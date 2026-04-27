@@ -106,13 +106,12 @@ repositories {
 
 dependencies {
 	implementation "net.neoforged:neoforge:${neo_version}"
-	implementation "dev.latvian.mods:rhino-neoforge:${rhino_version}"
 	localRuntime "org.javassist:javassist:3.30.2-GA"
 
 	// sparkcore 星火
 	implementation jarJar("curse.maven:spark-core-${sparkcore_version}")
 
-	implementation 'thedarkcolour:kotlinforforge-neoforge:6.0.0'
+	implementation "thedarkcolour:kotlinforforge-neoforge:${kff_version}"
 }
 
 tasks.withType(ProcessResources).configureEach {
