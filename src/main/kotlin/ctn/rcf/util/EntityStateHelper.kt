@@ -1,4 +1,4 @@
-package ctn.rcf.util
+package architecture.resonator_combat_framework.util
 
 object EntityStateHelper {
   @JvmStatic

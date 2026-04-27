@@ -1,4 +1,4 @@
-package ctn.rcf;
+package architecture.resonator_combat_framework;
 
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.fml.ModContainer;

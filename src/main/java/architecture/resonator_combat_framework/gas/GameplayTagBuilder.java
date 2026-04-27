@@ -1,4 +1,4 @@
-package ctn.rcf.gas;
+package architecture.resonator_combat_framework.gas;
 
 import cn.solarmoon.spark_core.gas.GameplayTag;
 

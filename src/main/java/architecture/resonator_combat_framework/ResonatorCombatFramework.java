@@ -1,4 +1,4 @@
-package ctn.rcf;
+package architecture.resonator_combat_framework;
 
 import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceKey;

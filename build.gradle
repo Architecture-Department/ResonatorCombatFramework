@@ -79,8 +79,10 @@ repositories {
 dependencies {
   implementation "net.neoforged:neoforge:${neo_version}"
 
-  implementation "curse.maven:spark-core-1185735:7230769"
-  implementation 'thedarkcolour:kotlinforforge-neoforge:6.0.0'
+	// sparkcore 星火
+	implementation jarJar("curse.maven:spark-core-${sparkcore_version}")
+
+	implementation 'thedarkcolour:kotlinforforge-neoforge:6.0.0'
 }
 
 tasks.withType(ProcessResources).configureEach {
