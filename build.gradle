@@ -30,6 +30,12 @@ runs {
     workingDirectory project.layout.projectDirectory.dir('run').dir(name)
 
     modSource project.sourceSets.main
+
+	  jvmArguments.addAll([
+					  // 忽略无效指令，避免有的人没安装 JetBrain Runtime 无法启动游戏
+					  "-XX:+IgnoreUnrecognizedVMOptions",
+					  // 启用 JetBrain Runtime 热重载功能
+					  "-XX:+AllowEnhancedClassRedefinition"])
   }
 
   client {
@@ -59,6 +65,16 @@ configurations {
 }
 
 repositories {
+	// Minecraft 官方库 - 提供 Minecraft 相关依赖
+	maven { url = "https://libraries.minecraft.net/" }
+
+	// NeoForge 官方发布仓库 - NeoForge 核心依赖和元数据
+	maven { url = "https://neoforged.forgecdn.net/releases" }
+	maven { url = "https://neoforged.forgecdn.net/mojang-meta" }
+
+	// 本地 Maven 仓库和中央仓库 - 基础依赖源
+	mavenLocal()
+	mavenCentral()
   exclusiveContent {
     forRepository {
       maven {
@@ -74,10 +90,24 @@ repositories {
       url = 'https://thedarkcolour.github.io/KotlinForForge/'
     }
   }
+
+	// Latvian Mods 仓库（FTB 系列模组）
+	maven {
+		url "https://maven.latvian.dev/releases"
+		content {
+			includeGroup "dev.latvian.mods"
+			includeGroup "dev.latvian.apps"
+		}
+	}
+
+	// JitPack - GitHub 项目构建仓库（通用）
+	maven { url = 'https://jitpack.io' }
 }
 
 dependencies {
-  implementation "net.neoforged:neoforge:${neo_version}"
+	implementation "net.neoforged:neoforge:${neo_version}"
+	implementation "dev.latvian.mods:rhino-neoforge:${rhino_version}"
+	localRuntime "org.javassist:javassist:3.30.2-GA"
 
 	// sparkcore 星火
 	implementation jarJar("curse.maven:spark-core-${sparkcore_version}")

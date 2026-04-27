@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 @Mod(ResonatorCombatFramework.ID)
-public class ResonatorCombatFramework {
+public final class ResonatorCombatFramework {
   public static final String ID = "resonator_combat_framework";
   public static final Logger LOGGER = LogManager.getLogger(ID);
 
