@@ -1,68 +1,22 @@
 plugins {
-  id 'java-library'
-  id 'maven-publish'
-  id 'net.neoforged.gradle.userdev' version '7.1.25'
+	id 'java-library'
+	id 'maven-publish'
+	id 'idea'
+	id 'net.neoforged.moddev' version '2.0.141'
 
-  id 'org.jetbrains.kotlin.jvm' version '2.2.20'
+	id "org.jetbrains.kotlin.jvm" version "2.3.0"
+	id "org.jetbrains.kotlin.plugin.serialization" version "2.3.0"
+}
+
+sourceSets.main.resources {
+	srcDir('src/generated/resources')
+
+	exclude("**/*.bbmodel")
+	exclude("src/generated/**/.cache")
 }
 
 version = mod_version
 group = mod_group_id
-
-sourceSets.main.resources {
-  srcDir('src/generated/resources')
-
-  exclude("**/*.bbmodel")
-  exclude("src/generated/**/.cache")
-}
-
-base {
-  archivesName = mod_id
-}
-
-java.toolchain.languageVersion = JavaLanguageVersion.of(21)
-
-runs {
-  configureEach {
-    systemProperty 'forge.logging.markers', 'REGISTRIES'
-    systemProperty 'forge.logging.console.level', 'debug'
-
-    workingDirectory project.layout.projectDirectory.dir('run').dir(name)
-
-    modSource project.sourceSets.main
-
-	  jvmArguments.addAll([
-					  // 忽略无效指令，避免有的人没安装 JetBrain Runtime 无法启动游戏
-					  "-XX:+IgnoreUnrecognizedVMOptions",
-					  // 启用 JetBrain Runtime 热重载功能
-					  "-XX:+AllowEnhancedClassRedefinition"])
-  }
-
-  client {
-    systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
-  }
-
-  server {
-    systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
-    argument '--nogui'
-  }
-
-  gameTestServer {
-    systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
-  }
-
-  data {
-
-    arguments.addAll '--mod', project.mod_id,
-      '--all',
-      '--output', file('src/generated/resources/').getAbsolutePath(),
-      '--existing', file('src/main/resources/').getAbsolutePath()
-  }
-}
-
-configurations {
-  runtimeClasspath.extendsFrom localRuntime
-}
 
 repositories {
 	// Minecraft 官方库 - 提供 Minecraft 相关依赖
@@ -75,21 +29,21 @@ repositories {
 	// 本地 Maven 仓库和中央仓库 - 基础依赖源
 	mavenLocal()
 	mavenCentral()
-  exclusiveContent {
-    forRepository {
-      maven {
-        url "https://cursemaven.com"
-      }
-    }
-    filter {
-      includeGroup "curse.maven"
-    }
+	exclusiveContent {
+		forRepository {
+			maven {
+				url "https://cursemaven.com"
+			}
+		}
+		filter {
+			includeGroup "curse.maven"
+		}
 
-    maven {
-      name = 'Kotlin for Forge'
-      url = 'https://thedarkcolour.github.io/KotlinForForge/'
-    }
-  }
+		maven {
+			name = 'Kotlin for Forge'
+			url = 'https://thedarkcolour.github.io/KotlinForForge/'
+		}
+	}
 
 	// Latvian Mods 仓库（FTB 系列模组）
 	maven {
@@ -104,6 +58,73 @@ repositories {
 	maven { url = 'https://jitpack.io' }
 }
 
+base {
+	archivesName = mod_id
+}
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+
+neoForge {
+	version = project.neo_version
+
+	parchment {
+		mappingsVersion = project.parchment_mappings_version
+		minecraftVersion = project.parchment_minecraft_version
+	}
+
+	runs {
+		client {
+			client()
+			systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+		}
+
+		clientAuth {
+			client()
+			systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+			devLogin = true
+		}
+
+		server {
+			server()
+			programArgument '--nogui'
+			systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+		}
+		gameTestServer {
+			type = "gameTestServer"
+			systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+		}
+
+		data {
+			data()
+			gameDirectory = project.file('run-data')
+			programArguments.addAll '--mod', project.mod_id, '--all', '--output', file('src/generated/resources/').getAbsolutePath(), '--existing', file('src/main/resources/').getAbsolutePath()
+		}
+
+		configureEach {
+			systemProperty 'forge.logging.markers', 'REGISTRIES'
+			systemProperty 'forge.logging.console.level', 'debug'
+
+			jvmArguments.addAll([
+							// 忽略无效指令，避免有的人没安装 JetBrain Runtime 无法启动游戏
+							"-XX:+IgnoreUnrecognizedVMOptions",
+							// 启用 JetBrain Runtime 热重载功能
+							"-XX:+AllowEnhancedClassRedefinition"])
+
+			logLevel = org.slf4j.event.Level.DEBUG
+		}
+	}
+
+	mods {
+		"${mod_id}" {
+			sourceSet(sourceSets.main)
+		}
+	}
+}
+
+configurations {
+	runtimeClasspath.extendsFrom localRuntime
+}
+
 dependencies {
 	implementation "net.neoforged:neoforge:${neo_version}"
 	localRuntime "org.javassist:javassist:3.30.2-GA"
@@ -114,44 +135,46 @@ dependencies {
 	implementation "thedarkcolour:kotlinforforge-neoforge:${kff_version}"
 }
 
-tasks.withType(ProcessResources).configureEach {
-  var replaceProperties = [
-    minecraft_version      : minecraft_version,
-    minecraft_version_range: minecraft_version_range,
-    neo_version            : neo_version,
-    loader_version_range   : loader_version_range,
-    mod_id                 : mod_id,
-    mod_name               : mod_name,
-    mod_license            : mod_license,
-    mod_version            : mod_version,
-  ]
-  inputs.properties replaceProperties
-
-  filesMatching(['META-INF/neoforge.mods.toml']) {
-    expand replaceProperties
-  }
+var generateModMetadata = tasks.register("generateModMetadata", ProcessResources) {
+	var replaceProperties = [
+					minecraft_version      : minecraft_version,
+					minecraft_version_range: minecraft_version_range,
+					neo_version            : neo_version,
+					loader_version_range   : loader_version_range,
+					mod_id                 : mod_id,
+					mod_name               : mod_name,
+					mod_license            : mod_license,
+					mod_version            : mod_version,
+	]
+	inputs.properties replaceProperties
+	expand replaceProperties
+	from "src/main/templates"
+	into "build/generated/sources/modMetadata"
 }
 
+sourceSets.main.resources.srcDir generateModMetadata
+neoForge.ideSyncTask generateModMetadata
+
 publishing {
-  publications {
-    register('mavenJava', MavenPublication) {
-      from components.java
-    }
-  }
-  repositories {
-    maven {
-      url "file://${project.projectDir}/repo"
-    }
-  }
+	publications {
+		register('mavenJava', MavenPublication) {
+			from components.java
+		}
+	}
+	repositories {
+		maven {
+			url "file://${project.projectDir}/repo"
+		}
+	}
 }
 
 tasks.withType(JavaCompile).configureEach {
-  options.encoding = 'UTF-8'
+	options.encoding = 'UTF-8'
 }
 
 idea {
-  module {
-    downloadSources = true
-    downloadJavadoc = true
-  }
+	module {
+		downloadSources = true
+		downloadJavadoc = true
+	}
 }
