@@ -4,8 +4,7 @@ plugins {
 	id 'idea'
 	id 'net.neoforged.moddev' version '2.0.141'
 
-	id "org.jetbrains.kotlin.jvm" version "2.3.0"
-	id "org.jetbrains.kotlin.plugin.serialization" version "2.3.0"
+	id 'org.jetbrains.kotlin.jvm' version '2.2.20'
 }
 
 sourceSets.main.resources {
@@ -132,6 +131,7 @@ dependencies {
 	// sparkcore 星火
 	implementation jarJar("curse.maven:spark-core-${sparkcore_version}")
 
+	// Kotlin
 	implementation "thedarkcolour:kotlinforforge-neoforge:${kff_version}"
 }
 
