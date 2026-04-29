@@ -55,6 +55,24 @@ repositories {
 
 	// JitPack - GitHub 项目构建仓库（通用）
 	maven { url = 'https://jitpack.io' }
+
+	// Spark-Core - 优先使用国内镜像
+	maven {
+		name = 'Solarmoon Maven (China Mirror)'
+		url = 'https://maven.bawnorton.com/releases'
+		content {
+			includeGroup "cn.solarmoon"
+		}
+	}
+
+	// Spark-Core
+	maven {
+		url = "https://maven.pkg.github.com/SolarMoonQAQ/Spark-Core"
+		credentials {
+			username = ""
+			password = ""
+		}
+	}
 }
 
 base {
@@ -129,7 +147,7 @@ dependencies {
 	localRuntime "org.javassist:javassist:3.30.2-GA"
 
 	// sparkcore 星火
-	implementation jarJar("curse.maven:spark-core-${sparkcore_version}")
+	implementation jarJar("cn.solarmoon:spark-core-neoforge:${minecraft_version}-${spark_core_version}")
 
 	// Kotlin
 	implementation "thedarkcolour:kotlinforforge-neoforge:${kff_version}"
@@ -145,6 +163,8 @@ var generateModMetadata = tasks.register("generateModMetadata", ProcessResources
 					mod_name               : mod_name,
 					mod_license            : mod_license,
 					mod_version            : mod_version,
+					mod_authors    : mod_authors,
+					mod_description: mod_description,
 	]
 	inputs.properties replaceProperties
 	expand replaceProperties

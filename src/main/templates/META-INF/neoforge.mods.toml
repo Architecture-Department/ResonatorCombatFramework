@@ -6,10 +6,8 @@ license = "${mod_license}"
 modId = "${mod_id}"
 version = "${mod_version}"
 displayName = "${mod_name}"
-authors = "Illaujaq, WangXiaoJing"
-description = '''
-Mod framework. A coding lib.
-'''
+authors = "${mod_authors}"
+description = '''${mod_description}'''
 
 [[mixins]]
 config = "${mod_id}.mixins.json"
