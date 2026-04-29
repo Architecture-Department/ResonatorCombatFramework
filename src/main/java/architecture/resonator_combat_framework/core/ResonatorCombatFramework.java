@@ -24,11 +24,6 @@ public final class ResonatorCombatFramework {
 		NeoForge.EVENT_BUS.register(this);
 	}
 
-	@SubscribeEvent
-	public void onServerStarting(ServerStartingEvent event) {
-		LOGGER.info("HELLO from server starting");
-	}
-
 	@Contract("_ -> new")
 	public static @NotNull ResourceLocation modRl(final String name) {
 		return ResourceLocation.fromNamespaceAndPath(ID, name);
@@ -45,5 +40,10 @@ public final class ResonatorCombatFramework {
 
 	public static <T> @NotNull DeferredRegister<T> modRegister(ResourceKey<Registry<T>> registry) {
 		return DeferredRegister.create(registry, ID);
+	}
+
+	@SubscribeEvent
+	public void onServerStarting(ServerStartingEvent event) {
+		LOGGER.info("HELLO from server starting");
 	}
 }
