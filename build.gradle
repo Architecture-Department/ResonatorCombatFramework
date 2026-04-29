@@ -58,14 +58,6 @@ repositories {
 	}
 
 	maven {
-		url = "https://maven.pkg.github.com/SolarMoonQAQ/Spark-Core"
-		credentials {
-			username = System.getenv("GITHUB_USERNAME")
-			password = System.getenv("GITHUB_TOKEN")
-		}
-	}
-
-	maven {
 		name = "Progwml6 maven"
 		url = uri("https://dvs1.progwml6.com/files/maven/")
 	}
@@ -99,10 +91,6 @@ repositories {
 	}
 	maven {
 		url = uri("https://maven.theillusivec4.top/")
-	}
-	maven {
-		name = "Kotlin for Forge"
-		url = uri("https://thedarkcolour.github.io/KotlinForForge/")
 	}
 	maven {
 		name = "GeckoLib"
