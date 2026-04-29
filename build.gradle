@@ -46,11 +46,8 @@ repositories {
 		}
 	}
 
-
-
 	// JitPack - GitHub 项目构建仓库（通用）
 	maven { url = 'https://jitpack.io' }
-
 
 	maven {
 		name = 'Solarmoon Maven (China Mirror)'
@@ -196,8 +193,6 @@ neoForge {
 configurations {
 	runtimeClasspath.extendsFrom localRuntime
 }
-
-
 
 var generateModMetadata = tasks.register("generateModMetadata", ProcessResources) {
 	var replaceProperties = [
