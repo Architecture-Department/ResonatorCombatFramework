@@ -18,16 +18,10 @@ version = mod_version
 group = mod_group_id
 
 repositories {
-	// Minecraft 官方库 - 提供 Minecraft 相关依赖
-	maven { url = "https://libraries.minecraft.net/" }
-
-	// NeoForge 官方发布仓库 - NeoForge 核心依赖和元数据
-	maven { url = "https://neoforged.forgecdn.net/releases" }
-	maven { url = "https://neoforged.forgecdn.net/mojang-meta" }
-
 	// 本地 Maven 仓库和中央仓库 - 基础依赖源
 	mavenLocal()
 	mavenCentral()
+
 	exclusiveContent {
 		forRepository {
 			maven {
@@ -44,7 +38,6 @@ repositories {
 		}
 	}
 
-	// Latvian Mods 仓库（FTB 系列模组）
 	maven {
 		url "https://maven.latvian.dev/releases"
 		content {
@@ -53,10 +46,12 @@ repositories {
 		}
 	}
 
+
+
 	// JitPack - GitHub 项目构建仓库（通用）
 	maven { url = 'https://jitpack.io' }
 
-	// Spark-Core - 优先使用国内镜像
+
 	maven {
 		name = 'Solarmoon Maven (China Mirror)'
 		url = 'https://maven.bawnorton.com/releases'
@@ -65,14 +60,74 @@ repositories {
 		}
 	}
 
-	// Spark-Core
 	maven {
 		url = "https://maven.pkg.github.com/SolarMoonQAQ/Spark-Core"
 		credentials {
-			username = ""
-			password = ""
+			username = System.getenv("GITHUB_USERNAME")
+			password = System.getenv("GITHUB_TOKEN")
 		}
 	}
+
+	maven {
+		name = "Progwml6 maven"
+		url = uri("https://dvs1.progwml6.com/files/maven/")
+	}
+	maven {
+		name = "ModMaven"
+		url = uri("https://modmaven.dev")
+	}
+	maven {
+		url = uri("https://www.cursemaven.com")
+		content {
+			includeGroup("curse.maven")
+		}
+	}
+	maven {
+		name = "KosmX's maven"
+		url = uri("https://maven.kosmx.dev/")
+	}
+	maven {
+		name = "Jared's maven"
+		url = uri("https://maven.blamejared.com/")
+	}
+	maven {
+		name = "tterrag maven"
+		url = uri("https://maven.tterrag.com/")
+	}
+	maven {
+		url = uri("https://api.modrinth.com/maven")
+	}
+	maven {
+		url = uri("https://maven.ryanliptak.com/")
+	}
+	maven {
+		url = uri("https://maven.theillusivec4.top/")
+	}
+	maven {
+		name = "Kotlin for Forge"
+		url = uri("https://thedarkcolour.github.io/KotlinForForge/")
+	}
+	maven {
+		name = "GeckoLib"
+		url = uri("https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/")
+		content {
+			includeGroup("software.bernie.geckolib")
+		}
+	}
+	maven {
+		url = uri("https://maven.azuredoom.com/mods")
+	}
+}
+
+dependencies {
+	implementation "net.neoforged:neoforge:${neo_version}"
+	runtimeOnly "org.javassist:javassist:3.30.2-GA"
+
+	// Kotlin
+	implementation "thedarkcolour:kotlinforforge-neoforge:${kff_version}"
+
+	// sparkcore 星火
+	implementation jarJar("cn.solarmoon:spark-core-neoforge:${minecraft_version}-${spark_core_version}")
 }
 
 base {
@@ -142,16 +197,7 @@ configurations {
 	runtimeClasspath.extendsFrom localRuntime
 }
 
-dependencies {
-	implementation "net.neoforged:neoforge:${neo_version}"
-	localRuntime "org.javassist:javassist:3.30.2-GA"
 
-	// sparkcore 星火
-	implementation jarJar("cn.solarmoon:spark-core-neoforge:${minecraft_version}-${spark_core_version}")
-
-	// Kotlin
-	implementation "thedarkcolour:kotlinforforge-neoforge:${kff_version}"
-}
 
 var generateModMetadata = tasks.register("generateModMetadata", ProcessResources) {
 	var replaceProperties = [
