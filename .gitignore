@@ -38,3 +38,44 @@ run/
 **/src/generated/**/.cache/
 repo/
 !**/src/**/repo/
+# eclipse
+bin
+*.launch
+.metadata
+
+# idea
+out
+.idea
+
+# gradle
+build
+
+# other
+eclipse
+run
+run-data/
+runs
+run-data
+
+repo
+/module/ImaginaryCraft/src/generated/
+/.ai/ai-ctx-20260129-112213.txt
+/.ai/
+.vscode/*
+.gitignore
+.history
+.trae
+
+generated/
+
+# idea
+*.log
+
+# other
+*.hprof
+*.nphd
+*.ref
+*.map
+
+#vscode
+.history/
