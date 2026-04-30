@@ -1,21 +1,17 @@
 package architecture.resonator_combat_framework.gas;
 
-import cn.solarmoon.spark_core.gas.GameplayTag;
+//import cn.solarmoon.spark_core.gas.GameplayTag;
+
 import com.google.common.collect.ImmutableList;
-import cpw.mods.util.Lazy;
 
 import javax.annotation.Nonnull;
 import java.util.HashSet;
 import java.util.List;
 
-public class GameplayTagJava {
-	public final String path;
-	private final Lazy<GameplayTag> ktObject;
+public record GameplayTagJava(String path) {
+	//	private final Lazy<GameplayTag> ktObject;
 
-	public GameplayTagJava(String path) {
-		this.path = path;
-		this.ktObject = Lazy.of(() -> new GameplayTag(this.path));
-	}
+	//		this.ktObject = Lazy.of(() -> new GameplayTag(this.path));
 
 	public List<String> parts() {
 		return ImmutableList.copyOf(this.path.split("\\."));
@@ -32,21 +28,17 @@ public class GameplayTagJava {
 		return new HashSet<>(otherParts).containsAll(otherParts.subList(0, parts.size()));
 	}
 
-	public boolean matchs(@Nonnull final GameplayTag other) {
-		return this.asKotlinObject().matches(other);
-	}
+//	public boolean matchs(@Nonnull final GameplayTag other) {
+//		return this.asKotlinObject().matches(other);
+//	}
 
-	public GameplayTag asKotlinObject() {
-		return ktObject.get();
-	}
+//	public GameplayTag asKotlinObject() {
+//		return ktObject.get();
+//	}
 
 	@Override
 	public String toString() {
 		return this.path;
 	}
 
-	@Override
-	public int hashCode() {
-		return this.path.hashCode();
-	}
 }
