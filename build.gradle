@@ -1,10 +1,4 @@
 plugins {
-	id 'java-library'
-	id 'maven-publish'
-	id 'idea'
-	id 'net.neoforged.moddev' version '2.0.141'
-
-	id 'org.jetbrains.kotlin.jvm' version '2.2.20'
 }
 
 var projectName = [
@@ -35,16 +29,20 @@ dependencies {
 	}
 
 	implementation "net.neoforged:neoforge:${neo_version}"
-	runtimeOnly "org.javassist:javassist:3.30.2-GA"
+	runtimeOnly "org.javassist:javassist:${javassist_version}"
 
 	// geckolib
 	implementation "software.bernie.geckolib:geckolib-neoforge-${minecraft_version}:${geckolib_version}"
 
-//	implementation jarJar("cn.solarmoon:spark-core-neoforge:${minecraft_version}-${spark_core_version}")
 	// sparkcore 星火
 	implementation jarJar("io.github.solarmoonqaq:spark-core:${spark_core_version}")
 	// Kotlin
-	implementation "thedarkcolour:kotlinforforge-neoforge:${kff_version}"
+	implementation "thedarkcolour:kotlinforforge-neoforge:${kotlinforforge_version}"
+	runtimeOnly 'org.jetbrains.kotlin:kotlin-stdlib'
+	runtimeOnly 'org.jetbrains.kotlin:kotlin-reflect'
+	runtimeOnly 'org.jetbrains.kotlinx:kotlinx-coroutines-core'
+	runtimeOnly 'org.jetbrains.kotlinx:kotlinx-serialization-core'
+	runtimeOnly 'org.jetbrains.kotlinx:kotlinx-serialization-json'
 }
 
 base {
