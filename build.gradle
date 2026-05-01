@@ -35,14 +35,13 @@ dependencies {
 	implementation "software.bernie.geckolib:geckolib-neoforge-${minecraft_version}:${geckolib_version}"
 
 	// sparkcore 星火
-	implementation jarJar("io.github.solarmoonqaq:spark-core:${spark_core_version}")
+	compileOnly "io.github.solarmoonqaq:spark-core:${spark_core_version}"
+//	implementation "curse.maven:spark-core-${maven_spark_core_version}"
+	localRuntime "maven.modrinth:spark-core:${modrinth_spark_core_version}"
+
 	// Kotlin
 	implementation "thedarkcolour:kotlinforforge-neoforge:${kotlinforforge_version}"
-//	runtimeOnly 'org.jetbrains.kotlin:kotlin-stdlib'
-//	runtimeOnly 'org.jetbrains.kotlin:kotlin-reflect'
-//	runtimeOnly 'org.jetbrains.kotlinx:kotlinx-coroutines-core'
-//	runtimeOnly 'org.jetbrains.kotlinx:kotlinx-serialization-core'
-//	runtimeOnly 'org.jetbrains.kotlinx:kotlinx-serialization-json'
+
 }
 
 base {
