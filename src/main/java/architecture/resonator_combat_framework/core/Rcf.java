@@ -15,12 +15,12 @@ import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
-@Mod(ResonatorCombatFramework.ID)
-public final class ResonatorCombatFramework {
+@Mod(Rcf.ID)
+public final class Rcf {
 	public static final String ID = "resonator_combat_framework";
 	public static final Logger LOGGER = LogManager.getLogger(ID);
 
-	public ResonatorCombatFramework(IEventBus modEventBus, ModContainer modContainer) {
+	public Rcf(IEventBus modEventBus, ModContainer modContainer) {
 		NeoForge.EVENT_BUS.register(this);
 	}
 
