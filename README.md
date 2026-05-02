@@ -19,12 +19,12 @@
  
 - SparkCore
 
-| 目录名             | Handler             | 注册表                               | 数据类              | 支持格式                      |
-|-----------------|---------------------|-----------------------------------|------------------|---------------------------|
-| animations/     | AnimationHandler    | SparkRegistries.TYPED_ANIMATION   | TypedAnimation   | .json                     |
-| models/         | ModelHandler        | SparkRegistries.MODELS            | OModel           | .json                     |
-| textures/       | TextureHandler      | SparkRegistries.DYNAMIC_TEXTURES  | OTexture         | .png .jpg .jpeg .tga .bmp |
-| scripts/        | JavaScriptHandler   | SparkRegistries.JS_SCRIPTS        | OJSScript        | .js                       |
-| ik_constraints/ | IKConstraintHandler | SparkRegistries.IK_COMPONENT_TYPE | TypedIKComponent | .json                     |
-| (元数据)           | MetaHandler         | 无独立注册表                            | 			—	            | -                         | -                         
+| 目录名             | 描述           | Handler             | 注册表                               | 数据类              | 支持格式                      |
+|-----------------|--------------|---------------------|-----------------------------------|------------------|---------------------------|
+| animations/     | 动画资源         | AnimationHandler    | SparkRegistries.TYPED_ANIMATION   | TypedAnimation   | .json                     |
+| models/         | 模型资源         | ModelHandler        | SparkRegistries.MODELS            | OModel           | .json                     |
+| textures/       | 纹理资源         | TextureHandler      | SparkRegistries.DYNAMIC_TEXTURES  | OTexture         | .png .jpg .jpeg .tga .bmp |
+| scripts/        | JavaScript脚本 | JavaScriptHandler   | SparkRegistries.JS_SCRIPTS        | OJSScript        | .js                       |
+| ik_constraints/ | IK约束         | IKConstraintHandler | SparkRegistries.IK_COMPONENT_TYPE | TypedIKComponent | .json                     |
+| (元数据)           | -            | MetaHandler         | 无独立注册表                            | 			—	            | -                         |
 
