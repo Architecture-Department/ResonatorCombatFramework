@@ -3,7 +3,6 @@
 注册新资源类型需要完成三个步骤：**定义数据类 → 创建动态注册表 → 实现并注册 Handler**。
 
 <!-- TOC -->
-
 * [注册新的资源类型](#注册新的资源类型)
   * [步骤一：定义资源数据类](#步骤一定义资源数据类)
   * [步骤二：创建动态注册表](#步骤二创建动态注册表)
@@ -11,7 +10,6 @@
   * [注册机制说明](#注册机制说明)
   * [资源文件放置](#资源文件放置)
     * [Citations](#citations)
-
 <!-- TOC -->
 
 ---
@@ -20,8 +18,17 @@
 
 创建你的资源数据类，例如 `OMyResource`：
 
+- kotlin
+
 ```kotlin
 class OMyResource(val data: String)
+```
+
+- java
+
+```java
+public record OMyResource(String data) {
+}
 ```
 
 ---
@@ -30,6 +37,8 @@ class OMyResource(val data: String)
 
 在你的注册表对象中（参考 `SparkRegistries.kt` 的模式），使用 `SparkCore.REGISTER.registry<T>()` 创建一个
 `DynamicAwareRegistry`，并设置 `onDynamicRegister` / `onDynamicUnregister` 回调用于网络同步：
+
+- kotlin
 
 ```kotlin
 val MY_RESOURCES =
@@ -47,12 +56,49 @@ val MY_RESOURCES =
     } ?: throw IllegalStateException("...")
 ```
 
+- java
+
+```java
+public static final DynamicAwareRegistry<OMyResource> MY_RESOURCES;
+
+static {
+  // 1. 获取基础注册表构建器
+  var builder = SparkCore.REGISTER.registry(OMyResource.class)
+          .id("my_resources")
+          .valueType(OMyResource.class);
+
+  // 2. 构建并尝试转换为 DynamicAwareRegistry
+  // 注意：Kotlin 的 .build { it.sync(true).create() } 在 Java 中通常对应链式调用或特定的构建参数
+  // 这里假设 build 返回的是一个 Registry 对象，我们需要将其强转或确保它实现了 DynamicAwareRegistry
+  Object rawRegistry = builder.build(r -> r.sync(true).create());
+
+  if (!(rawRegistry instanceof DynamicAwareRegistry)) {
+    throw new IllegalStateException("Failed to cast registry to DynamicAwareRegistry for my_resources");
+  }
+
+  @SuppressWarnings("unchecked")
+  DynamicAwareRegistry<OMyResource> registry = (DynamicAwareRegistry<OMyResource>) rawRegistry;
+
+  // 3. 设置动态注册的回调逻辑
+  registry.setOnDynamicRegister((key, value) -> {
+    // 可选：发送同步包到客户端
+  });
+
+  registry.setOnDynamicUnregister((key, value) -> {
+    // 可选：发送移除同步包
+  });
+
+  MY_RESOURCES = registry;
+}
+```
+
 ---
 
 ## 步骤三：实现 ResourceHandler
 
-继承 `ResourceHandlerBase`，实现三个核心抽象方法，并在 `companion object` 的 `init` 块中调用
-`HandlerDiscoveryService.registerHandler` 完成自动注册：
+继承 `ResourceHandlerBase`，实现三个核心抽象方法，并在静态初始化块中调用 `HandlerDiscoveryService.registerHandler` 完成自动注册：
+
+- kotlin
 
 ```kotlin
 @AutoRegisterHandler
@@ -99,6 +145,79 @@ class MyResourceHandler(
 
   override fun initializeDefaultResources(modMainClass: Class<*>): Boolean {
     return MultiModuleResourceExtractionUtil.extractAllModuleResources(modMainClass, getResourceType())
+  }
+}
+```
+
+- java
+
+```java
+
+public class MyResourceHandler extends ResourceHandlerBase {
+
+  private final DynamicAwareRegistry<OMyResource> registry;
+
+  public MyResourceHandler(DynamicAwareRegistry<OMyResource> registry) {
+    this.registry = registry;
+  }
+
+  static {
+    // 关键：在静态初始化时注册工厂方法
+    HandlerDiscoveryService.registerHandler(() -> new MyResourceHandler(MyRegistries.MY_RESOURCES));
+  }
+
+  @Override
+  public String getResourceType() {
+    return "my_resources"; // 对应目录名
+  }
+
+  @Override
+  public ResourceLocation getRegistryIdentifier() {
+    return registry.key().location();
+  }
+
+  @Override
+  public Set<String> getSupportedExtensions() {
+    return Set.of("json");
+  }
+
+  @Override
+  protected void processResourceAdded(ResourceNode node) {
+    try {
+      // 解析文件，注册到 registry
+      String content = Files.readString(node.getBasePath().resolve(node.getRelativePath()));
+      OMyResource resource = new OMyResource(content);
+      ResourceKey<OMyResource> key = ResourceKey.create(registry.key(), ResourceLocation.parse(node.getId()));
+      registry.register(key, resource, RegistrationInfo.BUILT_IN);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  @Override
+  protected void processResourceModified(ResourceNode node) {
+    processResourceAdded(node);
+  }
+
+  @Override
+  protected void processResourceRemoved(ResourceNode node) {
+    ResourceKey<OMyResource> key = ResourceKey.create(registry.key(), ResourceLocation.parse(node.getId()));
+    registry.unregisterDynamic(key);
+  }
+
+  @Override
+  public boolean initialize(Class<?> modMainClass) {
+    List<Path> paths = ResourceDiscoveryService.discoverResourcePaths(getResourceType());
+    for (Path basePath : paths) {
+      ResourceDiscoveryService.scanResourceFiles(basePath, getSupportedExtensions())
+              .forEach(this::onResourceAdded);
+    }
+    return true;
+  }
+
+  @Override
+  public boolean initializeDefaultResources(Class<?> modMainClass) {
+    return MultiModuleResourceExtractionUtil.extractAllModuleResources(modMainClass, getResourceType());
   }
 }
 ```
