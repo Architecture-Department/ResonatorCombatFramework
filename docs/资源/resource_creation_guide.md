@@ -9,7 +9,6 @@
     * [2.2 资源ID的生成规则](#22-资源id的生成规则)
     * [2.3 模块标识格式](#23-模块标识格式)
     * [2.4 从旧格式迁移](#24-从旧格式迁移)
-  * [](#)
   * [3. 元数据文件 (`.meta.json`)](#3-元数据文件-metajson)
     * [3.1 基础结构](#31-基础结构)
     * [3.2 `requires` - 声明依赖](#32-requires---声明依赖)
@@ -18,11 +17,9 @@
     * [4.1 动画 (`animations`)](#41-动画-animations)
     * [4.2 模型 (`models`)](#42-模型-models)
     * [4.3 JavaScript 脚本 (`scripts`)](#43-javascript-脚本-scripts)
-  * [](#-1)
   * [5. 验证与调试](#5-验证与调试)
     * [5.1 检查资源状态](#51-检查资源状态)
     * [5.2 查看依赖树](#52-查看依赖树)
-  * [](#-2)
   * [6. 总结](#6-总结)
 <!-- TOC -->
 
@@ -89,14 +86,15 @@ run/sparkcore/
 - **`{path}`**: 从第四层开始到**不包含扩展名**的文件名为止的相对路径
 
 **四层结构示例**:
-| 文件物理路径 | 生成的资源ID |
-|---|---|
-| `run/sparkcore/my_mod/my_mod/animations/player/combat/sword_attack.json` |
-`my_mod:my_mod/animations/player/combat/sword_attack` |
-| `run/sparkcore/my_mod/combat_system/animations/sword/combo.json` | `my_mod:combat_system/animations/sword/combo` |
-| `run/sparkcore/spark_core/sparkcore/models/player.json` | `spark_core:sparkcore/models/player` |
-| `run/sparkcore/spark_core/sparkcore/textures/gui/icons.png` | `spark_core:sparkcore/textures/gui/icons` |
-| `run/sparkcore/another_mod/magic_system/scripts/fireball.js` | `another_mod:magic_system/scripts/fireball` |
+
+| 文件物理路径                                                                   | 生成的资源ID                                       |
+|--------------------------------------------------------------------------|-----------------------------------------------|
+| `run/sparkcore/my_mod/my_mod/animations/player/combat/sword_attack.json` |                                               |
+| `my_mod:my_mod/animations/player/combat/sword_attack`                    |                                               |
+| `run/sparkcore/my_mod/combat_system/animations/sword/combo.json`         | `my_mod:combat_system/animations/sword/combo` |
+| `run/sparkcore/spark_core/sparkcore/models/player.json`                  | `spark_core:sparkcore/models/player`          |
+| `run/sparkcore/spark_core/sparkcore/textures/gui/icons.png`              | `spark_core:sparkcore/textures/gui/icons`     |
+| `run/sparkcore/another_mod/magic_system/scripts/fireball.js`             | `another_mod:magic_system/scripts/fireball`   |
 
 > **重要**: 在元数据文件中引用其他资源时，**必须**使用这个由系统生成的完整资源ID。
 
@@ -140,8 +138,6 @@ ResourceID: `my_mod:my_mod/animations/player`
 5. 利用`SparkResourcePathBuilder`工具类生成标准路径
 
 **向后兼容性**: 系统仍支持旧的两层格式，但建议迁移到四层结构以获得更好的模块化支持。
- 
----
 
 ## 3. 元数据文件 (`.meta.json`)
 
@@ -374,9 +370,6 @@ Skill.create("my_mod:fireball_skill", builder => {
 }
 ```
 
- 
----
-
 ## 5. 验证与调试
 
 当你保存或修改资源文件后，系统会自动热重载并验证。你可以使用命令行工具来主动调试。
@@ -413,9 +406,6 @@ Skill.create("my_mod:fireball_skill", builder => {
 ├─ ✓ HARD: sparkcore:player_model
 └─ ⚠ SOFT: sparkcore:effects/sword_slash
 ```
-
- 
----
 
 ## 6. 总结
 
