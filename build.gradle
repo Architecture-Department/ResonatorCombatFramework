@@ -23,8 +23,8 @@ repositories {
 dependencies {
 	projectName.forEach { name ->
 		{
-			implementation jarJar(project(":module:" + name))
-			interfaceInjectionData jarJar(project(":module:" + name))
+			implementation project(":module:" + name)
+			interfaceInjectionData project(":module:" + name)
 		}
 	}
 
@@ -35,13 +35,29 @@ dependencies {
 	implementation "software.bernie.geckolib:geckolib-neoforge-${minecraft_version}:${geckolib_version}"
 
 	// sparkcore 星火
-	compileOnly "io.github.solarmoonqaq:spark-core:${spark_core_version}"
+//	compileOnly "io.github.solarmoonqaq:spark-core:${spark_core_version}"
 //	implementation "curse.maven:spark-core-${maven_spark_core_version}"
-	runtimeOnly "maven.modrinth:spark-core:${modrinth_spark_core_version}"
+//	runtimeOnly "maven.modrinth:spark-core:${modrinth_spark_core_version}"
 
 	// Kotlin
 	implementation "thedarkcolour:kotlinforforge-neoforge:${kotlinforforge_version}"
 
+	fileTree(dir: "../../libs", include: ["*.jar"]).forEach { file ->
+		{
+			final def collection = files(file)
+			if (file.name.endsWith("-sources.jar")) {
+				compileOnly(collection)
+				return
+			}
+			jarJar(implementation(collection))
+			// 检查JAR文件中是否包含interfaces.json
+			zipTree(file).matching {
+				include 'META-INF/*interfaces.json'
+			}.each { jarEntry ->
+				interfaceInjectionData(files(jarEntry))
+			}
+		}
+	}
 }
 
 base {
@@ -56,6 +72,11 @@ neoForge {
 	parchment {
 		mappingsVersion = project.parchment_mappings_version
 		minecraftVersion = project.parchment_minecraft_version
+	}
+
+	interfaceInjectionData {
+		from "src/main/resources/META-INF/interfaces.json"
+		publish file("src/main/resources/META-INF/interfaces.json")
 	}
 
 	runs {

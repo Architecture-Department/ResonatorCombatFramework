@@ -1,13 +1,12 @@
 {
-  "itemGroup.resonator_combat_framework": "Example Mod Tab",
-  "block.resonator_combat_framework.example_block": "Example Block",
-  "item.resonator_combat_framework.example_item": "Example Item",
-
-  "resonator_combat_framework.configuration.title": "ResonatorCombatFramework Configs",
-  "resonator_combat_framework.configuration.section.resonator_combat_framework.common.toml": "ResonatorCombatFramework Configs",
-  "resonator_combat_framework.configuration.section.resonator_combat_framework.common.toml.title": "ResonatorCombatFramework Configs",
-  "resonator_combat_framework.configuration.items": "Item List",
-  "resonator_combat_framework.configuration.logDirtBlock": "Log Dirt Block",
-  "resonator_combat_framework.configuration.magicNumberIntroduction": "Magic Number Text",
-  "resonator_combat_framework.configuration.magicNumber": "Magic Number"
+	"itemGroup.resonator_combat_framework": "Example Mod Tab",
+	"block.resonator_combat_framework.example_block": "Example Block",
+	"item.resonator_combat_framework.example_item": "Example Item",
+	"resonator_combat_framework.configuration.title": "ResonatorCombatFramework Configs",
+	"resonator_combat_framework.configuration.section.resonator_combat_framework.common.toml": "ResonatorCombatFramework Configs",
+	"resonator_combat_framework.configuration.section.resonator_combat_framework.common.toml.title": "ResonatorCombatFramework Configs",
+	"resonator_combat_framework.configuration.items": "Item List",
+	"resonator_combat_framework.configuration.logDirtBlock": "Log Dirt Block",
+	"resonator_combat_framework.configuration.magicNumberIntroduction": "Magic Number Text",
+	"resonator_combat_framework.configuration.magicNumber": "Magic Number"
 }

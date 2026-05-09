@@ -3,6 +3,7 @@
 <!-- TOC -->
 * [Resonator战斗框架(ResonatorCombatFramework)](#resonator战斗框架resonatorcombatframework)
   * [文档](#文档)
+  * [资源脚本路径](#资源脚本路径)
   * [资源类型](#资源类型)
 <!-- TOC -->
 
@@ -11,20 +12,26 @@
 [Spark-Core源文档](https://deepwiki.com/lujunjiehhh/Spark-Core-HotReload)
 请善用ai搜索功能
 
-- 资源
-- [资源创建与管理指南.md](docs/资源/resource_creation_guide.md)
-- [注册新的资源类型.md](docs/资源/register_new_resource_type.md)
+## 资源脚本路径
+
+- 实际路径:
+  run/spark_modules/{包名称}/{模组Id}/{资源类型}
+
+- 开发路径:
+  resources/spark_modules/{包名称}/{模组Id}/{资源类型}
 
 ## 资源类型
- 
+
 - SparkCore
 
-| 目录名             | 描述           | Handler             | 注册表                               | 数据类              | 支持格式                      |
-|-----------------|--------------|---------------------|-----------------------------------|------------------|---------------------------|
-| animations/     | 动画资源         | AnimationHandler    | SparkRegistries.TYPED_ANIMATION   | TypedAnimation   | .json                     |
-| models/         | 模型资源         | ModelHandler        | SparkRegistries.MODELS            | OModel           | .json                     |
-| textures/       | 纹理资源         | TextureHandler      | SparkRegistries.DYNAMIC_TEXTURES  | OTexture         | .png .jpg .jpeg .tga .bmp |
-| scripts/        | JavaScript脚本 | JavaScriptHandler   | SparkRegistries.JS_SCRIPTS        | OJSScript        | .js                       |
-| ik_constraints/ | IK约束         | IKConstraintHandler | SparkRegistries.IK_COMPONENT_TYPE | TypedIKComponent | .json                     |
-| (元数据)           | -            | MetaHandler         | 无独立注册表                            | 			—	            | -                         |
-
+| 目录名         | 描述    | Module            | 数据类                    | 支持格式       |
+|-------------|-------|-------------------|------------------------|------------|
+| ability/    | 技能    | AbilityTypeModule | AbilityTypeManager     | .json      |
+| animations/ | 动画    | AnimationModule   | OAnimationSet          | .json      |
+| controller/ | 动画控制器 | AnimStateModule   | OAnimStateMachineSet   | .json      |
+| font/       | 字体    | FontModule        | SparkPackLoaderApplier | .ttf .json |
+| lang/       | 语言文件  | LangModule        | SparkPackLoaderApplier | .json      |
+| models/     | 模型    | ModelModule       | OModel                 | .json      |
+| recipe/     | 配方    | RecipeModule      | SparkPackLoaderApplier | .json      |
+| sounds/     | 音效    | SoundModule       | SparkPackLoaderApplier | .ogg       |
+| textures/   | 纹理    | TextureModule     | SparkPackLoaderApplier | .png       |

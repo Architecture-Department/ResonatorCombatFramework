@@ -46,4 +46,8 @@ public final class Rcf {
 	public void onServerStarting(ServerStartingEvent event) {
 		LOGGER.info("HELLO from server starting");
 	}
+
+	public static ResourceLocation getSparkModuleRl(String namespace, String typeName, String path) {
+		return ResourceLocation.fromNamespaceAndPath(namespace, "spark_modules/" + typeName + "/" + path);
+	}
 }
