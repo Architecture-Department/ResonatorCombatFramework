@@ -1,16 +1,13 @@
 plugins {
 }
 
+if (rootProject.file('build-conventions.gradle').exists()) {
+	apply from: rootProject.file('build-conventions.gradle')
+}
+
 var projectName = [
 				"GoldenBoughsLib",
 ]
-
-sourceSets.main.resources {
-	srcDir('src/generated/resources')
-
-	exclude("**/*.bbmodel")
-	exclude("src/generated/**/.cache")
-}
 
 version = mod_version
 group = mod_group_id
@@ -28,6 +25,7 @@ dependencies {
 		}
 	}
 
+	ksp "io.github.seggan:kmixin:0.1.2"
 	implementation "net.neoforged:neoforge:${neo_version}"
 	runtimeOnly "org.javassist:javassist:${javassist_version}"
 
@@ -168,13 +166,4 @@ publishing {
 	}
 }
 
-tasks.withType(JavaCompile).configureEach {
-	options.encoding = 'UTF-8'
-}
 
-idea {
-	module {
-		downloadSources = true
-		downloadJavadoc = true
-	}
-}
