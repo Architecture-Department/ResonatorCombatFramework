@@ -1,8 +1,8 @@
 package architecture.resonator_combat_framework.core.registry;
 
-import architecture.goldenboughs_lib.common.payload.api.ToClientPayload;
-import architecture.goldenboughs_lib.common.payload.api.ToServerAndClientPayload;
-import architecture.goldenboughs_lib.common.payload.api.ToServerPayload;
+import architecture.goldenboughs_lib.api.payload.ToClientPayload;
+import architecture.goldenboughs_lib.api.payload.ToServerAndClientPayload;
+import architecture.goldenboughs_lib.api.payload.ToServerPayload;
 import architecture.resonator_combat_framework.core.Rcf;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
