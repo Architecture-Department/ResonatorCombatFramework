@@ -1,6 +1,6 @@
 package architecture.resonator_combat_framework.events;
 
-import architecture.goldenboughs_lib.core.GoldenBoughsLib;
+import architecture.goldenboughs_lib.core.Lib;
 import architecture.resonator_combat_framework.api.AppurtenanceHost;
 import cn.solarmoon.spark_core.animation.IAnimatable;
 import cn.solarmoon.spark_core.animation.anim.KeyAnimData;
@@ -11,7 +11,7 @@ import cn.solarmoon.spark_core.event.PhysicsEntityTickEvent;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 
-@EventBusSubscriber(modid = GoldenBoughsLib.ID)
+@EventBusSubscriber(modid = Lib.ID)
 public final class PhysicsCollisionEvets {
 	@SubscribeEvent
 	public static void onCollision(BoneUpdateEvent event) {
