@@ -1,0 +1,22 @@
+{
+	"required": true,
+	"package": "architecture.resonator_combat_framework.module.player_animation.mixin",
+	"compatibilityLevel": "JAVA_21",
+	"mixins": [
+		"gecko_lib.AnimatableManagerMixin",
+		"gecko_lib.GeckoLibCacheAccessor",
+		"gecko_lib.GeckoLibCacheMixin"
+	],
+	"client": [
+		"client.MixinLivingEntityRenderer"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	},
+	"overwrites": {
+		"requireAnnotations": true
+	},
+	"mixinextras": {
+		"minVersion": "0.5.0"
+	}
+}

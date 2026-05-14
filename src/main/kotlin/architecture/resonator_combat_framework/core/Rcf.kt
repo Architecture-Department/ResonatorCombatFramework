@@ -1,5 +1,6 @@
 package architecture.resonator_combat_framework.core
 
+import architecture.resonator_combat_framework.init.RcfDataComponentTypes
 import net.minecraft.core.Registry
 import net.minecraft.resources.ResourceKey
 import net.minecraft.resources.ResourceLocation
@@ -26,6 +27,7 @@ object Rcf {
 	init {
 		val modContainer = LOADING_CONTEXT.activeContainer
 		val modBus = MOD_BUS
+		RcfDataComponentTypes.REGISTRY.register(modBus)
 	}
 
 	@SubscribeEvent

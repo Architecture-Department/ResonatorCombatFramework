@@ -1,0 +1,5 @@
+package architecture.resonator_combat_framework.mixed
+
+import architecture.resonator_combat_framework.module.player_animation.mixed.IPlayerAnimationExpand
+
+interface IPlayerRcf : IPlayerAnimationExpand

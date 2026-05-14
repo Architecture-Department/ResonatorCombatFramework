@@ -4,7 +4,12 @@
 	"compatibilityLevel": "JAVA_21",
 	"mixins": [
 		"EntityMixin",
-		"gecko_lib.GeckoLibCacheMixin"
+		"PlayerMixin",
+		"gecko_lib.AnimatableManager$ControllerRegistrarMixin",
+		"gecko_lib.AnimatableManagerAccessor",
+		"gecko_lib.AnimationControllerAccessor"
+	],
+	"client": [
 	],
 	"injectors": {
 		"defaultRequire": 1

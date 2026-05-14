@@ -15,6 +15,9 @@ file = "META-INF/accesstransformer.cfg"
 [[mixins]]
 config = "${mod_id}.mixins.json"
 
+[[mixins]]
+config = "player_animation.mixins.json"
+
 [[dependencies.${ mod_id }]]
 modId = "neoforge"
 type = "required"

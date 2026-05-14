@@ -1,5 +1,8 @@
 {
 	"net/minecraft/world/entity/Entity": [
-		"architecture/resonator_combat_framework/mixed/IEntity"
+		"architecture/resonator_combat_framework/mixed/IEntityRcf"
+	],
+	"net/minecraft/world/entity/player/Player": [
+		"architecture/resonator_combat_framework/mixed/IPlayerRcf"
 	]
 }
