@@ -1,6 +1,5 @@
 package architecture.resonator_combat_framework.init
 
-import architecture.goldenboughs_lib.init.LibDataComponentTypes
 import architecture.resonator_combat_framework.core.Rcf.modRegister
 import com.mojang.serialization.Codec
 import net.minecraft.core.component.DataComponentType
@@ -56,7 +55,7 @@ object RcfDataComponentTypes {
 		name: String,
 		builder: Supplier<out B>
 	): DeferredHolder<DataComponentType<*>, B> {
-		return LibDataComponentTypes.REGISTRY.register<B>("data_components.$name", builder)
+		return REGISTRY.register<B>("data_components.$name", builder)
 	}
 
 	private fun recordString(name: String, isCacheEncoding: Boolean): Supplier<DataComponentType<String>> {
