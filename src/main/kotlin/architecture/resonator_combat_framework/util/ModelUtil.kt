@@ -2,7 +2,6 @@ package architecture.resonator_combat_framework.util
 
 import architecture.goldenboughs_lib.client.model.GeoModelExpand
 import architecture.goldenboughs_lib.client.model.GeoModelExpand.Companion.texturePath
-import architecture.resonator_combat_framework.core.Rcf
 import architecture.resonator_combat_framework.core.Rcf.getSparkModuleRl
 import architecture.resonator_combat_framework.core.RcfConstants
 import net.minecraft.resources.ResourceLocation

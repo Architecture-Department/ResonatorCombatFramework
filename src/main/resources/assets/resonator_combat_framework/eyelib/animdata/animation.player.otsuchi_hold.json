@@ -1,0 +1,12 @@
+{
+	"bones": {
+		"right_arm": {
+			"lock": true,
+			"no_fade_in": true
+		},
+		"left_arm": {
+			"lock": true,
+			"no_fade_in": true
+		}
+	}
+}

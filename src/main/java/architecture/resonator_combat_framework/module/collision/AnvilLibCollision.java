@@ -6,7 +6,7 @@ import org.joml.Vector3fc;
 
 /**
  * 来源
- * <a href="https://github.com/Anvil-Dev/AnvilLib/blob/82b4f6afd6e7009f35bdc8080bbf01a7e526d875/module.collision/src/main/java/dev/anvilcraft/lib/v2/collision/AnvilLibCollision.java">...</a>
+ * <a href="https://github.com/Anvil-Dev/AnvilLib/blob/82b4f6afd6e7009f35bdc8080bbf01a7e526d875/module.collision/src/main/java/dev/anvilcraft/lib/v2/collision/AnvilLibCollision.java">AnvilLib</a>
  */
 public class AnvilLibCollision {
 	/**

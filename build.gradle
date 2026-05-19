@@ -32,6 +32,9 @@ dependencies {
 	// geckolib
 	implementation "software.bernie.geckolib:geckolib-neoforge-${minecraft_version}:${geckolib_version}"
 
+	// eyelib — 玩家动画计算（不替换渲染）
+	implementation "maven.modrinth:eyelib:${eyelib_version}"
+
 	// sparkcore 星火
 //	compileOnly "io.github.solarmoonqaq:spark-core:${spark_core_version}"
 //	implementation "curse.maven:spark-core-${maven_spark_core_version}"

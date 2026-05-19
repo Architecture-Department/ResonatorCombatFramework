@@ -1,5 +1,5 @@
 package architecture.resonator_combat_framework.mixed
 
-import architecture.resonator_combat_framework.module.player_animation.mixed.IPlayerAnimationExpand
+import architecture.resonator_combat_framework.module.player_animation.mixed.PlayerProxyProvider
 
-interface IPlayerRcf : IPlayerAnimationExpand
+interface IPlayerRcf : PlayerProxyProvider

@@ -6,12 +6,12 @@ import com.google.common.collect.ImmutableList
 data class GameplayTagJava(val path: String) {
 	//	private final Lazy<GameplayTag> ktObject;
 	//		this.ktObject = Lazy.of(() -> new GameplayTag(this.path));
-	fun parts(): MutableList<String?> {
-		return ImmutableList.copyOf<String?>(this.path.split("\\.".toRegex()).dropLastWhile { it.isEmpty() }
+	fun parts(): MutableList<String> {
+		return ImmutableList.copyOf(this.path.split("\\.".toRegex()).dropLastWhile { it.isEmpty() }
 			.toTypedArray())
 	}
 
-	fun matchs(@Nonnull other: GameplayTagJava): Boolean {
+	fun matchs(other: GameplayTagJava): Boolean {
 		val parts = this.parts()
 		val otherParts = other.parts()
 
@@ -19,7 +19,7 @@ data class GameplayTagJava(val path: String) {
 			return false
 		}
 
-		return HashSet<String?>(otherParts).containsAll(otherParts.subList(0, parts.size))
+		return HashSet(otherParts).containsAll(otherParts.subList(0, parts.size))
 	}
 
 	//	public boolean matchs(@Nonnull final GameplayTag other) {
