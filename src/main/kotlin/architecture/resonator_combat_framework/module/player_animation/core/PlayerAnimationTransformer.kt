@@ -2,18 +2,14 @@ package architecture.resonator_combat_framework.module.player_animation.core
 
 import architecture.resonator_combat_framework.module.player_animation.animdata.AnimationBoneData
 import architecture.resonator_combat_framework.module.player_animation.animdata.BoneStateRegistry
-import io.github.tt432.eyelib.Eyelib
 import io.github.tt432.eyelib.capability.RenderData
-import io.github.tt432.eyelib.capability.component.ModelComponent
 import io.github.tt432.eyelib.client.animation.AnimationEffects
 import io.github.tt432.eyelib.client.animation.BrAnimator
 import io.github.tt432.eyelib.client.model.GlobalBoneIdHandler
 import io.github.tt432.eyelib.client.render.bone.BoneRenderInfos
 import io.github.tt432.eyelib.molang.MolangScope
-import io.github.tt432.eyelib.molang.MolangValue
 import net.minecraft.client.model.PlayerModel
 import net.minecraft.client.model.geom.ModelPart
-import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.player.Player
 import kotlin.math.abs
 
@@ -30,28 +26,7 @@ class PlayerAnimationTransformer(val player: Player) {
 	private var currentAnimData: AnimationBoneData? = null
 
 	init {
-		renderData.isUseBuiltInRenderSystem = false
-
-		val modelInfo = ModelComponent.SerializableInfo(
-			"resonator_combat_framework:player_proxy",
-			ResourceLocation.fromNamespaceAndPath("resonator_combat_framework", "geo/empty"),
-			ResourceLocation.fromNamespaceAndPath("eyelib", "entity_cutout_no_cull")
-		)
-		val mc = ModelComponent()
-		mc.setInfo(modelInfo)
-		renderData.modelComponents.clear()
-		renderData.modelComponents.add(mc)
-
-		// 从 AnimationManager 自动发现所有已加载动画
-		val ac = renderData.animationComponent
-		val allAnims = Eyelib.getAnimationManager().allData
-		val animEntries = mutableMapOf<String, String>()
-		val animMultipliers = mutableMapOf<String, MolangValue>()
-		for (name in allAnims.keys) {
-			animEntries[name] = name
-			animMultipliers[name] = MolangValue.ONE
-		}
-		ac.setup(animEntries, animMultipliers)
+		PlayerAnimationSetup.setupRenderData(renderData)
 	}
 
 	// 直接使用 eyelib 动画 ID（如 "animation.player.otsuchi_hold"）

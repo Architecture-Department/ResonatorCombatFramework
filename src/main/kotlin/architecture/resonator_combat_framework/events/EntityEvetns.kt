@@ -6,14 +6,9 @@ import net.neoforged.fml.common.EventBusSubscriber
 import net.neoforged.neoforge.event.tick.EntityTickEvent
 
 @EventBusSubscriber(modid = Lib.ID)
-object EntityEvets {
+object EntityEvetns {
 	@SubscribeEvent
 	fun entityPre(pre: EntityTickEvent.Pre) {
 		val entity = pre.entity
-		entity.allTick()
-		entity.allAnimTick()
-		if (entity.isSpectator) {
-			entity.allStopAllAnimation()
-		}
 	}
 }

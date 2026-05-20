@@ -25,7 +25,6 @@ src/main/
         │       ├── api/       — 模块接口
         │       ├── core/      — 核心代理/动画定义
         │       ├── event/     — 事件监听
-        │       ├── gui3d/     — 3D 碰撞箱/OBB
         │       ├── helper/    — 辅助工具
         │       ├── init/      — 模块注册
         │       ├── model/     — 动画模型
@@ -33,6 +32,12 @@ src/main/
         │       └── util/      — 工具类
         └── util/          — 通用工具
 ```
+
+## 事件规则
+
+- **`@EventBusSubscriber`**: 自动选择对应 bus，通常只需定义 `modid` 和 `value`（如 `value = [Dist.CLIENT]`）
+- **事件分类**: 按事件的类分类（不是按作用），放在 `events/` 包下。公共事件放 `events/`，客户端专属放 `events/client/`
+- **工具类模式**: 事件 subscriber 只做转发，业务逻辑放在工具类中（如 `PlayerAnimationSetup.refresh()`）
 
 ## 命名规范
 
@@ -42,6 +47,8 @@ src/main/
 - **Mixin 唯一字段/方法**: 使用 `resonator_combat_framework$` 前缀。**必须保持此前缀不变**，否则混淆后会与其他 mod 冲突
 - **包名**: 全小写 snake_case（`resonator_combat_framework`, `player_animation`）
 - **常量/枚举值**: `UPPER_SNAKE_CASE`, 放在 `companion object` 或 `object` 中
+- **静态方法调用**: 跨类调用必须带类名（`ClassName.method()`），无论 Kotlin 还是 Java
+- **ID/常用值**: 使用静态变量引用（如 `Rcf.ID`），不硬编码字符串
 
 ## 注册体系
 
