@@ -5,176 +5,18 @@ if (rootProject.file('build-conventions.gradle').exists()) {
 	apply from: rootProject.file('build-conventions.gradle')
 }
 
-var projectName = [
-				"GoldenBoughsLib",
-]
-
-version = mod_version
-group = mod_group_id
-
-repositories {
-	mavenLocal()
-	mavenCentral()
-}
-
 dependencies {
-	projectName.forEach { name ->
-		{
-			implementation project(":module:" + name)
-			interfaceInjectionData project(":module:" + name)
-		}
-	}
-
-	ksp "io.github.seggan:kmixin:0.1.2"
-	implementation "net.neoforged:neoforge:${neo_version}"
-	runtimeOnly "org.javassist:javassist:${javassist_version}"
-
-	// geckolib
-	implementation "software.bernie.geckolib:geckolib-neoforge-${minecraft_version}:${geckolib_version}"
-
-	// eyelib — 玩家动画计算（不替换渲染）
-	implementation "maven.modrinth:eyelib:${eyelib_api_version}"
-
-	// sparkcore 星火
-//	compileOnly "io.github.solarmoonqaq:spark-core:${spark_core_version}"
-//	implementation "curse.maven:spark-core-${maven_spark_core_version}"
-//	runtimeOnly "maven.modrinth:spark-core:${modrinth_spark_core_version}"
-
-	fileTree(dir: "../../libs", include: ["*.jar"]).forEach { file ->
-		{
-			final def collection = files(file)
-			if (file.name.endsWith("-sources.jar")) {
-				compileOnly(collection)
-				return
-			}
-			jarJar(implementation(collection))
-			// 检查JAR文件中是否包含interfaces.json
-			zipTree(file).matching {
-				include 'META-INF/*interfaces.json'
-			}.each { jarEntry ->
-				interfaceInjectionData(files(jarEntry))
-			}
-		}
-	}
+	addModuleDeps('GoldenBoughsLib')
+	addEyelib()
+	addJarJarLocalLibs()
 }
-
-base {
-	archivesName = mod_id
-}
-
-java.toolchain.languageVersion = JavaLanguageVersion.of(21)
 
 neoForge {
-	version = project.neo_version
-
-	parchment {
-		mappingsVersion = project.parchment_mappings_version
-		minecraftVersion = project.parchment_minecraft_version
-	}
-
-	interfaceInjectionData {
-		from "src/main/resources/META-INF/interfaces.json"
-		publish file("src/main/resources/META-INF/interfaces.json")
-	}
-
 	runs {
-		client {
-			client()
-			systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
-		}
-
-		clientAuth {
-			client()
-			systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
-			devLogin = true
-		}
-
-		server {
-			server()
-			programArgument '--nogui'
-			systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
-		}
-		gameTestServer {
-			type = "gameTestServer"
-			systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
-		}
-
-		data {
-			data()
+		named('data') {
 			gameDirectory = project.file('run-data')
-			programArguments.addAll '--mod', project.mod_id, '--all', '--output', file('src/generated/resources/').getAbsolutePath(), '--existing', file('src/main/resources/').getAbsolutePath()
-		}
-
-		configureEach {
-			systemProperty 'forge.logging.markers', 'REGISTRIES'
-			systemProperty 'forge.logging.console.level', 'debug'
-
-			jvmArguments.addAll([
-							// 忽略无效指令，避免有的人没安装 JetBrain Runtime 无法启动游戏
-							"-XX:+IgnoreUnrecognizedVMOptions",
-							// 启用 JetBrain Runtime 热重载功能
-							"-XX:+AllowEnhancedClassRedefinition"
-			])
-
-			logLevel = org.slf4j.event.Level.DEBUG
-		}
-	}
-
-	mods {
-		"${mod_id}" {
-			sourceSet(sourceSets.main)
 		}
 	}
 }
 
-configurations {
-	runtimeClasspath.extendsFrom localRuntime
-}
-
-var generateModMetadata = tasks.register("generateModMetadata", ProcessResources) {
-	var replaceProperties = [
-					minecraft_version      : minecraft_version,
-					minecraft_version_range: minecraft_version_range,
-					neo_version            : neo_version,
-					loader_version_range   : loader_version_range,
-					eyelib_version  : eyelib_version,
-					geckolib_version: geckolib_version,
-					mod_id                 : mod_id,
-					mod_name               : mod_name,
-					mod_license            : mod_license,
-					mod_version            : mod_version,
-					mod_authors     : mod_authors,
-					mod_description : mod_description,
-	]
-	inputs.properties replaceProperties
-	expand replaceProperties
-	from "src/main/templates"
-	into "build/generated/sources/modMetadata"
-}
-
-sourceSets {
-	main {
-		java {
-			srcDirs += 'src/main/java'
-			srcDirs += 'src/main/kotlin'
-		}
-	}
-}
-
-sourceSets.main.resources.srcDir generateModMetadata
-neoForge.ideSyncTask generateModMetadata
-
-publishing {
-	publications {
-		register('mavenJava', MavenPublication) {
-			from components.java
-		}
-	}
-	repositories {
-		maven {
-			url "file://${project.projectDir}/repo"
-		}
-	}
-}
-
-
+addClientAuthRun()
