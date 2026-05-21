@@ -33,8 +33,8 @@ object RcfDataComponentTypes {
 		streamCodec: StreamCodec<in RegistryFriendlyByteBuf, T>,
 		isCacheEncoding: Boolean
 	): Supplier<DataComponentType<T>> {
-		return register<T>(name) { builder: DataComponentType.Builder<T> ->
-			builder!!.persistent(codec).networkSynchronized(streamCodec)
+		return register(name) { builder: DataComponentType.Builder<T> ->
+			builder.persistent(codec).networkSynchronized(streamCodec)
 			if (isCacheEncoding) {
 				builder.cacheEncoding()
 			}
@@ -48,7 +48,7 @@ object RcfDataComponentTypes {
 	): Supplier<DataComponentType<T>> {
 		return register<DataComponentType<T>>(
 			name,
-			Supplier { builder.apply(DataComponentType.builder<T>())!!.build() })
+			Supplier { builder.apply(DataComponentType.builder<T>()).build() })
 	}
 
 	private fun <B : DataComponentType<*>> register(
