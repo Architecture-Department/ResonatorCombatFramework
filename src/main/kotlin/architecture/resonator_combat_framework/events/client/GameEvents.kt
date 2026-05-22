@@ -1,7 +1,7 @@
 package architecture.resonator_combat_framework.events.client
 
 import architecture.resonator_combat_framework.core.Rcf
-import architecture.resonator_combat_framework.module.player_animation.core.PlayerAnimationSetup
+import architecture.resonator_combat_framework.module.player_animation.config.RcfBoneConfigLoader
 import net.neoforged.api.distmarker.Dist
 import net.neoforged.bus.api.SubscribeEvent
 import net.neoforged.fml.common.EventBusSubscriber
@@ -11,6 +11,6 @@ import net.neoforged.neoforge.client.event.RegisterClientReloadListenersEvent
 object GameEvents {
 	@SubscribeEvent
 	fun onRegisterClientReloadListeners(event: RegisterClientReloadListenersEvent) {
-		PlayerAnimationSetup.refresh()
+		event.registerReloadListener(RcfBoneConfigLoader)
 	}
 }

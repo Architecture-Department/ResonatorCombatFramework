@@ -1,0 +1,10 @@
+{
+	"bones": {
+		"right_arm": {
+			"lock": true
+		},
+		"left_arm": {
+			"lock": true
+		}
+	}
+}

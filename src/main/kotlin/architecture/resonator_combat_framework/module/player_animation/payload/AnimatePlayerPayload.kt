@@ -2,7 +2,10 @@ package architecture.resonator_combat_framework.module.player_animation.payload
 
 import architecture.goldenboughs_lib.api.payload.ToServerAndClientPayload
 import architecture.resonator_combat_framework.core.Rcf
-import architecture.resonator_combat_framework.module.player_animation.helper.PlayerAnimationHelper
+import architecture.resonator_combat_framework.module.player_animation.helper.PlayerAnimationHelper.clientStopPlayerAnimation
+import architecture.resonator_combat_framework.module.player_animation.helper.PlayerAnimationHelper.clientTriggerPlayerAnimation
+import architecture.resonator_combat_framework.module.player_animation.helper.PlayerAnimationHelper.serverPlayerAnimation
+import architecture.resonator_combat_framework.module.player_animation.helper.PlayerAnimationHelper.serverStopPlayerAnimation
 import io.netty.buffer.ByteBuf
 import net.minecraft.client.player.AbstractClientPlayer
 import net.minecraft.network.codec.ByteBufCodecs
@@ -20,20 +23,18 @@ data class AnimatePlayerPayload(val id: String, val playerUuid: UUID) : ToServer
 
 	override fun toClient(context: IPayloadContext, player: AbstractClientPlayer) {
 		val level: Level = context.player().level()
-		if (!level.isClientSide) return
-		val target = level.getPlayerByUUID(playerUuid) ?: return
-		if (id == STOP_MARKER) PlayerAnimationHelper.stopPlayerAnimation(target)
-		else PlayerAnimationHelper.triggerPlayerAnimation(target, id)
+		val target = (level.getPlayerByUUID(playerUuid) as? AbstractClientPlayer) ?: return
+		if (id == STOP_MARKER || id.isEmpty()) target.clientStopPlayerAnimation()
+		else target.clientTriggerPlayerAnimation(id)
 	}
 
 	override fun toServer(context: IPayloadContext, player: ServerPlayer) {
-		val target = player.server.overworld().getPlayerByUUID(playerUuid) ?: player
-		if (id == STOP_MARKER) PlayerAnimationHelper.pushStopPlayerAnimation(target)
-		else PlayerAnimationHelper.pushPlayerAnimation(target, id)
+		if (id == STOP_MARKER || id.isEmpty()) player.serverStopPlayerAnimation()
+		else player.serverPlayerAnimation(id)
 	}
 
 	companion object {
-		const val STOP_MARKER = "##stop##"
+		const val STOP_MARKER = ""
 
 		@JvmField
 		val TYPE = CustomPacketPayload.Type<AnimatePlayerPayload>(

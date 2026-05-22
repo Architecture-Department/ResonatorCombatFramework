@@ -1,5 +1,7 @@
 package architecture.resonator_combat_framework.module.player_animation.core
 
+import architecture.resonator_combat_framework.core.Rcf
+import architecture.resonator_combat_framework.module.player_animation.client.RcfPlayerAnimationBridge
 import io.github.tt432.eyelib.Eyelib
 import io.github.tt432.eyelib.capability.RenderData
 import io.github.tt432.eyelib.capability.component.ModelComponent
@@ -9,42 +11,23 @@ import net.minecraft.resources.ResourceLocation
 object PlayerAnimationSetup {
 
 	private val modelInfo = ModelComponent.SerializableInfo(
-		"resonator_combat_framework:player_proxy",
-		ResourceLocation.fromNamespaceAndPath("resonator_combat_framework", "geo/empty"),
-		ResourceLocation.fromNamespaceAndPath("eyelib", "entity_cutout_no_cull")
+		// 注：模型id是模型中的identifier决定的不通过路径或其他
+		Rcf.modRlText("player_proxy"),
+		Rcf.modRl("empty"),
+		ResourceLocation.parse("${Eyelib.MOD_ID}:entity_cutout_no_cull")
 	)
-
-	@Volatile
-	private var cachedAnimEntries: Map<String, String>? = null
-
-	@Volatile
-	private var cachedAnimMultipliers: Map<String, MolangValue>? = null
-
-	private val animEntries: Map<String, String>
-		get() = cachedAnimEntries ?: buildAnimEntries().also { cachedAnimEntries = it }
-
-	private val animMultipliers: Map<String, MolangValue>
-		get() = cachedAnimMultipliers ?: buildAnimMultipliers().also { cachedAnimMultipliers = it }
-
-	private fun buildAnimEntries(): Map<String, String> =
-		Eyelib.getAnimationManager().allData.keys.associateWith { it }
-
-	private fun buildAnimMultipliers(): Map<String, MolangValue> =
-		Eyelib.getAnimationManager().allData.keys.associateWith { MolangValue.ONE }
-
-	fun refresh() {
-		cachedAnimEntries = null
-		cachedAnimMultipliers = null
-	}
 
 	fun setupRenderData(renderData: RenderData<*>) {
 		renderData.isUseBuiltInRenderSystem = false
 
-		val mc = ModelComponent()
-		mc.setInfo(modelInfo)
+		val modelComponent = ModelComponent()
+		modelComponent.setInfo(modelInfo)
 		renderData.modelComponents.clear()
-		renderData.modelComponents.add(mc)
+		renderData.modelComponents.add(modelComponent)
 
-		renderData.animationComponent.setup(animEntries, animMultipliers)
+		renderData.animationComponent.setup(
+			mapOf("player" to RcfPlayerAnimationBridge.NAME),
+			mapOf("player" to MolangValue.ONE)
+		)
 	}
 }

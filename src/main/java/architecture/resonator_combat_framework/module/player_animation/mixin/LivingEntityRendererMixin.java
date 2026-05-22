@@ -24,12 +24,14 @@ public abstract class LivingEntityRendererMixin<T extends LivingEntity> {
 	@Inject(method = "render(Lnet/minecraft/world/entity/LivingEntity;FFLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V",
 		at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/entity/LivingEntityRenderer;getOverlayCoords(Lnet/minecraft/world/entity/LivingEntity;F)I"))
 	public void render(T entity, float entityYaw, float partialTicks, PoseStack poseStack, MultiBufferSource buffer, int packedLight, CallbackInfo ci) {
-		if (entity instanceof Player player && model instanceof PlayerModel<?> playerModel) {
-			PlayerAnimationTransformer transformer = player.resonator_combat_framework$getAnimationTransformer();
-			if (transformer.getBlendFactor() > 0.001f || transformer.getBlendTarget() > 0f) {
-				transformer.tick();
-				transformer.applyTransform(playerModel, partialTicks);
-			}
+		if (!(entity instanceof Player player) || !(model instanceof PlayerModel<?> playerModel)) {
+			return;
 		}
+		PlayerAnimationTransformer transformer = player.resonator_combat_framework$getAnimationTransformer();
+		if (!(transformer.getBlendFactor() > 0.001f) && !(transformer.getBlendTarget() > 0f)) {
+			return;
+		}
+		transformer.tick();
+		transformer.applyTransform(playerModel, partialTicks);
 	}
 }

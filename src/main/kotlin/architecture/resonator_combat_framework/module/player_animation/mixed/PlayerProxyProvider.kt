@@ -4,4 +4,10 @@ import architecture.resonator_combat_framework.module.player_animation.core.Play
 
 interface PlayerProxyProvider {
 	fun `resonator_combat_framework$getAnimationTransformer`(): PlayerAnimationTransformer
+
+	companion object {
+		fun PlayerProxyProvider.getAnimationTransformer(): PlayerAnimationTransformer {
+			return `resonator_combat_framework$getAnimationTransformer`()
+		}
+	}
 }

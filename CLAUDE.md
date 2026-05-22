@@ -97,18 +97,6 @@ init {
 | `LivingEntityRendererMixin`  | 注入 `render()`，调用 `applyTransform`                    |
 | `PlayerMixin`                | 持有 `PlayerAnimationTransformer` `@Unique` 实例         |
 
-### 动画 ID 注册
-
-在 `PlayerAnimationTransformer.animationMap` 中映射 (ID → eyelib 动画名)：
-
-```kotlin
-private val animationMap = mapOf(
-  "otsuchi_hold" to "animation.player.otsuchi_hold",
-  "otsuchi_smash" to "animation.player.otsuchi_smash",
-  "test_tekoki" to "animation.player.test_tekoki"
-)
-```
-
 ### 测试命令
 
 ```

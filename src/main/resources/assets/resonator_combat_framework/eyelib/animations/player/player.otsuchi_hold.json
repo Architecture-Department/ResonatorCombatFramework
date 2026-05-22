@@ -1,7 +1,7 @@
 {
 	"format_version": "1.8.0",
 	"animations": {
-		"animation.player.otsuchi_hold": {
+		"player.otsuchi_hold": {
 			"loop": true,
 			"animation_length": 4,
 			"bones": {
