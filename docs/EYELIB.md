@@ -57,7 +57,7 @@ val boneId = GlobalBoneIdHandler.get("left_arm")  // 骨骼名 → int ID
 ### AnimationManager
 
 ```kotlin
-val allAnims = Eyelib.getAnimationManager().getAllData()  // 所有已加载动画
+val allAnims = EyeLibUtil.getAnimationManager().getAllData()  // 所有已加载动画
 ```
 
 ### BrClientEntity

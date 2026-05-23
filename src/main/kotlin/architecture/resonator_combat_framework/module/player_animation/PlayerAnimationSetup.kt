@@ -1,4 +1,4 @@
-package architecture.resonator_combat_framework.module.player_animation.core
+package architecture.resonator_combat_framework.module.player_animation
 
 import architecture.resonator_combat_framework.core.Rcf
 import architecture.resonator_combat_framework.module.player_animation.client.RcfPlayerAnimationBridge

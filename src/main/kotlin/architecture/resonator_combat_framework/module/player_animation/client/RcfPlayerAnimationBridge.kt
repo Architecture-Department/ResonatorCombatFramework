@@ -2,10 +2,11 @@ package architecture.resonator_combat_framework.module.player_animation.client
 
 import architecture.resonator_combat_framework.core.Rcf
 import architecture.resonator_combat_framework.module.player_animation.config.RcfBoneConfig
-import io.github.tt432.eyelib.Eyelib
+import architecture.resonator_combat_framework.module.player_animation.util.EyeLibUtil
 import io.github.tt432.eyelib.client.animation.Animation
 import io.github.tt432.eyelib.client.animation.AnimationEffects
 import io.github.tt432.eyelib.client.animation.bedrock.BrAnimationEntry
+import io.github.tt432.eyelib.client.manager.AnimationManager
 import io.github.tt432.eyelib.client.render.bone.BoneRenderInfos
 import io.github.tt432.eyelib.molang.MolangScope
 
@@ -21,7 +22,7 @@ class RcfPlayerAnimationBridge private constructor() : Animation<RcfPlayerAnimat
 
 		fun getEntryData(animId: String): BrAnimationEntry.Data {
 			return entryDataCache.getOrPut(animId) {
-				val entry = Eyelib.getAnimationManager().get(animId) as BrAnimationEntry
+				val entry = getAnimationManager().get(animId) as BrAnimationEntry
 				entry.createData()
 			}
 		}
@@ -37,13 +38,13 @@ class RcfPlayerAnimationBridge private constructor() : Animation<RcfPlayerAnimat
 	}
 
 	private fun finishEntry(animId: String, data: BridgeData) {
-		val entry = Eyelib.getAnimationManager().get(animId) as? BrAnimationEntry ?: return
+		val entry = getAnimationManager().get(animId) as? BrAnimationEntry ?: return
 		entry.onFinish(data.getEntryData(animId))
 	}
 
 	override fun anyAnimationFinished(data: BridgeData): Boolean {
 		val animId = data.activeAnimationId ?: return true
-		val entry = Eyelib.getAnimationManager().get(animId) as? BrAnimationEntry ?: return true
+		val entry = getAnimationManager().get(animId) as? BrAnimationEntry ?: return true
 		return entry.anyAnimationFinished(data.getEntryData(animId))
 	}
 
@@ -64,7 +65,7 @@ class RcfPlayerAnimationBridge private constructor() : Animation<RcfPlayerAnimat
 		val progress = data.crossFadeProgress.coerceIn(0f, 1f)
 
 		if (currId != null) {
-			val entry = Eyelib.getAnimationManager().get(currId) as? BrAnimationEntry
+			val entry = getAnimationManager().get(currId) as? BrAnimationEntry
 			entry?.tickAnimation(
 				data.getEntryData(currId), animations, scope, ticks,
 				multiplier * progress, renderInfos, effects, animationStartFeedback
@@ -72,7 +73,7 @@ class RcfPlayerAnimationBridge private constructor() : Animation<RcfPlayerAnimat
 		}
 
 		if (prevId != null && progress < 1f) {
-			val entry = Eyelib.getAnimationManager().get(prevId) as? BrAnimationEntry
+			val entry = getAnimationManager().get(prevId) as? BrAnimationEntry
 			entry?.tickAnimation(
 				data.getEntryData(prevId), animations, scope, ticks,
 				multiplier * (1f - progress), renderInfos, effects, animationStartFeedback
@@ -89,7 +90,10 @@ class RcfPlayerAnimationBridge private constructor() : Animation<RcfPlayerAnimat
 		val INSTANCE = RcfPlayerAnimationBridge()
 
 		fun register() {
-			Eyelib.getAnimationManager().put(NAME, INSTANCE)
+			getAnimationManager().put(NAME, INSTANCE)
 		}
 	}
 }
+
+private fun getAnimationManager(): AnimationManager =
+	EyeLibUtil.getAnimationManager(true)

@@ -1,36 +1,29 @@
 package architecture.resonator_combat_framework.module.player_animation.config
 
 import architecture.resonator_combat_framework.core.Rcf
-import com.google.gson.GsonBuilder
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import io.github.tt432.eyelib.client.loader.BrResourcesLoader
-import net.minecraft.resources.FileToIdConverter
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.server.packs.resources.ResourceManager
-import net.minecraft.server.packs.resources.SimplePreparableReloadListener
 import net.minecraft.util.profiling.ProfilerFiller
 
-object RcfBoneConfigLoader : BrResourcesLoader("animdata", "json") {
+class RcfBoneConfigLoader : BrResourcesLoader("animdata", "json") {
+	companion object {
+		private val INSTANCE = RcfBoneConfigLoader()
 
-	@Volatile
-	private var configs: Map<String, RcfBoneConfig> = emptyMap()
+		private val INSTANCE_SERVER = RcfBoneConfigLoader()
+
+		@JvmStatic
+		fun getInstance(isClient: Boolean): RcfBoneConfigLoader {
+			return if (isClient) INSTANCE else INSTANCE_SERVER
+		}
+	}
+
+	private val configs = mutableMapOf<String, RcfBoneConfig>()
 
 	fun getConfig(animId: String): RcfBoneConfig {
 		return configs[animId] ?: RcfBoneConfig.EMPTY
-	}
-
-	// 服务器端加载也调用
-	fun loadConfigs(loaded: Map<ResourceLocation, JsonElement>) {
-		val map = mutableMapOf<String, RcfBoneConfig>()
-		loaded.forEach { (rl, json) ->
-			try {
-				map[rl.path] = parse(json.asJsonObject)
-			} catch (e: Exception) {
-				Rcf.LOGGER.error("can't load bone config {}", rl, e)
-			}
-		}
-		configs = map
 	}
 
 	override fun apply(
@@ -38,7 +31,15 @@ object RcfBoneConfigLoader : BrResourcesLoader("animdata", "json") {
 		resourceManager: ResourceManager,
 		profiler: ProfilerFiller
 	) {
-		loadConfigs(loaded)
+		val map = mutableMapOf<String, RcfBoneConfig>()
+		loaded.forEach { (rl, json) ->
+			try {
+				map[rl.path.substringAfterLast("/")] = parse(json.asJsonObject)
+			} catch (e: Exception) {
+				Rcf.LOGGER.error("can't load bone config {}", rl, e)
+			}
+		}
+		configs.putAll(map)
 	}
 
 	private fun parse(json: JsonObject): RcfBoneConfig {
@@ -73,34 +74,5 @@ object RcfBoneConfigLoader : BrResourcesLoader("animdata", "json") {
 			result[boneName] = RcfBoneFlags(flags)
 		}
 		return result
-	}
-}
-
-object ServerBoneConfigLoader : SimplePreparableReloadListener<Map<ResourceLocation, JsonElement>>() {
-	private val gson = GsonBuilder().setLenient().create()
-
-	override fun prepare(resourceManager: ResourceManager, profiler: ProfilerFiller): Map<ResourceLocation, JsonElement> {
-		val map = mutableMapOf<ResourceLocation, JsonElement>()
-		val converter = FileToIdConverter("eyelib/animdata", ".json")
-		for ((rl, resource) in converter.listMatchingResources(resourceManager)) {
-			val id = converter.fileToId(rl)
-			try {
-				resource.openAsReader().use { reader ->
-					val element = gson.fromJson(reader, JsonElement::class.java)
-					map[id] = element
-				}
-			} catch (e: Exception) {
-				Rcf.LOGGER.error("can't load server bone config {}", id, e)
-			}
-		}
-		return map
-	}
-
-	override fun apply(
-		loaded: Map<ResourceLocation, JsonElement>,
-		resourceManager: ResourceManager,
-		profiler: ProfilerFiller
-	) {
-		RcfBoneConfigLoader.loadConfigs(loaded)
 	}
 }

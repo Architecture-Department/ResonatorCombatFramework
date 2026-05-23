@@ -1,6 +1,6 @@
 package architecture.resonator_combat_framework.module.player_animation.mixin;
 
-import architecture.resonator_combat_framework.module.player_animation.core.PlayerAnimationTransformer;
+import architecture.resonator_combat_framework.module.player_animation.PlayerAnimationTransformer;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.model.PlayerModel;

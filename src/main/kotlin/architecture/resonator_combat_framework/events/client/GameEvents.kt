@@ -11,6 +11,6 @@ import net.neoforged.neoforge.client.event.RegisterClientReloadListenersEvent
 object GameEvents {
 	@SubscribeEvent
 	fun onRegisterClientReloadListeners(event: RegisterClientReloadListenersEvent) {
-		event.registerReloadListener(RcfBoneConfigLoader)
+		event.registerReloadListener(RcfBoneConfigLoader.getInstance(true))
 	}
 }

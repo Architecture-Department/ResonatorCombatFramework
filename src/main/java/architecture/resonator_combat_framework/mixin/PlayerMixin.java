@@ -1,7 +1,7 @@
 package architecture.resonator_combat_framework.mixin;
 
 import architecture.resonator_combat_framework.mixed.IPlayerRcf;
-import architecture.resonator_combat_framework.module.player_animation.core.PlayerAnimationTransformer;
+import architecture.resonator_combat_framework.module.player_animation.PlayerAnimationTransformer;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.EntityType;

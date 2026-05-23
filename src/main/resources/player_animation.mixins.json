@@ -3,7 +3,8 @@
 	"package": "architecture.resonator_combat_framework.module.player_animation.mixin",
 	"compatibilityLevel": "JAVA_21",
 	"client": [
-		"LivingEntityRendererMixin"
+		"LivingEntityRendererMixin",
+		"client.PlayerModelMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1
@@ -13,5 +14,14 @@
 	},
 	"mixinextras": {
 		"minVersion": "0.5.0"
-	}
+	},
+	"mixins": [
+		"eye_lib.AnimationManagerAccessor",
+		"eye_lib.BoneRenderInfoEntryMixin",
+		"eye_lib.BrAnimationEntryMixin",
+		"eye_lib.ManagerMixin",
+		"eye_lib.ModelManagerAccessor",
+		"gecko_lib.GeckoLibCacheAccessor",
+		"gecko_lib.GeckoLibCacheMixin"
+	]
 }

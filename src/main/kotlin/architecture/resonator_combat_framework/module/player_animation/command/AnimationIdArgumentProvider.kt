@@ -1,10 +1,10 @@
 package architecture.resonator_combat_framework.module.player_animation.command
 
+import architecture.resonator_combat_framework.module.player_animation.util.EyeLibUtil
 import com.mojang.brigadier.context.CommandContext
 import com.mojang.brigadier.suggestion.SuggestionProvider
 import com.mojang.brigadier.suggestion.Suggestions
 import com.mojang.brigadier.suggestion.SuggestionsBuilder
-import io.github.tt432.eyelib.Eyelib
 import net.minecraft.commands.CommandSourceStack
 import net.minecraft.commands.SharedSuggestionProvider
 import java.util.concurrent.CompletableFuture
@@ -15,7 +15,7 @@ object AnimationIdArgumentProvider : SuggestionProvider<CommandSourceStack> {
 		ctx: CommandContext<CommandSourceStack>,
 		builder: SuggestionsBuilder
 	): CompletableFuture<Suggestions> {
-		val anims = Eyelib.getAnimationManager().allData
+		val anims = EyeLibUtil.getAnimationManager(false).allData
 		return SharedSuggestionProvider.suggest(anims.keys, builder)
 	}
 }
