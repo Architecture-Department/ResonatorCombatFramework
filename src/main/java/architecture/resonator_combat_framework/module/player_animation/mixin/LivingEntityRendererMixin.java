@@ -28,10 +28,6 @@ public abstract class LivingEntityRendererMixin<T extends LivingEntity> {
 			return;
 		}
 		PlayerAnimationTransformer transformer = player.resonator_combat_framework$getAnimationTransformer();
-		if (!(transformer.getBlendFactor() > 0.001f) && !(transformer.getBlendTarget() > 0f)) {
-			return;
-		}
-		transformer.tick();
 		transformer.applyTransform(playerModel, partialTicks);
 	}
 }

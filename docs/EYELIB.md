@@ -16,7 +16,7 @@ assets/<modid>/eyelib/
 ├── bedrock_models/           ← 模型几何体 (.json)
 ├── render_controllers/       ← 渲染控制器 (.json, 可选)
 ├── textures/                 ← 纹理 (.png)
-└── animdata/                 ← 骨骼状态配置 (.json, 本模块自定义)
+└── animdata/                 ← RCF 骨骼状态配置 (.json), 含 transition/bones/timeline
 ```
 
 ## 核心 API
@@ -36,6 +36,18 @@ ac.setup(
     mapOf("anim.name" to "anim.name"),      // 动画名 → 动画名 (AnimationManager key)
     mapOf("anim.name" to MolangValue.ONE)    // 动画名 → 倍率
 )
+```
+
+RCF 通过 `EyeLibUtil.animateSetup()` 封装:
+
+```kotlin
+EyeLibUtil.animateSetup(renderData, animationNames, multipliers)
+```
+
+逐帧更新 multiplier 不调 setup (避免重建 animationData):
+
+```kotlin
+EyeLibUtil.setAnimateEntry(renderData, anim, MolangValue.getConstant(0.5f))
 ```
 
 ### BrAnimator
@@ -167,3 +179,34 @@ Eyelib.getClientEntityLoader().put(ResourceLocation("minecraft:player"), entity)
 3. `renderRotation` 返回弧度，不需要 `Math.toRadians()` 二次转换
 4. `AnimationManager` key 是动画 JSON 内部的动画名（如 `animation.player.xxx`）
 5. 模型加载顺序先于动画，否则骨骼映射丢失
+
+## RCF 集成
+
+### EyeLibUtil
+
+RCF 通过 `util/EyeLibUtil.kt` 集中管理所有 eyelib 操作:
+
+| 方法                                              | 作用                            |
+|-------------------------------------------------|-------------------------------|
+| `getAnimationManager(isClient)`                 | 双端 AnimationManager           |
+| `getAnimation(isClient, animId)`                | 从管理器获取 Animation              |
+| `getEntryData(renderData, animId)`              | 获取 BrAnimationEntry.Data      |
+| `resetAnimData(renderData, animId)`             | 重置动画时间线 (animTime=0)          |
+| `getAnimTime/setAnimTime`                       | 获取/设置动画时间                     |
+| `setAnimateEntry(renderData, anim, multiplier)` | 更新 animate map 中的 multiplier  |
+| `removeAnimateEntries(renderData, anims)`       | 从 animate map 移除动画            |
+| `animateSetup(renderData, names, multipliers)`  | 调用 AnimationComponent.setup() |
+
+### animdata 格式
+
+```json
+{
+    "transition": 10,
+    "bones": { "head": { "lock": true } },
+    "timeline": { "0.0-1.0": { "bones": { "right_arm": { "lock": true } } } }
+}
+```
+
+- `transition`: tick 制 (0=即时, 10=0.5秒, 20=1秒), 默认 10
+- `bones`: 全程生效的骨骼 flags
+- `timeline`: 时间段骨骼 flags

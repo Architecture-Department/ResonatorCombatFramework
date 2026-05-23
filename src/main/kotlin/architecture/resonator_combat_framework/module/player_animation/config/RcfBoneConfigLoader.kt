@@ -43,21 +43,25 @@ class RcfBoneConfigLoader : BrResourcesLoader("animdata", "json") {
 	}
 
 	private fun parse(json: JsonObject): RcfBoneConfig {
+		val transitionTicks = json.get("transition")?.asInt ?: RcfBoneConfig.DEFAULT_TRANSITION_TICKS
 		val bones = parseBonesSection(json.get("bones"))
-		val timelineJson = json.getAsJsonObject("timeline") ?: return RcfBoneConfig(bones, emptyList())
-		val timeline = mutableListOf<RcfTimelineEntry>()
-		for ((timeRange, data) in timelineJson.entrySet()) {
-			val parts = timeRange.split("-")
-			val entry = data.asJsonObject
-			timeline.add(
-				RcfTimelineEntry(
-					from = parts.getOrNull(0)?.toFloatOrNull() ?: 0f,
-					to = parts.getOrNull(1)?.toFloatOrNull() ?: 0f,
-					bones = parseBonesSection(entry.get("bones"))
+		val timelineJson = json.getAsJsonObject("timeline")
+		val timeline = if (timelineJson != null) {
+			val list = mutableListOf<RcfTimelineEntry>()
+			for ((timeRange, data) in timelineJson.entrySet()) {
+				val parts = timeRange.split("-")
+				val entry = data.asJsonObject
+				list.add(
+					RcfTimelineEntry(
+						from = parts.getOrNull(0)?.toFloatOrNull() ?: 0f,
+						to = parts.getOrNull(1)?.toFloatOrNull() ?: 0f,
+						bones = parseBonesSection(entry.get("bones"))
+					)
 				)
-			)
-		}
-		return RcfBoneConfig(bones, timeline)
+			}
+			list
+		} else emptyList()
+		return RcfBoneConfig(bones, timeline, transitionTicks)
 	}
 
 	private fun parseBonesSection(section: JsonElement?): Map<String, RcfBoneFlags> {

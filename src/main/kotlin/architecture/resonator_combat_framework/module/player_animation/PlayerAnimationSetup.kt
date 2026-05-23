@@ -1,11 +1,9 @@
 package architecture.resonator_combat_framework.module.player_animation
 
 import architecture.resonator_combat_framework.core.Rcf
-import architecture.resonator_combat_framework.module.player_animation.client.RcfPlayerAnimationBridge
 import io.github.tt432.eyelib.Eyelib
 import io.github.tt432.eyelib.capability.RenderData
 import io.github.tt432.eyelib.capability.component.ModelComponent
-import io.github.tt432.eyelib.molang.MolangValue
 import net.minecraft.resources.ResourceLocation
 
 object PlayerAnimationSetup {
@@ -24,10 +22,5 @@ object PlayerAnimationSetup {
 		modelComponent.setInfo(modelInfo)
 		renderData.modelComponents.clear()
 		renderData.modelComponents.add(modelComponent)
-
-		renderData.animationComponent.setup(
-			mapOf("player" to RcfPlayerAnimationBridge.NAME),
-			mapOf("player" to MolangValue.ONE)
-		)
 	}
 }

@@ -1,155 +1,315 @@
 package architecture.resonator_combat_framework.module.player_animation
 
 import architecture.resonator_combat_framework.core.Rcf
-import architecture.resonator_combat_framework.module.player_animation.client.RcfPlayerAnimationBridge
+import architecture.resonator_combat_framework.module.player_animation.api.IPlayerAnimator
 import architecture.resonator_combat_framework.module.player_animation.config.RcfBoneConfig
 import architecture.resonator_combat_framework.module.player_animation.config.RcfBoneConfigLoader
 import architecture.resonator_combat_framework.module.player_animation.config.RcfBoneFlags
 import architecture.resonator_combat_framework.module.player_animation.mixed.IBoneRenderInfoEntry
 import architecture.resonator_combat_framework.module.player_animation.util.EyeLibUtil
 import io.github.tt432.eyelib.capability.RenderData
+import io.github.tt432.eyelib.capability.component.AnimationComponent
+import io.github.tt432.eyelib.capability.component.ClientEntityComponent
+import io.github.tt432.eyelib.client.ClientTickHandler
+import io.github.tt432.eyelib.client.animation.Animation
 import io.github.tt432.eyelib.client.animation.AnimationEffects
 import io.github.tt432.eyelib.client.animation.BrAnimator
-import io.github.tt432.eyelib.client.animation.bedrock.BrAnimationEntry
 import io.github.tt432.eyelib.client.model.GlobalBoneIdHandler
 import io.github.tt432.eyelib.client.render.bone.BoneRenderInfos
 import io.github.tt432.eyelib.molang.MolangScope
+import io.github.tt432.eyelib.molang.MolangValue
 import net.minecraft.client.model.PlayerModel
 import net.minecraft.client.model.geom.ModelPart
 import net.minecraft.world.entity.player.Player
-import kotlin.math.abs
 
-class PlayerAnimationTransformer(val player: Player) {
+/** 每玩家实例，负责动画的触发、停止、过渡和骨骼变换应用 */
+class PlayerAnimationTransformer(val player: Player) : IPlayerAnimator {
 	private val isClient = player.level().isClientSide
 
-	val rcfBoneConfigLoaderInstance = RcfBoneConfigLoader.getInstance(isClient)
-	val animationManagerInstance = EyeLibUtil.getAnimationManager(isClient)
+	private val configLoader = RcfBoneConfigLoader.getInstance(isClient)
 
-	// 客户端
-	private val renderData: RenderData<Player>? = if (isClient) RenderData.getComponent(player) else null
-	private val scope = MolangScope()
+	private val renderData: RenderData<Player> = RenderData.getComponent(player)
 
-	var blendFactor = 0f; private set
-	var blendTarget = 0f; private set
-	private var currentBlendSpeed = 0.12f
-	private var currentBoneConfig: RcfBoneConfig = RcfBoneConfig.EMPTY
-	private var animTimeTracker = 0f
+	// 过渡状态
+	private var blendFactor = 0f       // 当前混合权重 (0=原版, 1=完全动画)
+	private var blendTarget = 0f       // 混合目标值
+	private var currentTransitionTicks = RcfBoneConfig.DEFAULT_TRANSITION_TICKS  // 过渡用时 (tick 制), 0=即时, 20=1秒
+
+	// 动画注册表
+	private val activeAnimations = linkedMapOf<String, Animation<*>>()    // 当前动画: animId → Animation
+	private val activeMultipliers = mutableMapOf<String, MolangValue>()   // 当前动画 multiplier
+	private val previousAnimations = linkedMapOf<String, Animation<*>>()  // 前一个动画 (交叉淡入淡出)
+	private val previousMultipliers = mutableMapOf<String, MolangValue>() // 前一个动画 multiplier
+	private val boneConfigs = mutableMapOf<String, RcfBoneConfig>()       // 动画骨骼配置
+	private var animTimeTracker = 0f   // 动画运行时间 (秒), 用于 timeline 解析
+	private var lastTickSec = 0f       // 上一帧时间戳, 用于 delta 计算
 
 	init {
-		if (isClient) {
-			PlayerAnimationSetup.setupRenderData(renderData!!)
+		PlayerAnimationSetup.setupRenderData(renderData)
+	}
+
+	// ---- IPlayerAnimator ----
+
+	override fun isActive(): Boolean = activeAnimations.isNotEmpty() || previousAnimations.isNotEmpty()
+
+	/** 触发动画。若同一动画已在播放中则重启；否则交叉淡入淡出覆盖当前动画 */
+	override fun trigger(animId: String) {
+		val anim = EyeLibUtil.getAnimation(isClient, animId)
+		if (anim == null) {
+			Rcf.LOGGER.error("[anim] trigger {} failed: not found in AnimationManager", animId)
+			return
 		}
-	}
+		val config = configLoader.getConfig(animId)
+		currentTransitionTicks = config.transitionTicks
 
-	// 客户端
-	private fun bridgeData(): RcfPlayerAnimationBridge.BridgeData {
-		return renderData!!.animationComponent.getAnimationData(RcfPlayerAnimationBridge.NAME) as RcfPlayerAnimationBridge.BridgeData
-	}
-
-	fun trigger(animId: String) {
-		Rcf.LOGGER.info("[anim] trigger {} bf={} bt={} bs={}", animId, blendFactor, blendTarget, currentBlendSpeed)
-		currentBoneConfig = rcfBoneConfigLoaderInstance.getConfig(animId)
-
-		animTimeTracker = 0f
-		currentBlendSpeed = currentBoneConfig.resolveBlendSpeed()
-		blendTarget = 1f
-
-		if (currentBlendSpeed >= 1f) {
-			blendFactor = 1f
-			blendTarget = 1f
-		}
-
-		clientTrigger(animId)
-	}
-
-	// 客户端
-	private fun clientTrigger(animId: String) {
-		if (!isClient) return
-		val data = bridgeData()
-		val prevId = data.activeAnimationId
-		if (prevId != null && prevId != animId) {
-			data.previousAnimationId = prevId
-			resetEntryState(prevId)
-			blendFactor = 0f
-		} else {
-			data.previousAnimationId = null
-		}
-		resetEntryState(animId)
-		data.activeAnimationId = animId
-		data.activeBoneConfig = currentBoneConfig
-		data.crossFadeProgress = blendFactor
-	}
-
-	fun stop() {
-		if (currentBlendSpeed >= 1f) {
-			blendFactor = 0f
-		}
-		animTimeTracker = 0f
-		currentBoneConfig = RcfBoneConfig.EMPTY
-		blendTarget = 0f
-
-		clientStop()
-	}
-
-	// 客户端
-	private fun clientStop() {
-		if (!isClient) return
-		val data = bridgeData()
-		val currId = data.activeAnimationId
-		if (currId != null) {
-			data.previousAnimationId = currId
-			data.crossFadeProgress = blendFactor
-		}
-		data.activeAnimationId = null
-		data.activeBoneConfig = RcfBoneConfig.EMPTY
-	}
-
-	private fun resetEntryState(animId: String) {
-		val entry = animationManagerInstance.get(animId) as? BrAnimationEntry ?: return
-		entry.onFinish(bridgeData().getEntryData(animId))
-	}
-
-	fun tick() {
-		val d = blendTarget - blendFactor
-		blendFactor = if (abs(d) < 0.001f) blendTarget
-		else if (d > 0) (blendFactor + currentBlendSpeed).coerceAtMost(1f)
-		else (blendFactor - currentBlendSpeed).coerceAtLeast(0f)
-	}
-
-	// 客户端
-	fun applyTransform(model: PlayerModel<*>, partialTick: Float) {
-		if (!isClient) return
-		Rcf.LOGGER.debug("[anim] transform bf={} bt={} animT={}", blendFactor, blendTarget, animTimeTracker)
-		if (blendFactor <= 0.001f && blendTarget <= 0f) {
-			bridgeData().crossFadeProgress = 1f
+		// 同一动画重复触发：重置时间线，跳过交叉淡入淡出
+		if (activeAnimations.containsKey(animId) || previousAnimations.containsKey(animId)) {
+			restartAnimation(animId, config)
 			return
 		}
 
-//		MolangQuery.animTime(scope)
-//		scope.set("query.anim_time", animTimeTracker * 20)
-
-		val ac = renderData!!.animationComponent
-		val ticks = (player.tickCount + partialTick) / 20f
-		val data = bridgeData()
-		data.crossFadeProgress = blendFactor
-		val infos = BrAnimator.tickAnimation(ac, scope, AnimationEffects(), ticks) {}
-
-		val animId = data.activeAnimationId
-		if (animId != null) {
-			animTimeTracker = data.getEntryData(animId).animTime
+		// 将当前动画移入 previous，新动画放入 active
+		previousAnimations.putAll(activeAnimations)
+		previousMultipliers.putAll(activeMultipliers)
+		activeAnimations.clear()
+		activeMultipliers.clear()
+		boneConfigs.clear()
+		boneConfigs[animId] = config
+		activeAnimations[animId] = anim
+		val hasCrossFade = previousAnimations.isNotEmpty()
+		if (hasCrossFade) {
+			activeMultipliers[animId] = MolangValue.getConstant(0f)
+			blendFactor = 0f
+		} else {
+			activeMultipliers[animId] = MolangValue.ONE
+		}
+		blendTarget = 1f
+		if (currentTransitionTicks <= 0) {
+			blendFactor = 1f
+			previousAnimations.clear()
+			previousMultipliers.clear()
 		}
 
-		val boneFlags = data.activeBoneConfig.resolveBoneFlags(animTimeTracker)
+		animTimeTracker = 0f
+		lastTickSec = 0f
 
+		// setup() 会重置所有 animationData → 保存/恢复 previous 动画时间线
+		val savedTimes = if (hasCrossFade) saveAnimTimes() else emptyMap()
+		rebuildAnimate()
+		restoreAnimTimes(savedTimes)
+	}
+
+	/** 停止所有动画，带过渡淡出 */
+	override fun stop() {
+		previousAnimations.clear()
+		previousMultipliers.clear()
+		blendTarget = 0f
+		if (currentTransitionTicks <= 0) {
+			blendFactor = 0f
+			activeAnimations.clear()
+			activeMultipliers.clear()
+			boneConfigs.clear()
+			animTimeTracker = 0f
+			lastTickSec = 0f
+			rebuildAnimate()
+		}
+	}
+
+	/** 移除指定动画 */
+	override fun stopAnimation(animId: String) {
+		activeAnimations.remove(animId)
+		activeMultipliers.remove(animId)
+		previousAnimations.remove(animId)
+		previousMultipliers.remove(animId)
+		boneConfigs.remove(animId)
+		if (activeAnimations.isEmpty() && previousAnimations.isEmpty()) {
+			blendFactor = 0f
+			animTimeTracker = 0f
+			lastTickSec = 0f
+		}
+		rebuildAnimate()
+	}
+
+	// ---- 内部: 同一动画重启 ----
+
+	/** 同一动画重复触发时直接重置时间线，不和自己交叉淡入淡出 */
+	private fun restartAnimation(animId: String, config: RcfBoneConfig) {
+		previousAnimations.remove(animId)
+		previousMultipliers.remove(animId)
+
+		activeMultipliers[animId] = MolangValue.ONE
+		boneConfigs[animId] = config
+		blendTarget = 1f
+		if (currentTransitionTicks <= 0) {
+			blendFactor = 1f
+		}
+
+		if (isClient) {
+			val anim = EyeLibUtil.getAnimation(true, animId) ?: return
+			EyeLibUtil.setAnimateEntry(renderData, anim, MolangValue.ONE)
+			EyeLibUtil.resetAnimData(renderData, animId)
+		}
+
+		animTimeTracker = 0f
+		lastTickSec = 0f
+	}
+
+	// ---- 内部: AnimationComponent 管理 ----
+
+	/** 将 active + previous 合并且写入 AnimationComponent (调用 setup, 会重建 animationData) */
+	private fun rebuildAnimate() {
+		if (!isClient) return
+		val allAnims = linkedMapOf<String, Animation<*>>().apply {
+			putAll(previousAnimations)
+			putAll(activeAnimations)
+		}
+		val allMultipliers = mutableMapOf<String, MolangValue>().apply {
+			putAll(previousMultipliers)
+			putAll(activeMultipliers)
+		}
+		EyeLibUtil.animateSetup(renderData, allAnims.mapValues { it.value.name() }, allMultipliers.toMap())
+	}
+
+	/** 只更新 multiplier 值，不重建 animationData (用于交叉淡入淡出期间的逐帧更新) */
+	private fun updateAnimateMultipliers() {
+		if (!isClient) return
+		for ((name, anim) in previousAnimations) {
+			EyeLibUtil.setAnimateEntry(renderData, anim, previousMultipliers[name]!!)
+		}
+		for ((name, anim) in activeAnimations) {
+			EyeLibUtil.setAnimateEntry(renderData, anim, activeMultipliers[name]!!)
+		}
+	}
+
+	/** 从 AnimationComponent 中移除指定动画，不重建 Data */
+	private fun removeFromAnimate(anims: Map<String, Animation<*>>) {
+		if (!isClient) return
+		EyeLibUtil.removeAnimateEntries(renderData, anims.values.toList())
+	}
+
+	// ---- 内部: animTime 保存/恢复 ----
+
+	/** rebuildAnimate() 调用 setup 会重置所有 animationData → 保存 previous 动画时间 */
+	private fun saveAnimTimes(): Map<String, Float> {
+		val map = mutableMapOf<String, Float>()
+		for (name in previousAnimations.keys) {
+			EyeLibUtil.getAnimTime(renderData, name)?.let { map[name] = it }
+		}
+		return map
+	}
+
+	/** 恢复 previous 动画时间到新创建的 Data 中 */
+	private fun restoreAnimTimes(saved: Map<String, Float>) {
+		for ((name, time) in saved) {
+			EyeLibUtil.setAnimTime(renderData, name, time)
+		}
+	}
+
+	// ---- 客户端: 每帧渲染 ----
+
+	/** 由 LivingEntityRendererMixin 每帧调用: 驱动 eyelib 、更新过渡、应用骨骼变换 */
+	fun applyTransform(model: PlayerModel<*>, partialTick: Float) {
+		if (!isClient) return
+
+		// 计算 delta 时间
+		val ticks = (ClientTickHandler.getTick() + partialTick) / 20
+		val deltaSec = if (lastTickSec == 0f) 0f else ticks - lastTickSec
+		lastTickSec = ticks
+		tickBlend(deltaSec)
+
+		if (activeAnimations.isEmpty() && previousAnimations.isEmpty()) return
+
+		// eyelib 动画计算
+		val scope: MolangScope = renderData.scope
+		val animationComponent: AnimationComponent = renderData.animationComponent
+		val clientEntityComponent: ClientEntityComponent = renderData.clientEntityComponent
+		val effects = AnimationEffects()
+		scope.set("variable.partial_tick", partialTick)
+		scope.set("variable.attack_time", (player.swingTime.toFloat()) / player.currentSwingDuration)
+
+		val infos = if (animationComponent.getSerializableInfo() != null) {
+			BrAnimator.tickAnimation(animationComponent, scope, effects, ticks) {
+				val ce = clientEntityComponent.clientEntity ?: return@tickAnimation
+				ce.scripts().ifPresent { it.pre_animation().eval(scope) }
+			}
+		} else {
+			BoneRenderInfos.EMPTY
+		}
+
+		animTimeTracker += deltaSec
+
+		// 合并所有活跃动画的骨骼 flags
+		val boneFlags = mutableMapOf<String, RcfBoneFlags>()
+		for ((animId, config) in boneConfigs) {
+			boneFlags.putAll(config.resolveBoneFlags(animTimeTracker))
+		}
+
+		// 将 eyelib 计算结果应用到 ModelPart
 		applyBone("head", infos, boneFlags, model.head, model.hat)
 		applyBone("body", infos, boneFlags, model.body, model.jacket)
 		applyBone("left_arm", infos, boneFlags, model.leftArm, model.leftSleeve)
 		applyBone("right_arm", infos, boneFlags, model.rightArm, model.rightSleeve)
 		applyBone("left_leg", infos, boneFlags, model.leftLeg, model.leftPants)
 		applyBone("right_leg", infos, boneFlags, model.rightLeg, model.rightPants)
+
+		animationComponent.tickedInfos = infos
+		animationComponent.effects = effects
 	}
 
-	// 客户端
+	// ---- 内部: 过渡 tick ----
+
+	/** 每帧更新 blendFactor, 驱动交叉淡入淡出 / fade-in / fade-out */
+	private fun tickBlend(deltaSec: Float) {
+		if (blendFactor == blendTarget) return
+		if (currentTransitionTicks <= 0) {
+			blendFactor = blendTarget
+			return
+		}
+		val step = (deltaSec * 20f) / currentTransitionTicks
+		blendFactor = if (blendFactor < blendTarget)
+			(blendFactor + step).coerceAtMost(blendTarget)
+		else
+			(blendFactor - step).coerceAtLeast(blendTarget)
+
+		// 交叉淡入淡出: 逐帧更新 eyelib 中 previous/active 的 multiplier 权重
+		if (previousAnimations.isNotEmpty()) {
+			for (key in previousMultipliers.keys) {
+				previousMultipliers[key] = MolangValue.getConstant(1f - blendFactor)
+			}
+			for (key in activeMultipliers.keys) {
+				activeMultipliers[key] = MolangValue.getConstant(blendFactor)
+			}
+			updateAnimateMultipliers()
+			if (blendFactor >= 1f) {
+				removeFromAnimate(previousAnimations)
+				previousAnimations.clear()
+				previousMultipliers.clear()
+			}
+		}
+
+		// fade-out 完成: 清理所有动画
+		if (blendTarget == 0f && blendFactor <= 0f) {
+			removeFromAnimate(activeAnimations)
+			removeFromAnimate(previousAnimations)
+			activeAnimations.clear()
+			activeMultipliers.clear()
+			boneConfigs.clear()
+			previousAnimations.clear()
+			previousMultipliers.clear()
+			animTimeTracker = 0f
+			lastTickSec = 0f
+		}
+	}
+
+	// ---- 客户端: 骨骼变换 ----
+
+	/**
+	 * 将 eyelib 计算的 BoneRenderInfos 应用到 ModelPart
+	 *
+	 * lock 模式: 替换原版旋转, 叠加位置
+	 *
+	 * 交叉淡入淡出期间 weight=1f (eyelib multiplier 控制权重), 否则用 blendFactor
+	 */
 	private fun applyBone(
 		name: String,
 		infos: BoneRenderInfos,
@@ -158,6 +318,7 @@ class PlayerAnimationTransformer(val player: Player) {
 	) {
 		val id = GlobalBoneIdHandler.get(name)
 		if (!infos.infos.containsKey(id)) return
+
 		val info = infos.getData(id)
 		val rp = info.renderPosition
 		val rr = info.renderRotation
@@ -165,43 +326,45 @@ class PlayerAnimationTransformer(val player: Player) {
 
 		val lock = boneFlags[name]?.hasAnyLockState() ?: false
 		val iInfos = IBoneRenderInfoEntry.of(info)
+		// 交叉淡入淡出时 eyelib multiplier 已控制权重, applyBone 不应再乘 blendFactor
+		val weight = if (previousAnimations.isNotEmpty()) 1f else blendFactor
 
 		for (part in parts) {
 			val ip = part.initialPose
 
 			if (!iInfos.renderPositionEmpty) {
 				if (lock) {
-					part.x += (ip.x - rp.x * 16f - part.x) * blendFactor
-					part.y += (ip.y - rp.y * 16f - part.y) * blendFactor
-					part.z += (ip.z + rp.z * 16f - part.z) * blendFactor
+					part.x += (ip.x - rp.x * 16f - part.x) * weight
+					part.y += (ip.y - rp.y * 16f - part.y) * weight
+					part.z += (ip.z + rp.z * 16f - part.z) * weight
 				} else {
-					part.x += (-rp.x * 16f) * blendFactor
-					part.y += (-rp.y * 16f) * blendFactor
-					part.z += (+rp.z * 16f) * blendFactor
+					part.x += (-rp.x * 16f) * weight
+					part.y += (-rp.y * 16f) * weight
+					part.z += (+rp.z * 16f) * weight
 				}
 			}
 
 			if (!iInfos.renderRotationEmpty) {
 				if (lock) {
-					part.xRot += (ip.xRot - rr.x - part.xRot) * blendFactor
-					part.yRot += (ip.yRot + rr.y - part.yRot) * blendFactor
-					part.zRot += (ip.zRot + rr.z - part.zRot) * blendFactor
+					part.xRot += (ip.xRot - rr.x - part.xRot) * weight
+					part.yRot += (ip.yRot + rr.y - part.yRot) * weight
+					part.zRot += (ip.zRot + rr.z - part.zRot) * weight
 				} else {
-					part.xRot += (-rr.x) * blendFactor
-					part.yRot += (+rr.y) * blendFactor
-					part.zRot += (+rr.z) * blendFactor
+					part.xRot += (-rr.x) * weight
+					part.yRot += (+rr.y) * weight
+					part.zRot += (+rr.z) * weight
 				}
 			}
 
 			if (!iInfos.renderScalaEmpty) {
 				if (lock) {
-					part.xScale += (1 + rs.x - part.xScale) * blendFactor
-					part.yScale += (1 + rs.y - part.yScale) * blendFactor
-					part.zScale += (1 + rs.z - part.zScale) * blendFactor
+					part.xScale += (1 + rs.x - part.xScale) * weight
+					part.yScale += (1 + rs.y - part.yScale) * weight
+					part.zScale += (1 + rs.z - part.zScale) * weight
 				} else {
-					part.xScale += (rs.x) * blendFactor
-					part.yScale += (rs.y) * blendFactor
-					part.zScale += (rs.z) * blendFactor
+					part.xScale += (rs.x) * weight
+					part.yScale += (rs.y) * weight
+					part.zScale += (rs.z) * weight
 				}
 			}
 		}

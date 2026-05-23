@@ -9,12 +9,6 @@ object BoneStateRegistry {
 		register("lock", object : BoneState {
 			override fun lockVanilla() = true
 		})
-		register("no_fade_in", object : BoneState {
-			override fun blendSpeedOverride() = 1f
-		})
-		register("no_fade_out", object : BoneState {
-			override fun blendSpeedOverride() = 1f
-		})
 	}
 
 	fun register(name: String, state: BoneState) {

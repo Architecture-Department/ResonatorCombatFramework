@@ -71,37 +71,46 @@ init {
 
 ### 动画引擎
 
-使用 **eyelib** (TT432/eyelib) 作为动画计算引擎，不替换原版渲染。
+使用 **eyelib 21.1.14** (TT432/eyelib) 作为动画计算引擎，不替换原版渲染。
+`AnimationComponent.setup()` 直接注册 `BrAnimationEntry` / `BrAnimationController`，原生支持多动画并发和状态机。
 
 ### 数据流
 
 ```
 物品/命令触发
-  → PlayerAnimationHelper.requestPushAnimation(target, id)
+  → PlayerAnimationHelper.trigger/stop (通过 IPlayerAnimator)
   → AnimatePlayerPayload 双端网络包
-  → Client: triggerPlayerAnimation() / Server: pushPlayerAnimation()
-  → PlayerAnimationTransformer.trigger(id)
-  → blendFactor 向 1.0 过渡
-  → LivingEntityRendererMixin 在 renderToBuffer 前调用 applyTransform()
-  → BrAnimator.tickAnimation() → BoneRenderInfos → 叠加到 ModelPart
+  → PlayerAnimationTransformer.trigger(animId)
+  → 过渡: blendFactor lerp (由 currentTransitionTicks 控制速度)
+  → LivingEntityRendererMixin.applyTransform()
+  → BrAnimator.tickAnimation() → BoneRenderInfos
+  → applyBone() → 叠加到 ModelPart
 ```
 
 ### 核心类
 
-| 类                            | 作用                                                   |
-|------------------------------|------------------------------------------------------|
-| `PlayerAnimationTransformer` | 每玩家实例：持有 RenderData，管理 blendFactor，动画偏移应用到 ModelPart |
-| `PlayerAnimationHelper`      | 双端触发/停止：trigger / stop / push / request              |
-| `AnimatePlayerPayload`       | `ToServerAndClientPayload` 双端网络包                     |
-| `PlayerProxyProvider`        | Mixin 接口：`getAnimationTransformer()`                 |
-| `LivingEntityRendererMixin`  | 注入 `render()`，调用 `applyTransform`                    |
-| `PlayerMixin`                | 持有 `PlayerAnimationTransformer` `@Unique` 实例         |
+| 类                                   | 作用                                                |
+|-------------------------------------|---------------------------------------------------|
+| `IPlayerAnimator` (`api/`)          | 公开 API: trigger/stop/stopAnimation/isActive       |
+| `PlayerAnimationTransformer`        | 实现 IPlayerAnimator，管理动画生命周期/过渡/交叉淡入淡出/骨骼变换        |
+| `PlayerAnimationSetup`              | 初始化 RenderData（模型 + 渲染配置）                         |
+| `PlayerAnimationHelper` (`helper/`) | 双端便捷方法：trigger/stop/request/push                  |
+| `EyeLibUtil` (`util/`)              | eyelib 操作集中管理 (AnimationManager/Data/animate map) |
+| `AnimatePlayerPayload` (`payload/`) | `ToServerAndClientPayload` 双端网络包                  |
+| `PlayerProxyProvider` (`mixed/`)    | Mixin 接口，返回 `IPlayerAnimator`                     |
+| `LivingEntityRendererMixin`         | 注入 `render()`，调用 `applyTransform`                 |
+| `PlayerMixin`                       | 持有 `PlayerAnimationTransformer` `@Unique` 实例      |
+
+### 过渡系统
+
+通过 `RcfBoneConfig.transitionTicks: Int` 配置（tick 制，默认 10 = 0.5 秒，0 = 即时）。
+详见 `docs/PLAYER_ANIMATION.md`。
 
 ### 测试命令
 
 ```
 /test_anim <target> <anim_id>    — 触发动画
-/test_anim <target> stop         — 停止动画
+/test_anim_stop <target>         — 停止动画
 ```
 
 ### 资源位置
@@ -110,8 +119,9 @@ eyelib 21.1.14 资源路径以 `eyelib/` 为前缀：
 
 ```
 assets/<modid>/eyelib/
-├── animations/bedrock/    — 原始动画关键帧 JSON
-├── animation_controllers/  — 动画控制器 JSON
+├── animations/player/     — Bedrock 动画关键帧 JSON
+├── animation_controllers/ — 动画控制器 JSON
+├── animdata/player/       — RCF 骨骼状态配置 JSON
 ├── bedrock_models/        — 模型几何体 JSON
 └── textures/              — 纹理
 ```
