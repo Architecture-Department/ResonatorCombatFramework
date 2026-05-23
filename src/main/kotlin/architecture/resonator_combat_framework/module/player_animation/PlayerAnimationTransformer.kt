@@ -7,6 +7,8 @@ import architecture.resonator_combat_framework.module.player_animation.config.Rc
 import architecture.resonator_combat_framework.module.player_animation.config.RcfBoneFlags
 import architecture.resonator_combat_framework.module.player_animation.mixed.IBoneRenderInfoEntry
 import architecture.resonator_combat_framework.module.player_animation.util.EyeLibUtil
+import com.mojang.blaze3d.vertex.PoseStack
+import com.mojang.math.Axis
 import io.github.tt432.eyelib.capability.RenderData
 import io.github.tt432.eyelib.capability.component.AnimationComponent
 import io.github.tt432.eyelib.capability.component.ClientEntityComponent
@@ -21,6 +23,7 @@ import io.github.tt432.eyelib.molang.MolangValue
 import net.minecraft.client.model.PlayerModel
 import net.minecraft.client.model.geom.ModelPart
 import net.minecraft.world.entity.player.Player
+import org.joml.Quaternionf
 
 /** 每玩家实例，负责动画的触发、停止、过渡和骨骼变换应用 */
 class PlayerAnimationTransformer(val player: Player) : IPlayerAnimator {
@@ -43,6 +46,10 @@ class PlayerAnimationTransformer(val player: Player) : IPlayerAnimator {
 	private val boneConfigs = mutableMapOf<String, RcfBoneConfig>()       // 动画骨骼配置
 	private var animTimeTracker = 0f   // 动画运行时间 (秒), 用于 timeline 解析
 	private var lastTickSec = 0f       // 上一帧时间戳, 用于 delta 计算
+
+	// 物品动画, 由 eyelib 虚拟骨骼 "right_item" / "left_item" 驱动
+	private var rightItemTransform = ItemTransform()
+	private var leftItemTransform = ItemTransform()
 
 	init {
 		PlayerAnimationSetup.setupRenderData(renderData)
@@ -212,6 +219,19 @@ class PlayerAnimationTransformer(val player: Player) : IPlayerAnimator {
 	}
 
 	// ---- 客户端: 每帧渲染 ----
+	/** 由 ItemInHandLayerMixin 每帧调用: 应用物品偏移 */
+	fun applyItemTransform(
+		leftHand: Boolean,
+		poseStack: PoseStack
+	) {
+
+		val t = if (leftHand) getLeftItemTransform() else getRightItemTransform()
+		poseStack.mulPose(Axis.XP.rotationDegrees(90.0f))
+		poseStack.translate(t.posX, t.posY, t.posZ)
+		poseStack.mulPose(Quaternionf().rotationZYX(t.rotZ, t.rotY, t.rotX))
+		poseStack.mulPose(Axis.XP.rotationDegrees(-90.0f))
+		poseStack.scale(t.scaleX, t.scaleY, t.scaleZ)
+	}
 
 	/** 由 LivingEntityRendererMixin 每帧调用: 驱动 eyelib 、更新过渡、应用骨骼变换 */
 	fun applyTransform(model: PlayerModel<*>, partialTick: Float) {
@@ -249,6 +269,9 @@ class PlayerAnimationTransformer(val player: Player) : IPlayerAnimator {
 		for ((animId, config) in boneConfigs) {
 			boneFlags.putAll(config.resolveBoneFlags(animTimeTracker))
 		}
+
+		extractItemTransform("left_item", infos, leftItemTransform)
+		extractItemTransform("right_item", infos, rightItemTransform)
 
 		// 将 eyelib 计算结果应用到 ModelPart
 		applyBone("head", infos, boneFlags, model.head, model.hat)
@@ -307,6 +330,37 @@ class PlayerAnimationTransformer(val player: Player) : IPlayerAnimator {
 			rebuildAnimate()
 		}
 	}
+
+	// ---- 客户端: 物品变换 ----
+
+	private fun extractItemTransform(boneName: String, infos: BoneRenderInfos, target: ItemTransform) {
+		val id = GlobalBoneIdHandler.get(boneName)
+		if (!infos.infos.containsKey(id)) {
+			target.posX = 0f;
+			target.posY = 0f;
+			target.posZ = 0f
+			target.rotX = 0f;
+			target.rotY = 0f;
+			target.rotZ = 0f
+			target.scaleX = 1f;
+			target.scaleY = 1f;
+			target.scaleZ = 1f
+			return
+		}
+		val info = infos.getData(id)
+		target.posX = info.renderPosition.x
+		target.posY = info.renderPosition.y
+		target.posZ = info.renderPosition.z
+		target.rotX = info.renderRotation.x
+		target.rotY = info.renderRotation.y
+		target.rotZ = info.renderRotation.z
+		target.scaleX = info.renderScala.x
+		target.scaleY = info.renderScala.y
+		target.scaleZ = info.renderScala.z
+	}
+
+	fun getRightItemTransform(): ItemTransform = rightItemTransform
+	fun getLeftItemTransform(): ItemTransform = leftItemTransform
 
 	// ---- 客户端: 骨骼变换 ----
 
