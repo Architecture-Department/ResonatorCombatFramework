@@ -16,6 +16,8 @@ import io.github.tt432.eyelib.client.ClientTickHandler
 import io.github.tt432.eyelib.client.animation.Animation
 import io.github.tt432.eyelib.client.animation.AnimationEffects
 import io.github.tt432.eyelib.client.animation.BrAnimator
+import io.github.tt432.eyelib.client.animation.bedrock.BrAnimationEntry
+import io.github.tt432.eyelib.client.animation.bedrock.BrLoopType
 import io.github.tt432.eyelib.client.model.GlobalBoneIdHandler
 import io.github.tt432.eyelib.client.render.bone.BoneRenderInfos
 import io.github.tt432.eyelib.molang.MolangScope
@@ -224,13 +226,18 @@ class PlayerAnimationTransformer(val player: Player) : IPlayerAnimator {
 		leftHand: Boolean,
 		poseStack: PoseStack
 	) {
-
 		val t = if (leftHand) getLeftItemTransform() else getRightItemTransform()
 		poseStack.mulPose(Axis.XP.rotationDegrees(90.0f))
-		poseStack.translate(t.posX, t.posY, t.posZ)
-		poseStack.mulPose(Quaternionf().rotationZYX(t.rotZ, t.rotY, t.rotX))
+		if (t.posX != 0f || t.posY != 0f || t.posZ != 0f) {
+			poseStack.translate(t.posX, t.posY, t.posZ)
+		}
+		if (t.rotZ != 0f || t.rotY != 0f || t.rotX != 0f) {
+			poseStack.mulPose(Quaternionf().rotationZYX(t.rotZ, t.rotY, t.rotX))
+		}
+		if (t.scaleX != 1f || t.scaleY != 1f || t.scaleZ != 1f) {
+			poseStack.scale(t.scaleX, t.scaleY, t.scaleZ)
+		}
 		poseStack.mulPose(Axis.XP.rotationDegrees(-90.0f))
-		poseStack.scale(t.scaleX, t.scaleY, t.scaleZ)
 	}
 
 	/** 由 LivingEntityRendererMixin 每帧调用: 驱动 eyelib 、更新过渡、应用骨骼变换 */
@@ -263,6 +270,16 @@ class PlayerAnimationTransformer(val player: Player) : IPlayerAnimator {
 		}
 
 		animTimeTracker += deltaSec
+
+		// 自动停止 ONCE 模式已完成的动画
+		for ((animId, anim) in activeAnimations.toList()) {
+			if (anim is BrAnimationEntry && anim.loop() == BrLoopType.ONCE) {
+				val data = EyeLibUtil.getEntryData(renderData, animId) ?: continue
+				if (data.animTime > anim.animationLength()) {
+					stopAnimation(animId)
+				}
+			}
+		}
 
 		// 合并所有活跃动画的骨骼 flags
 		val boneFlags = mutableMapOf<String, RcfBoneFlags>()
@@ -348,15 +365,16 @@ class PlayerAnimationTransformer(val player: Player) : IPlayerAnimator {
 			return
 		}
 		val info = infos.getData(id)
-		target.posX = info.renderPosition.x
-		target.posY = info.renderPosition.y
-		target.posZ = info.renderPosition.z
-		target.rotX = info.renderRotation.x
-		target.rotY = info.renderRotation.y
-		target.rotZ = info.renderRotation.z
-		target.scaleX = info.renderScala.x
-		target.scaleY = info.renderScala.y
-		target.scaleZ = info.renderScala.z
+		val w = if (previousAnimations.isNotEmpty()) 1f else blendFactor
+		target.posX = info.renderPosition.x * w
+		target.posY = info.renderPosition.y * w
+		target.posZ = info.renderPosition.z * w
+		target.rotX = info.renderRotation.x * w
+		target.rotY = info.renderRotation.y * w
+		target.rotZ = info.renderRotation.z * w
+		target.scaleX = 1f + info.renderScala.x * w
+		target.scaleY = 1f + info.renderScala.y * w
+		target.scaleZ = 1f + info.renderScala.z * w
 	}
 
 	fun getRightItemTransform(): ItemTransform = rightItemTransform
