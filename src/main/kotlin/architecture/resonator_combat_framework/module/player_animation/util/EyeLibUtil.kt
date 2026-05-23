@@ -39,6 +39,7 @@ object EyeLibUtil {
 		val data = getEntryData(renderData, animId) ?: return
 		data.animTime = 0f
 		data.lastTicks = 0f
+		data.deltaTime = 0f
 	}
 
 	@JvmStatic

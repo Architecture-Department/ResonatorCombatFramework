@@ -82,6 +82,7 @@ class PlayerAnimationTransformer(val player: Player) : IPlayerAnimator {
 			blendFactor = 0f
 		} else {
 			activeMultipliers[animId] = MolangValue.ONE
+			blendFactor = 0f
 		}
 		blendTarget = 1f
 		if (currentTransitionTicks <= 0) {
@@ -140,14 +141,19 @@ class PlayerAnimationTransformer(val player: Player) : IPlayerAnimator {
 		activeMultipliers[animId] = MolangValue.ONE
 		boneConfigs[animId] = config
 		blendTarget = 1f
-		if (currentTransitionTicks <= 0) {
-			blendFactor = 1f
-		}
+		blendFactor = 1f
 
 		if (isClient) {
-			val anim = EyeLibUtil.getAnimation(true, animId) ?: return
-			EyeLibUtil.setAnimateEntry(renderData, anim, MolangValue.ONE)
-			EyeLibUtil.resetAnimData(renderData, animId)
+			val anim = EyeLibUtil.getAnimation(true, animId)
+			if (anim != null) {
+				EyeLibUtil.setAnimateEntry(renderData, anim, MolangValue.ONE)
+			}
+			val data = EyeLibUtil.getEntryData(renderData, animId)
+			if (data != null) {
+				data.animTime = 0f
+				data.lastTicks = 0f
+				data.deltaTime = 0f
+			}
 		}
 
 		animTimeTracker = 0f
@@ -287,7 +293,7 @@ class PlayerAnimationTransformer(val player: Player) : IPlayerAnimator {
 			}
 		}
 
-		// fade-out 完成: 清理所有动画
+		// fade-out 完成: 清理所有动画并同步 serializableInfo
 		if (blendTarget == 0f && blendFactor <= 0f) {
 			removeFromAnimate(activeAnimations)
 			removeFromAnimate(previousAnimations)
@@ -298,6 +304,7 @@ class PlayerAnimationTransformer(val player: Player) : IPlayerAnimator {
 			previousMultipliers.clear()
 			animTimeTracker = 0f
 			lastTickSec = 0f
+			rebuildAnimate()
 		}
 	}
 
