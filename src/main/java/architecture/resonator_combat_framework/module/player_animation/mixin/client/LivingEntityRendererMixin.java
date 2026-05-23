@@ -1,4 +1,4 @@
-package architecture.resonator_combat_framework.module.player_animation.mixin;
+package architecture.resonator_combat_framework.module.player_animation.mixin.client;
 
 import architecture.resonator_combat_framework.module.player_animation.PlayerAnimationTransformer;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -23,7 +23,15 @@ public abstract class LivingEntityRendererMixin<T extends LivingEntity> {
 
 	@Inject(method = "render(Lnet/minecraft/world/entity/LivingEntity;FFLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V",
 		at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/entity/LivingEntityRenderer;getOverlayCoords(Lnet/minecraft/world/entity/LivingEntity;F)I"))
-	public void render(T entity, float entityYaw, float partialTicks, PoseStack poseStack, MultiBufferSource buffer, int packedLight, CallbackInfo ci) {
+	public void render(
+		T entity,
+		float entityYaw,
+		float partialTicks,
+		PoseStack poseStack,
+		MultiBufferSource buffer,
+		int packedLight,
+		CallbackInfo ci
+	) {
 		if (!(entity instanceof Player player) || !(model instanceof PlayerModel<?> playerModel)) {
 			return;
 		}

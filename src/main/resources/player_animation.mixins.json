@@ -3,8 +3,11 @@
 	"package": "architecture.resonator_combat_framework.module.player_animation.mixin",
 	"compatibilityLevel": "JAVA_21",
 	"client": [
-		"LivingEntityRendererMixin",
-		"client.PlayerModelMixin"
+		"client.CameraAccessor",
+		"client.LevelRendererMixin",
+		"client.LivingEntityRendererMixin",
+		"client.PlayerModelMixin",
+		"client.PlayerRendererMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1
