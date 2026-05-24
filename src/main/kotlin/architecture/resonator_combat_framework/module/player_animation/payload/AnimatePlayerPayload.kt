@@ -1,10 +1,12 @@
-package architecture.resonator_combat_framework.module.player_animation.payload
+﻿package architecture.resonator_combat_framework.module.player_animation.payload
 
 import architecture.goldenboughs_lib.api.payload.ToServerAndClientPayload
 import architecture.resonator_combat_framework.core.Rcf
 import architecture.resonator_combat_framework.module.player_animation.helper.PlayerAnimationHelper.clientStopPlayerAnimation
 import architecture.resonator_combat_framework.module.player_animation.helper.PlayerAnimationHelper.clientTriggerPlayerAnimation
+import architecture.resonator_combat_framework.module.player_animation.helper.PlayerAnimationHelper.clientTriggerPlayerAnimationForDuration
 import architecture.resonator_combat_framework.module.player_animation.helper.PlayerAnimationHelper.serverPlayerAnimation
+import architecture.resonator_combat_framework.module.player_animation.helper.PlayerAnimationHelper.serverPlayerAnimationForDuration
 import architecture.resonator_combat_framework.module.player_animation.helper.PlayerAnimationHelper.serverStopPlayerAnimation
 import io.netty.buffer.ByteBuf
 import net.minecraft.client.player.AbstractClientPlayer
@@ -18,19 +20,36 @@ import net.neoforged.neoforge.network.handling.IPayloadContext
 import java.util.*
 
 // 双端网络包：服务端→客户端 / 客户端→服务端
-data class AnimatePlayerPayload(val id: String, val playerUuid: UUID) : ToServerAndClientPayload {
+data class AnimatePlayerPayload(
+	val id: String,
+	val playerUuid: UUID,
+	val speedMultiplier: Float = 1f,
+	val useDuration: Boolean = false,
+	val durationTicks: Int = 0,
+	val originalAnimLengthSec: Float = 0f
+) : ToServerAndClientPayload {
 	override fun type() = TYPE
 
 	override fun toClient(context: IPayloadContext, player: AbstractClientPlayer) {
 		val level: Level = context.player().level()
 		val target = (level.getPlayerByUUID(playerUuid) as? AbstractClientPlayer) ?: return
-		if (id == STOP_MARKER || id.isEmpty()) target.clientStopPlayerAnimation()
-		else target.clientTriggerPlayerAnimation(id)
+		if (id == STOP_MARKER || id.isEmpty()) {
+			target.clientStopPlayerAnimation()
+		} else if (useDuration) {
+			target.clientTriggerPlayerAnimationForDuration(id, durationTicks, originalAnimLengthSec)
+		} else {
+			target.clientTriggerPlayerAnimation(id, speedMultiplier)
+		}
 	}
 
 	override fun toServer(context: IPayloadContext, player: ServerPlayer) {
-		if (id == STOP_MARKER || id.isEmpty()) player.serverStopPlayerAnimation()
-		else player.serverPlayerAnimation(id)
+		if (id == STOP_MARKER || id.isEmpty()) {
+			player.serverStopPlayerAnimation()
+		} else if (useDuration) {
+			player.serverPlayerAnimationForDuration(id, durationTicks, originalAnimLengthSec)
+		} else {
+			player.serverPlayerAnimation(id, speedMultiplier)
+		}
 	}
 
 	companion object {
@@ -45,6 +64,10 @@ data class AnimatePlayerPayload(val id: String, val playerUuid: UUID) : ToServer
 		val STREAM_CODEC: StreamCodec<ByteBuf, AnimatePlayerPayload> = StreamCodec.composite(
 			ByteBufCodecs.STRING_UTF8, AnimatePlayerPayload::id,
 			ByteBufCodecs.STRING_UTF8.map(UUID::fromString, UUID::toString), AnimatePlayerPayload::playerUuid,
+			ByteBufCodecs.FLOAT, AnimatePlayerPayload::speedMultiplier,
+			ByteBufCodecs.BOOL, AnimatePlayerPayload::useDuration,
+			ByteBufCodecs.VAR_INT, AnimatePlayerPayload::durationTicks,
+			ByteBufCodecs.FLOAT, AnimatePlayerPayload::originalAnimLengthSec,
 			::AnimatePlayerPayload
 		)
 	}
