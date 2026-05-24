@@ -13,7 +13,6 @@ import net.minecraft.client.player.AbstractClientPlayer
 import net.minecraft.network.codec.ByteBufCodecs
 import net.minecraft.network.codec.StreamCodec
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload
-import net.minecraft.resources.ResourceLocation
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.level.Level
 import net.neoforged.neoforge.network.handling.IPayloadContext
@@ -56,9 +55,7 @@ data class AnimatePlayerPayload(
 		const val STOP_MARKER = ""
 
 		@JvmField
-		val TYPE = CustomPacketPayload.Type<AnimatePlayerPayload>(
-			ResourceLocation.fromNamespaceAndPath(Rcf.ID, "animate_player")
-		)
+		val TYPE = CustomPacketPayload.Type<AnimatePlayerPayload>(Rcf.modRl("animate_player"))
 
 		@JvmField
 		val STREAM_CODEC: StreamCodec<ByteBuf, AnimatePlayerPayload> = StreamCodec.composite(

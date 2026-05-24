@@ -1,5 +1,6 @@
 package architecture.resonator_combat_framework.core
 
+import architecture.goldenboughs_lib.util.LibUtil.rlOf
 import architecture.resonator_combat_framework.init.RcfDataComponentTypes
 import net.minecraft.core.Registry
 import net.minecraft.resources.ResourceKey
@@ -38,7 +39,7 @@ object Rcf {
 	@JvmStatic
 	@Contract("_ -> new")
 	fun modRl(name: String): ResourceLocation {
-		return ResourceLocation.fromNamespaceAndPath(ID, name)
+		return rlOf(ID, name)
 	}
 
 	@JvmStatic
@@ -59,6 +60,6 @@ object Rcf {
 
 	@JvmStatic
 	fun getSparkModuleRl(namespace: String, typeName: String, path: String): ResourceLocation {
-		return ResourceLocation.fromNamespaceAndPath(namespace, "spark_modules/$typeName/$path")
+		return rlOf(namespace, "spark_modules/$typeName/$path")
 	}
 }
