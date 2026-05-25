@@ -2,6 +2,7 @@
 
 import architecture.resonator_combat_framework.module.player_animation.api.IAnimationMapper
 import architecture.resonator_combat_framework.module.player_animation.api.ProxyModel
+import architecture.resonator_combat_framework.module.player_animation.config.AnimationPlayConfig
 import architecture.resonator_combat_framework.module.player_animation.config.ProxyBoneConfigData
 import architecture.resonator_combat_framework.module.player_animation.config.ProxyBoneConfigLoader
 import architecture.resonator_combat_framework.module.player_animation.config.ProxyBoneFlags
@@ -32,6 +33,15 @@ abstract class EntityAnimationMapper<T : Entity, M : EntityModel<T>>(
 	fun resolveConfig(animId: String): ProxyBoneConfigData = configLoader.getConfig(animId)
 
 	// 触发
+
+	override fun trigger(config: AnimationPlayConfig) {
+		val controller = controllers[config.controllerName] ?: defaultController
+		val loaded = configLoader.getConfig(config.animId)
+		val used = config.boneConfig ?: loaded
+		boneConfigs.clear()
+		boneConfigs[config.animId] = used
+		controller.trigger(config)
+	}
 
 	override fun trigger(animId: String) = trigger(resolveController(animId), animId)
 

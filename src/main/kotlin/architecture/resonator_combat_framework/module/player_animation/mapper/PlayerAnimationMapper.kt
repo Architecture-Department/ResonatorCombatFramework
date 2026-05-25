@@ -5,6 +5,7 @@ import architecture.resonator_combat_framework.module.player_animation.api.IAnim
 import architecture.resonator_combat_framework.module.player_animation.api.ProxyModel
 import architecture.resonator_combat_framework.module.player_animation.config.ProxyBoneFlags
 import architecture.resonator_combat_framework.module.player_animation.controller.IAnimationController
+import architecture.resonator_combat_framework.module.player_animation.controller.BaseAnimationController
 import architecture.resonator_combat_framework.module.player_animation.controller.eyelib.EyeLibAnimationController
 import com.mojang.blaze3d.vertex.PoseStack
 import io.github.tt432.eyelib.capability.RenderData
@@ -73,7 +74,7 @@ class PlayerAnimationMapper(
 		if (renderableControllers.isEmpty()) return
 
 		val root = defaultController as EyeLibAnimationController
-		val proxyModels = renderableControllers.map { (it as EyeLibAnimationController).proxyModel }
+		val proxyModels = renderableControllers.map { (it as BaseAnimationController).proxyModel }
 		applyProxyToModel(
 			proxyModels,
 			model as PlayerModel<Player>,
@@ -88,7 +89,7 @@ class PlayerAnimationMapper(
 		if (renderableControllers.isEmpty()) return
 		val weight = defaultController.blendFactor
 		applyProxyToItem(
-			renderableControllers.map { (it as EyeLibAnimationController).proxyModel },
+			renderableControllers.map { (it as BaseAnimationController).proxyModel },
 			isLeft,
 			poseStack,
 			weight

@@ -1,5 +1,6 @@
 ﻿package architecture.resonator_combat_framework.module.player_animation.helper
 
+import architecture.resonator_combat_framework.module.player_animation.config.AnimationPlayConfig
 import architecture.resonator_combat_framework.module.player_animation.mixed.PlayerProxyProvider.Companion.getAnimationTransformer
 import architecture.resonator_combat_framework.module.player_animation.payload.AnimatePlayerPayload
 import net.minecraft.client.player.AbstractClientPlayer
@@ -31,6 +32,28 @@ object PlayerAnimationHelper {
 		} else if (this is ServerPlayer) {
 			serverPlayerAnimationForDuration(animId, durationTicks, originalAnimLengthSec)
 		}
+	}
+
+	// ---- 详细配置播放 ----
+
+	@JvmStatic
+	fun Player.triggerPlayerAnimation(config: AnimationPlayConfig) {
+		if (this is AbstractClientPlayer) clientTriggerPlayerAnimation(config)
+		else if (this is ServerPlayer) serverPlayerAnimation(config)
+	}
+
+	@JvmStatic
+	fun AbstractClientPlayer.clientTriggerPlayerAnimation(config: AnimationPlayConfig) {
+		getAnimationTransformer().trigger(config)
+	}
+
+	@JvmStatic
+	fun ServerPlayer.serverPlayerAnimation(config: AnimationPlayConfig) {
+		getAnimationTransformer().trigger(config)
+		PacketDistributor.sendToPlayersTrackingEntityAndSelf(
+			this,
+			AnimatePlayerPayload(config.animId, uuid, config.resolveSpeedMultiplier(), false, 0, 0f)
+		)
 	}
 
 	// ---- 停止 ----

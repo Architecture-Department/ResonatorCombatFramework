@@ -1,5 +1,6 @@
 ﻿package architecture.resonator_combat_framework.module.player_animation.api
 
+import architecture.resonator_combat_framework.module.player_animation.config.AnimationPlayConfig
 import architecture.resonator_combat_framework.module.player_animation.controller.IAnimationController
 
 /** 根接口：生命周期 + 控制器管理 + 动画映射 */
@@ -13,6 +14,9 @@ interface IAnimationMapper {
 
 	/** 解析动画ID对应的控制器 */
 	fun resolveController(animId: String): String = animControllerMap[animId] ?: DEFAULT_CONTROLLER_NAME
+
+	/** 详细播放配置 */
+	fun trigger(config: AnimationPlayConfig)
 
 	/** 在默认控制器上触发 */
 	fun trigger(animId: String)
