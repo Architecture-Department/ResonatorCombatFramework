@@ -6,8 +6,9 @@ import architecture.resonator_combat_framework.module.player_animation.command.T
 import net.neoforged.bus.api.SubscribeEvent
 import net.neoforged.fml.common.EventBusSubscriber
 import net.neoforged.neoforge.event.RegisterCommandsEvent
+import architecture.resonator_combat_framework.core.RcfConstants
 
-@EventBusSubscriber(modid = Rcf.ID)
+@EventBusSubscriber(modid = RcfConstants.ID)
 object CommandRegistry {
 	@SubscribeEvent
 	fun registry(event: RegisterCommandsEvent) {

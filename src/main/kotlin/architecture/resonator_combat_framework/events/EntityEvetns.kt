@@ -4,8 +4,9 @@ import architecture.goldenboughs_lib.core.Lib
 import net.neoforged.bus.api.SubscribeEvent
 import net.neoforged.fml.common.EventBusSubscriber
 import net.neoforged.neoforge.event.tick.EntityTickEvent
+import architecture.goldenboughs_lib.core.LibConstants
 
-@EventBusSubscriber(modid = Lib.ID)
+@EventBusSubscriber(modid = LibConstants.ID)
 object EntityEvetns {
 	@SubscribeEvent
 	fun entityPre(pre: EntityTickEvent.Pre) {

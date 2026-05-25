@@ -6,8 +6,9 @@ import architecture.resonator_combat_framework.module.player_animation.config.Pr
 import net.neoforged.bus.api.SubscribeEvent
 import net.neoforged.fml.common.EventBusSubscriber
 import net.neoforged.neoforge.event.AddReloadListenerEvent
+import architecture.resonator_combat_framework.core.RcfConstants
 
-@EventBusSubscriber(modid = Rcf.ID)
+@EventBusSubscriber(modid = RcfConstants.ID)
 object GameEvents {
 	@SubscribeEvent
 	fun onAddReloadListener(event: AddReloadListenerEvent) {

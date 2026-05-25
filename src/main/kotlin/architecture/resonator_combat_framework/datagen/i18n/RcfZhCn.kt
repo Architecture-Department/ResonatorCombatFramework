@@ -11,14 +11,15 @@ import net.minecraft.world.item.Item
 import net.neoforged.fml.loading.FMLEnvironment
 import org.jetbrains.annotations.ApiStatus
 import java.util.function.Supplier
+import architecture.resonator_combat_framework.core.RcfConstants
 
 @ApiStatus.Internal
-class RcfZhCn(output: PackOutput) : DatagenI18n(output, Rcf.ID, "zh_cn") {
+class RcfZhCn(output: PackOutput) : DatagenI18n(output, RcfConstants.ID, "zh_cn") {
 	override fun addTranslations() {
-		addPackDescription(Rcf.ID, "金枝")
+		addPackDescription(RcfConstants.ID, "金枝")
 
-		add("${Rcf.ID}.command.play_anim", "已给%s播放%s动画")
-		add("${Rcf.ID}.command.stop_anim", "已停止%s的动画")
+		add("${RcfConstants.ID}.command.play_anim", "已给%s播放%s动画")
+		add("${RcfConstants.ID}.command.stop_anim", "已停止%s的动画")
 	}
 
 	companion object {

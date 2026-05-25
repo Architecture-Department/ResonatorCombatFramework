@@ -8,6 +8,7 @@ import net.minecraft.commands.CommandSourceStack
 import net.minecraft.commands.Commands
 import net.minecraft.commands.arguments.EntityArgument
 import net.minecraft.network.chat.Component
+import architecture.resonator_combat_framework.core.RcfConstants
 
 // /test_anim_stop <target> — 停止玩家动画
 object TestAnimStopCommand {
@@ -21,12 +22,12 @@ object TestAnimStopCommand {
 							val target = try {
 								EntityArgument.getPlayer(it, "target")
 							} catch (exception: CommandSyntaxException) {
-								Rcf.LOGGER.error("Failed to get player", exception)
+								RcfConstants.LOGGER.error("Failed to get player", exception)
 								return@executes 0
 							}
 							target.stopPlayerAnimation()
 							it.getSource().sendSuccess({
-								Component.translatable("${Rcf.ID}.command.stop_anim", target.name)
+								Component.translatable("${RcfConstants.ID}.command.stop_anim", target.name)
 							}, true)
 							1
 						}

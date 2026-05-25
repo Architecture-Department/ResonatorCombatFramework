@@ -6,8 +6,9 @@ import net.neoforged.api.distmarker.Dist
 import net.neoforged.bus.api.SubscribeEvent
 import net.neoforged.fml.common.EventBusSubscriber
 import net.neoforged.neoforge.client.event.RegisterClientReloadListenersEvent
+import architecture.resonator_combat_framework.core.RcfConstants
 
-@EventBusSubscriber(modid = Rcf.ID, value = [Dist.CLIENT])
+@EventBusSubscriber(modid = RcfConstants.ID, value = [Dist.CLIENT])
 object GameEvents {
 	@SubscribeEvent
 	fun onRegisterClientReloadListeners(event: RegisterClientReloadListenersEvent) {

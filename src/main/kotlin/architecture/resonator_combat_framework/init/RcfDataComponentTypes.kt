@@ -1,6 +1,6 @@
 package architecture.resonator_combat_framework.init
 
-import architecture.resonator_combat_framework.core.Rcf.modRegister
+import architecture.resonator_combat_framework.core.RcfConstants.modRegister
 import com.mojang.serialization.Codec
 import net.minecraft.core.component.DataComponentType
 import net.minecraft.core.registries.BuiltInRegistries
@@ -11,6 +11,7 @@ import net.neoforged.neoforge.registries.DeferredHolder
 import net.neoforged.neoforge.registries.DeferredRegister
 import java.util.function.Supplier
 import java.util.function.UnaryOperator
+import architecture.resonator_combat_framework.core.RcfConstants
 
 object RcfDataComponentTypes {
 	@JvmField

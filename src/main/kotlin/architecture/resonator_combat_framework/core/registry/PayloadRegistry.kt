@@ -6,13 +6,14 @@ import architecture.resonator_combat_framework.module.player_animation.payload.A
 import net.neoforged.bus.api.SubscribeEvent
 import net.neoforged.fml.common.EventBusSubscriber
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent
+import architecture.resonator_combat_framework.core.RcfConstants
 
-@EventBusSubscriber(modid = Rcf.ID)
+@EventBusSubscriber(modid = RcfConstants.ID)
 object PayloadRegistry {
 	@SubscribeEvent
 	fun register(event: RegisterPayloadHandlersEvent) {
 		val registrar = event.registrar("1.0")
 		registrar.playToServerAndClient(AnimatePlayerPayload.TYPE, AnimatePlayerPayload.STREAM_CODEC)
-		Rcf.LOGGER.info("Registering payloads finish")
+		RcfConstants.LOGGER.info("Registering payloads finish")
 	}
 }

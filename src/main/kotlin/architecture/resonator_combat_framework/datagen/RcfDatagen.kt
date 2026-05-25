@@ -6,11 +6,12 @@ import architecture.resonator_combat_framework.datagen.i18n.RcfZhCn
 import net.neoforged.bus.api.SubscribeEvent
 import net.neoforged.fml.common.EventBusSubscriber
 import net.neoforged.neoforge.data.event.GatherDataEvent
+import architecture.resonator_combat_framework.core.RcfConstants
 
 /**
  * 数据生成主类
  */
-@EventBusSubscriber(modid = Rcf.ID)
+@EventBusSubscriber(modid = RcfConstants.ID)
 object RcfDatagen {
 	@SubscribeEvent
 	fun gatherData(event: GatherDataEvent) {

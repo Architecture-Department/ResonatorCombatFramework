@@ -17,6 +17,7 @@ import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.level.Level
 import net.neoforged.neoforge.network.handling.IPayloadContext
 import java.util.*
+import architecture.resonator_combat_framework.core.RcfConstants
 
 // 双端网络包：服务端→客户端 / 客户端→服务端
 data class AnimatePlayerPayload(
@@ -55,7 +56,7 @@ data class AnimatePlayerPayload(
 		const val STOP_MARKER = ""
 
 		@JvmField
-		val TYPE = CustomPacketPayload.Type<AnimatePlayerPayload>(Rcf.modRl("animate_player"))
+		val TYPE = CustomPacketPayload.Type<AnimatePlayerPayload>(RcfConstants.modRl("animate_player"))
 
 		@JvmField
 		val STREAM_CODEC: StreamCodec<ByteBuf, AnimatePlayerPayload> = StreamCodec.composite(

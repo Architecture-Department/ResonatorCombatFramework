@@ -1,7 +1,8 @@
 package architecture.resonator_combat_framework.init
 
-import architecture.resonator_combat_framework.core.Rcf.modRl
+import architecture.resonator_combat_framework.core.RcfConstants.modRl
 import net.neoforged.neoforge.capabilities.ItemCapability
+import architecture.resonator_combat_framework.core.RcfConstants
 
 class RcfCapabilitys {
 	object Item {

@@ -9,6 +9,7 @@ import net.minecraft.commands.CommandSourceStack
 import net.minecraft.commands.Commands
 import net.minecraft.commands.arguments.EntityArgument
 import net.minecraft.network.chat.Component
+import architecture.resonator_combat_framework.core.RcfConstants
 
 // /test_anim <target> <anim_id> — 触发玩家动画（Tab 补全动画 ID）
 object TestAnimCommand {
@@ -25,13 +26,13 @@ object TestAnimCommand {
 									val target = try {
 										EntityArgument.getPlayer(it, "target")
 									} catch (exception: CommandSyntaxException) {
-										Rcf.LOGGER.error("Failed to get player", exception)
+										RcfConstants.LOGGER.error("Failed to get player", exception)
 										return@executes 0
 									}
 									val anim = StringArgumentType.getString(it, "anim_id")
 									target.triggerPlayerAnimation(anim)
 									it.getSource().sendSuccess({
-										Component.translatable("${Rcf.ID}.command.play_anim", target.name, anim)
+										Component.translatable("${RcfConstants.ID}.command.play_anim", target.name, anim)
 									}, true)
 									1
 								}
