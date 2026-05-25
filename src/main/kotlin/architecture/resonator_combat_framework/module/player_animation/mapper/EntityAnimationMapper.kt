@@ -9,7 +9,7 @@ import architecture.resonator_combat_framework.module.player_animation.controlle
 import net.minecraft.client.model.EntityModel
 import net.minecraft.world.entity.Entity
 
-/** 实体动画映射器 — 管理控制器、动画生命周期、配置解析、优先级覆盖 */
+/** 实体动画映射器：控制器、生命周期、优先级、骨骼冲突 */
 abstract class EntityAnimationMapper<T : Entity, M : EntityModel<T>>(
 	val entity: T,
 	protected val isClient: Boolean = entity.level().isClientSide
@@ -31,19 +31,19 @@ abstract class EntityAnimationMapper<T : Entity, M : EntityModel<T>>(
 
 	fun resolveConfig(animId: String): ProxyBoneConfigData = configLoader.getConfig(animId)
 
-	// ---- 触发 ----
+	// 触发
 
 	override fun trigger(animId: String) = trigger(resolveController(animId), animId)
 
 	override fun trigger(controllerName: String, animId: String) {
 		val config = resolveConfig(animId)
-		// clear previous configs to prevent stale lock/unlock flags
+		// 清除旧配置防止 lock/unlock 标志泄漏
 		boneConfigs.clear()
 		boneConfigs[animId] = config
 		(controllers[controllerName] ?: defaultController).trigger(animId, config.transitionTicks)
 	}
 
-	// ---- 停止 ----
+	// 停止
 
 	override fun stop(controllerName: String) {
 		(controllers[controllerName] ?: defaultController).stop()
@@ -79,7 +79,7 @@ abstract class EntityAnimationMapper<T : Entity, M : EntityModel<T>>(
 		(controllers[controllerName] ?: defaultController).stopAnimation(animId)
 	}
 
-	// ---- 查询 ----
+	// 查询
 
 	override fun isActive(): Boolean = controllers.values.any { it.isActive() }
 
@@ -94,7 +94,7 @@ abstract class EntityAnimationMapper<T : Entity, M : EntityModel<T>>(
 	override fun hasController(): Boolean = true
 	override fun hasController(controllerName: String): Boolean = controllerName in controllers
 
-	// ---- 控制器管理 ----
+	// 控制器管理
 
 	override fun addController(name: String, controller: IAnimationController) {
 		if (name == IAnimationMapper.DEFAULT_CONTROLLER_NAME) return
@@ -106,7 +106,7 @@ abstract class EntityAnimationMapper<T : Entity, M : EntityModel<T>>(
 		controllers.remove(name)?.stop()
 	}
 
-	// ---- 优先级与骨骼冲突检测 ----
+	// 优先级 + 骨骼冲突
 
 	override fun getActiveControllersSorted(): List<IAnimationController> {
 		return controllers.values
@@ -121,7 +121,7 @@ abstract class EntityAnimationMapper<T : Entity, M : EntityModel<T>>(
 		if (myIndex < 0) return emptyList()
 
 		val blocking = mutableListOf<IAnimationController>()
-		// 优先级高于当前控制器的 (在列表中索引更小)
+		// 更高优先级
 		for (i in 0 until myIndex) {
 			val higher = sorted[i]
 			if (higher.isOverriding && hasBoneConflict(higher, controller)) {
@@ -131,10 +131,7 @@ abstract class EntityAnimationMapper<T : Entity, M : EntityModel<T>>(
 		return blocking
 	}
 
-	/**
-	 * 获取优先渲染的活跃控制器列表 (过滤掉被高优先级覆盖控制器阻塞的).
-	 * 返回按优先级降序排列.
-	 */
+	/** 返回可渲染控制器，按优先级降序，过滤骨骼冲突阻塞的 */
 	fun getRenderableControllers(): List<IAnimationController> {
 		val sorted = getActiveControllersSorted()
 		if (sorted.isEmpty()) return sorted
@@ -142,17 +139,17 @@ abstract class EntityAnimationMapper<T : Entity, M : EntityModel<T>>(
 		val result = mutableListOf(sorted.first())
 		val blockedBones = mutableSetOf<String>()
 
-		// 累积被覆盖控制器阻塞的骨骼集合
+		// 累积被阻塞的骨骼
 		if (sorted.first().isOverriding) {
 			blockedBones.addAll(sorted.first().affectedBones)
 		}
 
 		for (i in 1 until sorted.size) {
 			val ctrl = sorted[i]
-			// 检查当前控制器的骨骼是否被高优先级覆盖控制器阻塞
+			// 检查与高优先级覆盖控制器的骨骼冲突
 			val ctrlBones = ctrl.affectedBones
 			if (ctrlBones.isNotEmpty() && ctrlBones.any { it in blockedBones }) {
-				// 有骨骼冲突, 被阻塞, 跳过
+				// 被阻塞，跳过
 				continue
 			}
 			result.add(ctrl)

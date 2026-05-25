@@ -4,15 +4,15 @@ import architecture.resonator_combat_framework.module.player_animation.config.Pr
 import net.minecraft.client.model.EntityModel
 import net.minecraft.world.entity.LivingEntity
 
-/** 生物动画映射器 — 添加骨骼标志解析和动画时间追踪 */
+/** + 骨骼标志解析 + 动画时间追踪 */
 abstract class LivingEntityAnimationMapper<T : LivingEntity, M : EntityModel<T>>(
 	livingEntity: T
 ) : EntityAnimationMapper<T, M>(livingEntity) {
 
-	/** 动画运行时间 (秒), 用于 timeline 解析 */
+	/** 动画已运行时间，用于 timeline 求值 */
 	protected var animTimeTracker = 0f
 
-	/** 合并所有活跃动画的骨骼标志, 供 applyProxyToModel 使用 */
+	/** 合并所有活跃动画的骨骼标志 */
 	fun resolveBoneFlags(animTime: Float): Map<String, ProxyBoneFlags> {
 		val flags = mutableMapOf<String, ProxyBoneFlags>()
 		for ((_, config) in boneConfigs) flags.putAll(config.resolveBoneFlags(animTime))

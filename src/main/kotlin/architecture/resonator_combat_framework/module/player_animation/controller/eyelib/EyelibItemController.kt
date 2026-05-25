@@ -6,7 +6,7 @@ import architecture.resonator_combat_framework.module.player_animation.controlle
 import io.github.tt432.eyelib.client.model.GlobalBoneIdHandler
 import io.github.tt432.eyelib.client.render.bone.BoneRenderInfos
 
-/** eyelib 物品控制器 — 从 BoneRenderInfos 提取 right_item/left_item 定位器写入手臂骨骼 */
+/** eyelib right_item/left_item 定位器 → 手臂骨骼 */
 class EyelibItemController : IItemController<BoneRenderInfos, ProxyBone> {
 
 	override fun writeToProxy(infos: BoneRenderInfos, leftArm: ProxyBone, rightArm: ProxyBone) {

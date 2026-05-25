@@ -14,7 +14,7 @@ abstract class HumanoidEntityAnimationMapper<T : LivingEntity, M : HumanoidModel
 	livingEntity: T
 ) : LivingEntityAnimationMapper<T, M>(livingEntity) {
 
-	/** 将 ProxyModel 骨骼数据应用到 HumanoidModel, 含 lock 模式和权重 */
+	/** ProxyModel 骨骼 → HumanoidModel（支持 lock 模式）*/
 	override fun applyProxyToModel(
 		proxyModels: List<ProxyModel>, model: M, flags: Map<String, ProxyBoneFlags>, weight: Float
 	) {

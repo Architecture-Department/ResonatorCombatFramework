@@ -1,6 +1,6 @@
 ﻿package architecture.resonator_combat_framework.module.player_animation.controller
 
-/** 动画控制器 — 管理单个控制器的过渡状态和动画生命周期 */
+/** 动画控制器：过渡状态 + 生命周期 */
 interface IAnimationController {
 	/** 当前混合权重 (0=原版, 1=完全动画) */
 	var blendFactor: Float

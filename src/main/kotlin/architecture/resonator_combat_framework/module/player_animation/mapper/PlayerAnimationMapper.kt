@@ -12,7 +12,7 @@ import io.github.tt432.eyelib.client.ClientTickHandler
 import net.minecraft.client.model.PlayerModel
 import net.minecraft.world.entity.player.Player
 
-/** 玩家动画映射器 — eyelib 后端 + 渲染入口 */
+/** 玩家动画映射器：eyelib 后端 + 渲染入口 */
 class PlayerAnimationMapper(
 	val player: Player
 ) : HumanoidEntityAnimationMapper<Player, PlayerModel<Player>>(player) {
@@ -29,7 +29,7 @@ class PlayerAnimationMapper(
 		PlayerAnimationSetup.setupRenderData(renderData)
 	}
 
-	/** 扩展父类: jacket/sleeve/pants 附加层 */
+	/** 附加层：外套/袖子/裤腿 */
 	override fun applyProxyToModel(
 		proxyModels: List<ProxyModel>,
 		model: PlayerModel<Player>,
@@ -54,7 +54,7 @@ class PlayerAnimationMapper(
 		lastRenderTick = 0f
 	}
 
-	/** 由 LivingEntityRendererMixin 每帧调用: 驱动 eyelib → ProxyModel → ModelPart */
+	/** LivingEntityRendererMixin 每帧调用：tick → proxyModel → ModelPart */
 	@Suppress("UNCHECKED_CAST")
 	fun applyTransform(model: PlayerModel<*>, partialTick: Float) {
 		if (!isClient) return
@@ -68,16 +68,21 @@ class PlayerAnimationMapper(
 			ctrl.tick(partialTick, deltaSec)
 		}
 
-		// 使用优先级过滤获取可渲染的控制器
+		// 获取可渲染控制器（按优先级过滤）
 		val renderableControllers = getRenderableControllers()
 		if (renderableControllers.isEmpty()) return
 
+		val root = defaultController as EyeLibAnimationController
 		val proxyModels = renderableControllers.map { (it as EyeLibAnimationController).proxyModel }
-		val root = defaultController
-		applyProxyToModel(proxyModels, model as PlayerModel<Player>, resolveBoneFlags(animTimeTracker), root.blendFactor)
+		applyProxyToModel(
+			proxyModels,
+			model as PlayerModel<Player>,
+			resolveBoneFlags(animTimeTracker),
+			root.effectiveWeight
+		)
 	}
 
-	/** 由 ItemInHandLayerMixin 调用: ProxyLocator → PoseStack, 支持 blendFactor 过渡 */
+	/** ItemInHandLayerMixin 调用：物品定位器 → PoseStack */
 	fun applyItemTransform(isLeft: Boolean, poseStack: PoseStack) {
 		val renderableControllers = getRenderableControllers()
 		if (renderableControllers.isEmpty()) return

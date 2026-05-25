@@ -6,7 +6,7 @@ import architecture.resonator_combat_framework.module.player_animation.controlle
 import io.github.tt432.eyelib.client.model.GlobalBoneIdHandler
 import io.github.tt432.eyelib.client.render.bone.BoneRenderInfos
 
-/** eyelib 骨骼控制器 — 遍历 BoneRenderInfos 全量条目, 按 boneId 反向查询名称写入 ProxyModel */
+/** eyelib 骨骼数据写入 ProxyModel */
 class EyelibBoneController : IBoneController<BoneRenderInfos, ProxyModel> {
 
 	override fun writeToProxy(infos: BoneRenderInfos, proxyModel: ProxyModel) {

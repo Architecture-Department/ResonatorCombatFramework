@@ -1,6 +1,9 @@
 package architecture.resonator_combat_framework.module.player_animation.controller.eyelib
 
+import architecture.resonator_combat_framework.module.player_animation.api.ProxyBone
 import architecture.resonator_combat_framework.module.player_animation.api.ProxyModel
+import architecture.resonator_combat_framework.module.player_animation.config.AnimationPlayConfig
+import architecture.resonator_combat_framework.module.player_animation.config.AnimType
 import architecture.resonator_combat_framework.module.player_animation.config.ProxyBoneConfigData
 import architecture.resonator_combat_framework.module.player_animation.config.ProxyBoneConfigLoader
 import architecture.resonator_combat_framework.module.player_animation.controller.IAnimationController
@@ -18,19 +21,12 @@ import io.github.tt432.eyelib.client.render.bone.BoneRenderInfos
 import io.github.tt432.eyelib.molang.MolangValue
 
 /**
- * eyelib animation controller | simplified state machine.
+ * eyelib 动画控制器。
  *
- * Design:
- * - applyProxyBone IS the transition; no internal crossfade needed
- * - trigger: clear old anim, start new at frame 0 (frozen), fade in via blendFactor 0->1
- * - stop: set blendTarget=0, animation keeps ticking for fade-out, then clear
- * - stopImmediate: instant clear, no transition
- * - pause: freeze eyelib tick + pose
- * - resume: unfreeze
+ * 跨动画 crossfade：切换时捕获当前姿态，在 proxyModel 层交叉过渡到新动画首帧。
+ * 过渡期间 effectiveWeight 恒为 1.0，applyProxyBone 直接套用混合结果，无二次混合。
  *
- * States: IDLE -> TRANSITIONING -> PLAYING
- *         PLAYING -> FADING_OUT -> IDLE
- *         any -> PAUSED -> previous
+ * 状态机：IDLE → TRANSITIONING → PLAYING → FADING_OUT → IDLE（任意非 IDLE 可 → PAUSED）
  */
 class EyeLibAnimationController(
 	private val renderData: RenderData<*>,
@@ -41,8 +37,10 @@ class EyeLibAnimationController(
 
 	val proxyModel = ProxyModel("eyelib")
 	private var state = State.IDLE
+	private var transitionSource: ProxyModel? = null
+	private var currentConfig: AnimationPlayConfig = AnimationPlayConfig.of("")
 
-	// === params ===
+
 	override var blendFactor = 0f
 	override var blendTarget = 0f
 	override var currentTransitionTicks = ProxyBoneConfigData.DEFAULT_TRANSITION_TICKS
@@ -52,7 +50,7 @@ class EyeLibAnimationController(
 	override var currentAnimId: String? = null
 	override var affectedBones = emptySet<String>()
 
-	// === eyelib ===
+
 	private val activeAnimations = linkedMapOf<String, Animation<*>>()
 	private val activeMultipliers = mutableMapOf<String, MolangValue>()
 	private val configLoader = ProxyBoneConfigLoader.getInstance(isClient)
@@ -60,9 +58,59 @@ class EyeLibAnimationController(
 	private val itemController = EyelibItemController()
 	private var lastTickSec = 0f
 
+	/** 跨动画过渡时恒为 1.0；否则等于 blendFactor */
+	val effectiveWeight: Float get() = if (transitionSource != null) 1f else blendFactor
+
 	override fun isActive(): Boolean = state != State.IDLE
 
-	// ===================== trigger =====================
+	// 触发
+
+	override fun trigger(config: AnimationPlayConfig) {
+		val anim = EyeLibUtil.getAnimation(isClient, config.animId) ?: return
+		val multiplier = MolangValue.getConstant(config.resolveSpeedMultiplier())
+		val cfg = configLoader.getConfig(config.animId)
+		val finalConfig = config.boneConfig ?: cfg
+
+		// 如果同一动画，使用 restart；否则走完整触发流程
+		if (activeAnimations.containsKey(config.animId)) {
+			restartInternal(config.animId, finalConfig, multiplier)
+			return
+		}
+
+		// 跨动画过渡源
+		if (activeAnimations.isNotEmpty() && proxyModel.bones.isNotEmpty()) {
+			transitionSource = ProxyModel("src")
+			for ((name, bone) in proxyModel.bones) {
+				val copy = ProxyBone(name)
+				copy.pos.set(bone.pos); copy.rotation.set(bone.rotation); copy.scale.set(bone.scale)
+				transitionSource!!.addBone(copy)
+			}
+		}
+
+		activeAnimations.clear(); activeMultipliers.clear()
+		activeAnimations[config.animId] = anim
+		activeMultipliers[config.animId] = multiplier
+		currentConfig = config
+		speedMultiplier = config.resolveSpeedMultiplier()
+		currentAnimId = config.animId
+		affectedBones = finalConfig.resolveCurrentBoneNames()
+
+		// 设置起始时间
+		if (config.startTime > 0 && isClient) {
+			EyeLibUtil.setAnimTime(renderData, config.animId, config.startTime / 20f)
+		}
+
+		// 处理动画类型
+		applyAnimType(config.animType, anim)
+
+		// 淡入
+		currentTransitionTicks = config.resolveFadeInTicks(cfg.transitionTicks)
+		state = State.TRANSITIONING
+		blendFactor = 0f; blendTarget = 1f
+		lastTickSec = 0f
+		freezeAllAtFrameZero()
+		rebuildAnimate()
+	}
 
 	override fun trigger(animId: String, transitionTicks: Int) {
 		trigger(animId, transitionTicks, speedMultiplier)
@@ -80,10 +128,19 @@ class EyeLibAnimationController(
 			return
 		}
 
-		// clear previous animation unconditionally
+		// 跨动画过渡源：快照当前姿态
+		if (activeAnimations.isNotEmpty() && proxyModel.bones.isNotEmpty()) {
+			transitionSource = ProxyModel("src")
+
+			for ((name, bone) in proxyModel.bones) {
+				val copy = ProxyBone(name)
+				copy.pos.set(bone.pos); copy.rotation.set(bone.rotation); copy.scale.set(bone.scale)
+				transitionSource!!.addBone(copy)
+			}
+		}
+
+
 		activeAnimations.clear(); activeMultipliers.clear()
-		// clear proxyModel: old bones must not leak into new animation
-		proxyModel.bones.clear()
 
 		activeAnimations[animId] = anim
 		activeMultipliers[animId] = multiplier
@@ -105,12 +162,13 @@ class EyeLibAnimationController(
 		trigger(animId, transitionTicks, m)
 	}
 
-	// ===================== stop =====================
+	// 停止
 
 	override fun stop() {
 		if (state == State.IDLE || state == State.FADING_OUT) return
 		state = State.FADING_OUT
 		blendTarget = 0f
+		currentTransitionTicks = currentConfig.resolveFadeOutTicks(currentTransitionTicks)
 		if (currentTransitionTicks <= 0) forceClear()
 	}
 
@@ -118,7 +176,7 @@ class EyeLibAnimationController(
 		forceClear()
 	}
 
-	// ===================== pause / resume =====================
+	// 暂停 / 恢复
 
 	override fun pause() {
 		if (state == State.PLAYING || state == State.TRANSITIONING) state = State.PAUSED
@@ -137,7 +195,7 @@ class EyeLibAnimationController(
 		restartInternal(animId, configLoader.getConfig(animId), MolangValue.getConstant(speedMultiplier))
 	}
 
-	// ===================== tick =====================
+	// 每帧
 
 	override fun tick(partialTick: Float, deltaSec: Float) {
 		if (!isClient) return
@@ -149,7 +207,7 @@ class EyeLibAnimationController(
 
 		val shouldTickEyelib = state != State.IDLE && state != State.PAUSED
 
-		// stale-bone removal: only keep bones that current animation declares
+		// 清除不属于当前动画的骨骼
 		if (affectedBones.isNotEmpty()) {
 			val toRemove = proxyModel.bones.keys.filter { it !in affectedBones }.toList()
 			for (name in toRemove) proxyModel.bones.remove(name)
@@ -168,7 +226,7 @@ class EyeLibAnimationController(
 			}
 		} else BoneRenderInfos.EMPTY
 
-		// freeze at frame 0 during transition
+		// 冻结首帧
 		if (state == State.TRANSITIONING) freezeAllAtFrameZero()
 
 		checkOnceAnimations()
@@ -178,29 +236,96 @@ class EyeLibAnimationController(
 		val ra = proxyModel.getBone("right_arm")
 		if (la != null && ra != null) itemController.writeToProxy(infos, la, ra)
 
-		// state transitions from blendFactor
-		if (state == State.TRANSITIONING && blendFactor >= 1f) state = State.PLAYING
+		// 交叉过渡：旧姿态 → 新动画首帧
+		if (state == State.TRANSITIONING && transitionSource != null) {
+			// 旧动画独有骨骼：每帧重置为 identity
+			for ((name, bone) in proxyModel.bones) {
+				if (name !in affectedBones) {
+					bone.pos.set(0f); bone.rotation.set(0f); bone.scale.set(1f)
+				}
+			}
+			// 新动画骨骼：source 补 identity
+			for ((name, _) in proxyModel.bones) {
+				if (transitionSource!!.getBone(name) == null)
+					transitionSource!!.addBone(ProxyBone(name))
+			}
+			// 旧动画骨骼：target 补 identity
+			for ((name, _) in transitionSource!!.bones) {
+				if (proxyModel.getBone(name) == null)
+					proxyModel.addBone(ProxyBone(name))
+			}
+			// lerp 混合
+			for ((name, fromBone) in transitionSource!!.bones) {
+				val toBone = proxyModel.getBone(name) ?: continue
+				fromBone.pos.lerp(toBone.pos, blendFactor, toBone.pos)
+				fromBone.rotation.lerp(toBone.rotation, blendFactor, toBone.rotation)
+				fromBone.scale.lerp(toBone.scale, blendFactor, toBone.scale)
+			}
+		}
+
+		// 状态转换
+		if (state == State.TRANSITIONING && blendFactor >= 1f) {
+			state = State.PLAYING
+			transitionSource = null
+		}
 		if (state == State.FADING_OUT && blendFactor <= 0f) forceClear()
 
 		ac.tickedInfos = infos; ac.effects = effects
 	}
 
-	// ===================== internal =====================
+	// 内部
 
 	private fun restartInternal(animId: String, config: ProxyBoneConfigData, multiplier: MolangValue) {
 		activeMultipliers[animId] = multiplier
 		currentAnimId = animId; affectedBones = config.resolveCurrentBoneNames()
 		state = State.PLAYING; blendTarget = 1f; blendFactor = 1f
+		transitionSource = null
 		if (isClient) EyeLibUtil.resetAnimData(renderData, animId)
 		lastTickSec = 0f
 	}
 
+	private fun applyAnimType(type: AnimType, anim: Animation<*>) {
+		if (anim !is BrAnimationEntry) return
+		when (type) {
+			AnimType.DEFAULT -> {} // 不修改
+			AnimType.PLAY_ONCE -> anim.setLoop(BrLoopType.ONCE)
+			AnimType.STOP_AT_LAST -> anim.setLoop(BrLoopType.HOLD_ON_LAST_FRAME)
+			AnimType.LOOP -> anim.setLoop(BrLoopType.LOOP)
+		}
+	}
+
 	private fun checkOnceAnimations() {
 		for ((animId, anim) in activeAnimations.toList()) {
-			if (anim is BrAnimationEntry && anim.loop() == BrLoopType.ONCE) {
-				val data = EyeLibUtil.getEntryData(renderData, animId) ?: continue
-				val effectiveTime = data.animTime * speedMultiplier
-				if (effectiveTime > anim.animationLength()) stop()
+			if (anim !is BrAnimationEntry) continue
+			val data = EyeLibUtil.getEntryData(renderData, animId) ?: continue
+			val effectiveTime = data.animTime * speedMultiplier
+			val animLength = anim.animationLength()
+
+			// 检查 endTime
+			if (currentConfig.endTime != 0) {
+				val endSec = if (currentConfig.endTime < 0)
+					animLength + currentConfig.endTime / 20f
+				else
+					currentConfig.endTime / 20f
+				if (effectiveTime >= endSec) {
+					when (currentConfig.animType) {
+						AnimType.STOP_AT_LAST -> pause()
+						AnimType.LOOP -> EyeLibUtil.resetAnimData(renderData, animId)
+						else -> stop()
+					}
+					return
+				}
+			}
+
+			// 默认行为
+			when {
+				anim.loop() == BrLoopType.ONCE && effectiveTime > animLength -> {
+					if (currentConfig.animType == AnimType.STOP_AT_LAST) pause()
+					else stop()
+				}
+				anim.loop() == BrLoopType.HOLD_ON_LAST_FRAME && effectiveTime > animLength -> {
+					pause()
+				}
 			}
 		}
 	}
@@ -222,6 +347,7 @@ class EyeLibAnimationController(
 		blendFactor = 0f; blendTarget = 0f
 		activeAnimations.clear(); activeMultipliers.clear()
 		proxyModel.bones.clear()
+		transitionSource = null
 		currentAnimId = null; affectedBones = emptySet()
 		lastTickSec = 0f
 		rebuildAnimate()
