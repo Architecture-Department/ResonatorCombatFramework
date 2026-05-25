@@ -15,6 +15,7 @@ class EyelibBoneController : IBoneController<BoneRenderInfos, ProxyModel> {
 			val bone = proxyModel.getBone(name) ?: ProxyBone(name).also { proxyModel.addBone(it) }
 			bone.pos.set(info.renderPosition)
 			bone.rotation.set(info.renderRotation)
+			bone.scale.set(info.renderScala)
 		}
 	}
 }

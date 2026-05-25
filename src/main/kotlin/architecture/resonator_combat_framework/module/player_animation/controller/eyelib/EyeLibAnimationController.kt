@@ -216,8 +216,13 @@ class EyeLibAnimationController(
 				val copy = ProxyBone(name)
 				copy.pos.set(bone.pos)
 				copy.rotation.set(bone.rotation)
+				copy.scale.set(bone.scale)
 				for ((ln, ll) in bone.locators) {
-					copy.addLocator(ProxyLocator(ln).also { it.pos.set(ll.pos); it.rotation.set(ll.rotation) })
+					copy.addLocator(ProxyLocator(ln).also {
+						it.pos.set(ll.pos);
+						it.rotation.set(ll.rotation)
+						it.scale.set(ll.scale)
+					})
 				}
 				dst.addBone(copy)
 			}
@@ -228,6 +233,7 @@ class EyeLibAnimationController(
 				val toBone = to.getBone(name) ?: continue
 				fromBone.pos.lerp(toBone.pos, t, toBone.pos)
 				fromBone.rotation.lerp(toBone.rotation, t, toBone.rotation)
+				fromBone.scale.lerp(toBone.scale, t, toBone.scale)
 			}
 		}
 	}

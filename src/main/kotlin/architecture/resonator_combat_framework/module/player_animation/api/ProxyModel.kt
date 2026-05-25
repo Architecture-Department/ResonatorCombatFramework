@@ -14,6 +14,7 @@ data class ProxyBone(
 	var name: String,
 	val pos: Vector3f = Vector3f(),
 	val rotation: Vector3f = Vector3f(),
+	val scale: Vector3f = Vector3f(1f, 1f, 1f),
 	val locators: HashMap<String, ProxyLocator> = hashMapOf()
 ) {
 	fun addLocator(locator: ProxyLocator): ProxyLocator? = locators.put(locator.name, locator)
@@ -24,5 +25,6 @@ data class ProxyLocator(
 	var name: String,
 	val pos: Vector3f = Vector3f(),
 	val rotation: Vector3f = Vector3f(),
+	val scale: Vector3f = Vector3f(1f, 1f, 1f),
 	var ignoreInheritedScale: Boolean = true
 )

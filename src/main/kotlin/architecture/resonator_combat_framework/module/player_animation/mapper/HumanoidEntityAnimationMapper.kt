@@ -37,25 +37,48 @@ abstract class HumanoidEntityAnimationMapper<T : LivingEntity, M : HumanoidModel
 		val bone = proxy.getBone(name) ?: return
 		val rp = bone.pos;
 		val rr = bone.rotation
+		val rs = bone.scale
 		val lock = flags[name]?.hasAnyLockState() ?: false
-		if (rp.x == 0f && rp.y == 0f && rp.z == 0f && rr.x == 0f && rr.y == 0f && rr.z == 0f) return
+
+		val isPos = rp.x != 0f || rp.y != 0f || rp.z != 0f
+		val isRotation = rr.x != 0f || rr.y != 0f || rr.z != 0f
+		val isScale = rs.x != 1f || rs.y != 1f || rs.z != 1f
+		if (!isPos && !isRotation && !isScale) return
 
 		for (part in parts) {
 			val ip = part.initialPose
 			if (lock) {
-				part.x += (ip.x - rp.x * 16f - part.x) * weight
-				part.y += (ip.y - rp.y * 16f - part.y) * weight
-				part.z += (ip.z + rp.z * 16f - part.z) * weight
-				part.xRot += (ip.xRot - rr.x - part.xRot) * weight
-				part.yRot += (ip.yRot + rr.y - part.yRot) * weight
-				part.zRot += (ip.zRot + rr.z - part.zRot) * weight
+				if (isPos) {
+					part.x += (ip.x - rp.x * 16f - part.x) * weight
+					part.y += (ip.y - rp.y * 16f - part.y) * weight
+					part.z += (ip.z + rp.z * 16f - part.z) * weight
+				}
+				if (isRotation) {
+					part.xRot += (ip.xRot - rr.x - part.xRot) * weight
+					part.yRot += (ip.yRot - rr.y - part.yRot) * weight
+					part.zRot += (ip.zRot + rr.z - part.zRot) * weight
+				}
+				if (isScale) {
+					part.xScale += (1 + rs.x - part.xScale) * weight
+					part.yScale += (1 + rs.y - part.yScale) * weight
+					part.zScale += (1 + rs.z - part.zScale) * weight
+				}
 			} else {
-				part.x += (-rp.x * 16f) * weight
-				part.y += (-rp.y * 16f) * weight
-				part.z += (+rp.z * 16f) * weight
-				part.xRot += (-rr.x) * weight
-				part.yRot += (+rr.y) * weight
-				part.zRot += (+rr.z) * weight
+				if (isPos) {
+					part.x += (-rp.x * 16f) * weight
+					part.y += (-rp.y * 16f) * weight
+					part.z += (+rp.z * 16f) * weight
+				}
+				if (isRotation) {
+					part.xRot += (-rr.x) * weight
+					part.yRot += (-rr.y) * weight
+					part.zRot += (+rr.z) * weight
+				}
+				if (isScale) {
+					part.xScale += (rs.x) * weight
+					part.yScale += (rs.y) * weight
+					part.zScale += (rs.z) * weight
+				}
 			}
 		}
 	}
@@ -73,9 +96,13 @@ abstract class HumanoidEntityAnimationMapper<T : LivingEntity, M : HumanoidModel
 			val rx = loc.rotation.x;
 			val ry = loc.rotation.y;
 			val rz = loc.rotation.z
+			val sx = loc.scale.x;
+			val sy = loc.scale.y;
+			val sz = loc.scale.z
 			poseStack.mulPose(Axis.XP.rotationDegrees(90.0f))
 			if (px != 0f || py != 0f || pz != 0f) poseStack.translate(px.toDouble(), py.toDouble(), pz.toDouble())
 			if (rz != 0f || ry != 0f || rx != 0f) poseStack.mulPose(Quaternionf().rotationZYX(rz, ry, rx))
+			if (sx != 1f || sy != 1f || sz != 1f) poseStack.scale(sx, sy, sz)
 			poseStack.mulPose(Axis.XP.rotationDegrees(-90.0f))
 			return
 		}
