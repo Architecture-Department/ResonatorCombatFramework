@@ -1,12 +1,11 @@
 package architecture.resonator_combat_framework.datagen
 
-import architecture.goldenboughs_lib.util.buildClient
-import architecture.resonator_combat_framework.core.Rcf
+import architecture.goldenboughs_lib.util.datagen.buildClient
+import architecture.resonator_combat_framework.core.RcfConstants
 import architecture.resonator_combat_framework.datagen.i18n.RcfZhCn
 import net.neoforged.bus.api.SubscribeEvent
 import net.neoforged.fml.common.EventBusSubscriber
 import net.neoforged.neoforge.data.event.GatherDataEvent
-import architecture.resonator_combat_framework.core.RcfConstants
 
 /**
  * 数据生成主类
