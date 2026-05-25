@@ -10,6 +10,7 @@ import io.github.tt432.eyelib.capability.component.ClientEntityComponent
 import io.github.tt432.eyelib.client.animation.AnimationEffects
 import io.github.tt432.eyelib.client.animation.BrAnimator
 import io.github.tt432.eyelib.client.animation.bedrock.BrAnimationEntry
+import io.github.tt432.eyelib.client.animation.bedrock.BrLoopType
 import io.github.tt432.eyelib.client.render.bone.BoneRenderInfos
 import io.github.tt432.eyelib.molang.MolangValue
 
@@ -58,25 +59,25 @@ class EyeLibAnimationController(
 		if (isClient) EyeLibUtil.setAnimTime(renderData, animId, timeSec)
 	}
 
-	override fun getPlaybackInfo(animId: String): BaseAnimationController.PlaybackInfo? {
+	override fun getPlaybackInfo(animId: String): PlaybackInfo? {
 		val anim = EyeLibUtil.getAnimation(isClient, animId) as? BrAnimationEntry ?: return null
 		val data = EyeLibUtil.getEntryData(renderData, animId) ?: return null
 		val loopType = when (anim.loop()) {
-			io.github.tt432.eyelib.client.animation.bedrock.BrLoopType.ONCE -> BaseAnimationController.LoopType.ONCE
-			io.github.tt432.eyelib.client.animation.bedrock.BrLoopType.LOOP -> BaseAnimationController.LoopType.LOOP
-			io.github.tt432.eyelib.client.animation.bedrock.BrLoopType.HOLD_ON_LAST_FRAME -> BaseAnimationController.LoopType.HOLD_ON_LAST
-			else -> BaseAnimationController.LoopType.ONCE
+			BrLoopType.ONCE -> LoopType.ONCE
+			BrLoopType.LOOP -> LoopType.LOOP
+			BrLoopType.HOLD_ON_LAST_FRAME -> LoopType.HOLD_ON_LAST
+			else -> LoopType.ONCE
 		}
-		return BaseAnimationController.PlaybackInfo(data.animTime, anim.animationLength(), loopType)
+		return PlaybackInfo(data.animTime, anim.animationLength(), loopType)
 	}
 
-	override fun tickBackend(ticks: Float) {
+	override fun tickBackend(gameTime: Float) {
 		val ac: AnimationComponent = renderData.animationComponent
 		val cec: ClientEntityComponent = renderData.clientEntityComponent
 		val effects = AnimationEffects()
 
 		val infos = if (ac.getSerializableInfo() != null) {
-			BrAnimator.tickAnimation(ac, renderData.scope, effects, ticks) {
+			BrAnimator.tickAnimation(ac, renderData.scope, effects, gameTime) {
 				val ce = cec.clientEntity ?: return@tickAnimation
 				ce.scripts().ifPresent { it.pre_animation().eval(renderData.scope) }
 			}

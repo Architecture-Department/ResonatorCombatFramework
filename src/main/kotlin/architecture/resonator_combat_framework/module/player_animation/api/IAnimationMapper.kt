@@ -1,4 +1,4 @@
-﻿package architecture.resonator_combat_framework.module.player_animation.api
+package architecture.resonator_combat_framework.module.player_animation.api
 
 import architecture.resonator_combat_framework.module.player_animation.config.AnimationPlayConfig
 import architecture.resonator_combat_framework.module.player_animation.controller.IAnimationController
@@ -12,78 +12,62 @@ interface IAnimationMapper {
 	/** 动画ID → 控制器名称，未映射走默认 */
 	val animControllerMap: MutableMap<String, String>
 
-	/** 解析动画ID对应的控制器 */
 	fun resolveController(animId: String): String = animControllerMap[animId] ?: DEFAULT_CONTROLLER_NAME
 
-	/** 详细播放配置 */
+	// 触发
+
 	fun trigger(config: AnimationPlayConfig)
 
-	/** 在默认控制器上触发 */
-	fun trigger(animId: String)
+	fun trigger(animId: String) = trigger(AnimationPlayConfig.of(animId))
 
-	/** 在指定控制器上触发 */
-	fun trigger(controllerName: String, animId: String)
+	fun trigger(controllerName: String, animId: String) =
+		trigger(AnimationPlayConfig.of(animId).copy(controllerName = controllerName))
 
+	// 停止
 
 	fun stop(controllerName: String)
-
 	fun stopImmediate(controllerName: String)
+	fun stopAll() = controllers().forEach { it.stop() }
+	fun stopAllImmediate() = controllers().forEach { it.stopImmediate() }
 
-
-	fun stopAll()
-
-	fun stopAllImmediate()
+	// 暂停 / 恢复
 
 	fun pause(controllerName: String)
-
 	fun resume(controllerName: String)
+	fun pauseAll() = controllers().forEach { it.pause() }
+	fun resumeAll() = controllers().forEach { it.resume() }
 
+	// 动画管理
 
 	fun stopAnimation(animId: String)
-
-
 	fun stopAnimation(controllerName: String, animId: String)
 
+	// 查询
 
 	fun isActive(): Boolean
-
-
 	fun isControllerActive(): Boolean
-
-
 	fun isControllerActive(controllerName: String): Boolean
-
-
 	fun getController(): IAnimationController
-
-
 	fun getController(controllerName: String): IAnimationController
-
-
 	fun hasController(): Boolean
-
-
 	fun hasController(controllerName: String): Boolean
 
+	// 控制器管理
 
+	fun controllers(): Collection<IAnimationController>
 	fun addController(name: String, controller: IAnimationController)
-
-
 	fun removeController(name: String)
 
 	// 优先级 + 骨骼冲突
 
-	/** 活跃控制器按优先级降序 */
 	fun getActiveControllersSorted(): List<IAnimationController>
 
-	/** 两控制器是否影响同一骨骼，空集合视为无冲突 */
 	fun hasBoneConflict(ctrlA: IAnimationController, ctrlB: IAnimationController): Boolean {
-		val bonesA = ctrlA.affectedBones
-		val bonesB = ctrlB.affectedBones
-		if (bonesA.isEmpty() || bonesB.isEmpty()) return false
-		return bonesA.intersect(bonesB).isNotEmpty()
+		val a = ctrlA.affectedBones
+		val b = ctrlB.affectedBones
+		if (a.isEmpty() || b.isEmpty()) return false
+		return a.intersect(b).isNotEmpty()
 	}
 
-	/** 因骨骼冲突阻塞当前控制器的更高优先级控制器列表 */
 	fun findBlockingControllers(controller: IAnimationController): List<IAnimationController>
 }

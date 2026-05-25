@@ -43,14 +43,19 @@ abstract class EntityAnimationMapper<T : Entity, M : EntityModel<T>>(
 		controller.trigger(config)
 	}
 
-	override fun trigger(animId: String) = trigger(resolveController(animId), animId)
+	override fun trigger(animId: String) = trigger(AnimationPlayConfig.of(animId))
 
 	override fun trigger(controllerName: String, animId: String) {
-		val config = resolveConfig(animId)
-		// 清除旧配置防止 lock/unlock 标志泄漏
+		val cfg = resolveConfig(animId)
+		val ctrl = controllers[controllerName] ?: defaultController
+		val usedCfg = AnimationPlayConfig.of(animId).copy(
+			controllerName = controllerName,
+			fadeInTicks = cfg.transitionTicks,
+			speedMultiplier = ctrl.speedMultiplier
+		)
 		boneConfigs.clear()
-		boneConfigs[animId] = config
-		(controllers[controllerName] ?: defaultController).trigger(animId, config.transitionTicks)
+		boneConfigs[animId] = cfg
+		ctrl.trigger(usedCfg)
 	}
 
 	// 停止
@@ -63,13 +68,9 @@ abstract class EntityAnimationMapper<T : Entity, M : EntityModel<T>>(
 		(controllers[controllerName] ?: defaultController).stopImmediate()
 	}
 
-	override fun stopAll() {
-		for (ctrl in controllers.values) ctrl.stop()
-	}
+	override fun stopAll() = controllers().forEach { it.stop() }
 
-	override fun stopAllImmediate() {
-		for (ctrl in controllers.values) ctrl.stopImmediate()
-	}
+	override fun stopAllImmediate() = controllers().forEach { it.stopImmediate() }
 
 	override fun pause(controllerName: String) {
 		(controllers[controllerName] ?: defaultController).pause()
@@ -102,6 +103,7 @@ abstract class EntityAnimationMapper<T : Entity, M : EntityModel<T>>(
 		controllers[controllerName] ?: defaultController
 
 	override fun hasController(): Boolean = true
+	override fun controllers() = controllers.values
 	override fun hasController(controllerName: String): Boolean = controllerName in controllers
 
 	// 控制器管理
@@ -118,11 +120,8 @@ abstract class EntityAnimationMapper<T : Entity, M : EntityModel<T>>(
 
 	// 优先级 + 骨骼冲突
 
-	override fun getActiveControllersSorted(): List<IAnimationController> {
-		return controllers.values
-			.filter { it.isActive() }
-			.sortedByDescending { it.priority }
-	}
+	override fun getActiveControllersSorted(): List<IAnimationController> =
+		controllers().filter { it.isActive() }.sortedByDescending { it.priority }
 
 	override fun findBlockingControllers(controller: IAnimationController): List<IAnimationController> {
 		if (!controller.isActive()) return emptyList()

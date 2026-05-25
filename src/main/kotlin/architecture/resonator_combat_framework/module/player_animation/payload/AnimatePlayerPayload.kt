@@ -1,13 +1,12 @@
 ﻿package architecture.resonator_combat_framework.module.player_animation.payload
 
 import architecture.goldenboughs_lib.api.payload.ToServerAndClientPayload
-import architecture.resonator_combat_framework.core.Rcf
+import architecture.resonator_combat_framework.core.RcfConstants
+import architecture.resonator_combat_framework.module.player_animation.config.AnimationPlayConfig
 import architecture.resonator_combat_framework.module.player_animation.helper.PlayerAnimationHelper.clientStopPlayerAnimation
 import architecture.resonator_combat_framework.module.player_animation.helper.PlayerAnimationHelper.clientTriggerPlayerAnimation
-import architecture.resonator_combat_framework.module.player_animation.helper.PlayerAnimationHelper.clientTriggerPlayerAnimationForDuration
-import architecture.resonator_combat_framework.module.player_animation.helper.PlayerAnimationHelper.serverPlayerAnimation
-import architecture.resonator_combat_framework.module.player_animation.helper.PlayerAnimationHelper.serverPlayerAnimationForDuration
 import architecture.resonator_combat_framework.module.player_animation.helper.PlayerAnimationHelper.serverStopPlayerAnimation
+import architecture.resonator_combat_framework.module.player_animation.helper.PlayerAnimationHelper.serverTriggerPlayerAnimation
 import io.netty.buffer.ByteBuf
 import net.minecraft.client.player.AbstractClientPlayer
 import net.minecraft.network.codec.ByteBufCodecs
@@ -17,9 +16,7 @@ import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.level.Level
 import net.neoforged.neoforge.network.handling.IPayloadContext
 import java.util.*
-import architecture.resonator_combat_framework.core.RcfConstants
 
-// 双端网络包：服务端→客户端 / 客户端→服务端
 data class AnimatePlayerPayload(
 	val id: String,
 	val playerUuid: UUID,
@@ -28,6 +25,7 @@ data class AnimatePlayerPayload(
 	val durationTicks: Int = 0,
 	val originalAnimLengthSec: Float = 0f
 ) : ToServerAndClientPayload {
+
 	override fun type() = TYPE
 
 	override fun toClient(context: IPayloadContext, player: AbstractClientPlayer) {
@@ -35,25 +33,34 @@ data class AnimatePlayerPayload(
 		val target = (level.getPlayerByUUID(playerUuid) as? AbstractClientPlayer) ?: return
 		if (id == STOP_MARKER || id.isEmpty()) {
 			target.clientStopPlayerAnimation()
-		} else if (useDuration) {
-			target.clientTriggerPlayerAnimationForDuration(id, durationTicks, originalAnimLengthSec)
 		} else {
-			target.clientTriggerPlayerAnimation(id, speedMultiplier)
+			target.clientTriggerPlayerAnimation(
+				if (useDuration)
+					AnimationPlayConfig.builder(id).duration(durationTicks, originalAnimLengthSec).build()
+				else
+					AnimationPlayConfig.of(id).copy(speedMultiplier = speedMultiplier)
+			)
 		}
 	}
 
 	override fun toServer(context: IPayloadContext, player: ServerPlayer) {
 		if (id == STOP_MARKER || id.isEmpty()) {
 			player.serverStopPlayerAnimation()
-		} else if (useDuration) {
-			player.serverPlayerAnimationForDuration(id, durationTicks, originalAnimLengthSec)
 		} else {
-			player.serverPlayerAnimation(id, speedMultiplier)
+			player.serverTriggerPlayerAnimation(
+				if (useDuration)
+					AnimationPlayConfig.builder(id).duration(durationTicks, originalAnimLengthSec).build()
+				else
+					AnimationPlayConfig.of(id).copy(speedMultiplier = speedMultiplier)
+			)
 		}
 	}
 
 	companion object {
 		const val STOP_MARKER = ""
+
+		@JvmStatic
+		fun stop() = AnimatePlayerPayload(STOP_MARKER, UUID.randomUUID())
 
 		@JvmField
 		val TYPE = CustomPacketPayload.Type<AnimatePlayerPayload>(RcfConstants.modRl("animate_player"))

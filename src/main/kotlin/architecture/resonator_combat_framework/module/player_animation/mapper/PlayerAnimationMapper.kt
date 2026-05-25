@@ -3,9 +3,10 @@
 import architecture.resonator_combat_framework.module.player_animation.PlayerAnimationSetup
 import architecture.resonator_combat_framework.module.player_animation.api.IAnimationMapper
 import architecture.resonator_combat_framework.module.player_animation.api.ProxyModel
+import architecture.resonator_combat_framework.module.player_animation.config.AnimationPlayConfig
 import architecture.resonator_combat_framework.module.player_animation.config.ProxyBoneFlags
-import architecture.resonator_combat_framework.module.player_animation.controller.IAnimationController
 import architecture.resonator_combat_framework.module.player_animation.controller.BaseAnimationController
+import architecture.resonator_combat_framework.module.player_animation.controller.IAnimationController
 import architecture.resonator_combat_framework.module.player_animation.controller.eyelib.EyeLibAnimationController
 import com.mojang.blaze3d.vertex.PoseStack
 import io.github.tt432.eyelib.capability.RenderData
@@ -47,7 +48,13 @@ class PlayerAnimationMapper(
 		}
 	}
 
-	override fun trigger(animId: String) = trigger(resolveController(animId), animId)
+	override fun trigger(config: AnimationPlayConfig) {
+		super.trigger(config)
+		animTimeTracker = 0f
+		lastRenderTick = 0f
+	}
+
+	override fun trigger(animId: String) = trigger(AnimationPlayConfig.of(animId))
 
 	override fun trigger(controllerName: String, animId: String) {
 		super.trigger(controllerName, animId)
@@ -66,14 +73,14 @@ class PlayerAnimationMapper(
 
 		// 驱动所有控制器
 		for (ctrl in controllers.values) {
-			ctrl.tick(partialTick, deltaSec)
+			ctrl.tick(tickSec, deltaSec)
 		}
 
 		// 获取可渲染控制器（按优先级过滤）
 		val renderableControllers = getRenderableControllers()
 		if (renderableControllers.isEmpty()) return
 
-		val root = defaultController as EyeLibAnimationController
+		val root = defaultController
 		val proxyModels = renderableControllers.map { (it as BaseAnimationController).proxyModel }
 		applyProxyToModel(
 			proxyModels,
@@ -87,7 +94,7 @@ class PlayerAnimationMapper(
 	fun applyItemTransform(isLeft: Boolean, poseStack: PoseStack) {
 		val renderableControllers = getRenderableControllers()
 		if (renderableControllers.isEmpty()) return
-		val weight = defaultController.blendFactor
+		val weight = (defaultController as BaseAnimationController).effectiveWeight
 		applyProxyToItem(
 			renderableControllers.map { (it as BaseAnimationController).proxyModel },
 			isLeft,

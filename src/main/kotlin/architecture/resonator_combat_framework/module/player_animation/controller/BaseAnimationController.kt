@@ -2,8 +2,8 @@ package architecture.resonator_combat_framework.module.player_animation.controll
 
 import architecture.resonator_combat_framework.module.player_animation.api.ProxyBone
 import architecture.resonator_combat_framework.module.player_animation.api.ProxyModel
-import architecture.resonator_combat_framework.module.player_animation.config.AnimationPlayConfig
 import architecture.resonator_combat_framework.module.player_animation.config.AnimType
+import architecture.resonator_combat_framework.module.player_animation.config.AnimationPlayConfig
 import architecture.resonator_combat_framework.module.player_animation.config.ProxyBoneConfigData
 import architecture.resonator_combat_framework.module.player_animation.config.ProxyBoneConfigLoader
 
@@ -34,8 +34,6 @@ abstract class BaseAnimationController(
 	override var currentAnimId: String? = null
 	override var affectedBones = emptySet<String>()
 
-	protected var lastTickSec = 0f
-
 	/** 跨动画过渡时恒为 1.0；否则等于 blendFactor */
 	val effectiveWeight: Float get() = if (transitionSource != null) 1f else blendFactor
 
@@ -58,8 +56,8 @@ abstract class BaseAnimationController(
 	/** 获取动画播放信息，null 表示取不到 */
 	protected abstract fun getPlaybackInfo(animId: String): PlaybackInfo?
 
-	/** 每帧驱动后端，将骨骼写入 proxyModel */
-	protected abstract fun tickBackend(ticks: Float)
+	/** 每帧驱动后端，将骨骼写入 proxyModel。gameTime = 游戏时间(秒) */
+	protected abstract fun tickBackend(gameTime: Float)
 
 	data class PlaybackInfo(
 		val animTime: Float,
@@ -95,7 +93,6 @@ abstract class BaseAnimationController(
 		currentTransitionTicks = config.resolveFadeInTicks(cfg.transitionTicks)
 		state = State.TRANSITIONING
 		blendFactor = 0f; blendTarget = 1f
-		lastTickSec = 0f
 		freezeAllAtFrameZero()
 		rebuildBackend()
 	}
@@ -158,11 +155,8 @@ abstract class BaseAnimationController(
 
 	override fun tick(partialTick: Float, deltaSec: Float) {
 		if (!isClient) return
-		val ticks = partialTick  // 由调用方传入的累计秒
-		val dSec = if (lastTickSec == 0f) 0f else ticks - lastTickSec
-		lastTickSec = ticks
 
-		tickBlend(dSec)
+		tickBlend(deltaSec)
 
 		val shouldTick = state != State.IDLE && state != State.PAUSED
 
@@ -180,7 +174,7 @@ abstract class BaseAnimationController(
 		checkPlaybackBounds()
 
 		// 子类驱动后端 + 写入 proxyModel
-		tickBackend(ticks)
+		tickBackend(partialTick)
 
 		// crossfade
 		if (state == State.TRANSITIONING && transitionSource != null) {
@@ -275,7 +269,6 @@ abstract class BaseAnimationController(
 		state = State.PLAYING; blendTarget = 1f; blendFactor = 1f
 		transitionSource = null
 		if (isClient) resetAnimAndRestart(currentConfig)
-		lastTickSec = 0f
 	}
 
 	private fun rebuildBackend() {
@@ -303,7 +296,6 @@ abstract class BaseAnimationController(
 		proxyModel.bones.clear()
 		transitionSource = null
 		currentAnimId = null; affectedBones = emptySet()
-		lastTickSec = 0f
 		rebuildBackend()
 	}
 

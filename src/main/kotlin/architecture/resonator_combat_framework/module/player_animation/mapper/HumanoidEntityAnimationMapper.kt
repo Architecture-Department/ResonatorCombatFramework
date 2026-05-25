@@ -35,7 +35,7 @@ abstract class HumanoidEntityAnimationMapper<T : LivingEntity, M : HumanoidModel
 		proxy: ProxyModel, name: String, flags: Map<String, ProxyBoneFlags>, weight: Float, vararg parts: ModelPart
 	) {
 		val bone = proxy.getBone(name) ?: return
-		val rp = bone.pos;
+		val rp = bone.pos
 		val rr = bone.rotation
 		val rs = bone.scale
 		val lock = flags[name]?.hasAnyLockState() ?: false
