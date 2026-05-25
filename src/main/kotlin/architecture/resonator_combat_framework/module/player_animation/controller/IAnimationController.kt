@@ -48,6 +48,9 @@ interface IAnimationController {
 	 */
 	fun triggerForDuration(animId: String, transitionTicks: Int, durationTicks: Int, originalAnimLengthSec: Float)
 	fun stop()
+	fun stopImmediate()
+	fun pause()
+	fun resume()
 	fun stopAnimation(animId: String)
 	fun restartAnimation(animId: String)
 }

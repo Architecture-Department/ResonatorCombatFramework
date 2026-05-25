@@ -23,8 +23,16 @@ interface IAnimationMapper {
 	/** 停止指定控制器的动画 */
 	fun stop(controllerName: String)
 
+	fun stopImmediate(controllerName: String)
+
 	/** 停止所有控制器的动画 */
 	fun stopAll()
+
+	fun stopAllImmediate()
+
+	fun pause(controllerName: String)
+
+	fun resume(controllerName: String)
 
 	/** 从默认控制器移除指定动画 */
 	fun stopAnimation(animId: String)

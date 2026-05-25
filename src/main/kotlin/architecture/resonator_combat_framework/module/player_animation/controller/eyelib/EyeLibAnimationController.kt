@@ -1,7 +1,5 @@
-﻿package architecture.resonator_combat_framework.module.player_animation.controller.eyelib
+package architecture.resonator_combat_framework.module.player_animation.controller.eyelib
 
-import architecture.resonator_combat_framework.module.player_animation.api.ProxyBone
-import architecture.resonator_combat_framework.module.player_animation.api.ProxyLocator
 import architecture.resonator_combat_framework.module.player_animation.api.ProxyModel
 import architecture.resonator_combat_framework.module.player_animation.config.ProxyBoneConfigData
 import architecture.resonator_combat_framework.module.player_animation.config.ProxyBoneConfigLoader
@@ -19,29 +17,42 @@ import io.github.tt432.eyelib.client.animation.bedrock.BrLoopType
 import io.github.tt432.eyelib.client.render.bone.BoneRenderInfos
 import io.github.tt432.eyelib.molang.MolangValue
 
-/** eyelib 动画控制器 — 过渡系统 + BrAnimator 驱动 + ProxyModel lerp */
+/**
+ * eyelib animation controller | simplified state machine.
+ *
+ * Design:
+ * - applyProxyBone IS the transition; no internal crossfade needed
+ * - trigger: clear old anim, start new at frame 0 (frozen), fade in via blendFactor 0->1
+ * - stop: set blendTarget=0, animation keeps ticking for fade-out, then clear
+ * - stopImmediate: instant clear, no transition
+ * - pause: freeze eyelib tick + pose
+ * - resume: unfreeze
+ *
+ * States: IDLE -> TRANSITIONING -> PLAYING
+ *         PLAYING -> FADING_OUT -> IDLE
+ *         any -> PAUSED -> previous
+ */
 class EyeLibAnimationController(
 	private val renderData: RenderData<*>,
 	private val isClient: Boolean
 ) : IAnimationController {
 
-	/** 当前帧的骨骼数据, Mapper 通过 cast 读取 */
+	private enum class State { IDLE, TRANSITIONING, PLAYING, PAUSED, FADING_OUT }
+
 	val proxyModel = ProxyModel("eyelib")
+	private var state = State.IDLE
 
-	/** 旧帧 ProxyModel 快照, 用于交叉淡入淡出 lerp */
-	private var previousProxyModel: ProxyModel? = null
-
+	// === params ===
 	override var blendFactor = 0f
 	override var blendTarget = 0f
 	override var currentTransitionTicks = ProxyBoneConfigData.DEFAULT_TRANSITION_TICKS
-
 	override var speedMultiplier = 1f
 	override var priority = 0
 	override var isOverriding = true
 	override var currentAnimId: String? = null
 	override var affectedBones = emptySet<String>()
 
-	/** eyelib 动画注册表 — 同时只能有一个动画 */
+	// === eyelib ===
 	private val activeAnimations = linkedMapOf<String, Animation<*>>()
 	private val activeMultipliers = mutableMapOf<String, MolangValue>()
 	private val configLoader = ProxyBoneConfigLoader.getInstance(isClient)
@@ -49,10 +60,12 @@ class EyeLibAnimationController(
 	private val itemController = EyelibItemController()
 	private var lastTickSec = 0f
 
-	override fun isActive(): Boolean = activeAnimations.isNotEmpty()
+	override fun isActive(): Boolean = state != State.IDLE
+
+	// ===================== trigger =====================
 
 	override fun trigger(animId: String, transitionTicks: Int) {
-		trigger(animId, transitionTicks, 1f)
+		trigger(animId, transitionTicks, speedMultiplier)
 	}
 
 	override fun trigger(animId: String, transitionTicks: Int, speedMultiplier: Float) {
@@ -63,178 +76,170 @@ class EyeLibAnimationController(
 		val multiplier = MolangValue.getConstant(speedMultiplier)
 
 		if (activeAnimations.containsKey(animId)) {
-			restartAnimationInternal(animId, config, multiplier)
+			restartInternal(animId, config, multiplier)
 			return
 		}
 
-		// 单动画约束: 清除旧动画再触发新动画
-		if (activeAnimations.isNotEmpty()) {
-			previousProxyModel = ProxyModel("prev").also { deepCopyProxy(proxyModel, it) }
-			activeAnimations.clear()
-			activeMultipliers.clear()
-		}
+		// clear previous animation unconditionally
+		activeAnimations.clear(); activeMultipliers.clear()
+		// clear proxyModel: old bones must not leak into new animation
+		proxyModel.bones.clear()
 
 		activeAnimations[animId] = anim
 		activeMultipliers[animId] = multiplier
 		currentAnimId = animId
 		affectedBones = config.resolveCurrentBoneNames()
-		blendFactor = 0f; blendTarget = 1f
-		if (currentTransitionTicks <= 0) {
-			blendFactor = 1f; previousProxyModel = null
-		}
 
+		state = State.TRANSITIONING
+		blendFactor = 0f; blendTarget = 1f
 		lastTickSec = 0f
+		freezeAllAtFrameZero()
 		rebuildAnimate()
 	}
 
 	override fun triggerForDuration(
-		animId: String,
-		transitionTicks: Int,
-		durationTicks: Int,
-		originalAnimLengthSec: Float
+		animId: String, transitionTicks: Int, durationTicks: Int, originalAnimLengthSec: Float
 	) {
-		// 计算倍数: durationTicks / 20 = 期望秒数, originalAnimLengthSec / 期望秒数 = 倍数
 		val desiredSec = durationTicks / 20f
-		val calculatedMultiplier = if (desiredSec > 0f) originalAnimLengthSec / desiredSec else 1f
-		trigger(animId, transitionTicks, calculatedMultiplier)
+		val m = if (desiredSec > 0f) originalAnimLengthSec / desiredSec else 1f
+		trigger(animId, transitionTicks, m)
 	}
 
+	// ===================== stop =====================
+
 	override fun stop() {
-		val hasFade = activeAnimations.isNotEmpty()
-		if (hasFade) {
-			previousProxyModel = ProxyModel("prev").also { deepCopyProxy(proxyModel, it) }
-		}
+		if (state == State.IDLE || state == State.FADING_OUT) return
+		state = State.FADING_OUT
 		blendTarget = 0f
-		if (currentTransitionTicks <= 0 || !hasFade) {
-			blendFactor = 0f; activeAnimations.clear(); activeMultipliers.clear()
-			currentAnimId = null; affectedBones = emptySet()
-			lastTickSec = 0f; rebuildAnimate()
-		}
+		if (currentTransitionTicks <= 0) forceClear()
+	}
+
+	override fun stopImmediate() {
+		forceClear()
+	}
+
+	// ===================== pause / resume =====================
+
+	override fun pause() {
+		if (state == State.PLAYING || state == State.TRANSITIONING) state = State.PAUSED
+	}
+
+	override fun resume() {
+		if (state == State.PAUSED) state = if (isInFadeIn()) State.TRANSITIONING else State.PLAYING
 	}
 
 	override fun stopAnimation(animId: String) {
-		activeAnimations.remove(animId)
-		activeMultipliers.remove(animId)
-		if (activeAnimations.isEmpty()) {
-			blendFactor = 0f; previousProxyModel = null; lastTickSec = 0f
-			currentAnimId = null; affectedBones = emptySet()
-		}
-		rebuildAnimate()
+		activeAnimations.remove(animId); activeMultipliers.remove(animId)
+		if (activeAnimations.isEmpty()) forceClear()
 	}
 
 	override fun restartAnimation(animId: String) {
-		restartAnimationInternal(animId, configLoader.getConfig(animId), MolangValue.getConstant(speedMultiplier))
+		restartInternal(animId, configLoader.getConfig(animId), MolangValue.getConstant(speedMultiplier))
 	}
 
-	private fun restartAnimationInternal(animId: String, config: ProxyBoneConfigData, multiplier: MolangValue) {
-		activeMultipliers[animId] = multiplier
-		currentAnimId = animId
-		affectedBones = config.resolveCurrentBoneNames()
-		blendTarget = 1f; blendFactor = 1f; previousProxyModel = null
-		if (isClient) {
-			val anim = EyeLibUtil.getAnimation(true, animId)
-			if (anim != null) EyeLibUtil.setAnimateEntry(renderData, anim, multiplier)
-			val data = EyeLibUtil.getEntryData(renderData, animId)
-			if (data != null) {
-				data.animTime = 0f; data.lastTicks = 0f; data.deltaTime = 0f
-			}
-		}
-		lastTickSec = 0f
-	}
+	// ===================== tick =====================
 
-	/** 每帧: 驱动 eyelib → 写骨骼/物品 Proxy → lerp 过渡 */
 	override fun tick(partialTick: Float, deltaSec: Float) {
 		if (!isClient) return
-		val scope = renderData.scope
 		val ticks = (ClientTickHandler.getTick() + partialTick) / 20
 		val dSec = if (lastTickSec == 0f) 0f else ticks - lastTickSec
 		lastTickSec = ticks
+
 		tickBlend(dSec)
-		if (activeAnimations.isEmpty()) return
+
+		val shouldTickEyelib = state != State.IDLE && state != State.PAUSED
+
+		// stale-bone removal: only keep bones that current animation declares
+		if (affectedBones.isNotEmpty()) {
+			val toRemove = proxyModel.bones.keys.filter { it !in affectedBones }.toList()
+			for (name in toRemove) proxyModel.bones.remove(name)
+		}
+
+		if (!shouldTickEyelib) return
 
 		val ac: AnimationComponent = renderData.animationComponent
 		val cec: ClientEntityComponent = renderData.clientEntityComponent
 		val effects = AnimationEffects()
 
-		val infos = if (ac.getSerializableInfo() != null)
-			BrAnimator.tickAnimation(ac, scope, effects, ticks) {
+		val infos = if (ac.getSerializableInfo() != null) {
+			BrAnimator.tickAnimation(ac, renderData.scope, effects, ticks) {
 				val ce = cec.clientEntity ?: return@tickAnimation
-				ce.scripts().ifPresent { it.pre_animation().eval(scope) }
-			} else BoneRenderInfos.EMPTY
+				ce.scripts().ifPresent { it.pre_animation().eval(renderData.scope) }
+			}
+		} else BoneRenderInfos.EMPTY
+
+		// freeze at frame 0 during transition
+		if (state == State.TRANSITIONING) freezeAllAtFrameZero()
 
 		checkOnceAnimations()
-		boneController.writeToProxy(infos, proxyModel)
-		val la = proxyModel.getBone("left_arm") ?: return
-		val ra = proxyModel.getBone("right_arm") ?: return
-		itemController.writeToProxy(infos, la, ra)
 
-		// lerp 旧姿态 → 新姿态
-		previousProxyModel?.let { prev ->
-			lerpProxyModels(prev, proxyModel, blendFactor)
-			if (blendFactor >= 1f || blendFactor <= 0f) previousProxyModel = null
-		}
+		boneController.writeToProxy(infos, proxyModel)
+		val la = proxyModel.getBone("left_arm")
+		val ra = proxyModel.getBone("right_arm")
+		if (la != null && ra != null) itemController.writeToProxy(infos, la, ra)
+
+		// state transitions from blendFactor
+		if (state == State.TRANSITIONING && blendFactor >= 1f) state = State.PLAYING
+		if (state == State.FADING_OUT && blendFactor <= 0f) forceClear()
 
 		ac.tickedInfos = infos; ac.effects = effects
+	}
+
+	// ===================== internal =====================
+
+	private fun restartInternal(animId: String, config: ProxyBoneConfigData, multiplier: MolangValue) {
+		activeMultipliers[animId] = multiplier
+		currentAnimId = animId; affectedBones = config.resolveCurrentBoneNames()
+		state = State.PLAYING; blendTarget = 1f; blendFactor = 1f
+		if (isClient) EyeLibUtil.resetAnimData(renderData, animId)
+		lastTickSec = 0f
 	}
 
 	private fun checkOnceAnimations() {
 		for ((animId, anim) in activeAnimations.toList()) {
 			if (anim is BrAnimationEntry && anim.loop() == BrLoopType.ONCE) {
 				val data = EyeLibUtil.getEntryData(renderData, animId) ?: continue
-				// 考虑 speedMultiplier: animTime * multiplier 与 animationLength 比较
 				val effectiveTime = data.animTime * speedMultiplier
-				if (effectiveTime > anim.animationLength()) stopAnimation(animId)
+				if (effectiveTime > anim.animationLength()) stop()
 			}
 		}
 	}
 
-	/** 过渡 tick: blendFactor → blendTarget */
 	private fun tickBlend(ds: Float) {
 		if (blendFactor == blendTarget) return
 		if (currentTransitionTicks <= 0) {
 			blendFactor = blendTarget; return
 		}
 		val step = (ds * 20f) / currentTransitionTicks
-		blendFactor = if (blendFactor < blendTarget) (blendFactor + step).coerceAtMost(blendTarget)
-		else (blendFactor - step).coerceAtLeast(blendTarget)
-		if (blendTarget == 0f && blendFactor <= 0f) {
-			previousProxyModel = null; lastTickSec = 0f
-			currentAnimId = null; affectedBones = emptySet()
-			rebuildAnimate()
-		}
+		blendFactor = if (blendFactor < blendTarget)
+			(blendFactor + step).coerceAtMost(blendTarget)
+		else
+			(blendFactor - step).coerceAtLeast(blendTarget)
+	}
+
+	private fun forceClear() {
+		state = State.IDLE
+		blendFactor = 0f; blendTarget = 0f
+		activeAnimations.clear(); activeMultipliers.clear()
+		proxyModel.bones.clear()
+		currentAnimId = null; affectedBones = emptySet()
+		lastTickSec = 0f
+		rebuildAnimate()
+	}
+
+	private fun isInFadeIn(): Boolean = blendTarget > 0f && blendFactor < 1f
+
+	private fun freezeAllAtFrameZero() {
+		if (!isClient) return
+		for (animId in activeAnimations.keys) EyeLibUtil.resetAnimData(renderData, animId)
 	}
 
 	private fun rebuildAnimate() {
 		if (!isClient) return
-		EyeLibUtil.animateSetup(renderData, activeAnimations.mapValues { it.value.name() }, activeMultipliers.toMap())
-	}
-
-	companion object {
-		private fun deepCopyProxy(src: ProxyModel, dst: ProxyModel) {
-			dst.bones.clear()
-			for ((name, bone) in src.bones) {
-				val copy = ProxyBone(name)
-				copy.pos.set(bone.pos)
-				copy.rotation.set(bone.rotation)
-				copy.scale.set(bone.scale)
-				for ((ln, ll) in bone.locators) {
-					copy.addLocator(ProxyLocator(ln).also {
-						it.pos.set(ll.pos);
-						it.rotation.set(ll.rotation)
-						it.scale.set(ll.scale)
-					})
-				}
-				dst.addBone(copy)
-			}
-		}
-
-		private fun lerpProxyModels(from: ProxyModel, to: ProxyModel, t: Float) {
-			for ((name, fromBone) in from.bones) {
-				val toBone = to.getBone(name) ?: continue
-				fromBone.pos.lerp(toBone.pos, t, toBone.pos)
-				fromBone.rotation.lerp(toBone.rotation, t, toBone.rotation)
-				fromBone.scale.lerp(toBone.scale, t, toBone.scale)
-			}
-		}
+		EyeLibUtil.animateSetup(
+			renderData,
+			activeAnimations.mapValues { it.value.name() },
+			activeMultipliers.toMap()
+		)
 	}
 }

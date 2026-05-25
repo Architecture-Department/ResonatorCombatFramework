@@ -37,6 +37,8 @@ abstract class EntityAnimationMapper<T : Entity, M : EntityModel<T>>(
 
 	override fun trigger(controllerName: String, animId: String) {
 		val config = resolveConfig(animId)
+		// clear previous configs to prevent stale lock/unlock flags
+		boneConfigs.clear()
 		boneConfigs[animId] = config
 		(controllers[controllerName] ?: defaultController).trigger(animId, config.transitionTicks)
 	}
@@ -47,8 +49,24 @@ abstract class EntityAnimationMapper<T : Entity, M : EntityModel<T>>(
 		(controllers[controllerName] ?: defaultController).stop()
 	}
 
+	override fun stopImmediate(controllerName: String) {
+		(controllers[controllerName] ?: defaultController).stopImmediate()
+	}
+
 	override fun stopAll() {
 		for (ctrl in controllers.values) ctrl.stop()
+	}
+
+	override fun stopAllImmediate() {
+		for (ctrl in controllers.values) ctrl.stopImmediate()
+	}
+
+	override fun pause(controllerName: String) {
+		(controllers[controllerName] ?: defaultController).pause()
+	}
+
+	override fun resume(controllerName: String) {
+		(controllers[controllerName] ?: defaultController).resume()
 	}
 
 	override fun stopAnimation(animId: String) {

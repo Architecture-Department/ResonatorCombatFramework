@@ -83,22 +83,26 @@ abstract class HumanoidEntityAnimationMapper<T : LivingEntity, M : HumanoidModel
 		}
 	}
 
-	/** 将 ProxyLocator 数据应用到 PoseStack, 用于物品渲染 */
-	fun applyProxyToItem(proxyModels: List<ProxyModel>, isLeft: Boolean, poseStack: PoseStack) {
+	/**
+	 * 将 ProxyLocator 应用到 PoseStack, 用于物品渲染.
+	 * @param weight blendFactor, 用于过渡淡入淡出 (0=原版, 1=完全动画)
+	 */
+	fun applyProxyToItem(proxyModels: List<ProxyModel>, isLeft: Boolean, poseStack: PoseStack, weight: Float = 1f) {
+		if (weight <= 0f) return
 		val armName = if (isLeft) "left_arm" else "right_arm"
 		val itemName = if (isLeft) "left_item" else "right_item"
 		for (proxy in proxyModels) {
 			val bone = proxy.getBone(armName) ?: continue
 			val loc = bone.getLocator(itemName) ?: continue
-			val px = loc.pos.x;
-			val py = loc.pos.y;
-			val pz = loc.pos.z
-			val rx = loc.rotation.x;
-			val ry = loc.rotation.y;
-			val rz = loc.rotation.z
-			val sx = loc.scale.x;
-			val sy = loc.scale.y;
-			val sz = loc.scale.z
+			val px = loc.pos.x * weight
+			val py = loc.pos.y * weight
+			val pz = loc.pos.z * weight
+			val rx = loc.rotation.x * weight
+			val ry = loc.rotation.y * weight
+			val rz = loc.rotation.z * weight
+			val sx = 1f + (loc.scale.x - 1f) * weight
+			val sy = 1f + (loc.scale.y - 1f) * weight
+			val sz = 1f + (loc.scale.z - 1f) * weight
 			poseStack.mulPose(Axis.XP.rotationDegrees(90.0f))
 			if (px != 0f || py != 0f || pz != 0f) poseStack.translate(px.toDouble(), py.toDouble(), pz.toDouble())
 			if (rz != 0f || ry != 0f || rx != 0f) poseStack.mulPose(Quaternionf().rotationZYX(rz, ry, rx))

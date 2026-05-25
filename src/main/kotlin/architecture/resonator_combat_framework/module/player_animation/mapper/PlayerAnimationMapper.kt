@@ -77,9 +77,16 @@ class PlayerAnimationMapper(
 		applyProxyToModel(proxyModels, model as PlayerModel<Player>, resolveBoneFlags(animTimeTracker), root.blendFactor)
 	}
 
-	/** 由 ItemInHandLayerMixin 调用: ProxyLocator → PoseStack */
+	/** 由 ItemInHandLayerMixin 调用: ProxyLocator → PoseStack, 支持 blendFactor 过渡 */
 	fun applyItemTransform(isLeft: Boolean, poseStack: PoseStack) {
 		val renderableControllers = getRenderableControllers()
-		applyProxyToItem(renderableControllers.map { (it as EyeLibAnimationController).proxyModel }, isLeft, poseStack)
+		if (renderableControllers.isEmpty()) return
+		val weight = defaultController.blendFactor
+		applyProxyToItem(
+			renderableControllers.map { (it as EyeLibAnimationController).proxyModel },
+			isLeft,
+			poseStack,
+			weight
+		)
 	}
 }
