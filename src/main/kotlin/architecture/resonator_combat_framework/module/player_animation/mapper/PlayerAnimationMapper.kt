@@ -84,7 +84,7 @@ class PlayerAnimationMapper(
 		val weight = mergedWeight()
 
 		// 3. 输出到渲染（修改外部模型）
-		applyRootTransform(proxyModels, poseStack, weight)
+		applyRootTransform(proxyModels, poseStack, flags, weight)
 		applyProxyToModel(proxyModels, model as PlayerModel<Player>, flags, weight)
 	}
 
@@ -94,11 +94,13 @@ class PlayerAnimationMapper(
 		val renderableControllers = getRenderableControllers()
 		if (renderableControllers.isEmpty()) return
 		val weight = defaultController.effectiveWeight
+		val flags = resolveMergedFlags(defaultController.currentAnimTime)
 		applyProxyToItem(
 			renderableControllers.map { (it as BaseAnimationController).proxyModel },
 			isLeft,
 			poseStack,
-			weight
+			flags,
+			weight,
 		)
 	}
 }

@@ -2,10 +2,7 @@ package architecture.resonator_combat_framework.module.player_animation.controll
 
 import architecture.resonator_combat_framework.module.player_animation.api.ProxyBone
 import architecture.resonator_combat_framework.module.player_animation.api.ProxyModel
-import architecture.resonator_combat_framework.module.player_animation.config.AnimType
-import architecture.resonator_combat_framework.module.player_animation.config.AnimationPlayConfig
-import architecture.resonator_combat_framework.module.player_animation.config.ProxyBoneConfigData
-import architecture.resonator_combat_framework.module.player_animation.config.ProxyBoneConfigLoader
+import architecture.resonator_combat_framework.module.player_animation.config.*
 
 /**
  * 动画控制器基类。
@@ -25,6 +22,9 @@ abstract class BaseAnimationController(
 	protected var transitionSource: ProxyModel? = null
 	protected var currentConfig: AnimationPlayConfig = AnimationPlayConfig.of("")
 	internal var resolvedBoneConfig: ProxyBoneConfigData? = null
+
+	/** 活跃的骨骼配置（保留引用，供 crossfade 使用），trigger 时设，forceClear 时清除 */
+	private var activeBoneConfig: ProxyBoneConfigData = ProxyBoneConfigData.EMPTY
 
 	override var blendFactor = 0f
 	override var blendTarget = 0f
@@ -49,22 +49,11 @@ abstract class BaseAnimationController(
 
 	// ═══════════════════ 抽象：后端操作 ═══════════════════
 
-	/** 加载动画，返回 true 表示成功 */
 	protected abstract fun loadAnimation(animId: String): Boolean
-
-	/** 将当前动画列表同步到后端 */
 	protected abstract fun syncToBackend(animIds: List<String>, multipliers: List<Float>)
-
-	/** 冻结全部动画到第 0 帧 */
 	protected abstract fun freezeAllAtFrameZero()
-
-	/** 设置动画起始时间（秒）*/
 	protected abstract fun setAnimStartTime(animId: String, timeSec: Float)
-
-	/** 获取动画播放信息，null 表示取不到 */
 	protected abstract fun getPlaybackInfo(animId: String): PlaybackInfo?
-
-	/** 每帧驱动后端，将骨骼写入 proxyModel。gameTime = 游戏时间(秒) */
 	protected abstract fun tickBackend(gameTime: Float)
 
 	data class PlaybackInfo(
@@ -79,25 +68,24 @@ abstract class BaseAnimationController(
 
 	override fun trigger(config: AnimationPlayConfig) {
 		if (!loadAnimation(config.animId)) return
-		// 优先使用 Mapper 传入的已解析配置，避免重复加载
 		val finalConfig = resolvedBoneConfig ?: config.boneConfig ?: configLoader.getConfig(config.animId)
-		resolvedBoneConfig = null  // 用完即弃
+		resolvedBoneConfig = null
 
-		// 同一动画：暂停→恢复，其他状态→重启
+		// 保存活跃配置供 crossfade 使用
+		activeBoneConfig = finalConfig
+
 		if (currentAnimId == config.animId && state != State.IDLE) {
 			if (state == State.PAUSED) resume()
 			else restartInternal(config.animId, finalConfig)
 			return
 		}
 
-		// 跨动画过渡源（先快照再清除，避免新旧混杂）
 		snapshotTransitionSource()
 		proxyModel.bones.clear()
 
 		currentConfig = config
 		speedMultiplier = config.resolveSpeedMultiplier()
 		currentAnimId = config.animId
-		// affectedBones 由子类 tickBackend 从动画数据自动检测，不依赖 config
 
 		if (config.startTime > 0)
 			setAnimStartTime(config.animId, config.startTime / 20f)
@@ -150,13 +138,12 @@ abstract class BaseAnimationController(
 	override fun pause() {
 		if (state == State.PLAYING || state == State.TRANSITIONING) {
 			state = State.PAUSED
-			transitionSource = null  // 停止 crossfade，当前 proxyModel 即最终姿态
+			transitionSource = null
 		}
 	}
 
 	override fun resume() {
 		if (state != State.PAUSED) return
-		// HOLD_ON_LAST_FRAME 已播放完毕，恢复时保持在最后一帧
 		val info = currentAnimId?.let { getPlaybackInfo(it) }
 		if (info != null && info.animTime * speedMultiplier >= info.animLength
 			&& info.loopType == LoopType.HOLD_ON_LAST
@@ -175,12 +162,11 @@ abstract class BaseAnimationController(
 	// ═══════════════════ 每帧 ═══════════════════
 
 	override fun tick(partialTick: Float, deltaSec: Float) {
-		if (state == State.IDLE) return  // 已停止，不处理任何 tick
+		if (state == State.IDLE) return
 		tickBlend(deltaSec)
 
 		val shouldTick = state != State.IDLE && state != State.PAUSED
 
-		// 清除不属于当前动画的骨骼
 		if (affectedBones.isNotEmpty()) {
 			val toRemove = proxyModel.bones.keys.filter { it !in affectedBones }.toList()
 			for (name in toRemove) proxyModel.bones.remove(name)
@@ -188,20 +174,16 @@ abstract class BaseAnimationController(
 
 		if (!shouldTick) return
 
-		// 冻结首帧
 		if (state == State.TRANSITIONING) freezeAllAtFrameZero()
 
 		checkPlaybackBounds()
 
-		// 子类驱动后端 + 写入 proxyModel
 		tickBackend(partialTick)
 
-		// crossfade
 		if (state == State.TRANSITIONING && transitionSource != null) {
 			crossfadeStep()
 		}
 
-		// 状态转换
 		if (state == State.TRANSITIONING && blendFactor >= 1f) {
 			state = State.PLAYING
 			transitionSource = null
@@ -221,8 +203,13 @@ abstract class BaseAnimationController(
 		}
 	}
 
+	/**
+	 * 跨动画过渡混合。
+	 * 检查 each bone 的 shouldBlend 标志：false 时不 lerp，直接使用新动画数据。
+	 */
 	private fun crossfadeStep() {
 		val src = transitionSource ?: return
+		val boneFlags = activeBoneConfig.resolveBoneFlags(currentAnimTime)
 
 		// 旧动画独有骨骼：每帧重置为 identity
 		for ((name, bone) in proxyModel.bones) {
@@ -237,9 +224,16 @@ abstract class BaseAnimationController(
 		for ((name, _) in src.bones) {
 			if (proxyModel.getBone(name) == null) proxyModel.addBone(ProxyBone(name))
 		}
-		// lerp
+		// lerp — 跳过 shouldBlend=false 的骨骼
 		for ((name, fromBone) in src.bones) {
 			val toBone = proxyModel.getBone(name) ?: continue
+			if (!boneFlags[name].shouldBlend()) {
+				// 不混合：直接复制新动画数据到源，确保渲染时无旧动画残留
+				fromBone.pos.set(toBone.pos)
+				fromBone.rotation.set(toBone.rotation)
+				fromBone.scale.set(toBone.scale)
+				continue
+			}
 			fromBone.pos.lerp(toBone.pos, blendFactor, toBone.pos)
 			fromBone.rotation.lerp(toBone.rotation, blendFactor, toBone.rotation)
 			fromBone.scale.lerp(toBone.scale, blendFactor, toBone.scale)
@@ -249,7 +243,6 @@ abstract class BaseAnimationController(
 	// ═══════════════════ 播放边界检查 ═══════════════════
 
 	private fun checkPlaybackBounds() {
-		// 只在正常播放状态下检查边界，避免过渡期间误触发
 		if (state != State.PLAYING) return
 		val info = currentAnimId?.let { getPlaybackInfo(it) } ?: return
 		val effectiveTime = info.animTime * speedMultiplier
@@ -269,6 +262,7 @@ abstract class BaseAnimationController(
 				state = State.FADING_OUT
 				blendTarget = 0f
 			}
+
 			AnimType.LOOP -> {
 				resetAnimAndRestart(config)
 				if (config.startTime > 0) setAnimStartTime(config.animId, config.startTime / 20f)
@@ -278,12 +272,11 @@ abstract class BaseAnimationController(
 			AnimType.DEFAULT -> {
 				when (info.loopType) {
 					LoopType.ONCE -> {
-						// 冻结当前姿态后再淡出，确保过渡期间有骨骼数据
 						pause()
-						// pause 已将 transitionSource=null，直接设置 FADING_OUT 开始淡出
 						state = State.FADING_OUT
 						blendTarget = 0f
 					}
+
 					LoopType.LOOP -> resetAnimAndRestart(config)
 					LoopType.HOLD_ON_LAST -> pause()
 				}
@@ -297,7 +290,7 @@ abstract class BaseAnimationController(
 
 	private fun restartInternal(animId: String, config: ProxyBoneConfigData) {
 		currentAnimId = animId
-		// affectedBones 由 tickBackend 自动更新
+		activeBoneConfig = config
 		state = State.PLAYING; blendTarget = 1f; blendFactor = 1f
 		transitionSource = null
 		resetAnimAndRestart(currentConfig)
@@ -330,8 +323,12 @@ abstract class BaseAnimationController(
 		currentAnimId = null; affectedBones = emptySet()
 		currentTransitionTicks = ProxyBoneConfigData.DEFAULT_TRANSITION_TICKS
 		speedMultiplier = 1f
+		activeBoneConfig = ProxyBoneConfigData.EMPTY
 		rebuildBackend()
 	}
 
 	private fun isInFadeIn(): Boolean = blendTarget > 0f && blendFactor < 1f
 }
+
+
+

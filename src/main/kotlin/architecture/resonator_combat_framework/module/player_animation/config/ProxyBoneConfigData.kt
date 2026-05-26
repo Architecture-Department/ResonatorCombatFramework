@@ -1,4 +1,4 @@
-﻿package architecture.resonator_combat_framework.module.player_animation.config
+package architecture.resonator_combat_framework.module.player_animation.config
 
 import architecture.goldenboughs_lib.api.AllOpe
 
@@ -24,13 +24,13 @@ private constructor(
 		bones: Map<String, ProxyBoneFlags> = emptyMap(),
 		timeline: List<ProxyTimelineEntry> = emptyList(),
 		transitionTicks: Int = DEFAULT_TRANSITION_TICKS,
-		v: Any? = null // 占位
+		v: Any? = null
 	) : this(run {
-		val mutableMapOf = mutableMapOf<String, ProxyBoneFlags>().apply {
+		val merged = mutableMapOf<String, ProxyBoneFlags>().apply {
 			putAll(DEFAULT_FLAGS)
 			putAll(bones)
 		}
-		return@run mutableMapOf
+		merged
 	}, timeline, transitionTicks)
 
 	fun resolveBoneFlags(animTime: Float): Map<String, ProxyBoneFlags> {
@@ -43,7 +43,6 @@ private constructor(
 		return result
 	}
 
-	/** 返回当前动画所有可能影响的骨骼名称集合 (base bones + 所有 timeline entry 的 bones) */
 	fun resolveCurrentBoneNames(): Set<String> {
 		val names = bones.keys.toMutableSet()
 		for (entry in timeline) {

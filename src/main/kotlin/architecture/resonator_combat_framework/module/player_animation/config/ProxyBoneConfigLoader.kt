@@ -11,7 +11,6 @@ import net.minecraft.util.profiling.ProfilerFiller
 class ProxyBoneConfigLoader : BrResourcesLoader("animdata", "json") {
 	companion object {
 		private val INSTANCE = ProxyBoneConfigLoader()
-
 		private val INSTANCE_SERVER = ProxyBoneConfigLoader()
 
 		@JvmStatic
@@ -64,19 +63,38 @@ class ProxyBoneConfigLoader : BrResourcesLoader("animdata", "json") {
 		return ProxyBoneConfigData(bones, timeline, transitionTicks)
 	}
 
+	/** 解析 bones 块：嵌套 JSON → 扁平 dot-notation Map */
 	private fun parseBonesSection(section: JsonElement?): Map<String, ProxyBoneFlags> {
 		if (section == null || !section.isJsonObject) return emptyMap()
 		val obj = section.asJsonObject
 		val result = mutableMapOf<String, ProxyBoneFlags>()
-		for ((boneName, flagsElement) in obj.entrySet()) {
-			if (!flagsElement.isJsonObject) continue
-			val flagsObj = flagsElement.asJsonObject
-			val flags = mutableMapOf<String, Boolean>()
-			for ((key, value) in flagsObj.entrySet()) {
-				flags[key] = value.asBoolean
-			}
-			result[boneName] = ProxyBoneFlags(flags)
+		for ((boneName, boneElement) in obj.entrySet()) {
+			if (!boneElement.isJsonObject) continue
+			val boneObj = boneElement.asJsonObject
+			result[boneName] = ProxyBoneFlags(flattenBoneFlags(boneObj))
 		}
 		return result
+	}
+
+	/** 将嵌套 JSON 对象打平为 dot-notation Map */
+	private fun flattenBoneFlags(obj: JsonObject): Map<String, Boolean> {
+		val flat = mutableMapOf<String, Boolean>()
+		for ((key, value) in obj.entrySet()) {
+			when {
+				value.isJsonPrimitive -> {
+					flat[key] = value.asBoolean
+				}
+
+				value.isJsonObject -> {
+					val sub = value.asJsonObject
+					for ((subKey, subValue) in sub.entrySet()) {
+						if (subValue.isJsonPrimitive) {
+							flat["$key.$subKey"] = subValue.asBoolean
+						}
+					}
+				}
+			}
+		}
+		return flat
 	}
 }

@@ -15,7 +15,10 @@ data class ProxyBone(
 	val pos: Vector3f = Vector3f(),
 	val rotation: Vector3f = Vector3f(),
 	val scale: Vector3f = Vector3f(1f, 1f, 1f),
-	val locators: HashMap<String, ProxyLocator> = hashMapOf()
+	val locators: HashMap<String, ProxyLocator> = hashMapOf(),
+	var posEmpty: Boolean = false,
+	var rotationEmpty: Boolean = false,
+	var scalaEmpty: Boolean = false
 ) {
 	fun addLocator(locator: ProxyLocator): ProxyLocator? = locators.put(locator.name, locator)
 	fun getLocator(locatorName: String): ProxyLocator? = locators[locatorName]

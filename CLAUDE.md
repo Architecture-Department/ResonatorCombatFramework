@@ -89,22 +89,38 @@ init {
 
 ### 核心类
 
-| 类                                   | 作用                                                |
-|-------------------------------------|---------------------------------------------------|
-| `IPlayerAnimator` (`api/`)          | 公开 API: trigger/stop/stopAnimation/isActive       |
-| `PlayerAnimationTransformer`        | 实现 IPlayerAnimator，管理动画生命周期/过渡/交叉淡入淡出/骨骼变换        |
-| `PlayerAnimationSetup`              | 初始化 RenderData（模型 + 渲染配置）                         |
-| `PlayerAnimationHelper` (`helper/`) | 双端便捷方法：trigger/stop/request/push                  |
-| `EyeLibUtil` (`util/`)              | eyelib 操作集中管理 (AnimationManager/Data/animate map) |
-| `AnimatePlayerPayload` (`payload/`) | `ToServerAndClientPayload` 双端网络包                  |
-| `PlayerProxyProvider` (`mixed/`)    | Mixin 接口，返回 `IPlayerAnimator`                     |
-| `LivingEntityRendererMixin`         | 注入 `render()`，调用 `applyTransform`                 |
-| `PlayerMixin`                       | 持有 `PlayerAnimationTransformer` `@Unique` 实例      |
+| 类                                   | 作用                                           |
+|-------------------------------------|----------------------------------------------|
+| `IAnimationMapper` (`api/`)         | 根接口: 生命周期+控制器管理+骨骼冲突                         |
+| `EntityAnimationMapper<T, M>`       | 控制器注册+tick/trigger/stop+root PoseStack       |
+| `HumanoidEntityAnimationMapper`     | 6人形骨骼 applyProxyBone + 物品 applyProxyToItem   |
+| `PlayerAnimationMapper`             | EyeLibAnimationController+渲染入口+jacket/sleeve |
+| `BaseAnimationController`           | 状态机+过渡+crossfade(含shouldBlend检查)             |
+| `EyeLibAnimationController`         | eyelib 后端适配                                  |
+| `AnimationPlayConfig`               | 播放配置: 类型/时间/速率/淡入淡出/骨骼配置(Builder)            |
+| `ProxyBoneFlags`                    | 骨骼标志: Map存储+扩展函数 per-axis lock/enable        |
+| `ProxyBoneConfigData`               | 骨骼配置容器: bones+timeline+transitionTicks       |
+| `PlayerAnimationHelper` (`helper/`) | 双端便捷: trigger/stop/pause/resume              |
+| `AnimatePlayerPayload` (`payload/`) | 双端网络包(PLAY/STOP/PAUSE/RESUME)                |
+| `PlayerProxyProvider` (`mixed/`)    | Mixin 接口，返回 IAnimationMapper                 |
+| `LivingEntityRendererMixin`         | 注入渲染，调用 tickAndRender                        |
+| `ItemInHandLayerMixin`              | 注入物品渲染，调用 applyItemTransform                 |
 
 ### 过渡系统
 
-通过 `RcfBoneConfig.transitionTicks: Int` 配置（tick 制，默认 10 = 0.5 秒，0 = 即时）。
-详见 `docs/PLAYER_ANIMATION.md`。
+- 淡入淡出分离: `AnimationPlayConfig.fadeInTicks` / `fadeOutTicks` 各自独立默认值
+- Crossfade: `BaseAnimationController` 自动快照旧帧 → lerp 到新帧
+- `ProxyBoneFlags.shouldBlend()` 控制每骨骼是否参与 crossfade (默认 true)
+- `ProxyBoneFlags.shouldTransition()` 控制每骨骼是否参与 weight (默认 true)
+
+### 骨骼配置 JSON 格式
+
+嵌套 JSON → 加载时打平为 dot-notation key:
+
+```json
+{ "head": { "pos": { "lock": true, "x": false }, "blend": false } }
+  → ProxyBoneFlags({ "pos.lock":true, "pos.x":false, "blend":false })
+```
 
 ### 测试命令
 
@@ -125,3 +141,4 @@ assets/<modid>/eyelib/
 ├── bedrock_models/        — 模型几何体 JSON
 └── textures/              — 纹理
 ```
+
