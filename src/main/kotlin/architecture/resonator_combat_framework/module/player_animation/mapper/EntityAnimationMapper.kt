@@ -44,11 +44,11 @@ abstract class EntityAnimationMapper<T : Entity, M : EntityModel<T>>(
 		if (weight <= 0f) return
 		for (proxy in proxyModels) {
 			val root = proxy.getBone("root") ?: continue
-			val px = root.pos.x * weight
-			val py = root.pos.y * weight
+			val px = -root.pos.x * weight
+			val py = -root.pos.y * weight
 			val pz = root.pos.z * weight
-			val rx = root.rotation.x * weight
-			val ry = root.rotation.y * weight
+			val rx = -root.rotation.x * weight
+			val ry = -root.rotation.y * weight
 			val rz = root.rotation.z * weight
 			val sx = 1f + (root.scale.x - 1f) * weight
 			val sy = 1f + (root.scale.y - 1f) * weight

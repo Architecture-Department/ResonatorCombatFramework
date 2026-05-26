@@ -63,19 +63,19 @@ abstract class HumanoidEntityAnimationMapper<T : LivingEntity, M : HumanoidModel
 			val ip = part.initialPose
 			if (lock) {
 				if (isPos) {
-					part.x += ip.x + (posX - part.x) * weight
-					part.y += ip.y + (posY - part.y) * weight
-					part.z += ip.z + (posZ - part.z) * weight
+					part.x += (ip.x + posX - part.x) * weight
+					part.y += (ip.y + posY - part.y) * weight
+					part.z += (ip.z + posZ - part.z) * weight
 				}
 				if (isRotation) {
-					part.xRot += ip.xRot + (rotationX - part.xRot) * weight
-					part.yRot += ip.yRot + (rotationY - part.yRot) * weight
-					part.zRot += ip.zRot + (rotationZ - part.zRot) * weight
+					part.xRot += (ip.xRot + rotationX - part.xRot) * weight
+					part.yRot += (ip.yRot + rotationY - part.yRot) * weight
+					part.zRot += (ip.zRot + rotationZ - part.zRot) * weight
 				}
 				if (isScale) {
-					part.xScale += 1 + (scaleX - part.xScale) * weight
-					part.yScale += 1 + (scaleY - part.yScale) * weight
-					part.zScale += 1 + (scaleZ - part.zScale) * weight
+					part.xScale += (1 + scaleX - part.xScale) * weight
+					part.yScale += (1 + scaleY - part.yScale) * weight
+					part.zScale += (1 + scaleZ - part.zScale) * weight
 				}
 			} else {
 				if (isPos) {
@@ -102,7 +102,6 @@ abstract class HumanoidEntityAnimationMapper<T : LivingEntity, M : HumanoidModel
 	 * @param weight blendFactor, 用于过渡淡入淡出 (0=原版, 1=完全动画)
 	 */
 	@Suppress("DuplicatedCode")
-		/** 物品渲染：right_item / left_item 在 eyelib 中是独立的骨骼，直接读取 */
 	fun applyProxyToItem(proxyModels: List<ProxyModel>, isLeft: Boolean, poseStack: PoseStack, weight: Float = 1f) {
 		if (weight <= 0f) return
 		val itemName = if (isLeft) "left_item" else "right_item"

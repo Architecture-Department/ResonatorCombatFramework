@@ -83,8 +83,10 @@ abstract class BaseAnimationController(
 		val finalConfig = resolvedBoneConfig ?: config.boneConfig ?: configLoader.getConfig(config.animId)
 		resolvedBoneConfig = null  // 用完即弃
 
+		// 同一动画：暂停→恢复，其他状态→重启
 		if (currentAnimId == config.animId && state != State.IDLE) {
-			restartInternal(config.animId, finalConfig)
+			if (state == State.PAUSED) resume()
+			else restartInternal(config.animId, finalConfig)
 			return
 		}
 
@@ -262,7 +264,11 @@ abstract class BaseAnimationController(
 		if (effectiveTime < endSec || endSec <= 0f) return
 
 		when (config.animType) {
-			AnimType.PLAY_ONCE -> stop()
+			AnimType.PLAY_ONCE -> {
+				pause()
+				state = State.FADING_OUT
+				blendTarget = 0f
+			}
 			AnimType.LOOP -> {
 				resetAnimAndRestart(config)
 				if (config.startTime > 0) setAnimStartTime(config.animId, config.startTime / 20f)
@@ -271,7 +277,13 @@ abstract class BaseAnimationController(
 			AnimType.STOP_AT_LAST -> pause()
 			AnimType.DEFAULT -> {
 				when (info.loopType) {
-					LoopType.ONCE -> stop()
+					LoopType.ONCE -> {
+						// 冻结当前姿态后再淡出，确保过渡期间有骨骼数据
+						pause()
+						// pause 已将 transitionSource=null，直接设置 FADING_OUT 开始淡出
+						state = State.FADING_OUT
+						blendTarget = 0f
+					}
 					LoopType.LOOP -> resetAnimAndRestart(config)
 					LoopType.HOLD_ON_LAST -> pause()
 				}

@@ -31,7 +31,7 @@ class EyeLibAnimationController(
 	// ═══════════ 后端实现 ═══════════
 
 	override fun loadAnimation(animId: String): Boolean {
-		val anim = EyeLibUtil.getAnimation(isClient, animId) ?: return false
+		EyeLibUtil.getAnimation(isClient, animId) ?: return false
 		activeAnimations.clear()
 		activeAnimations[animId] = MolangValue.getConstant(speedMultiplier)
 		return true
