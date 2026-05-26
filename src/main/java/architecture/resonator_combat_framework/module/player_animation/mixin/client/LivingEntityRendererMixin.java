@@ -36,6 +36,6 @@ public abstract class LivingEntityRendererMixin<T extends LivingEntity> {
 			return;
 		}
 		PlayerAnimationMapper transformer = player.resonator_combat_framework$getAnimationTransformer();
-		transformer.applyTransform(playerModel, partialTicks);
+		transformer.tickAndRender(playerModel, partialTicks, poseStack);
 	}
 }

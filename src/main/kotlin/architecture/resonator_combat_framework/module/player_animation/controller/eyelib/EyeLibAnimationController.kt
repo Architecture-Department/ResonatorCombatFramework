@@ -11,6 +11,7 @@ import io.github.tt432.eyelib.client.animation.AnimationEffects
 import io.github.tt432.eyelib.client.animation.BrAnimator
 import io.github.tt432.eyelib.client.animation.bedrock.BrAnimationEntry
 import io.github.tt432.eyelib.client.animation.bedrock.BrLoopType
+import io.github.tt432.eyelib.client.model.GlobalBoneIdHandler
 import io.github.tt432.eyelib.client.render.bone.BoneRenderInfos
 import io.github.tt432.eyelib.molang.MolangValue
 
@@ -27,8 +28,6 @@ class EyeLibAnimationController(
 
 	private val activeAnimations = linkedMapOf<String, MolangValue>()
 	private val boneController = EyelibBoneController()
-	private val itemController = EyelibItemController()
-
 	// ═══════════ 后端实现 ═══════════
 
 	override fun loadAnimation(animId: String): Boolean {
@@ -39,11 +38,10 @@ class EyeLibAnimationController(
 	}
 
 	override fun syncToBackend(animIds: List<String>, multipliers: List<Float>) {
-		if (!isClient) return
 		val names = mutableMapOf<String, String>()
 		val mults = mutableMapOf<String, MolangValue>()
 		for ((i, id) in animIds.withIndex()) {
-			val anim = EyeLibUtil.getAnimation(true, id) ?: continue
+			val anim = EyeLibUtil.getAnimation(isClient, id) ?: continue
 			names[id] = anim.name()
 			mults[id] = MolangValue.getConstant(multipliers.getOrElse(i) { 1f })
 		}
@@ -51,12 +49,11 @@ class EyeLibAnimationController(
 	}
 
 	override fun freezeAllAtFrameZero() {
-		if (!isClient) return
 		for (animId in activeAnimations.keys) EyeLibUtil.resetAnimData(renderData, animId)
 	}
 
 	override fun setAnimStartTime(animId: String, timeSec: Float) {
-		if (isClient) EyeLibUtil.setAnimTime(renderData, animId, timeSec)
+		EyeLibUtil.setAnimTime(renderData, animId, timeSec)
 	}
 
 	override fun getPlaybackInfo(animId: String): PlaybackInfo? {
@@ -83,14 +80,13 @@ class EyeLibAnimationController(
 			}
 		} else BoneRenderInfos.EMPTY
 
+		// 自动检测当前动画实际控制的骨骼
+		affectedBones = infos.infos.keys.mapNotNull { GlobalBoneIdHandler.get(it) }.toSet()
+
 		boneController.writeToProxy(infos, proxyModel)
-		val la = proxyModel.getBone("left_arm")
-		val ra = proxyModel.getBone("right_arm")
-		if (la != null && ra != null) itemController.writeToProxy(infos, la, ra)
 	}
 
 	override fun resetAnimAndRestart(config: AnimationPlayConfig) {
-		if (!isClient) return
 		EyeLibUtil.resetAnimData(renderData, config.animId)
 	}
 }

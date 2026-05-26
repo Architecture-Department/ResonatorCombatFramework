@@ -49,10 +49,7 @@ object PlayerAnimationHelper {
 		getAnimationTransformer().trigger(config)
 		PacketDistributor.sendToPlayersTrackingEntityAndSelf(
 			this,
-			AnimatePlayerPayload(
-				config.animId, uuid, config.resolveSpeedMultiplier(),
-				config.durationTicks > 0, config.durationTicks, config.originalAnimLengthSec
-			)
+			AnimatePlayerPayload.play(config.animId, uuid, config.resolveSpeedMultiplier())
 		)
 	}
 
@@ -69,7 +66,7 @@ object PlayerAnimationHelper {
 		if (this is AbstractClientPlayer) getAnimationTransformer().stopAllImmediate()
 		else if (this is ServerPlayer) {
 			getAnimationTransformer().stopAllImmediate()
-			PacketDistributor.sendToPlayersTrackingEntityAndSelf(this, AnimatePlayerPayload.stop())
+			PacketDistributor.sendToPlayersTrackingEntityAndSelf(this, AnimatePlayerPayload.stop(uuid))
 		}
 	}
 
@@ -81,7 +78,7 @@ object PlayerAnimationHelper {
 	@JvmStatic
 	fun ServerPlayer.serverStopPlayerAnimation() {
 		getAnimationTransformer().stopAll()
-		PacketDistributor.sendToPlayersTrackingEntityAndSelf(this, AnimatePlayerPayload.stop())
+		PacketDistributor.sendToPlayersTrackingEntityAndSelf(this, AnimatePlayerPayload.stop(uuid))
 	}
 
 	// ═══════════════ 暂停 / 恢复 ═══════════════
@@ -89,12 +86,18 @@ object PlayerAnimationHelper {
 	@JvmStatic
 	fun Player.pausePlayerAnimation() {
 		if (this is AbstractClientPlayer) getAnimationTransformer().pause(IAnimationMapper.DEFAULT_CONTROLLER_NAME)
-		else if (this is ServerPlayer) getAnimationTransformer().pause(IAnimationMapper.DEFAULT_CONTROLLER_NAME)
+		else if (this is ServerPlayer) {
+			getAnimationTransformer().pause(IAnimationMapper.DEFAULT_CONTROLLER_NAME)
+			PacketDistributor.sendToPlayersTrackingEntityAndSelf(this, AnimatePlayerPayload.pause(uuid))
+		}
 	}
 
 	@JvmStatic
 	fun Player.resumePlayerAnimation() {
 		if (this is AbstractClientPlayer) getAnimationTransformer().resume(IAnimationMapper.DEFAULT_CONTROLLER_NAME)
-		else if (this is ServerPlayer) getAnimationTransformer().resume(IAnimationMapper.DEFAULT_CONTROLLER_NAME)
+		else if (this is ServerPlayer) {
+			getAnimationTransformer().resume(IAnimationMapper.DEFAULT_CONTROLLER_NAME)
+			PacketDistributor.sendToPlayersTrackingEntityAndSelf(this, AnimatePlayerPayload.resume(uuid))
+		}
 	}
 }

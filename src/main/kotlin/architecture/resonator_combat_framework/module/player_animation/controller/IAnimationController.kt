@@ -1,8 +1,10 @@
 package architecture.resonator_combat_framework.module.player_animation.controller
 
+import architecture.goldenboughs_lib.api.AllOpe
 import architecture.resonator_combat_framework.module.player_animation.config.AnimationPlayConfig
 
 /** 动画控制器：过渡状态 + 生命周期 */
+@AllOpe
 interface IAnimationController {
 	var blendFactor: Float
 	var blendTarget: Float
@@ -14,6 +16,8 @@ interface IAnimationController {
 	var affectedBones: Set<String>
 
 	fun isActive(): Boolean
+	val effectiveWeight: Float
+	val currentAnimTime: Float
 	fun tick(partialTick: Float, deltaSec: Float)
 
 	/** 详细播放配置 */

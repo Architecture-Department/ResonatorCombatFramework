@@ -1,9 +1,11 @@
 package architecture.resonator_combat_framework.module.player_animation.api
 
+import architecture.goldenboughs_lib.api.AllOpe
 import architecture.resonator_combat_framework.module.player_animation.config.AnimationPlayConfig
 import architecture.resonator_combat_framework.module.player_animation.controller.IAnimationController
 
 /** 根接口：生命周期 + 控制器管理 + 动画映射 */
+@AllOpe
 interface IAnimationMapper {
 	companion object {
 		const val DEFAULT_CONTROLLER_NAME: String = "default"

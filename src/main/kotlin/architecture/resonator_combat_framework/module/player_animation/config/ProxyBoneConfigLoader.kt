@@ -1,13 +1,12 @@
 package architecture.resonator_combat_framework.module.player_animation.config
 
-import architecture.resonator_combat_framework.core.Rcf
+import architecture.resonator_combat_framework.core.RcfConstants
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import io.github.tt432.eyelib.client.loader.BrResourcesLoader
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.server.packs.resources.ResourceManager
 import net.minecraft.util.profiling.ProfilerFiller
-import architecture.resonator_combat_framework.core.RcfConstants
 
 class ProxyBoneConfigLoader : BrResourcesLoader("animdata", "json") {
 	companion object {
@@ -35,7 +34,7 @@ class ProxyBoneConfigLoader : BrResourcesLoader("animdata", "json") {
 		val map = mutableMapOf<String, ProxyBoneConfigData>()
 		loaded.forEach { (rl, json) ->
 			try {
-				map[rl.path.substringAfterLast("/")] = parse(json.asJsonObject)
+				map[rl.path.substringAfterLast("/").removeSuffix(".json")] = parse(json.asJsonObject)
 			} catch (e: Exception) {
 				RcfConstants.LOGGER.error("can't load bone config {}", rl, e)
 			}

@@ -38,6 +38,7 @@ class PlayerAnimationMapper(
 		flags: Map<String, ProxyBoneFlags>,
 		weight: Float
 	) {
+		if (!isClient) return
 		super.applyProxyToModel(proxyModels, model, flags, weight)
 		for (proxy in proxyModels) {
 			applyProxyBone(proxy, "body", flags, weight, model.jacket)
@@ -62,39 +63,37 @@ class PlayerAnimationMapper(
 		lastRenderTick = 0f
 	}
 
-	/** LivingEntityRendererMixin 每帧调用：tick → proxyModel → ModelPart */
-	@Suppress("UNCHECKED_CAST")
-	fun applyTransform(model: PlayerModel<*>, partialTick: Float) {
-		if (!isClient) return
+	/**
+	 * 由 Mixin 每帧调用：tick 控制器 → 合并数据 → 渲染到模型。
+	 * 控制器驱动与渲染分离，Mapper 负责合并多控制器数据。
+	 */
+	fun tickAndRender(model: PlayerModel<*>, partialTick: Float, poseStack: PoseStack) {
+		if (!isClient || !isActive()) return
 		val tickSec = (ClientTickHandler.getTick() + partialTick) / 20f
 		val deltaSec = if (lastRenderTick == 0f) 0f else tickSec - lastRenderTick
 		lastRenderTick = tickSec
 		animTimeTracker += deltaSec
 
-		// 驱动所有控制器
-		for (ctrl in controllers.values) {
-			ctrl.tick(tickSec, deltaSec)
-		}
+		// 1. 驱动所有控制器（控制器只操控自己的 proxyModel）
+		tick(tickSec, deltaSec)
 
-		// 获取可渲染控制器（按优先级过滤）
-		val renderableControllers = getRenderableControllers()
-		if (renderableControllers.isEmpty()) return
+		// 2. 合并多控制器数据
+		val proxyModels = collectProxyModels()
+		if (proxyModels.isEmpty()) return
+		val flags = resolveMergedFlags(defaultController.currentAnimTime)
+		val weight = mergedWeight()
 
-		val root = defaultController
-		val proxyModels = renderableControllers.map { (it as BaseAnimationController).proxyModel }
-		applyProxyToModel(
-			proxyModels,
-			model as PlayerModel<Player>,
-			resolveBoneFlags(animTimeTracker),
-			root.effectiveWeight
-		)
+		// 3. 输出到渲染（修改外部模型）
+		applyRootTransform(proxyModels, poseStack, weight)
+		applyProxyToModel(proxyModels, model as PlayerModel<Player>, flags, weight)
 	}
 
 	/** ItemInHandLayerMixin 调用：物品定位器 → PoseStack */
 	fun applyItemTransform(isLeft: Boolean, poseStack: PoseStack) {
+		if (!isClient) return
 		val renderableControllers = getRenderableControllers()
 		if (renderableControllers.isEmpty()) return
-		val weight = (defaultController as BaseAnimationController).effectiveWeight
+		val weight = defaultController.effectiveWeight
 		applyProxyToItem(
 			renderableControllers.map { (it as BaseAnimationController).proxyModel },
 			isLeft,

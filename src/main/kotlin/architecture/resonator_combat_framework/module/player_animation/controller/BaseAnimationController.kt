@@ -24,6 +24,7 @@ abstract class BaseAnimationController(
 	protected var state = State.IDLE
 	protected var transitionSource: ProxyModel? = null
 	protected var currentConfig: AnimationPlayConfig = AnimationPlayConfig.of("")
+	internal var resolvedBoneConfig: ProxyBoneConfigData? = null
 
 	override var blendFactor = 0f
 	override var blendTarget = 0f
@@ -34,8 +35,15 @@ abstract class BaseAnimationController(
 	override var currentAnimId: String? = null
 	override var affectedBones = emptySet<String>()
 
+	/** 当前动画时间(秒)，计入 speedMultiplier。用于 timeline 求值 */
+	override val currentAnimTime: Float
+		get() {
+			val info = currentAnimId?.let { getPlaybackInfo(it) } ?: return 0f
+			return info.animTime * speedMultiplier
+		}
+
 	/** 跨动画过渡时恒为 1.0；否则等于 blendFactor */
-	val effectiveWeight: Float get() = if (transitionSource != null) 1f else blendFactor
+	override val effectiveWeight: Float get() = if (transitionSource != null) 1f else blendFactor
 
 	override fun isActive(): Boolean = state != State.IDLE
 
@@ -71,26 +79,28 @@ abstract class BaseAnimationController(
 
 	override fun trigger(config: AnimationPlayConfig) {
 		if (!loadAnimation(config.animId)) return
-		val cfg = configLoader.getConfig(config.animId)
-		val finalConfig = config.boneConfig ?: cfg
+		// 优先使用 Mapper 传入的已解析配置，避免重复加载
+		val finalConfig = resolvedBoneConfig ?: config.boneConfig ?: configLoader.getConfig(config.animId)
+		resolvedBoneConfig = null  // 用完即弃
 
 		if (currentAnimId == config.animId && state != State.IDLE) {
 			restartInternal(config.animId, finalConfig)
 			return
 		}
 
-		// 跨动画过渡源
+		// 跨动画过渡源（先快照再清除，避免新旧混杂）
 		snapshotTransitionSource()
+		proxyModel.bones.clear()
 
 		currentConfig = config
 		speedMultiplier = config.resolveSpeedMultiplier()
 		currentAnimId = config.animId
-		affectedBones = finalConfig.resolveCurrentBoneNames()
+		// affectedBones 由子类 tickBackend 从动画数据自动检测，不依赖 config
 
-		if (config.startTime > 0 && isClient)
+		if (config.startTime > 0)
 			setAnimStartTime(config.animId, config.startTime / 20f)
 
-		currentTransitionTicks = config.resolveFadeInTicks(cfg.transitionTicks)
+		currentTransitionTicks = config.resolveFadeInTicks(finalConfig.transitionTicks)
 		state = State.TRANSITIONING
 		blendFactor = 0f; blendTarget = 1f
 		freezeAllAtFrameZero()
@@ -136,11 +146,20 @@ abstract class BaseAnimationController(
 	// ═══════════════════ 暂停 / 恢复 ═══════════════════
 
 	override fun pause() {
-		if (state == State.PLAYING || state == State.TRANSITIONING) state = State.PAUSED
+		if (state == State.PLAYING || state == State.TRANSITIONING) {
+			state = State.PAUSED
+			transitionSource = null  // 停止 crossfade，当前 proxyModel 即最终姿态
+		}
 	}
 
 	override fun resume() {
-		if (state == State.PAUSED) state = if (isInFadeIn()) State.TRANSITIONING else State.PLAYING
+		if (state != State.PAUSED) return
+		// HOLD_ON_LAST_FRAME 已播放完毕，恢复时保持在最后一帧
+		val info = currentAnimId?.let { getPlaybackInfo(it) }
+		if (info != null && info.animTime * speedMultiplier >= info.animLength
+			&& info.loopType == LoopType.HOLD_ON_LAST
+		) return
+		state = if (isInFadeIn()) State.TRANSITIONING else State.PLAYING
 	}
 
 	override fun stopAnimation(animId: String) {
@@ -154,8 +173,7 @@ abstract class BaseAnimationController(
 	// ═══════════════════ 每帧 ═══════════════════
 
 	override fun tick(partialTick: Float, deltaSec: Float) {
-		if (!isClient) return
-
+		if (state == State.IDLE) return  // 已停止，不处理任何 tick
 		tickBlend(deltaSec)
 
 		val shouldTick = state != State.IDLE && state != State.PAUSED
@@ -229,6 +247,8 @@ abstract class BaseAnimationController(
 	// ═══════════════════ 播放边界检查 ═══════════════════
 
 	private fun checkPlaybackBounds() {
+		// 只在正常播放状态下检查边界，避免过渡期间误触发
+		if (state != State.PLAYING) return
 		val info = currentAnimId?.let { getPlaybackInfo(it) } ?: return
 		val effectiveTime = info.animTime * speedMultiplier
 		val config = currentConfig
@@ -239,7 +259,7 @@ abstract class BaseAnimationController(
 			config.endTime > 0 -> config.endTime / 20f
 			else -> animLength
 		}
-		if (effectiveTime < endSec) return
+		if (effectiveTime < endSec || endSec <= 0f) return
 
 		when (config.animType) {
 			AnimType.PLAY_ONCE -> stop()
@@ -265,14 +285,13 @@ abstract class BaseAnimationController(
 
 	private fun restartInternal(animId: String, config: ProxyBoneConfigData) {
 		currentAnimId = animId
-		affectedBones = config.resolveCurrentBoneNames()
+		// affectedBones 由 tickBackend 自动更新
 		state = State.PLAYING; blendTarget = 1f; blendFactor = 1f
 		transitionSource = null
-		if (isClient) resetAnimAndRestart(currentConfig)
+		resetAnimAndRestart(currentConfig)
 	}
 
 	private fun rebuildBackend() {
-		if (!isClient) return
 		val ids = currentAnimId?.let { listOf(it) } ?: emptyList()
 		val multipliers = ids.map { speedMultiplier }
 		syncToBackend(ids, multipliers)
@@ -295,7 +314,10 @@ abstract class BaseAnimationController(
 		blendFactor = 0f; blendTarget = 0f
 		proxyModel.bones.clear()
 		transitionSource = null
+		currentConfig = AnimationPlayConfig.of("")
 		currentAnimId = null; affectedBones = emptySet()
+		currentTransitionTicks = ProxyBoneConfigData.DEFAULT_TRANSITION_TICKS
+		speedMultiplier = 1f
 		rebuildBackend()
 	}
 

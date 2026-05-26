@@ -6,9 +6,12 @@ import architecture.resonator_combat_framework.module.player_animation.config.An
 import architecture.resonator_combat_framework.module.player_animation.config.ProxyBoneConfigData
 import architecture.resonator_combat_framework.module.player_animation.config.ProxyBoneConfigLoader
 import architecture.resonator_combat_framework.module.player_animation.config.ProxyBoneFlags
+import architecture.resonator_combat_framework.module.player_animation.controller.BaseAnimationController
 import architecture.resonator_combat_framework.module.player_animation.controller.IAnimationController
+import com.mojang.blaze3d.vertex.PoseStack
 import net.minecraft.client.model.EntityModel
 import net.minecraft.world.entity.Entity
+import org.joml.Quaternionf
 
 /** 实体动画映射器：控制器、生命周期、优先级、骨骼冲突 */
 abstract class EntityAnimationMapper<T : Entity, M : EntityModel<T>>(
@@ -30,7 +33,58 @@ abstract class EntityAnimationMapper<T : Entity, M : EntityModel<T>>(
 		weight: Float
 	)
 
+	/**
+	 * 读取 "root" 骨骼变换，应用到 PoseStack，影响整个模型渲染。
+	 * root.pos → translate, root.rotation → rotate, root.scale → scale。
+	 * 全部值乘以 weight，与动画过渡同步。
+	 */
+	@Suppress("DuplicatedCode")
+	fun applyRootTransform(proxyModels: List<ProxyModel>, poseStack: PoseStack, weight: Float) {
+		if (!isClient) return
+		if (weight <= 0f) return
+		for (proxy in proxyModels) {
+			val root = proxy.getBone("root") ?: continue
+			val px = root.pos.x * weight
+			val py = root.pos.y * weight
+			val pz = root.pos.z * weight
+			val rx = root.rotation.x * weight
+			val ry = root.rotation.y * weight
+			val rz = root.rotation.z * weight
+			val sx = 1f + (root.scale.x - 1f) * weight
+			val sy = 1f + (root.scale.y - 1f) * weight
+			val sz = 1f + (root.scale.z - 1f) * weight
+			if (px != 0f || py != 0f || pz != 0f) poseStack.translate(px.toDouble(), py.toDouble(), pz.toDouble())
+			if (rz != 0f || ry != 0f || rx != 0f) poseStack.mulPose(Quaternionf().rotationZYX(rz, ry, rx))
+			if (sx != 1f || sy != 1f || sz != 1f) poseStack.scale(sx, sy, sz)
+			return
+		}
+	}
+
 	fun resolveConfig(animId: String): ProxyBoneConfigData = configLoader.getConfig(animId)
+
+	// tick
+
+	/** 驱动所有控制器（控制器内部用状态机决定是否处理） */
+	fun tick(gameTime: Float, deltaSec: Float) {
+		for (ctrl in controllers()) {
+			ctrl.tick(gameTime, deltaSec)
+		}
+	}
+
+	/** 收集可渲染控制器的代理模型 */
+	fun collectProxyModels(): List<ProxyModel> {
+		return getRenderableControllers().map { (it as BaseAnimationController).proxyModel }
+	}
+
+	/** 合并所有活跃动画的骨骼标志 */
+	fun resolveMergedFlags(animTime: Float): Map<String, ProxyBoneFlags> {
+		val flags = mutableMapOf<String, ProxyBoneFlags>()
+		for ((_, config) in boneConfigs) flags.putAll(config.resolveBoneFlags(animTime))
+		return flags
+	}
+
+	/** 合并后的混合权重 */
+	fun mergedWeight(): Float = defaultController.effectiveWeight
 
 	// 触发
 
@@ -40,6 +94,8 @@ abstract class EntityAnimationMapper<T : Entity, M : EntityModel<T>>(
 		val used = config.boneConfig ?: loaded
 		boneConfigs.clear()
 		boneConfigs[config.animId] = used
+		// 传给控制器，避免重复加载
+		(controller as BaseAnimationController).resolvedBoneConfig = used
 		controller.trigger(config)
 	}
 

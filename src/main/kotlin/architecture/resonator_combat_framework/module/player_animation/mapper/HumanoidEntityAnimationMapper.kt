@@ -18,6 +18,7 @@ abstract class HumanoidEntityAnimationMapper<T : LivingEntity, M : HumanoidModel
 	override fun applyProxyToModel(
 		proxyModels: List<ProxyModel>, model: M, flags: Map<String, ProxyBoneFlags>, weight: Float
 	) {
+		if (!isClient) return
 		for (proxyModel in proxyModels) {
 			applyProxyBone(proxyModel, "head", flags, weight, model.head, model.hat)
 			applyProxyBone(proxyModel, "body", flags, weight, model.body)
@@ -38,46 +39,59 @@ abstract class HumanoidEntityAnimationMapper<T : LivingEntity, M : HumanoidModel
 		val rp = bone.pos
 		val rr = bone.rotation
 		val rs = bone.scale
-		val lock = flags[name]?.hasAnyLockState() ?: false
+		val boneFlags = flags[name]
+		val lock = boneFlags?.hasAnyLockState() ?: true // TODO 后续改成通用常量
+		// 不参与过渡时 weight 强制为 1.0，骨骼直接跟随动画
+		val useWeight = if (boneFlags?.shouldTransition() != false) weight else 1f
 
 		val isPos = rp.x != 0f || rp.y != 0f || rp.z != 0f
 		val isRotation = rr.x != 0f || rr.y != 0f || rr.z != 0f
 		val isScale = rs.x != 1f || rs.y != 1f || rs.z != 1f
 		if (!isPos && !isRotation && !isScale) return
 
+		val posX = -rp.x * 16f
+		val posY = -rp.y * 16f
+		val posZ = rp.z * 16f
+		val rotationX = -rr.x
+		val rotationY = -rr.y
+		val rotationZ = rr.z
+		val scaleX = rs.x
+		val scaleY = rs.y
+		val scaleZ = rs.z
+
 		for (part in parts) {
 			val ip = part.initialPose
 			if (lock) {
 				if (isPos) {
-					part.x += (ip.x - rp.x * 16f - part.x) * weight
-					part.y += (ip.y - rp.y * 16f - part.y) * weight
-					part.z += (ip.z + rp.z * 16f - part.z) * weight
+					part.x += ip.x + (posX - part.x) * weight
+					part.y += ip.y + (posY - part.y) * weight
+					part.z += ip.z + (posZ - part.z) * weight
 				}
 				if (isRotation) {
-					part.xRot += (ip.xRot - rr.x - part.xRot) * weight
-					part.yRot += (ip.yRot - rr.y - part.yRot) * weight
-					part.zRot += (ip.zRot + rr.z - part.zRot) * weight
+					part.xRot += ip.xRot + (rotationX - part.xRot) * weight
+					part.yRot += ip.yRot + (rotationY - part.yRot) * weight
+					part.zRot += ip.zRot + (rotationZ - part.zRot) * weight
 				}
 				if (isScale) {
-					part.xScale += (1 + rs.x - part.xScale) * weight
-					part.yScale += (1 + rs.y - part.yScale) * weight
-					part.zScale += (1 + rs.z - part.zScale) * weight
+					part.xScale += 1 + (scaleX - part.xScale) * weight
+					part.yScale += 1 + (scaleY - part.yScale) * weight
+					part.zScale += 1 + (scaleZ - part.zScale) * weight
 				}
 			} else {
 				if (isPos) {
-					part.x += (-rp.x * 16f) * weight
-					part.y += (-rp.y * 16f) * weight
-					part.z += (+rp.z * 16f) * weight
+					part.x += posX * useWeight
+					part.y += posY * useWeight
+					part.z += posZ * useWeight
 				}
 				if (isRotation) {
-					part.xRot += (-rr.x) * weight
-					part.yRot += (-rr.y) * weight
-					part.zRot += (+rr.z) * weight
+					part.xRot += rotationX * useWeight
+					part.yRot += rotationY * useWeight
+					part.zRot += rotationZ * useWeight
 				}
 				if (isScale) {
-					part.xScale += (rs.x) * weight
-					part.yScale += (rs.y) * weight
-					part.zScale += (rs.z) * weight
+					part.xScale += scaleX * useWeight
+					part.yScale += scaleY * useWeight
+					part.zScale += scaleZ * useWeight
 				}
 			}
 		}
@@ -87,22 +101,22 @@ abstract class HumanoidEntityAnimationMapper<T : LivingEntity, M : HumanoidModel
 	 * 将 ProxyLocator 应用到 PoseStack, 用于物品渲染.
 	 * @param weight blendFactor, 用于过渡淡入淡出 (0=原版, 1=完全动画)
 	 */
+	@Suppress("DuplicatedCode")
+		/** 物品渲染：right_item / left_item 在 eyelib 中是独立的骨骼，直接读取 */
 	fun applyProxyToItem(proxyModels: List<ProxyModel>, isLeft: Boolean, poseStack: PoseStack, weight: Float = 1f) {
 		if (weight <= 0f) return
-		val armName = if (isLeft) "left_arm" else "right_arm"
 		val itemName = if (isLeft) "left_item" else "right_item"
 		for (proxy in proxyModels) {
-			val bone = proxy.getBone(armName) ?: continue
-			val loc = bone.getLocator(itemName) ?: continue
-			val px = loc.pos.x * weight
-			val py = loc.pos.y * weight
-			val pz = loc.pos.z * weight
-			val rx = loc.rotation.x * weight
-			val ry = loc.rotation.y * weight
-			val rz = loc.rotation.z * weight
-			val sx = 1f + (loc.scale.x - 1f) * weight
-			val sy = 1f + (loc.scale.y - 1f) * weight
-			val sz = 1f + (loc.scale.z - 1f) * weight
+			val bone = proxy.getBone(itemName) ?: continue
+			val px = bone.pos.x * weight;
+			val py = bone.pos.y * weight;
+			val pz = bone.pos.z * weight
+			val rx = bone.rotation.x * weight;
+			val ry = bone.rotation.y * weight;
+			val rz = bone.rotation.z * weight
+			val sx = 1f + (bone.scale.x - 1f) * weight
+			val sy = 1f + (bone.scale.y - 1f) * weight
+			val sz = 1f + (bone.scale.z - 1f) * weight
 			poseStack.mulPose(Axis.XP.rotationDegrees(90.0f))
 			if (px != 0f || py != 0f || pz != 0f) poseStack.translate(px.toDouble(), py.toDouble(), pz.toDouble())
 			if (rz != 0f || ry != 0f || rx != 0f) poseStack.mulPose(Quaternionf().rotationZYX(rz, ry, rx))
