@@ -39,7 +39,7 @@ abstract class BaseAnimationController(
 	override val currentAnimTime: Float
 		get() {
 			val info = currentAnimId?.let { getPlaybackInfo(it) } ?: return 0f
-			return info.animTime * speedMultiplier
+			return info.animTime
 		}
 
 	/** 跨动画过渡时恒为 1.0；否则等于 blendFactor */
@@ -67,6 +67,7 @@ abstract class BaseAnimationController(
 	// ═══════════════════ 触发 ═══════════════════
 
 	override fun trigger(config: AnimationPlayConfig) {
+		speedMultiplier = config.resolveSpeedMultiplier()
 		if (!loadAnimation(config.animId)) return
 		val finalConfig = resolvedBoneConfig ?: config.boneConfig ?: configLoader.getConfig(config.animId)
 		resolvedBoneConfig = null
@@ -84,7 +85,6 @@ abstract class BaseAnimationController(
 		proxyModel.bones.clear()
 
 		currentConfig = config
-		speedMultiplier = config.resolveSpeedMultiplier()
 		currentAnimId = config.animId
 
 		if (config.startTime > 0)
@@ -123,11 +123,14 @@ abstract class BaseAnimationController(
 
 	// ═══════════════════ 停止 ═══════════════════
 
-	override fun stop() {
+	override fun stop() = stop(-1)
+
+	override fun stop(fadeOutTicks: Int) {
 		if (state == State.IDLE || state == State.FADING_OUT) return
 		state = State.FADING_OUT
 		blendTarget = 0f
-		currentTransitionTicks = currentConfig.resolveFadeOutTicks(currentTransitionTicks)
+		currentTransitionTicks = if (fadeOutTicks >= 0) fadeOutTicks
+		else currentConfig.resolveFadeOutTicks(activeBoneConfig.transitionTicks)
 		if (currentTransitionTicks <= 0) forceClear()
 	}
 
@@ -261,6 +264,7 @@ abstract class BaseAnimationController(
 				pause()
 				state = State.FADING_OUT
 				blendTarget = 0f
+				currentTransitionTicks = currentConfig.resolveFadeOutTicks(activeBoneConfig.transitionTicks)
 			}
 
 			AnimType.LOOP -> {
@@ -275,6 +279,7 @@ abstract class BaseAnimationController(
 						pause()
 						state = State.FADING_OUT
 						blendTarget = 0f
+						currentTransitionTicks = currentConfig.resolveFadeOutTicks(activeBoneConfig.transitionTicks)
 					}
 
 					LoopType.LOOP -> resetAnimAndRestart(config)

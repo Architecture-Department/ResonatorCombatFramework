@@ -28,6 +28,11 @@ class EyeLibAnimationController(
 
 	private val activeAnimations = linkedMapOf<String, MolangValue>()
 	private val boneController = EyelibBoneController()
+
+	/// 原始游戏时间跟踪（用于速度缩放）
+	private var lastRawGameTime = -1f
+	private var scaledGameTime = 0f
+
 	// ═══════════ 后端实现 ═══════════
 
 	override fun loadAnimation(animId: String): Boolean {
@@ -43,13 +48,15 @@ class EyeLibAnimationController(
 		for ((i, id) in animIds.withIndex()) {
 			val anim = EyeLibUtil.getAnimation(isClient, id) ?: continue
 			names[id] = anim.name()
-			mults[id] = MolangValue.getConstant(multipliers.getOrElse(i) { 1f })
+			// 速度由时间线缩放控制，animate multiplier 固定为 1（仅用作混合权重）
+			mults[id] = MolangValue.getConstant(1f)
 		}
 		EyeLibUtil.animateSetup(renderData, names, mults)
 	}
 
 	override fun freezeAllAtFrameZero() {
 		for (animId in activeAnimations.keys) EyeLibUtil.resetAnimData(renderData, animId)
+		lastRawGameTime = -1f
 	}
 
 	override fun setAnimStartTime(animId: String, timeSec: Float) {
@@ -73,8 +80,20 @@ class EyeLibAnimationController(
 		val cec: ClientEntityComponent = renderData.clientEntityComponent
 		val effects = AnimationEffects()
 
+		// 用缩放后的时间线驱动 EyeLib 动画，实现速度控制
+		val scaledTicks = if (lastRawGameTime < 0f) {
+			lastRawGameTime = gameTime
+			scaledGameTime = gameTime
+			gameTime
+		} else {
+			val delta = gameTime - lastRawGameTime
+			scaledGameTime += delta * speedMultiplier
+			lastRawGameTime = gameTime
+			scaledGameTime
+		}
+
 		val infos = if (ac.getSerializableInfo() != null) {
-			BrAnimator.tickAnimation(ac, renderData.scope, effects, gameTime) {
+			BrAnimator.tickAnimation(ac, renderData.scope, effects, scaledTicks) {
 				val ce = cec.clientEntity ?: return@tickAnimation
 				ce.scripts().ifPresent { it.pre_animation().eval(renderData.scope) }
 			}
@@ -88,5 +107,6 @@ class EyeLibAnimationController(
 
 	override fun resetAnimAndRestart(config: AnimationPlayConfig) {
 		EyeLibUtil.resetAnimData(renderData, config.animId)
+		lastRawGameTime = -1f
 	}
 }

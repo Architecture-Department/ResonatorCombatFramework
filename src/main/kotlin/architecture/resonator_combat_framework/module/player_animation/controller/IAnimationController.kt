@@ -32,7 +32,10 @@ interface IAnimationController {
 	/** 触发动画，自动计算速度以适配 durationTicks */
 	fun triggerForDuration(animId: String, transitionTicks: Int, durationTicks: Int, originalAnimLengthSec: Float)
 
-	fun stop()
+	fun stop() = stop(-1)
+
+	/** 停止动画，指定淡出时间 */
+	fun stop(fadeOutTicks: Int)
 	fun stopImmediate()
 	fun pause()
 	fun resume()

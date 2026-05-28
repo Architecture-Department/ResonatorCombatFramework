@@ -74,9 +74,9 @@ data class AnimationPlayConfig(
 		fun endAt(tick: Int) = apply { endTime = tick }
 		fun speed(multiplier: Float) = apply { speedMultiplier = multiplier }
 		fun duration(ticks: Int, originalLengthSec: Float) = apply {
-			durationTicks = ticks; originalAnimLengthSec = originalLengthSec
+			durationTicks = ticks;
+			originalAnimLengthSec = originalLengthSec
 		}
-
 		fun boneConfig(config: ProxyBoneConfigData) = apply { boneConfig = config }
 		fun fadeIn(ticks: Int) = apply { fadeInTicks = ticks }
 		fun fadeOut(ticks: Int) = apply { fadeOutTicks = ticks }

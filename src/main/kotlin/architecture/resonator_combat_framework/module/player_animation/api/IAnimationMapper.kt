@@ -30,6 +30,7 @@ interface IAnimationMapper {
 	fun stop(controllerName: String)
 	fun stopImmediate(controllerName: String)
 	fun stopAll() = controllers().forEach { it.stop() }
+	fun stopAll(fadeOutTicks: Int) = controllers().forEach { it.stop(fadeOutTicks) }
 	fun stopAllImmediate() = controllers().forEach { it.stopImmediate() }
 
 	// 暂停 / 恢复
