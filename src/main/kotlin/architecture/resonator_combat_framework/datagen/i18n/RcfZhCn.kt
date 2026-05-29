@@ -1,7 +1,7 @@
 package architecture.resonator_combat_framework.datagen.i18n
 
 import architecture.goldenboughs_lib.datagen.i18n.DatagenI18n
-import architecture.resonator_combat_framework.core.Rcf
+import architecture.resonator_combat_framework.core.RcfConstants
 import net.minecraft.data.PackOutput
 import net.minecraft.sounds.SoundEvent
 import net.minecraft.world.effect.MobEffect
@@ -11,7 +11,6 @@ import net.minecraft.world.item.Item
 import net.neoforged.fml.loading.FMLEnvironment
 import org.jetbrains.annotations.ApiStatus
 import java.util.function.Supplier
-import architecture.resonator_combat_framework.core.RcfConstants
 
 @ApiStatus.Internal
 class RcfZhCn(output: PackOutput) : DatagenI18n(output, RcfConstants.ID, "zh_cn") {

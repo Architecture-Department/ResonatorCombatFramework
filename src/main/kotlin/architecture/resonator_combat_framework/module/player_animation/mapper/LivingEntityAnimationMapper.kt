@@ -1,4 +1,6 @@
-package architecture.resonator_combat_framework.module.player_animation.mapper
+﻿package architecture.resonator_combat_framework.module.player_animation.mapper
+
+// 生物实体动画映射器
 
 import architecture.resonator_combat_framework.module.player_animation.config.ProxyBoneFlags
 import net.minecraft.client.model.EntityModel

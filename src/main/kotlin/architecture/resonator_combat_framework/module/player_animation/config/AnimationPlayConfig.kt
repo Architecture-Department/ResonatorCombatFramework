@@ -1,4 +1,4 @@
-package architecture.resonator_combat_framework.module.player_animation.config
+﻿package architecture.resonator_combat_framework.module.player_animation.config
 
 import architecture.resonator_combat_framework.module.player_animation.api.IAnimationMapper
 
@@ -74,9 +74,10 @@ data class AnimationPlayConfig(
 		fun endAt(tick: Int) = apply { endTime = tick }
 		fun speed(multiplier: Float) = apply { speedMultiplier = multiplier }
 		fun duration(ticks: Int, originalLengthSec: Float) = apply {
-			durationTicks = ticks;
+			durationTicks = ticks
 			originalAnimLengthSec = originalLengthSec
 		}
+
 		fun boneConfig(config: ProxyBoneConfigData) = apply { boneConfig = config }
 		fun fadeIn(ticks: Int) = apply { fadeInTicks = ticks }
 		fun fadeOut(ticks: Int) = apply { fadeOutTicks = ticks }

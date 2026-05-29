@@ -1,10 +1,9 @@
 package architecture.resonator_combat_framework.core.registry
 
-import architecture.resonator_combat_framework.core.Rcf
+import architecture.resonator_combat_framework.core.RcfConstants
 import net.neoforged.bus.api.SubscribeEvent
 import net.neoforged.fml.common.EventBusSubscriber
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent
-import architecture.resonator_combat_framework.core.RcfConstants
 
 /**
  * 注册能力
@@ -12,6 +11,6 @@ import architecture.resonator_combat_framework.core.RcfConstants
 @EventBusSubscriber(modid = RcfConstants.ID)
 object CapabilityRegistry {
 	@SubscribeEvent
-	fun registerHighest(event: RegisterCapabilitiesEvent?) {
+	fun registry(event: RegisterCapabilitiesEvent?) {
 	}
 }

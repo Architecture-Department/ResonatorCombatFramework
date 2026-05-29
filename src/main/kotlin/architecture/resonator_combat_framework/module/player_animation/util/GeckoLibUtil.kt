@@ -1,3 +1,4 @@
+﻿// GeckoLib 工具类。根据 isClient 参数分发到客户端或服务端的模型/动画缓存
 @file:Suppress("UNCHECKED_CAST")
 
 package architecture.resonator_combat_framework.module.player_animation.util
@@ -19,4 +20,3 @@ object GeckoLibUtil {
 		return if (isClient) GeckoLibCache.getBakedModels() else GeckoLibCacheServer.MODELS
 	}
 }
-

@@ -1,0 +1,21 @@
+﻿// MoLang AST 节点: 逻辑非 !expr
+package architecture.resonator_combat_framework.module.player_animation.bedrock.molang.value
+
+import architecture.resonator_combat_framework.module.player_animation.bedrock.molang.MathValue
+
+class BooleanNegate(private val value: MathValue) : MathValue {
+	override fun get(): Double {
+		return (if (value.get() == 0.0) 1 else 0).toDouble()
+	}
+
+	override fun isMutable(): Boolean {
+		return value.isMutable()
+	}
+
+	override fun toString(): String {
+		return "!$value"
+	}
+}
+
+
+

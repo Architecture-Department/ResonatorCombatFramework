@@ -8,7 +8,6 @@ import net.neoforged.fml.common.Mod
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent
 import thedarkcolour.kotlinforforge.neoforge.forge.LOADING_CONTEXT
 import thedarkcolour.kotlinforforge.neoforge.forge.MOD_BUS
-import architecture.resonator_combat_framework.core.RcfConstants
 
 @Mod(value = RcfConstants.ID, dist = [Dist.CLIENT])
 @EventBusSubscriber(modid = RcfConstants.ID, value = [Dist.CLIENT])

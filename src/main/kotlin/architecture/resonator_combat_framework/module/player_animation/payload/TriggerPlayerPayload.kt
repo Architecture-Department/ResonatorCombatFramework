@@ -1,4 +1,6 @@
-package architecture.resonator_combat_framework.module.player_animation.payload
+﻿package architecture.resonator_combat_framework.module.player_animation.payload
+
+// 触发动画数据包。预留
 
 import architecture.goldenboughs_lib.api.payload.ToServerAndClientPayload
 import architecture.resonator_combat_framework.core.RcfConstants

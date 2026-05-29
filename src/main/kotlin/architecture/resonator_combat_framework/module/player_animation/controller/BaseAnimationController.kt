@@ -1,8 +1,13 @@
+﻿// 动画控制器基类。包含状态机(IDLE/TRANSITIONING/PLAYING/PAUSED/FADING_OUT)、crossfade 过渡系统、blend 混合、播放边界检查。子类实现具体后端
 package architecture.resonator_combat_framework.module.player_animation.controller
 
 import architecture.resonator_combat_framework.module.player_animation.api.ProxyBone
 import architecture.resonator_combat_framework.module.player_animation.api.ProxyModel
-import architecture.resonator_combat_framework.module.player_animation.config.*
+import architecture.resonator_combat_framework.module.player_animation.config.AnimType
+import architecture.resonator_combat_framework.module.player_animation.config.AnimationPlayConfig
+import architecture.resonator_combat_framework.module.player_animation.config.ProxyBoneConfigData
+import architecture.resonator_combat_framework.module.player_animation.config.shouldBlend
+import architecture.resonator_combat_framework.module.player_animation.registry.ProxyBoneConfigRegistry
 
 /**
  * 动画控制器基类。
@@ -11,9 +16,9 @@ import architecture.resonator_combat_framework.module.player_animation.config.*
  * 子类只需实现后端相关方法（加载动画、驱动帧、写入骨骼等）。
  */
 abstract class BaseAnimationController(
-	protected val isClient: Boolean,
-	protected val configLoader: ProxyBoneConfigLoader = ProxyBoneConfigLoader.getInstance(isClient)
+	protected val isClient: Boolean
 ) : IAnimationController {
+	protected val configLoader: ProxyBoneConfigRegistry = ProxyBoneConfigRegistry.getInstance(isClient)
 
 	protected enum class State { IDLE, TRANSITIONING, PLAYING, PAUSED, FADING_OUT }
 
@@ -177,7 +182,7 @@ abstract class BaseAnimationController(
 
 		if (!shouldTick) return
 
-		if (state == State.TRANSITIONING) freezeAllAtFrameZero()
+		// 过渡期间不再每帧 freezeAllAtFrameZero，允许动画从第 1 帧开始推进
 
 		checkPlaybackBounds()
 
@@ -248,7 +253,7 @@ abstract class BaseAnimationController(
 	private fun checkPlaybackBounds() {
 		if (state != State.PLAYING) return
 		val info = currentAnimId?.let { getPlaybackInfo(it) } ?: return
-		val effectiveTime = info.animTime * speedMultiplier
+		val effectiveTime = info.animTime  // animTime 已包含速度缩放
 		val config = currentConfig
 		val animLength = info.animLength
 
@@ -334,6 +339,9 @@ abstract class BaseAnimationController(
 
 	private fun isInFadeIn(): Boolean = blendTarget > 0f && blendFactor < 1f
 }
+
+
+
 
 
 

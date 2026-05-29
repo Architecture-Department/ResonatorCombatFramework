@@ -1,4 +1,6 @@
-package architecture.resonator_combat_framework.module.player_animation.controller
+﻿package architecture.resonator_combat_framework.module.player_animation.controller
+
+// 骨骼控制器接口
 
 import architecture.goldenboughs_lib.api.AllOpe
 
@@ -8,3 +10,4 @@ interface IBoneController<in TRawData, in TProxyModel> {
 	/** 遍历原始数据, 逐骨骼写入代理模型 */
 	fun writeToProxy(data: TRawData, proxyModel: TProxyModel)
 }
+

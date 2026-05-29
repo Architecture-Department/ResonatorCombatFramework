@@ -1,4 +1,6 @@
-package architecture.resonator_combat_framework.module.player_animation.command
+﻿package architecture.resonator_combat_framework.module.player_animation.command
+
+// 玩家动画测试命令。用于在游戏中测试动画播放
 
 import architecture.goldenboughs_lib.util.CommandContextUtil.getArguments
 import architecture.resonator_combat_framework.module.player_animation.config.AnimationPlayConfig

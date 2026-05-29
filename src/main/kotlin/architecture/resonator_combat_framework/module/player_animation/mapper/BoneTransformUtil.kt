@@ -1,157 +1,187 @@
+﻿// 骨骼变换工具类
 package architecture.resonator_combat_framework.module.player_animation.mapper
 
 import architecture.resonator_combat_framework.module.player_animation.api.ProxyBone
+import architecture.resonator_combat_framework.module.player_animation.api.hasPos
+import architecture.resonator_combat_framework.module.player_animation.api.hasRot
+import architecture.resonator_combat_framework.module.player_animation.api.hasScale
 import architecture.resonator_combat_framework.module.player_animation.config.ProxyBoneFlags
 import architecture.resonator_combat_framework.module.player_animation.config.isEnabled
 import architecture.resonator_combat_framework.module.player_animation.config.shouldTransition
 import com.mojang.blaze3d.vertex.PoseStack
 import net.minecraft.client.model.geom.ModelPart
 import org.joml.Quaternionf
+import org.joml.Vector3f
+import java.lang.Math.toRadians
+
+/** 启用位标记 */
+const val POS_X = 0x001
+const val POS_Y = 0x002
+const val POS_Z = 0x004
+const val ROT_X = 0x008
+const val ROT_Y = 0x010
+const val ROT_Z = 0x020
+const val SCL_X = 0x040
+const val SCL_Y = 0x080
+const val SCL_Z = 0x100
 
 object BoneTransformUtil {
 
-	@Suppress("DuplicatedCode")
 	fun computeForPoseStack(
-		bone: ProxyBone, flags: ProxyBoneFlags?, weight: Float, flipXY: Boolean = false
+		bone: ProxyBone, flags: ProxyBoneFlags?, weight: Float, flipY: Boolean = false
 	): Transform {
 		val useWeight = if (flags.shouldTransition()) weight else 1f
-		val noP = !bone.posEmpty;
-		val noR = !bone.rotationEmpty;
-		val noS = !bone.scalaEmpty
-		val signX = if (flipXY) -1f else 1f;
-		val signY = if (flipXY) -1f else 1f
+		val np = bone.hasPos()
+		val nr = bone.hasRot()
+		val ns = bone.hasScale()
+		var mask = 0
+		val p = Vector3f()
+		val r = Vector3f()
+		val s = Vector3f(1f, 1f, 1f)
 
-		val ePX = flags.isEnabled("pos.x") && noP;
-		val ePY = flags.isEnabled("pos.y") && noP;
-		val ePZ = flags.isEnabled("pos.z") && noP
-		val eRX = flags.isEnabled("rot.x") && noR;
-		val eRY = flags.isEnabled("rot.y") && noR;
-		val eRZ = flags.isEnabled("rot.z") && noR
-		val eSX = flags.isEnabled("scale.x") && noS;
-		val eSY = flags.isEnabled("scale.y") && noS;
-		val eSZ = flags.isEnabled("scale.z") && noS
+		val signY = if (flipY) -1f else 1f
 
-		return Transform(
-			ePX,
-			ePY,
-			ePZ,
-			eRX,
-			eRY,
-			eRZ,
-			eSX,
-			eSY,
-			eSZ,
-			if (ePX) bone.pos.x * signX * useWeight else 0f,
-			if (ePY) bone.pos.y * signY * useWeight else 0f,
-			if (ePZ) bone.pos.z * useWeight else 0f,
-			if (eRX) bone.rotation.x * signX * useWeight else 0f,
-			if (eRY) bone.rotation.y * signY * useWeight else 0f,
-			if (eRZ) bone.rotation.z * useWeight else 0f,
-			if (eSX) 1f + (bone.scale.x - 1f) * useWeight else 1f,
-			if (eSY) 1f + (bone.scale.y - 1f) * useWeight else 1f,
-			if (eSZ) 1f + (bone.scale.z - 1f) * useWeight else 1f
-		)
+		if (flags.isEnabled("pos.x") && np) {
+			mask = mask or POS_X
+			p.x = bone.pos.x / 16f * useWeight
+		}
+		if (flags.isEnabled("pos.y") && np) {
+			mask = mask or POS_Y
+			p.y = bone.pos.y * signY / 16f * useWeight
+		}
+		if (flags.isEnabled("pos.z") && np) {
+			mask = mask or POS_Z
+			p.z = bone.pos.z / 16f * useWeight
+		}
+		if (flags.isEnabled("rot.x") && nr) {
+			mask = mask or ROT_X
+			r.x = toRadians(bone.rotation.x.toDouble()).toFloat() * useWeight
+		}
+		if (flags.isEnabled("rot.y") && nr) {
+			mask = mask or ROT_Y
+			r.y = toRadians(bone.rotation.y.toDouble()).toFloat() * useWeight
+		}
+		if (flags.isEnabled("rot.z") && nr) {
+			mask = mask or ROT_Z
+			r.z = toRadians(bone.rotation.z.toDouble()).toFloat() * useWeight
+		}
+		if (flags.isEnabled("scale.x") && ns) {
+			mask = mask or SCL_X
+			s.x = 1f + (bone.scale.x - 1f) * useWeight
+		}
+		if (flags.isEnabled("scale.y") && ns) {
+			mask = mask or SCL_Y
+			s.y = 1f + (bone.scale.y - 1f) * useWeight
+		}
+		if (flags.isEnabled("scale.z") && ns) {
+			mask = mask or SCL_Z
+			s.z = 1f + (bone.scale.z - 1f) * useWeight
+		}
+
+		return Transform(mask, p, r, s)
 	}
 
-	@Suppress("DuplicatedCode")
-	fun computeForModelPart(
-		bone: ProxyBone, flags: ProxyBoneFlags?, useWeight: Float
-	): Transform {
-		val noP = !bone.posEmpty;
-		val noR = !bone.rotationEmpty;
-		val noS = !bone.scalaEmpty
+	fun computeForModelPart(bone: ProxyBone, flags: ProxyBoneFlags?, useWeight: Float): Transform {
+		val np = bone.hasPos()
+		val nr = bone.hasRot()
+		val ns = bone.hasScale()
+		var mask = 0
+		val p = Vector3f()
+		val r = Vector3f()
+		val s = Vector3f(1f, 1f, 1f)
 
-		val ePX = flags.isEnabled("pos.x") && noP;
-		val ePY = flags.isEnabled("pos.y") && noP;
-		val ePZ = flags.isEnabled("pos.z") && noP
-		val eRX = flags.isEnabled("rot.x") && noR;
-		val eRY = flags.isEnabled("rot.y") && noR;
-		val eRZ = flags.isEnabled("rot.z") && noR
-		val eSX = flags.isEnabled("scale.x") && noS;
-		val eSY = flags.isEnabled("scale.y") && noS;
-		val eSZ = flags.isEnabled("scale.z") && noS
+		if (flags.isEnabled("pos.x") && np) {
+			mask = mask or POS_X;
+			p.x = bone.pos.x
+		}
+		if (flags.isEnabled("pos.y") && np) {
+			mask = mask or POS_Y;
+			p.y = -bone.pos.y
+		}
+		if (flags.isEnabled("pos.z") && np) {
+			mask = mask or POS_Z;
+			p.z = bone.pos.z
+		}
+		if (flags.isEnabled("rot.x") && nr) {
+			mask = mask or ROT_X;
+			r.x = toRadians(bone.rotation.x.toDouble()).toFloat()
+		}
+		if (flags.isEnabled("rot.y") && nr) {
+			mask = mask or ROT_Y;
+			r.y = toRadians(bone.rotation.y.toDouble()).toFloat()
+		}
+		if (flags.isEnabled("rot.z") && nr) {
+			mask = mask or ROT_Z;
+			r.z = toRadians(bone.rotation.z.toDouble()).toFloat()
+		}
+		if (flags.isEnabled("scale.x") && ns) {
+			mask = mask or SCL_X;
+			s.x = bone.scale.x
+		}
+		if (flags.isEnabled("scale.y") && ns) {
+			mask = mask or SCL_Y;
+			s.y = bone.scale.y
+		}
+		if (flags.isEnabled("scale.z") && ns) {
+			mask = mask or SCL_Z;
+			s.z = bone.scale.z
+		}
 
-		return Transform(
-			ePX,
-			ePY,
-			ePZ,
-			eRX,
-			eRY,
-			eRZ,
-			eSX,
-			eSY,
-			eSZ,
-			-bone.pos.x * 16f,
-			-bone.pos.y * 16f,
-			bone.pos.z * 16f,
-			-bone.rotation.x,
-			-bone.rotation.y,
-			bone.rotation.z,
-			bone.scale.x,
-			bone.scale.y,
-			bone.scale.z
-		)
+		return Transform(mask, p, r, s)
 	}
 
 	fun applyTo(poseStack: PoseStack, t: Transform) {
-		poseStack.translate(t.posX, t.posY, t.posZ)
-		poseStack.mulPose(Quaternionf().rotationZYX(t.rotZ, t.rotY, t.rotX))
-		poseStack.scale(t.scaleX, t.scaleY, t.scaleZ)
+		if (t.mask and (POS_X or POS_Y or POS_Z) != 0) poseStack.translate(t.pos.x, t.pos.y, t.pos.z)
+		if (t.mask and (ROT_X or ROT_Y or ROT_Z) != 0) poseStack.mulPose(
+			Quaternionf().rotationZYX(
+				t.rot.z,
+				t.rot.y,
+				t.rot.x
+			)
+		)
+		if (t.mask and (SCL_X or SCL_Y or SCL_Z) != 0) poseStack.scale(
+			if (t.mask and SCL_X != 0) t.scale.x else 1f,
+			if (t.mask and SCL_Y != 0) t.scale.y else 1f,
+			if (t.mask and SCL_Z != 0) t.scale.z else 1f
+		)
 	}
 
-	@Suppress("DuplicatedCode")
-	fun applyTo(
-		part: ModelPart, t: Transform,
-		lockPos: Boolean, lockRot: Boolean, lockScale: Boolean, useWeight: Float
-	) {
+	fun applyTo(part: ModelPart, t: Transform, lockPos: Boolean, lockRot: Boolean, lockScale: Boolean, useWeight: Float) {
 		val ip = part.initialPose
 		if (lockPos) {
-			if (t.enPosX) part.x += (ip.x + t.posX - part.x) * useWeight
-			if (t.enPosY) part.y += (ip.y + t.posY - part.y) * useWeight
-			if (t.enPosZ) part.z += (ip.z + t.posZ - part.z) * useWeight
+			if (t.mask and POS_X != 0) part.x += (ip.x + t.pos.x - part.x) * useWeight
+			if (t.mask and POS_Y != 0) part.y += (ip.y + t.pos.y - part.y) * useWeight
+			if (t.mask and POS_Z != 0) part.z += (ip.z + t.pos.z - part.z) * useWeight
 		} else {
-			if (t.enPosX) part.x += t.posX * useWeight
-			if (t.enPosY) part.y += t.posY * useWeight
-			if (t.enPosZ) part.z += t.posZ * useWeight
+			if (t.mask and POS_X != 0) part.x += t.pos.x * useWeight
+			if (t.mask and POS_Y != 0) part.y += t.pos.y * useWeight
+			if (t.mask and POS_Z != 0) part.z += t.pos.z * useWeight
 		}
 		if (lockRot) {
-			if (t.enRotX) part.xRot += (ip.xRot + t.rotX - part.xRot) * useWeight
-			if (t.enRotY) part.yRot += (ip.yRot + t.rotY - part.yRot) * useWeight
-			if (t.enRotZ) part.zRot += (ip.zRot + t.rotZ - part.zRot) * useWeight
+			if (t.mask and ROT_X != 0) part.xRot += (ip.xRot + t.rot.x - part.xRot) * useWeight
+			if (t.mask and ROT_Y != 0) part.yRot += (ip.yRot + t.rot.y - part.yRot) * useWeight
+			if (t.mask and ROT_Z != 0) part.zRot += (ip.zRot + t.rot.z - part.zRot) * useWeight
 		} else {
-			if (t.enRotX) part.xRot += t.rotX * useWeight
-			if (t.enRotY) part.yRot += t.rotY * useWeight
-			if (t.enRotZ) part.zRot += t.rotZ * useWeight
+			if (t.mask and ROT_X != 0) part.xRot += t.rot.x * useWeight
+			if (t.mask and ROT_Y != 0) part.yRot += t.rot.y * useWeight
+			if (t.mask and ROT_Z != 0) part.zRot += t.rot.z * useWeight
 		}
 		if (lockScale) {
-			if (t.enSclX) part.xScale += (1f + (t.scaleX - 1f) - part.xScale) * useWeight
-			if (t.enSclY) part.yScale += (1f + (t.scaleY - 1f) - part.yScale) * useWeight
-			if (t.enSclZ) part.zScale += (1f + (t.scaleZ - 1f) - part.zScale) * useWeight
+			if (t.mask and SCL_X != 0) part.xScale += (1f + (t.scale.x - 1f) - part.xScale) * useWeight
+			if (t.mask and SCL_Y != 0) part.yScale += (1f + (t.scale.y - 1f) - part.yScale) * useWeight
+			if (t.mask and SCL_Z != 0) part.zScale += (1f + (t.scale.z - 1f) - part.zScale) * useWeight
 		} else {
-			if (t.enSclX) part.xScale += (t.scaleX) * useWeight
-			if (t.enSclY) part.yScale += (t.scaleY) * useWeight
-			if (t.enSclZ) part.zScale += (t.scaleZ) * useWeight
+			if (t.mask and SCL_X != 0) part.xScale += t.scale.x * useWeight
+			if (t.mask and SCL_Y != 0) part.yScale += t.scale.y * useWeight
+			if (t.mask and SCL_Z != 0) part.zScale += t.scale.z * useWeight
 		}
 	}
 
+	/** 骨骼变换，18字段压缩为 4 字段：bitmask + 3×Vector3f */
 	data class Transform(
-		val enPosX: Boolean,
-		val enPosY: Boolean,
-		val enPosZ: Boolean,
-		val enRotX: Boolean,
-		val enRotY: Boolean,
-		val enRotZ: Boolean,
-		val enSclX: Boolean,
-		val enSclY: Boolean,
-		val enSclZ: Boolean,
-		val posX: Float,
-		val posY: Float,
-		val posZ: Float,
-		val rotX: Float,
-		val rotY: Float,
-		val rotZ: Float,
-		val scaleX: Float,
-		val scaleY: Float,
-		val scaleZ: Float
+		val mask: Int,
+		val pos: Vector3f,
+		val rot: Vector3f,
+		val scale: Vector3f
 	)
 }

@@ -1,7 +1,9 @@
-package architecture.resonator_combat_framework.module.player_animation.config
+﻿package architecture.resonator_combat_framework.module.player_animation.config
+
 
 import architecture.goldenboughs_lib.api.AllOpe
 
+// 骨骼配置数据。包含过渡时间、骨骼标志、时间线
 @ExposedCopyVisibility
 @AllOpe
 data class ProxyBoneConfigData

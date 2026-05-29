@@ -1,4 +1,5 @@
-package architecture.resonator_combat_framework.module.player_animation
+﻿package architecture.resonator_combat_framework.module.player_animation
+
 
 import architecture.resonator_combat_framework.module.player_animation.mixin.gecko_lib.GeckoLibCacheAccessor
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
@@ -13,6 +14,7 @@ import java.util.concurrent.Executor
 import java.util.function.Consumer
 import java.util.function.Function
 
+// 服务端 GeckoLib 缓存。存储服务端的模型(BakedGeoModel)和动画(BakedAnimations)数据，通过 Mixin 访问 GeckoLib 的加载逻辑
 object GeckoLibCacheServer {
 	@JvmField
 	val ANIMATIONS = Object2ObjectOpenHashMap<ResourceLocation, BakedAnimations>()
@@ -22,8 +24,11 @@ object GeckoLibCacheServer {
 
 	@JvmStatic
 	fun reload(
-		stage: PreparableReloadListener.PreparationBarrier, resourceManager: ResourceManager,
-		preparationsProfiler: ProfilerFiller?, reloadProfiler: ProfilerFiller?, backgroundExecutor: Executor?,
+		stage: PreparableReloadListener.PreparationBarrier,
+		resourceManager: ResourceManager,
+		preparationsProfiler: ProfilerFiller?,
+		reloadProfiler: ProfilerFiller?,
+		backgroundExecutor: Executor?,
 		gameExecutor: Executor?
 	): CompletableFuture<Void?> {
 		val animations = Object2ObjectOpenHashMap<ResourceLocation, BakedAnimations>()

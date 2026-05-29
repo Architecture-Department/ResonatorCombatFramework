@@ -1,7 +1,7 @@
+﻿// 动画映射器接口。定义实体模型动画映射的生命周期，将玩家模型的特定部分映射到动画骨骼
 package architecture.resonator_combat_framework.module.player_animation.api
 
 import architecture.goldenboughs_lib.api.AllOpe
-import architecture.resonator_combat_framework.module.player_animation.api.IAnimationMapper.Companion.DEFAULT_CONTROLLER_NAME
 import architecture.resonator_combat_framework.module.player_animation.config.AnimationPlayConfig
 import architecture.resonator_combat_framework.module.player_animation.controller.IAnimationController
 
@@ -17,20 +17,6 @@ interface IAnimationMapper {
 		/** 默认控制器名称 */
 		const val DEFAULT_CONTROLLER_NAME: String = "default"
 	}
-
-	// ═══════════════════ 控制器路由 ═══════════════════
-
-	/**
-	 * 动画 ID → 控制器名称的映射表。
-	 * 未映射的动画走 [DEFAULT_CONTROLLER_NAME]。
-	 */
-	val animControllerMap: MutableMap<String, String>
-
-	/**
-	 * 解析动画 ID 对应的控制器名称。
-	 * @return 映射的控制器名称，未映射则返回 [DEFAULT_CONTROLLER_NAME]
-	 */
-	fun resolveController(animId: String): String = animControllerMap[animId] ?: DEFAULT_CONTROLLER_NAME
 
 	// ═══════════════════ 触发 ═══════════════════
 

@@ -7,7 +7,6 @@ if (rootProject.file('build-conventions.gradle').exists()) {
 
 dependencies {
 	addModuleDeps('GoldenBoughsLib')
-	addEyelib()
 	addJarJarLocalLibs()
 }
 
@@ -20,3 +19,4 @@ neoForge {
 }
 
 addClientAuthRun()
+

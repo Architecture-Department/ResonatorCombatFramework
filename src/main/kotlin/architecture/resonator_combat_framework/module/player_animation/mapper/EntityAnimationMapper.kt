@@ -1,13 +1,15 @@
-package architecture.resonator_combat_framework.module.player_animation.mapper
+﻿package architecture.resonator_combat_framework.module.player_animation.mapper
+
+// 实体动画映射器。实体模型到动画骨骼的映射实现
 
 import architecture.resonator_combat_framework.module.player_animation.api.IAnimationMapper
 import architecture.resonator_combat_framework.module.player_animation.api.ProxyModel
 import architecture.resonator_combat_framework.module.player_animation.config.AnimationPlayConfig
 import architecture.resonator_combat_framework.module.player_animation.config.ProxyBoneConfigData
-import architecture.resonator_combat_framework.module.player_animation.config.ProxyBoneConfigLoader
 import architecture.resonator_combat_framework.module.player_animation.config.ProxyBoneFlags
 import architecture.resonator_combat_framework.module.player_animation.controller.BaseAnimationController
 import architecture.resonator_combat_framework.module.player_animation.controller.IAnimationController
+import architecture.resonator_combat_framework.module.player_animation.registry.ProxyBoneConfigRegistry
 import com.mojang.blaze3d.vertex.PoseStack
 import net.minecraft.client.model.EntityModel
 import net.minecraft.world.entity.Entity
@@ -17,8 +19,7 @@ abstract class EntityAnimationMapper<T : Entity, M : EntityModel<T>>(
 	protected val isClient: Boolean = entity.level().isClientSide
 ) : IAnimationMapper {
 
-	override val animControllerMap = mutableMapOf<String, String>()
-	protected val configLoader = ProxyBoneConfigLoader.getInstance(isClient)
+	protected val configLoader = ProxyBoneConfigRegistry.getInstance(isClient)
 	protected val boneConfigs = mutableMapOf<String, ProxyBoneConfigData>()
 
 	abstract val controllers: LinkedHashMap<String, IAnimationController>
@@ -37,7 +38,7 @@ abstract class EntityAnimationMapper<T : Entity, M : EntityModel<T>>(
 		if (weight <= 0f) return
 		for (proxy in proxyModels) {
 			val bone = proxy.getBone("root") ?: continue
-			val t = BoneTransformUtil.computeForPoseStack(bone, flags["root"], weight, flipXY = true)
+			val t = BoneTransformUtil.computeForPoseStack(bone, flags["root"], weight, flipY = true)
 			BoneTransformUtil.applyTo(poseStack, t)
 			return
 		}
@@ -92,6 +93,7 @@ abstract class EntityAnimationMapper<T : Entity, M : EntityModel<T>>(
 	override fun stopImmediate(controllerName: String) {
 		(controllers[controllerName] ?: defaultController).stopImmediate()
 	}
+
 	override fun stopAll() = controllers().forEach { it.stop() }
 	override fun stopAllImmediate() = controllers().forEach { it.stopImmediate() }
 	override fun pause(controllerName: String) {
@@ -120,6 +122,7 @@ abstract class EntityAnimationMapper<T : Entity, M : EntityModel<T>>(
 	override fun getController(): IAnimationController = defaultController
 	override fun getController(controllerName: String): IAnimationController =
 		controllers[controllerName] ?: defaultController
+
 	override fun hasController(): Boolean = true
 	override fun controllers() = controllers.values
 	override fun hasController(controllerName: String): Boolean = controllerName in controllers
@@ -165,3 +168,4 @@ abstract class EntityAnimationMapper<T : Entity, M : EntityModel<T>>(
 		return result
 	}
 }
+

@@ -1,4 +1,6 @@
-package architecture.resonator_combat_framework.module.player_animation.payload
+﻿package architecture.resonator_combat_framework.module.player_animation.payload
+
+// 停止动画数据包。从服务端发送到客户端，停止指定动画
 
 import architecture.goldenboughs_lib.api.payload.ToServerAndClientPayload
 import architecture.resonator_combat_framework.core.RcfConstants

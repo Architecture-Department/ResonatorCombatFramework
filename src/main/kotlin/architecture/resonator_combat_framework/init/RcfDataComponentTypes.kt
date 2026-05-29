@@ -11,7 +11,6 @@ import net.neoforged.neoforge.registries.DeferredHolder
 import net.neoforged.neoforge.registries.DeferredRegister
 import java.util.function.Supplier
 import java.util.function.UnaryOperator
-import architecture.resonator_combat_framework.core.RcfConstants
 
 object RcfDataComponentTypes {
 	@JvmField
