@@ -1,5 +1,6 @@
 ﻿package architecture.resonator_combat_framework.module.player_animation.mapper
 
+import architecture.resonator_combat_framework.events.registry.AnimationControllerRegistry
 import architecture.resonator_combat_framework.module.player_animation.api.IAnimationMapper
 import architecture.resonator_combat_framework.module.player_animation.api.ProxyModel
 import architecture.resonator_combat_framework.module.player_animation.config.AnimationPlayConfig
@@ -135,12 +136,12 @@ abstract class EntityAnimationMapper<T : Entity, M : EntityModel<T>>(
 	override fun hasController(controllerName: String): Boolean = controllerManager.has(controllerName)
 
 	override fun addController(name: String, controller: IAnimationController) {
-		if (name == IAnimationMapper.DEFAULT_CONTROLLER_NAME) return
+		if (name == AnimationControllerRegistry.DEFAULT) return
 		controllerManager.add(name, controller)
 	}
 
 	override fun removeController(name: String) {
-		if (name == IAnimationMapper.DEFAULT_CONTROLLER_NAME) return
+		if (name == AnimationControllerRegistry.DEFAULT) return
 		controllerManager.remove(name)
 	}
 

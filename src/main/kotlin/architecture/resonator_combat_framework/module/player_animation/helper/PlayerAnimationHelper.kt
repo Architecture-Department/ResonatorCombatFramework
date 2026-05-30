@@ -1,6 +1,6 @@
 package architecture.resonator_combat_framework.module.player_animation.helper
 
-import architecture.resonator_combat_framework.module.player_animation.api.IAnimationMapper
+import architecture.resonator_combat_framework.events.registry.AnimationControllerRegistry
 import architecture.resonator_combat_framework.module.player_animation.config.AnimationPlayConfig
 import architecture.resonator_combat_framework.module.player_animation.mixed.PlayerProxyProvider.Companion.getAnimationTransformer
 import architecture.resonator_combat_framework.module.player_animation.payload.PausePlayerPayload
@@ -109,9 +109,9 @@ object PlayerAnimationHelper {
 
 	@JvmStatic
 	fun Player.pausePlayerAnimation() {
-		if (this is AbstractClientPlayer) getAnimationTransformer().pause(IAnimationMapper.DEFAULT_CONTROLLER_NAME)
+		if (this is AbstractClientPlayer) getAnimationTransformer().pause(AnimationControllerRegistry.DEFAULT)
 		else if (this is ServerPlayer) {
-			getAnimationTransformer().pause(IAnimationMapper.DEFAULT_CONTROLLER_NAME)
+			getAnimationTransformer().pause(AnimationControllerRegistry.DEFAULT)
 			PacketDistributor.sendToPlayersTrackingEntityAndSelf(
 				this, PausePlayerPayload(uuid, null as String?)
 			)
@@ -120,9 +120,9 @@ object PlayerAnimationHelper {
 
 	@JvmStatic
 	fun Player.resumePlayerAnimation() {
-		if (this is AbstractClientPlayer) getAnimationTransformer().resume(IAnimationMapper.DEFAULT_CONTROLLER_NAME)
+		if (this is AbstractClientPlayer) getAnimationTransformer().resume(AnimationControllerRegistry.DEFAULT)
 		else if (this is ServerPlayer) {
-			getAnimationTransformer().resume(IAnimationMapper.DEFAULT_CONTROLLER_NAME)
+			getAnimationTransformer().resume(AnimationControllerRegistry.DEFAULT)
 			PacketDistributor.sendToPlayersTrackingEntityAndSelf(
 				this, ResumePlayerPayload(uuid, null as String?)
 			)

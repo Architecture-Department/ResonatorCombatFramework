@@ -1,6 +1,6 @@
 ﻿package architecture.resonator_combat_framework.module.player_animation.config
 
-import architecture.resonator_combat_framework.module.player_animation.api.IAnimationMapper
+import architecture.resonator_combat_framework.events.registry.AnimationControllerRegistry
 
 /**
  * 动画播放配置。
@@ -19,7 +19,7 @@ import architecture.resonator_combat_framework.module.player_animation.api.IAnim
  */
 data class AnimationPlayConfig(
 	val animId: String,
-	val controllerName: String = IAnimationMapper.DEFAULT_CONTROLLER_NAME,
+	val controllerName: String = AnimationControllerRegistry.DEFAULT,
 	val animType: AnimType = AnimType.DEFAULT,
 	val startTime: Int = 0,
 	val endTime: Int = 0,
@@ -57,7 +57,7 @@ data class AnimationPlayConfig(
 	}
 
 	class Builder(private val animId: String) {
-		private var controllerName: String = IAnimationMapper.DEFAULT_CONTROLLER_NAME
+		private var controllerName: String = AnimationControllerRegistry.DEFAULT
 		private var animType: AnimType = AnimType.DEFAULT
 		private var startTime: Int = 0
 		private var endTime: Int = 0

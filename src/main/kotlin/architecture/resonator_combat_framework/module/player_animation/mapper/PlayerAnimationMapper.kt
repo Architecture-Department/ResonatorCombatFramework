@@ -1,13 +1,13 @@
 ﻿package architecture.resonator_combat_framework.module.player_animation.mapper
 
-import architecture.resonator_combat_framework.module.player_animation.api.IAnimationMapper
 import architecture.resonator_combat_framework.module.player_animation.api.ProxyModel
 import architecture.resonator_combat_framework.module.player_animation.config.ProxyBoneFlags
 import architecture.resonator_combat_framework.module.player_animation.controller.BaseAnimationController
-import architecture.resonator_combat_framework.module.player_animation.controller.BedrockAnimationController
+import architecture.resonator_combat_framework.module.player_animation.event.AnimationControllerRegisterEvent
 import com.mojang.blaze3d.vertex.PoseStack
 import net.minecraft.client.model.PlayerModel
 import net.minecraft.world.entity.player.Player
+import net.neoforged.neoforge.common.NeoForge
 
 /** 玩家动画映射器：零外部依赖 + 渲染入口 */
 class PlayerAnimationMapper(
@@ -17,7 +17,10 @@ class PlayerAnimationMapper(
 	private var lastRenderTick = 0f
 
 	init {
-		controllerManager.add(IAnimationMapper.DEFAULT_CONTROLLER_NAME, BedrockAnimationController(isClient))
+		NeoForge.EVENT_BUS.post(AnimationControllerRegisterEvent()).getSortedEntries()
+			.forEach { (controllerName, controllerFactory, priority) ->
+				controllerManager.add(controllerName, controllerFactory(isClient))
+			}
 	}
 
 	/** 附加层：外套/袖子/裤腿 */

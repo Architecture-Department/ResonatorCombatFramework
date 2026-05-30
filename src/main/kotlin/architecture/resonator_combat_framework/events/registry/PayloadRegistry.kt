@@ -1,6 +1,6 @@
-package architecture.resonator_combat_framework.core.registry
+package architecture.resonator_combat_framework.events.registry
 
-import architecture.goldenboughs_lib.core.registry.PayloadRegistry.playToServerAndClient
+import architecture.goldenboughs_lib.events.registry.PayloadRegistry.playToServerAndClient
 import architecture.resonator_combat_framework.core.RcfConstants
 import architecture.resonator_combat_framework.module.player_animation.payload.*
 import net.neoforged.bus.api.SubscribeEvent

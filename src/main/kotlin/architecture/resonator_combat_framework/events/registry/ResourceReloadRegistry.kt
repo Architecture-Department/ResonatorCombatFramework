@@ -1,4 +1,4 @@
-﻿package architecture.resonator_combat_framework.core.registry
+﻿package architecture.resonator_combat_framework.events.registry
 
 import architecture.resonator_combat_framework.core.RcfConstants
 import architecture.resonator_combat_framework.module.player_animation.GeckoLibCacheServer

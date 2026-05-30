@@ -9,28 +9,28 @@ import net.neoforged.bus.api.Event
  * 动画控制器注册事件
  */
 class AnimationControllerRegisterEvent : Event() {
-	private val entries = mutableListOf<ControllerEntry>()
+	private val entries = mutableMapOf<String, ControllerEntry>()
 
 	/**
 	 * 注册动画 ID 到控制器的映射。
 	 * @param controllerName 目标控制器名称
-	 * @param order 排序值（越小越优先添加，默认 1000）
+	 * @param order 排序值（越大越优先添加，默认 1000）
 	 */
 	fun register(
 		controllerName: String,
-		controllerFactory: (isClient: Boolean, any: Any?) -> IAnimationController,
+		controllerFactory: (isClient: Boolean) -> IAnimationController,
 		order: Int = 1000
 	) {
-		entries.add(ControllerEntry(controllerName, controllerFactory, order))
+		entries[controllerName] = ControllerEntry(controllerName, controllerFactory, order)
 	}
 
 	@JvmRecord
 	data class ControllerEntry(
 		val controllerName: String,
-		val controllerFactory: (isClient: Boolean, any: Any?) -> IAnimationController,
-		val order: Int
+		val controllerFactory: (isClient: Boolean) -> IAnimationController,
+		val priority: Int
 	)
 
 	/** 按 order 升序返回所有注册项 */
-	fun getSortedEntries(): List<ControllerEntry> = entries.sortedBy { it.order }
+	fun getSortedEntries(): List<ControllerEntry> = entries.values.sortedBy { it.priority }
 }

@@ -15,7 +15,6 @@ import architecture.resonator_combat_framework.module.player_animation.controlle
 interface IAnimationMapper {
 	companion object {
 		/** 默认控制器名称 */
-		const val DEFAULT_CONTROLLER_NAME: String = "default"
 	}
 
 	// ═══════════════════ 触发 ═══════════════════
