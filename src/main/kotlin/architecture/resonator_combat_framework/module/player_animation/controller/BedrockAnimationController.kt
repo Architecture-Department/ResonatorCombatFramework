@@ -1,4 +1,5 @@
-﻿package architecture.resonator_combat_framework.module.player_animation.controller
+﻿// Bedrock 动画控制器实现。加载 BedrockAnimation，每帧通过 MolangQueries 设置查询值后求值 animTimeUpdate 表达式，然后将骨骼变换写入 ProxyModel
+package architecture.resonator_combat_framework.module.player_animation.controller
 
 import architecture.resonator_combat_framework.module.player_animation.bedrock.BedrockAnimation
 import architecture.resonator_combat_framework.module.player_animation.bedrock.BedrockAnimator
@@ -6,14 +7,19 @@ import architecture.resonator_combat_framework.module.player_animation.bedrock.m
 import architecture.resonator_combat_framework.module.player_animation.config.AnimationPlayConfig
 import architecture.resonator_combat_framework.module.player_animation.registry.BedrockAnimationRegistry
 
-// Bedrock 动画控制器实现。加载 BedrockAnimation，每帧通过 MolangQueries 设置查询值后求值 animTimeUpdate 表达式，然后将骨骼变换写入 ProxyModel
 class BedrockAnimationController(
 	isClient: Boolean
 ) : BaseAnimationController(isClient) {
 
 	private var currentAnim: BedrockAnimation? = null
+
+	/** 当前加载的动画数据 */
 	private var animTime = 0f
+
+	/** 当前动画播放位置（秒） */
 	private var lastRawGameTime = -1f
+
+	/** 上一帧的 gameTime，-1 表示首帧 */
 
 	override fun loadAnimation(animId: String): Boolean {
 		currentAnim = BedrockAnimationRegistry.getInstance(isClient).get(animId)
@@ -73,6 +79,3 @@ fun BedrockAnimation.LoopType.toBaseLoopType() = when (this) {
 	BedrockAnimation.LoopType.LOOP -> BaseAnimationController.LoopType.LOOP
 	BedrockAnimation.LoopType.HOLD_ON_LAST -> BaseAnimationController.LoopType.HOLD_ON_LAST
 }
-
-
-

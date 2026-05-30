@@ -91,39 +91,39 @@ object BoneTransformUtil {
 		val s = Vector3f(1f, 1f, 1f)
 
 		if (flags.isEnabled("pos.x") && np) {
-			mask = mask or POS_X;
+			mask = mask or POS_X
 			p.x = bone.pos.x
 		}
 		if (flags.isEnabled("pos.y") && np) {
-			mask = mask or POS_Y;
+			mask = mask or POS_Y
 			p.y = -bone.pos.y
 		}
 		if (flags.isEnabled("pos.z") && np) {
-			mask = mask or POS_Z;
+			mask = mask or POS_Z
 			p.z = bone.pos.z
 		}
 		if (flags.isEnabled("rot.x") && nr) {
-			mask = mask or ROT_X;
+			mask = mask or ROT_X
 			r.x = toRadians(bone.rotation.x.toDouble()).toFloat()
 		}
 		if (flags.isEnabled("rot.y") && nr) {
-			mask = mask or ROT_Y;
+			mask = mask or ROT_Y
 			r.y = toRadians(bone.rotation.y.toDouble()).toFloat()
 		}
 		if (flags.isEnabled("rot.z") && nr) {
-			mask = mask or ROT_Z;
+			mask = mask or ROT_Z
 			r.z = toRadians(bone.rotation.z.toDouble()).toFloat()
 		}
 		if (flags.isEnabled("scale.x") && ns) {
-			mask = mask or SCL_X;
+			mask = mask or SCL_X
 			s.x = bone.scale.x
 		}
 		if (flags.isEnabled("scale.y") && ns) {
-			mask = mask or SCL_Y;
+			mask = mask or SCL_Y
 			s.y = bone.scale.y
 		}
 		if (flags.isEnabled("scale.z") && ns) {
-			mask = mask or SCL_Z;
+			mask = mask or SCL_Z
 			s.z = bone.scale.z
 		}
 

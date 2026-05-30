@@ -19,18 +19,30 @@ data class ProxyBone(
 	val scale: Vector3f = Vector3f(1f, 1f, 1f),
 	val locators: HashMap<String, ProxyLocator> = hashMapOf(),
 	var emptyMask: Int = 0
+	/** 位标记：0x1=pos空, 0x2=rot空, 0x4=scale空。setXxxEmpty 系列函数操作此字段 */
 ) {
 	fun addLocator(locator: ProxyLocator): ProxyLocator? = locators.put(locator.name, locator)
 	fun getLocator(locatorName: String): ProxyLocator? = locators[locatorName]
 }
 
 const val EMPTY_POS = 0x1
-const val EMPTY_ROT = 0x2
-const val EMPTY_SCALE = 0x4
 
+/** 标记位：position 通道无动画数据 */
+const val EMPTY_ROT = 0x2
+
+/** 标记位：rotation 通道无动画数据 */
+const val EMPTY_SCALE = 0x4
+/** 标记位：scale 通道无动画数据 */
+
+/** 当前骨骼的 position 是否有动画数据 */
 fun ProxyBone.hasPos(): Boolean = emptyMask and EMPTY_POS == 0
+
+/** 当前骨骼的 rotation 是否有动画数据 */
 fun ProxyBone.hasRot(): Boolean = emptyMask and EMPTY_ROT == 0
+
+/** 当前骨骼的 scale 是否有动画数据 */
 fun ProxyBone.hasScale(): Boolean = emptyMask and EMPTY_SCALE == 0
+
 fun ProxyBone.setPosEmpty(v: Boolean) {
 	emptyMask = if (v) emptyMask or EMPTY_POS else emptyMask and EMPTY_POS.inv()
 }

@@ -35,6 +35,7 @@ private constructor(
 		merged
 	}, timeline, transitionTicks)
 
+	/** 根据当前动画时间合并基础配置和时间线配置 */
 	fun resolveBoneFlags(animTime: Float): Map<String, ProxyBoneFlags> {
 		val result = bones.toMutableMap()
 		for (entry in timeline) {
@@ -45,6 +46,7 @@ private constructor(
 		return result
 	}
 
+	/** 获取当前动画涉及的所有骨骼名（包括时间线中的） */
 	fun resolveCurrentBoneNames(): Set<String> {
 		val names = bones.keys.toMutableSet()
 		for (entry in timeline) {

@@ -58,6 +58,7 @@ class BedrockAnimationRegistry : SimplePreparableReloadListener<Map<String, Bedr
 		RcfConstants.LOGGER.info("Loaded {} bedrock animations", loaded.size)
 	}
 
+	/** 解析 JSON 根对象的 "animations" 段，每个条目注册为一个 BedrockAnimation */
 	private fun parseAnimations(root: JsonObject, out: MutableMap<String, BedrockAnimation>) {
 		val animations = root.getAsJsonObject("animations") ?: return
 		for ((animKey, animEl) in animations.entrySet()) {
@@ -88,6 +89,7 @@ class BedrockAnimationRegistry : SimplePreparableReloadListener<Map<String, Bedr
 		}
 	}
 
+	/** 解析骨骼字典：{ 骨骼名 → { position/rotation/scale } } */
 	private fun parseBones(bonesJson: JsonObject): Map<String, BrBoneAnimation> {
 		val bones = mutableMapOf<String, BrBoneAnimation>()
 		for ((name, bj) in bonesJson.entrySet()) {
@@ -101,6 +103,7 @@ class BedrockAnimationRegistry : SimplePreparableReloadListener<Map<String, Bedr
 		return bones
 	}
 
+	/** 解析单组关键帧数据：简单数组 [x,y,z] 或对象 {pre, post, lerp_mode} */
 	private fun parseBrBoneKeyFrames(element: JsonElement?): List<BrBoneKeyFrame> {
 		element ?: return emptyList()
 
@@ -159,6 +162,7 @@ class BedrockAnimationRegistry : SimplePreparableReloadListener<Map<String, Bedr
 
 	/** 解析 JSON 数组 [x, y, z]：数字→Constant，字符串→MoLang 表达式 */
 	/** 当 animation_length 未在 JSON 中指定时，从所有关键帧的最大时间计算长度 */
+	/** 从所有骨骼关键帧中取最大时间作为动画长度，至少 1 秒 */
 	private fun calcAnimLength(bones: Map<String, BrBoneAnimation>): Float {
 		var maxTime = 0f
 		for ((_, ba) in bones) {
@@ -175,6 +179,7 @@ class BedrockAnimationRegistry : SimplePreparableReloadListener<Map<String, Bedr
 		return if (maxTime > 0f) maxTime else 1f  // 至少 1 秒
 	}
 
+	/** 解析 [x, y, z] 数组：数字→Constant，字符串→MoLang 表达式 */
 	private fun parseMolangVector(arr: com.google.gson.JsonArray): MolangVector3 {
 		if (arr.size() < 3) return MolangVector3()
 		return MolangVector3(
@@ -185,6 +190,7 @@ class BedrockAnimationRegistry : SimplePreparableReloadListener<Map<String, Bedr
 	}
 
 	/** 单个轴值：数字→Constant，字符串→MoLang */
+	/** 解析单轴值：数字→Constant，字符串→MoLang */
 	private fun parseAxisExpr(el: JsonElement): MathValue {
 		return if (el.isJsonPrimitive && el.asJsonPrimitive.isString) {
 			try {
