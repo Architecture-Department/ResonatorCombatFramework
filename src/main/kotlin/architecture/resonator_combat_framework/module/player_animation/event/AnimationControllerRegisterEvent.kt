@@ -32,5 +32,5 @@ class AnimationControllerRegisterEvent : Event() {
 	)
 
 	/** 按 order 升序返回所有注册项 */
-	fun getSortedEntries(): List<ControllerEntry> = entries.values.sortedBy { it.priority }
+	fun getSortedEntries(): List<ControllerEntry> = entries.values.sortedByDescending { it.priority }
 }

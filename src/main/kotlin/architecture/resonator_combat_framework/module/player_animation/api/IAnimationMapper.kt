@@ -13,9 +13,6 @@ import architecture.resonator_combat_framework.module.player_animation.controlle
  */
 @AllOpe
 interface IAnimationMapper {
-	companion object {
-		/** 默认控制器名称 */
-	}
 
 	// ═══════════════════ 触发 ═══════════════════
 
