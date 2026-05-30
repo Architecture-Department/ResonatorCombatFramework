@@ -9,9 +9,11 @@ import architecture.resonator_combat_framework.module.player_animation.config.Pr
 import architecture.resonator_combat_framework.module.player_animation.config.shouldBlend
 import architecture.resonator_combat_framework.module.player_animation.registry.ProxyBoneConfigRegistry
 
-abstract class BaseAnimationController(
-	protected val isClient: Boolean
+abstract class BaseAnimationController @JvmOverloads constructor(
+	protected val isClient: Boolean,
+	override val isOverriding: Boolean = true
 ) : IAnimationController {
+
 	protected val configLoader: ProxyBoneConfigRegistry = ProxyBoneConfigRegistry.getInstance(isClient)
 
 	/** 控制器状态机 */
@@ -36,7 +38,6 @@ abstract class BaseAnimationController(
 	override var blendTarget = 0f
 	override var currentTransitionTicks = ProxyBoneConfigData.DEFAULT_TRANSITION_TICKS
 	override var speedMultiplier = 1f
-	override var isOverriding = true
 	override var currentAnimId: String? = null
 	override var affectedBones = emptySet<String>()
 
@@ -106,11 +107,11 @@ abstract class BaseAnimationController(
 	}
 
 	override fun trigger(animId: String, transitionTicks: Int) {
-		trigger(AnimationPlayConfig.of(animId).copy(fadeInTicks = transitionTicks, speedMultiplier = speedMultiplier))
+		trigger(AnimationPlayConfig(animId = animId, fadeInTicks = transitionTicks, speedMultiplier = speedMultiplier))
 	}
 
 	override fun trigger(animId: String, transitionTicks: Int, spd: Float) {
-		trigger(AnimationPlayConfig.of(animId).copy(fadeInTicks = transitionTicks, speedMultiplier = spd))
+		trigger(AnimationPlayConfig(animId = animId, fadeInTicks = transitionTicks, speedMultiplier = spd))
 	}
 
 	override fun triggerForDuration(
@@ -120,7 +121,8 @@ abstract class BaseAnimationController(
 		originalAnimLengthSec: Float
 	) {
 		trigger(
-			AnimationPlayConfig.of(animId).copy(
+			AnimationPlayConfig(
+				animId = animId,
 				fadeInTicks = transitionTicks,
 				durationTicks = durationTicks,
 				originalAnimLengthSec = originalAnimLengthSec,

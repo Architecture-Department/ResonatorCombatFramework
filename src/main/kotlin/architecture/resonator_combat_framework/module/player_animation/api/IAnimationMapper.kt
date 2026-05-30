@@ -4,6 +4,7 @@ package architecture.resonator_combat_framework.module.player_animation.api
 import architecture.goldenboughs_lib.api.AllOpe
 import architecture.resonator_combat_framework.module.player_animation.config.AnimationPlayConfig
 import architecture.resonator_combat_framework.module.player_animation.controller.IAnimationController
+import net.minecraft.resources.ResourceLocation
 
 /**
  * 动画映射器根接口。
@@ -27,16 +28,16 @@ interface IAnimationMapper {
 	 * @param controllerName 目标控制器名称
 	 * @param animId 动画 ID
 	 */
-	fun trigger(controllerName: String, animId: String) =
-		trigger(AnimationPlayConfig.of(animId).copy(controllerName = controllerName))
+	fun trigger(controllerName: ResourceLocation, animId: String) =
+		trigger(AnimationPlayConfig(animId = animId, controllerName = controllerName))
 
 	// ═══════════════════ 停止 ═══════════════════
 
 	/** 停止指定控制器的动画（使用配置中的淡出时间） */
-	fun stop(controllerName: String)
+	fun stop(controllerName: ResourceLocation)
 
 	/** 立即停止指定控制器的动画，无过渡 */
-	fun stopImmediate(controllerName: String)
+	fun stopImmediate(controllerName: ResourceLocation)
 
 	/** 停止所有控制器的动画 */
 	fun stopAll() = controllers().forEach { it.stop() }
@@ -50,10 +51,10 @@ interface IAnimationMapper {
 	// ═══════════════════ 暂停 / 恢复 ═══════════════════
 
 	/** 暂停指定控制器的动画 */
-	fun pause(controllerName: String)
+	fun pause(controllerName: ResourceLocation)
 
 	/** 恢复指定控制器的动画 */
-	fun resume(controllerName: String)
+	fun resume(controllerName: ResourceLocation)
 
 	/** 暂停所有控制器的动画 */
 	fun pauseAll() = controllers().forEach { it.pause() }
@@ -67,7 +68,7 @@ interface IAnimationMapper {
 	fun stopAnimation(animId: String)
 
 	/** 在指定控制器中停止指定动画 ID */
-	fun stopAnimation(controllerName: String, animId: String)
+	fun stopAnimation(controllerName: ResourceLocation, animId: String)
 
 	// ═══════════════════ 状态查询 ═══════════════════
 
@@ -78,19 +79,19 @@ interface IAnimationMapper {
 	fun isControllerActive(): Boolean
 
 	/** 指定控制器是否有动画运行 */
-	fun isControllerActive(controllerName: String): Boolean
+	fun isControllerActive(controllerName: ResourceLocation): Boolean
 
 	/** 获取默认控制器 */
 	fun getController(): IAnimationController
 
 	/** 获取指定控制器 */
-	fun getController(controllerName: String): IAnimationController
+	fun getController(controllerName: ResourceLocation): IAnimationController
 
 	/** 是否有默认控制器 */
 	fun hasController(): Boolean
 
 	/** 是否有指定控制器 */
-	fun hasController(controllerName: String): Boolean
+	fun hasController(controllerName: ResourceLocation): Boolean
 
 	/** 当前活跃的控制器集，按优先级降序排列 */
 	fun getActiveControllersSorted(): List<IAnimationController>
@@ -101,10 +102,10 @@ interface IAnimationMapper {
 	fun controllers(): Collection<IAnimationController>
 
 	/** 添加控制器 */
-	fun addController(name: String, controller: IAnimationController)
+	fun addController(name: ResourceLocation, controller: IAnimationController)
 
 	/** 移除控制器 */
-	fun removeController(name: String)
+	fun removeController(name: ResourceLocation)
 
 	// ═══════════════════ 优先级与骨骼冲突 ═══════════════════
 

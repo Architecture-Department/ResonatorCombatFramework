@@ -3,6 +3,7 @@
 // 停止动画数据包。从服务端发送到客户端，停止指定动画
 
 import architecture.goldenboughs_lib.api.payload.ToServerAndClientPayload
+import architecture.goldenboughs_lib.core.LibConstants.OPTIONAL_RESOURCE_LOCATION_STREAM_CODEC
 import architecture.resonator_combat_framework.core.RcfConstants
 import architecture.resonator_combat_framework.module.player_animation.mixed.PlayerProxyProvider.Companion.getAnimationTransformer
 import io.netty.buffer.ByteBuf
@@ -11,6 +12,7 @@ import net.minecraft.core.UUIDUtil
 import net.minecraft.network.codec.ByteBufCodecs
 import net.minecraft.network.codec.StreamCodec
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload
+import net.minecraft.resources.ResourceLocation
 import net.minecraft.server.level.ServerPlayer
 import net.neoforged.neoforge.network.PacketDistributor
 import net.neoforged.neoforge.network.handling.IPayloadContext
@@ -18,13 +20,13 @@ import java.util.*
 
 data class StopPlayerPayload(
 	val playerUuid: UUID,
-	val controllerName: Optional<String>,
+	val controllerName: Optional<ResourceLocation>,
 	val fadeOutTicks: Int = -1
 ) : ToServerAndClientPayload {
 
 	constructor(
 		playerUuid: UUID,
-		controllerName: String?,
+		controllerName: ResourceLocation?,
 		fadeOutTicks: Int = -1
 	) : this(playerUuid, Optional.ofNullable(controllerName), fadeOutTicks)
 
@@ -55,17 +57,6 @@ data class StopPlayerPayload(
 	}
 
 	companion object {
-		private val OPTIONAL_STRING: StreamCodec<ByteBuf, Optional<String>> =
-			StreamCodec.of(
-				{ buf, v ->
-					buf.writeBoolean(v.isPresent)
-					v.ifPresent { ByteBufCodecs.STRING_UTF8.encode(buf, it) }
-				},
-				{ buf ->
-					if (buf.readBoolean()) Optional.of(ByteBufCodecs.STRING_UTF8.decode(buf))
-					else Optional.empty()
-				}
-			)
 
 		@JvmField
 		val TYPE = CustomPacketPayload.Type<StopPlayerPayload>(RcfConstants.modRl("stop_player"))
@@ -74,13 +65,13 @@ data class StopPlayerPayload(
 		val STREAM_CODEC: StreamCodec<ByteBuf, StopPlayerPayload> = StreamCodec.of(
 			{ buf, p ->
 				UUIDUtil.STREAM_CODEC.encode(buf, p.playerUuid)
-				OPTIONAL_STRING.encode(buf, p.controllerName)
+				OPTIONAL_RESOURCE_LOCATION_STREAM_CODEC.encode(buf, p.controllerName)
 				ByteBufCodecs.VAR_INT.encode(buf, p.fadeOutTicks)
 			},
 			{ buf ->
 				StopPlayerPayload(
 					UUIDUtil.STREAM_CODEC.decode(buf),
-					OPTIONAL_STRING.decode(buf),
+					OPTIONAL_RESOURCE_LOCATION_STREAM_CODEC.decode(buf),
 					ByteBufCodecs.VAR_INT.decode(buf)
 				)
 			}

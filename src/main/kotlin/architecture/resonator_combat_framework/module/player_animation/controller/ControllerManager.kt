@@ -1,5 +1,7 @@
 ﻿package architecture.resonator_combat_framework.module.player_animation.controller
 
+import net.minecraft.resources.ResourceLocation
+
 /**
  * 控制器管理器。
  *
@@ -9,25 +11,25 @@
  */
 class ControllerManager {
 	/** 名称 → 控制器（O(1) 查找） */
-	private val nameMap = mutableMapOf<String, IAnimationController>()
+	private val nameMap = mutableMapOf<ResourceLocation, IAnimationController>()
 
 	/** 保持插入顺序的控制器列表 */
 	private val ordered = mutableListOf<IAnimationController>()
 
 	/** 追加控制器到末尾 */
-	fun add(name: String, controller: IAnimationController) {
+	fun add(name: ResourceLocation, controller: IAnimationController) {
 		nameMap[name] = controller
 		ordered.add(controller)
 	}
 
 	/** 在指定索引位置插入控制器 */
-	fun add(index: Int, name: String, controller: IAnimationController) {
+	fun add(index: Int, name: ResourceLocation, controller: IAnimationController) {
 		nameMap[name] = controller
 		ordered.add(index, controller)
 	}
 
 	/** 在指定控制器之后插入 */
-	fun addAfter(afterName: String, name: String, controller: IAnimationController) {
+	fun addAfter(afterName: ResourceLocation, name: ResourceLocation, controller: IAnimationController) {
 		val after = nameMap[afterName]
 		if (after != null) {
 			val idx = ordered.indexOf(after)
@@ -39,7 +41,7 @@ class ControllerManager {
 	}
 
 	/** 在指定控制器之前插入 */
-	fun addBefore(beforeName: String, name: String, controller: IAnimationController) {
+	fun addBefore(beforeName: ResourceLocation, name: ResourceLocation, controller: IAnimationController) {
 		val before = nameMap[beforeName]
 		if (before != null) {
 			val idx = ordered.indexOf(before)
@@ -51,14 +53,14 @@ class ControllerManager {
 	}
 
 	/** 移除控制器并立即停止 */
-	fun remove(name: String) {
+	fun remove(name: ResourceLocation) {
 		val ctrl = nameMap.remove(name) ?: return
 		ctrl.stopImmediate()
 		ordered.remove(ctrl)
 	}
 
 	/** 按名称获取控制器（O(1)） */
-	fun get(name: String): IAnimationController? = nameMap[name]
+	fun get(name: ResourceLocation): IAnimationController? = nameMap[name]
 
 	/** 获取默认控制器（第一个添加的） */
 	fun getDefault(): IAnimationController? = ordered.firstOrNull()
@@ -67,13 +69,13 @@ class ControllerManager {
 	fun getAll(): List<IAnimationController> = ordered
 
 	/** 是否存在指定控制器（O(1)） */
-	fun has(name: String): Boolean = name in nameMap
+	fun has(name: ResourceLocation): Boolean = name in nameMap
 
 	/** 任意控制器是否活跃 */
 	fun isAnyActive(): Boolean = ordered.any { it.isActive() }
 
 	/** 指定控制器是否活跃（O(1)） */
-	fun isActive(name: String): Boolean = nameMap[name]?.isActive() == true
+	fun isActive(name: ResourceLocation): Boolean = nameMap[name]?.isActive() == true
 
 	/** 获取所有活跃控制器（按添加顺序） */
 	fun getSortedActive(): List<IAnimationController> =

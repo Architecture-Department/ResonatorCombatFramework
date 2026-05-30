@@ -8,6 +8,7 @@ import architecture.resonator_combat_framework.module.player_animation.payload.P
 import architecture.resonator_combat_framework.module.player_animation.payload.ResumePlayerPayload
 import architecture.resonator_combat_framework.module.player_animation.payload.StopPlayerPayload
 import net.minecraft.client.player.AbstractClientPlayer
+import net.minecraft.resources.ResourceLocation
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.entity.player.Player
 import net.neoforged.neoforge.network.PacketDistributor
@@ -87,7 +88,7 @@ object PlayerAnimationHelper {
 		else if (this is ServerPlayer) {
 			getAnimationTransformer().stopAllImmediate()
 			PacketDistributor.sendToPlayersTrackingEntityAndSelf(
-				this, StopPlayerPayload(uuid, null as String?, 0)
+				this, StopPlayerPayload(uuid, null as ResourceLocation?, 0)
 			)
 		}
 	}
@@ -101,7 +102,7 @@ object PlayerAnimationHelper {
 	fun ServerPlayer.serverStopPlayerAnimation() {
 		getAnimationTransformer().stopAll()
 		PacketDistributor.sendToPlayersTrackingEntityAndSelf(
-			this, StopPlayerPayload(uuid, null as String?)
+			this, StopPlayerPayload(uuid, null as ResourceLocation?)
 		)
 	}
 
@@ -113,7 +114,7 @@ object PlayerAnimationHelper {
 		else if (this is ServerPlayer) {
 			getAnimationTransformer().pause(AnimationControllerRegistry.DEFAULT)
 			PacketDistributor.sendToPlayersTrackingEntityAndSelf(
-				this, PausePlayerPayload(uuid, null as String?)
+				this, PausePlayerPayload(uuid, null as ResourceLocation?)
 			)
 		}
 	}
@@ -124,7 +125,7 @@ object PlayerAnimationHelper {
 		else if (this is ServerPlayer) {
 			getAnimationTransformer().resume(AnimationControllerRegistry.DEFAULT)
 			PacketDistributor.sendToPlayersTrackingEntityAndSelf(
-				this, ResumePlayerPayload(uuid, null as String?)
+				this, ResumePlayerPayload(uuid, null as ResourceLocation?)
 			)
 		}
 	}

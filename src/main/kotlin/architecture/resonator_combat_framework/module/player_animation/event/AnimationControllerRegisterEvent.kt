@@ -2,31 +2,34 @@
 
 // 动画控制器注册事件。NeoForge 事件，用于注册各部位的动画控制器到 AnimationController 管理器
 
+import architecture.resonator_combat_framework.module.player_animation.controller.BedrockAnimationController
 import architecture.resonator_combat_framework.module.player_animation.controller.IAnimationController
+import net.minecraft.resources.ResourceLocation
 import net.neoforged.bus.api.Event
 
 /**
  * 动画控制器注册事件
  */
 class AnimationControllerRegisterEvent : Event() {
-	private val entries = mutableMapOf<String, ControllerEntry>()
+	private val entries = mutableMapOf<ResourceLocation, ControllerEntry>()
 
 	/**
 	 * 注册动画 ID 到控制器的映射。
 	 * @param controllerName 目标控制器名称
-	 * @param order 排序值（越大越优先添加，默认 1000）
+	 * @param priority 排序值（越大越优先添加，默认 1000）
 	 */
+	@JvmOverloads
 	fun register(
-		controllerName: String,
-		controllerFactory: (isClient: Boolean) -> IAnimationController,
-		order: Int = 1000
+		controllerName: ResourceLocation,
+		controllerFactory: (isClient: Boolean) -> IAnimationController = { BedrockAnimationController(it) },
+		priority: Int
 	) {
-		entries[controllerName] = ControllerEntry(controllerName, controllerFactory, order)
+		entries[controllerName] = ControllerEntry(controllerName, controllerFactory, priority)
 	}
 
 	@JvmRecord
 	data class ControllerEntry(
-		val controllerName: String,
+		val controllerName: ResourceLocation,
 		val controllerFactory: (isClient: Boolean) -> IAnimationController,
 		val priority: Int
 	)

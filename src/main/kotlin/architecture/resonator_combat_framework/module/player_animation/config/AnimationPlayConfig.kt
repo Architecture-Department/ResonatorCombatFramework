@@ -1,6 +1,7 @@
 ﻿package architecture.resonator_combat_framework.module.player_animation.config
 
 import architecture.resonator_combat_framework.events.registry.AnimationControllerRegistry
+import net.minecraft.resources.ResourceLocation
 
 /**
  * 动画播放配置。
@@ -19,7 +20,7 @@ import architecture.resonator_combat_framework.events.registry.AnimationControll
  */
 data class AnimationPlayConfig(
 	val animId: String,
-	val controllerName: String = AnimationControllerRegistry.DEFAULT,
+	val controllerName: ResourceLocation = AnimationControllerRegistry.DEFAULT,
 	val animType: AnimType = AnimType.DEFAULT,
 	val startTime: Int = 0,
 	val endTime: Int = 0,
@@ -57,7 +58,7 @@ data class AnimationPlayConfig(
 	}
 
 	class Builder(private val animId: String) {
-		private var controllerName: String = AnimationControllerRegistry.DEFAULT
+		private var controllerName: ResourceLocation = AnimationControllerRegistry.DEFAULT
 		private var animType: AnimType = AnimType.DEFAULT
 		private var startTime: Int = 0
 		private var endTime: Int = 0
@@ -68,7 +69,7 @@ data class AnimationPlayConfig(
 		private var fadeInTicks: Int = -1
 		private var fadeOutTicks: Int = -1
 
-		fun controller(name: String) = apply { controllerName = name }
+		fun controller(name: ResourceLocation) = apply { controllerName = name }
 		fun type(type: AnimType) = apply { animType = type }
 		fun startAt(tick: Int) = apply { startTime = tick }
 		fun endAt(tick: Int) = apply { endTime = tick }

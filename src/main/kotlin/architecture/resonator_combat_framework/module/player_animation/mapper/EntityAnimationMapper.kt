@@ -12,6 +12,7 @@ import architecture.resonator_combat_framework.module.player_animation.controlle
 import architecture.resonator_combat_framework.module.player_animation.registry.ProxyBoneConfigRegistry
 import com.mojang.blaze3d.vertex.PoseStack
 import net.minecraft.client.model.EntityModel
+import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.Entity
 
 abstract class EntityAnimationMapper<T : Entity, M : EntityModel<T>>(
@@ -80,10 +81,11 @@ abstract class EntityAnimationMapper<T : Entity, M : EntityModel<T>>(
 
 	override fun trigger(animId: String) = trigger(AnimationPlayConfig.of(animId))
 
-	override fun trigger(controllerName: String, animId: String) {
+	override fun trigger(controllerName: ResourceLocation, animId: String) {
 		val cfg = resolveConfig(animId)
 		val ctrl = controllerManager.get(controllerName) ?: defaultController
-		val usedCfg = AnimationPlayConfig.of(animId).copy(
+		val usedCfg = AnimationPlayConfig(
+			animId = animId,
 			controllerName = controllerName,
 			fadeInTicks = cfg.transitionTicks,
 			speedMultiplier = ctrl.speedMultiplier
@@ -93,22 +95,22 @@ abstract class EntityAnimationMapper<T : Entity, M : EntityModel<T>>(
 		ctrl.trigger(usedCfg)
 	}
 
-	override fun stop(controllerName: String) {
+	override fun stop(controllerName: ResourceLocation) {
 		(controllerManager.get(controllerName) ?: defaultController).stop()
 	}
 
-	override fun stopImmediate(controllerName: String) {
+	override fun stopImmediate(controllerName: ResourceLocation) {
 		(controllerManager.get(controllerName) ?: defaultController).stopImmediate()
 	}
 
 	override fun stopAll() = controllerManager.getAll().forEach { it.stop() }
 	override fun stopAllImmediate() = controllerManager.getAll().forEach { it.stopImmediate() }
 
-	override fun pause(controllerName: String) {
+	override fun pause(controllerName: ResourceLocation) {
 		(controllerManager.get(controllerName) ?: defaultController).pause()
 	}
 
-	override fun resume(controllerName: String) {
+	override fun resume(controllerName: ResourceLocation) {
 		(controllerManager.get(controllerName) ?: defaultController).resume()
 	}
 
@@ -117,30 +119,30 @@ abstract class EntityAnimationMapper<T : Entity, M : EntityModel<T>>(
 		defaultController.stopAnimation(animId)
 	}
 
-	override fun stopAnimation(controllerName: String, animId: String) {
+	override fun stopAnimation(controllerName: ResourceLocation, animId: String) {
 		boneConfigs.remove(animId)
 		(controllerManager.get(controllerName) ?: defaultController).stopAnimation(animId)
 	}
 
 	override fun isActive(): Boolean = controllerManager.isAnyActive()
 	override fun isControllerActive(): Boolean = defaultController.isActive()
-	override fun isControllerActive(controllerName: String): Boolean =
+	override fun isControllerActive(controllerName: ResourceLocation): Boolean =
 		(controllerManager.get(controllerName) ?: defaultController).isActive()
 
 	override fun getController(): IAnimationController = defaultController
-	override fun getController(controllerName: String): IAnimationController =
+	override fun getController(controllerName: ResourceLocation): IAnimationController =
 		controllerManager.get(controllerName) ?: defaultController
 
 	override fun hasController(): Boolean = controllerManager.getDefault() != null
 	override fun controllers() = controllerManager.getAll()
-	override fun hasController(controllerName: String): Boolean = controllerManager.has(controllerName)
+	override fun hasController(controllerName: ResourceLocation): Boolean = controllerManager.has(controllerName)
 
-	override fun addController(name: String, controller: IAnimationController) {
+	override fun addController(name: ResourceLocation, controller: IAnimationController) {
 		if (name == AnimationControllerRegistry.DEFAULT) return
 		controllerManager.add(name, controller)
 	}
 
-	override fun removeController(name: String) {
+	override fun removeController(name: ResourceLocation) {
 		if (name == AnimationControllerRegistry.DEFAULT) return
 		controllerManager.remove(name)
 	}

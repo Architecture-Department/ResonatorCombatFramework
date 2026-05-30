@@ -3,7 +3,9 @@
 // 播放动画数据包。从服务端发送到客户端，触发动画播放
 
 import architecture.goldenboughs_lib.api.payload.ToServerAndClientPayload
+import architecture.goldenboughs_lib.core.LibConstants.OPTIONAL_RESOURCE_LOCATION_STREAM_CODEC
 import architecture.resonator_combat_framework.core.RcfConstants
+import architecture.resonator_combat_framework.events.registry.AnimationControllerRegistry
 import architecture.resonator_combat_framework.module.player_animation.config.AnimType
 import architecture.resonator_combat_framework.module.player_animation.config.AnimationPlayConfig
 import architecture.resonator_combat_framework.module.player_animation.mixed.PlayerProxyProvider.Companion.getAnimationTransformer
@@ -13,6 +15,7 @@ import net.minecraft.core.UUIDUtil
 import net.minecraft.network.codec.ByteBufCodecs
 import net.minecraft.network.codec.StreamCodec
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload
+import net.minecraft.resources.ResourceLocation
 import net.minecraft.server.level.ServerPlayer
 import net.neoforged.neoforge.network.PacketDistributor
 import net.neoforged.neoforge.network.handling.IPayloadContext
@@ -20,7 +23,7 @@ import java.util.*
 
 data class PlayPlayerPayload(
 	val playerUuid: UUID,
-	val controllerName: Optional<String>,
+	val controllerName: Optional<ResourceLocation>,
 	val animId: String,
 	val animType: AnimType = AnimType.DEFAULT,
 	val speedMultiplier: Float = 1f,
@@ -32,7 +35,7 @@ data class PlayPlayerPayload(
 
 	constructor(
 		playerUuid: UUID,
-		controllerName: String?,
+		controllerName: ResourceLocation?,
 		animId: String,
 		animType: AnimType = AnimType.DEFAULT,
 		speedMultiplier: Float = 1f,
@@ -56,7 +59,7 @@ data class PlayPlayerPayload(
 
 	private fun buildConfig() = AnimationPlayConfig(
 		animId = animId,
-		controllerName = controllerName.orElse("default"),
+		controllerName = controllerName.orElse(AnimationControllerRegistry.DEFAULT)!!,
 		animType = animType,
 		speedMultiplier = speedMultiplier,
 		startTime = startTime,
@@ -77,18 +80,6 @@ data class PlayPlayerPayload(
 	}
 
 	companion object {
-		private val OPTIONAL_STRING: StreamCodec<ByteBuf, Optional<String>> =
-			StreamCodec.of(
-				{ buf, v ->
-					buf.writeBoolean(v.isPresent)
-					v.ifPresent { ByteBufCodecs.STRING_UTF8.encode(buf, it) }
-				},
-				{ buf ->
-					if (buf.readBoolean()) Optional.of(ByteBufCodecs.STRING_UTF8.decode(buf))
-					else Optional.empty()
-				}
-			)
-
 		private val ANIM_TYPE_CODEC: StreamCodec<ByteBuf, AnimType> =
 			ByteBufCodecs.BYTE.map(
 				{ AnimType.entries[it.toInt()] },
@@ -102,7 +93,7 @@ data class PlayPlayerPayload(
 		val STREAM_CODEC: StreamCodec<ByteBuf, PlayPlayerPayload> = StreamCodec.of(
 			{ buf, p ->
 				UUIDUtil.STREAM_CODEC.encode(buf, p.playerUuid)
-				OPTIONAL_STRING.encode(buf, p.controllerName)
+				OPTIONAL_RESOURCE_LOCATION_STREAM_CODEC.encode(buf, p.controllerName)
 				ByteBufCodecs.STRING_UTF8.encode(buf, p.animId)
 				ANIM_TYPE_CODEC.encode(buf, p.animType)
 				ByteBufCodecs.FLOAT.encode(buf, p.speedMultiplier)
@@ -111,17 +102,17 @@ data class PlayPlayerPayload(
 				ByteBufCodecs.VAR_INT.encode(buf, p.fadeInTicks)
 				ByteBufCodecs.VAR_INT.encode(buf, p.fadeOutTicks)
 			},
-			{ buf ->
+			{
 				PlayPlayerPayload(
-					UUIDUtil.STREAM_CODEC.decode(buf),
-					OPTIONAL_STRING.decode(buf),
-					ByteBufCodecs.STRING_UTF8.decode(buf),
-					ANIM_TYPE_CODEC.decode(buf),
-					ByteBufCodecs.FLOAT.decode(buf),
-					ByteBufCodecs.VAR_INT.decode(buf),
-					ByteBufCodecs.VAR_INT.decode(buf),
-					ByteBufCodecs.VAR_INT.decode(buf),
-					ByteBufCodecs.VAR_INT.decode(buf)
+					UUIDUtil.STREAM_CODEC.decode(it),
+					OPTIONAL_RESOURCE_LOCATION_STREAM_CODEC.decode(it),
+					ByteBufCodecs.STRING_UTF8.decode(it),
+					ANIM_TYPE_CODEC.decode(it),
+					ByteBufCodecs.FLOAT.decode(it),
+					ByteBufCodecs.VAR_INT.decode(it),
+					ByteBufCodecs.VAR_INT.decode(it),
+					ByteBufCodecs.VAR_INT.decode(it),
+					ByteBufCodecs.VAR_INT.decode(it)
 				)
 			}
 		)
