@@ -1,4 +1,4 @@
-﻿package architecture.resonator_combat_framework.module.player_animation.mapper
+package architecture.resonator_combat_framework.module.player_animation.mapper
 
 import architecture.resonator_combat_framework.events.registry.AnimationControllerRegistry
 import architecture.resonator_combat_framework.module.player_animation.api.IAnimationMapper
@@ -10,6 +10,7 @@ import architecture.resonator_combat_framework.module.player_animation.controlle
 import architecture.resonator_combat_framework.module.player_animation.controller.ControllerManager
 import architecture.resonator_combat_framework.module.player_animation.controller.IAnimationController
 import architecture.resonator_combat_framework.module.player_animation.registry.ProxyBoneConfigRegistry
+import architecture.resonator_combat_framework.module.player_animation.util.BoneTransformUtil
 import com.mojang.blaze3d.vertex.PoseStack
 import net.minecraft.client.model.EntityModel
 import net.minecraft.resources.ResourceLocation
@@ -21,7 +22,6 @@ abstract class EntityAnimationMapper<T : Entity, M : EntityModel<T>>(
 ) : IAnimationMapper {
 
 	protected val configLoader = ProxyBoneConfigRegistry.getInstance(isClient)
-	protected val boneConfigs = mutableMapOf<String, ProxyBoneConfigData>()
 
 	/**
 	 * 控制器管理器。
@@ -31,7 +31,8 @@ abstract class EntityAnimationMapper<T : Entity, M : EntityModel<T>>(
 
 	/** 默认控制器（管理器中的第一个） */
 	protected val defaultController: IAnimationController
-		get() = controllerManager.getDefault() ?: error("Default controller not initialized")
+		get() = controllerManager.get(AnimationControllerRegistry.DEFAULT) ?: controllerManager.getDefault()
+		?: error("Default controller not initialized")
 
 	abstract fun applyProxyToModel(
 		proxyModels: List<ProxyModel>, model: M,
@@ -61,21 +62,17 @@ abstract class EntityAnimationMapper<T : Entity, M : EntityModel<T>>(
 	fun collectProxyModels(): List<ProxyModel> =
 		controllerManager.getRenderable().map { (it as BaseAnimationController).proxyModel }
 
-	fun resolveMergedFlags(animTime: Float): Map<String, ProxyBoneFlags> {
-		val flags = mutableMapOf<String, ProxyBoneFlags>()
-		for ((_, config) in boneConfigs) flags.putAll(config.resolveBoneFlags(animTime))
-		return flags
-	}
 
-	fun mergedWeight(): Float = defaultController.effectiveWeight
+	fun mergedWeight(): Float =
+		controllerManager.getRenderable().firstOrNull()?.effectiveWeight ?: defaultController.effectiveWeight
 
 	override fun trigger(config: AnimationPlayConfig) {
 		val controller = controllerManager.get(config.controllerName) ?: defaultController
 		val loaded = configLoader.getConfig(config.animId)
 		val used = config.boneConfig ?: loaded
-		boneConfigs.clear()
-		boneConfigs[config.animId] = used
-		(controller as BaseAnimationController).resolvedBoneConfig = used
+		val bac = controller as BaseAnimationController
+		bac.resolvedBoneConfig = used
+		bac.boneConfigs = used
 		controller.trigger(config)
 	}
 
@@ -90,8 +87,7 @@ abstract class EntityAnimationMapper<T : Entity, M : EntityModel<T>>(
 			fadeInTicks = cfg.transitionTicks,
 			speedMultiplier = ctrl.speedMultiplier
 		)
-		boneConfigs.clear()
-		boneConfigs[animId] = cfg
+		(ctrl as BaseAnimationController).boneConfigs = cfg
 		ctrl.trigger(usedCfg)
 	}
 
@@ -115,12 +111,10 @@ abstract class EntityAnimationMapper<T : Entity, M : EntityModel<T>>(
 	}
 
 	override fun stopAnimation(animId: String) {
-		boneConfigs.remove(animId)
 		defaultController.stopAnimation(animId)
 	}
 
 	override fun stopAnimation(controllerName: ResourceLocation, animId: String) {
-		boneConfigs.remove(animId)
 		(controllerManager.get(controllerName) ?: defaultController).stopAnimation(animId)
 	}
 
@@ -156,3 +150,8 @@ abstract class EntityAnimationMapper<T : Entity, M : EntityModel<T>>(
 	fun getRenderableControllers(): List<IAnimationController> =
 		controllerManager.getRenderable()
 }
+
+
+
+
+

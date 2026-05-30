@@ -1,6 +1,6 @@
 package architecture.resonator_combat_framework.module.player_animation.mixin.client;
 
-import architecture.resonator_combat_framework.module.player_animation.RcfFirstPersonRender;
+import architecture.resonator_combat_framework.module.player_animation.client.RcfFirstPersonRender;
 import com.llamalad7.mixinextras.sugar.Local;
 import net.minecraft.client.model.PlayerModel;
 import net.minecraft.client.player.AbstractClientPlayer;

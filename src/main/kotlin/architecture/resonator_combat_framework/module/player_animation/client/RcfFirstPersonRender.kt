@@ -1,4 +1,4 @@
-package architecture.resonator_combat_framework.module.player_animation
+package architecture.resonator_combat_framework.module.player_animation.client
 
 import net.minecraft.client.Minecraft
 import net.neoforged.fml.loading.FMLLoader

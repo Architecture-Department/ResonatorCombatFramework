@@ -1,4 +1,4 @@
-﻿package architecture.resonator_combat_framework.module.player_animation.controller
+package architecture.resonator_combat_framework.module.player_animation.controller
 
 import net.minecraft.resources.ResourceLocation
 
@@ -84,18 +84,21 @@ class ControllerManager {
 	/**
 	 * 获取可渲染的控制器列表。
 	 *
-	 * 先放入的优先级更高。
-	 * 如果某个控制器的骨骼已经被更高优先级且 isOverriding 的控制器占用，
-	 * 则跳过该控制器。
+	 * 从最高优先级到最低优先级遍历活跃控制器。
+	 * 如果某个控制器的所有骨骼已被更高优先级控制器渲染，
+	 * 且自身没有 isOverriding 标志，则跳过该控制器。
+	 * isOverriding 允许低优先级控制器覆盖高优先级控制器的活跃骨骼。
 	 */
 	fun getRenderable(): List<IAnimationController> {
 		val active = getSortedActive()
 		val result = mutableListOf<IAnimationController>()
-		val blockedBones = mutableSetOf<String>()
+		val renderedBones = mutableSetOf<String>()
 		for (ctrl in active) {
-			if (ctrl.affectedBones.isNotEmpty() && ctrl.affectedBones.any { it in blockedBones }) continue
+			if (ctrl.affectedBones.isNotEmpty() && ctrl.affectedBones.all { it in renderedBones } && !ctrl.isOverriding) {
+				continue
+			}
 			result.add(ctrl)
-			if (ctrl.isOverriding) blockedBones.addAll(ctrl.affectedBones)
+			renderedBones.addAll(ctrl.affectedBones)
 		}
 		return result
 	}
@@ -124,3 +127,4 @@ class ControllerManager {
 		return aBones.intersect(bBones).isNotEmpty()
 	}
 }
+

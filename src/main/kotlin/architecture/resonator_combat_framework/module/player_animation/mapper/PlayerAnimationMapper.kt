@@ -1,4 +1,4 @@
-﻿package architecture.resonator_combat_framework.module.player_animation.mapper
+package architecture.resonator_combat_framework.module.player_animation.mapper
 
 import architecture.resonator_combat_framework.module.player_animation.api.ProxyModel
 import architecture.resonator_combat_framework.module.player_animation.config.ProxyBoneFlags
@@ -42,7 +42,8 @@ class PlayerAnimationMapper(
 	}
 
 	/**
-	 * 由 Mixin 每帧调用：tick 控制器 → 合并数据 → 渲染到模型。
+	 * 由 Mixin 每帧调用：tick 所有控制器，逐控制器渲染到模型。
+	 * 每个控制器使用自己的权重和骨骼标志独立应用。
 	 */
 	fun tickAndRender(model: PlayerModel<*>, partialTick: Float, poseStack: PoseStack) {
 		if (!isClient || !isActive()) return
@@ -51,13 +52,16 @@ class PlayerAnimationMapper(
 		lastRenderTick = tickSec
 
 		tick(tickSec, deltaSec)
-		val proxyModels = collectProxyModels()
-		if (proxyModels.isEmpty()) return
-		val flags = resolveMergedFlags(defaultController.currentAnimTime)
-		val weight = mergedWeight()
+		val renderable = controllerManager.getRenderable()
+		if (renderable.isEmpty()) return
+		for (ctrl in renderable) {
+			val bac = ctrl as BaseAnimationController
+			val flags = bac.resolveBoneFlags(bac.currentAnimTime)
+			val weight = ctrl.effectiveWeight
 
-		applyRootTransform(proxyModels, poseStack, flags, weight)
-		applyProxyToModel(proxyModels, model as PlayerModel<Player>, flags, weight)
+			applyRootTransform(listOf(bac.proxyModel), poseStack, flags, weight)
+			applyProxyToModel(listOf(bac.proxyModel), model as PlayerModel<Player>, flags, weight)
+		}
 	}
 
 	/** ItemInHandLayerMixin 调用：物品定位器 → PoseStack */
@@ -65,11 +69,13 @@ class PlayerAnimationMapper(
 		if (!isClient) return
 		val renderable = getRenderableControllers()
 		if (renderable.isEmpty()) return
-		applyProxyToItem(
-			renderable.map { (it as BaseAnimationController).proxyModel },
-			isLeft, poseStack,
-			resolveMergedFlags(defaultController.currentAnimTime),
-			defaultController.effectiveWeight,
-		)
+		for (ctrl in renderable) {
+			val bac = ctrl as BaseAnimationController
+			val flags = bac.resolveBoneFlags(bac.currentAnimTime)
+			applyProxyToItem(
+				listOf(bac.proxyModel), isLeft, poseStack, flags,
+				ctrl.effectiveWeight
+			)
+		}
 	}
 }

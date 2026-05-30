@@ -1,12 +1,9 @@
-﻿// 动画控制器基类。包含状态机(IDLE/TRANSITIONING/PLAYING/PAUSED/FADING_OUT)、crossfade 过渡系统、blend 混合、播放边界检查。子类实现具体后端
+// 动画控制器基类。包含状态机(IDLE/TRANSITIONING/PLAYING/PAUSED/FADING_OUT)、crossfade 过渡系统、blend 混合、播放边界检查。子类实现具体后端
 package architecture.resonator_combat_framework.module.player_animation.controller
 
 import architecture.resonator_combat_framework.module.player_animation.api.ProxyBone
 import architecture.resonator_combat_framework.module.player_animation.api.ProxyModel
-import architecture.resonator_combat_framework.module.player_animation.config.AnimType
-import architecture.resonator_combat_framework.module.player_animation.config.AnimationPlayConfig
-import architecture.resonator_combat_framework.module.player_animation.config.ProxyBoneConfigData
-import architecture.resonator_combat_framework.module.player_animation.config.shouldBlend
+import architecture.resonator_combat_framework.module.player_animation.config.*
 import architecture.resonator_combat_framework.module.player_animation.registry.ProxyBoneConfigRegistry
 
 abstract class BaseAnimationController @JvmOverloads constructor(
@@ -34,6 +31,9 @@ abstract class BaseAnimationController @JvmOverloads constructor(
 	/** 当前活跃骨骼配置（crossfade 时保留引用），trigger 时设，forceClear 时清除 */
 	private var activeBoneConfig: ProxyBoneConfigData = ProxyBoneConfigData.EMPTY
 
+	/** 额外骨骼配置（通常 null）。优先级高于 activeBoneConfig，只覆盖已存在的骨骼 */
+	var boneConfigs: ProxyBoneConfigData? = null
+
 	override var blendFactor = 0f
 	override var blendTarget = 0f
 	override var currentTransitionTicks = ProxyBoneConfigData.DEFAULT_TRANSITION_TICKS
@@ -48,6 +48,17 @@ abstract class BaseAnimationController @JvmOverloads constructor(
 		}
 
 	override val effectiveWeight: Float get() = if (transitionSource != null) 1f else blendFactor
+
+
+	/** 获取当前活跃骨骼配置的骨骼标志（用于外部按控制器解析标志） */
+	fun resolveBoneFlags(animTime: Float): Map<String, ProxyBoneFlags> {
+		val flags = activeBoneConfig.resolveBoneFlags(animTime).toMutableMap()
+		val overrideFlags = boneConfigs?.resolveBoneFlags(animTime) ?: return flags
+		for ((boneName, boneFlag) in overrideFlags) {
+			if (boneName in flags) flags[boneName] = boneFlag
+		}
+		return flags
+	}
 
 	override fun isActive(): Boolean = state != State.IDLE
 
@@ -350,3 +361,7 @@ abstract class BaseAnimationController @JvmOverloads constructor(
 	/** 当前是否处于淡入阶段（blendTarget > 0 且 blendFactor 未达目标） */
 	private fun isInFadeIn(): Boolean = blendTarget > 0f && blendFactor < 1f
 }
+
+
+
+

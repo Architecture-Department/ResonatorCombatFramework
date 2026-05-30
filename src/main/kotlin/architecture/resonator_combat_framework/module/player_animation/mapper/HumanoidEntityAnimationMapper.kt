@@ -4,6 +4,7 @@
 
 import architecture.resonator_combat_framework.module.player_animation.api.ProxyModel
 import architecture.resonator_combat_framework.module.player_animation.config.*
+import architecture.resonator_combat_framework.module.player_animation.util.BoneTransformUtil
 import com.mojang.blaze3d.vertex.PoseStack
 import com.mojang.math.Axis
 import net.minecraft.client.model.HumanoidModel

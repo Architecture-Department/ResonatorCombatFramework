@@ -26,6 +26,7 @@ interface IAnimationController {
 	var speedMultiplier: Float
 
 	/** 是否覆盖低优先级控制器的骨骼 */
+	// TODO 完成作用
 	val isOverriding: Boolean
 
 	/** 当前播放的动画 ID */

@@ -113,6 +113,7 @@ interface IAnimationMapper {
 	 * 检查两个控制器是否存在骨骼冲突。
 	 * 当两者都有 affectedBones 且交集非空时返回 true。
 	 */
+	// TODO 确保是否需要
 	fun hasBoneConflict(ctrlA: IAnimationController, ctrlB: IAnimationController): Boolean {
 		val a = ctrlA.affectedBones
 		val b = ctrlB.affectedBones

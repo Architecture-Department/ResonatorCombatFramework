@@ -1,4 +1,4 @@
-package architecture.resonator_combat_framework.events.registry
+﻿package architecture.resonator_combat_framework.events.registry
 
 import architecture.goldenboughs_lib.util.LibUtil.rlOf
 import architecture.resonator_combat_framework.core.RcfConstants
