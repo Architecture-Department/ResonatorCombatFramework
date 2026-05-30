@@ -11,15 +11,14 @@ class BedrockAnimationController(
 	isClient: Boolean
 ) : BaseAnimationController(isClient) {
 
+	/** 当前加载的动画数据 */
 	private var currentAnim: BedrockAnimation? = null
 
-	/** 当前加载的动画数据 */
+	/** 当前动画播放位置（秒） */
 	private var animTime = 0f
 
-	/** 当前动画播放位置（秒） */
-	private var lastRawGameTime = -1f
-
 	/** 上一帧的 gameTime，-1 表示首帧 */
+	private var lastRawGameTime = -1f
 
 	override fun loadAnimation(animId: String): Boolean {
 		currentAnim = BedrockAnimationRegistry.getInstance(isClient).get(animId)

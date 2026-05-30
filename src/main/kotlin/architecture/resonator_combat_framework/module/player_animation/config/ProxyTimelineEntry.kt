@@ -6,10 +6,10 @@
  * 用于在动画的不同阶段动态切换骨骼的 blend/lock 行为。
  */
 data class ProxyTimelineEntry(
-	val from: Float,
 	/** 时间线起始时间（秒，含） */
-	val to: Float,
+	val from: Float,
 	/** 时间线结束时间（秒，不含） */
-	val bones: Map<String, ProxyBoneFlags>
+	val to: Float,
 	/** 时间段内生效的骨骼标志配置 */
+	val bones: Map<String, ProxyBoneFlags>
 )

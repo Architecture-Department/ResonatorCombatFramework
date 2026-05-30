@@ -1,4 +1,4 @@
-package architecture.resonator_combat_framework.module.player_animation.controller
+﻿package architecture.resonator_combat_framework.module.player_animation.controller
 
 import architecture.goldenboughs_lib.api.AllOpe
 import architecture.resonator_combat_framework.module.player_animation.config.AnimationPlayConfig
@@ -24,9 +24,6 @@ interface IAnimationController {
 
 	/** 播放速度倍数 */
 	var speedMultiplier: Float
-
-	/** 优先级（越高越优先渲染） */
-	var priority: Int
 
 	/** 是否覆盖低优先级控制器的骨骼 */
 	var isOverriding: Boolean

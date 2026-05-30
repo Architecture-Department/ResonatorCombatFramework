@@ -1,13 +1,12 @@
 ﻿package architecture.resonator_combat_framework.module.player_animation.mapper
 
-// 实体动画映射器。实体模型到动画骨骼的映射实现
-
 import architecture.resonator_combat_framework.module.player_animation.api.IAnimationMapper
 import architecture.resonator_combat_framework.module.player_animation.api.ProxyModel
 import architecture.resonator_combat_framework.module.player_animation.config.AnimationPlayConfig
 import architecture.resonator_combat_framework.module.player_animation.config.ProxyBoneConfigData
 import architecture.resonator_combat_framework.module.player_animation.config.ProxyBoneFlags
 import architecture.resonator_combat_framework.module.player_animation.controller.BaseAnimationController
+import architecture.resonator_combat_framework.module.player_animation.controller.ControllerManager
 import architecture.resonator_combat_framework.module.player_animation.controller.IAnimationController
 import architecture.resonator_combat_framework.module.player_animation.registry.ProxyBoneConfigRegistry
 import com.mojang.blaze3d.vertex.PoseStack
@@ -22,8 +21,15 @@ abstract class EntityAnimationMapper<T : Entity, M : EntityModel<T>>(
 	protected val configLoader = ProxyBoneConfigRegistry.getInstance(isClient)
 	protected val boneConfigs = mutableMapOf<String, ProxyBoneConfigData>()
 
-	abstract val controllers: LinkedHashMap<String, IAnimationController>
-	abstract val defaultController: IAnimationController
+	/**
+	 * 控制器管理器。
+	 * 默认控制器由子类在 init 中添加，保证 getDefault() 可用。
+	 */
+	protected val controllerManager = ControllerManager()
+
+	/** 默认控制器（管理器中的第一个） */
+	protected val defaultController: IAnimationController
+		get() = controllerManager.getDefault() ?: error("Default controller not initialized")
 
 	abstract fun applyProxyToModel(
 		proxyModels: List<ProxyModel>, model: M,
@@ -47,11 +53,11 @@ abstract class EntityAnimationMapper<T : Entity, M : EntityModel<T>>(
 	fun resolveConfig(animId: String): ProxyBoneConfigData = configLoader.getConfig(animId)
 
 	fun tick(gameTime: Float, deltaSec: Float) {
-		for (ctrl in controllers()) ctrl.tick(gameTime, deltaSec)
+		for (ctrl in controllerManager.getAll()) ctrl.tick(gameTime, deltaSec)
 	}
 
 	fun collectProxyModels(): List<ProxyModel> =
-		getRenderableControllers().map { (it as BaseAnimationController).proxyModel }
+		controllerManager.getRenderable().map { (it as BaseAnimationController).proxyModel }
 
 	fun resolveMergedFlags(animTime: Float): Map<String, ProxyBoneFlags> {
 		val flags = mutableMapOf<String, ProxyBoneFlags>()
@@ -62,7 +68,7 @@ abstract class EntityAnimationMapper<T : Entity, M : EntityModel<T>>(
 	fun mergedWeight(): Float = defaultController.effectiveWeight
 
 	override fun trigger(config: AnimationPlayConfig) {
-		val controller = controllers[config.controllerName] ?: defaultController
+		val controller = controllerManager.get(config.controllerName) ?: defaultController
 		val loaded = configLoader.getConfig(config.animId)
 		val used = config.boneConfig ?: loaded
 		boneConfigs.clear()
@@ -75,7 +81,7 @@ abstract class EntityAnimationMapper<T : Entity, M : EntityModel<T>>(
 
 	override fun trigger(controllerName: String, animId: String) {
 		val cfg = resolveConfig(animId)
-		val ctrl = controllers[controllerName] ?: defaultController
+		val ctrl = controllerManager.get(controllerName) ?: defaultController
 		val usedCfg = AnimationPlayConfig.of(animId).copy(
 			controllerName = controllerName,
 			fadeInTicks = cfg.transitionTicks,
@@ -87,21 +93,22 @@ abstract class EntityAnimationMapper<T : Entity, M : EntityModel<T>>(
 	}
 
 	override fun stop(controllerName: String) {
-		(controllers[controllerName] ?: defaultController).stop()
+		(controllerManager.get(controllerName) ?: defaultController).stop()
 	}
 
 	override fun stopImmediate(controllerName: String) {
-		(controllers[controllerName] ?: defaultController).stopImmediate()
+		(controllerManager.get(controllerName) ?: defaultController).stopImmediate()
 	}
 
-	override fun stopAll() = controllers().forEach { it.stop() }
-	override fun stopAllImmediate() = controllers().forEach { it.stopImmediate() }
+	override fun stopAll() = controllerManager.getAll().forEach { it.stop() }
+	override fun stopAllImmediate() = controllerManager.getAll().forEach { it.stopImmediate() }
+
 	override fun pause(controllerName: String) {
-		(controllers[controllerName] ?: defaultController).pause()
+		(controllerManager.get(controllerName) ?: defaultController).pause()
 	}
 
 	override fun resume(controllerName: String) {
-		(controllers[controllerName] ?: defaultController).resume()
+		(controllerManager.get(controllerName) ?: defaultController).resume()
 	}
 
 	override fun stopAnimation(animId: String) {
@@ -111,61 +118,38 @@ abstract class EntityAnimationMapper<T : Entity, M : EntityModel<T>>(
 
 	override fun stopAnimation(controllerName: String, animId: String) {
 		boneConfigs.remove(animId)
-		(controllers[controllerName] ?: defaultController).stopAnimation(animId)
+		(controllerManager.get(controllerName) ?: defaultController).stopAnimation(animId)
 	}
 
-	override fun isActive(): Boolean = controllers.values.any { it.isActive() }
+	override fun isActive(): Boolean = controllerManager.isAnyActive()
 	override fun isControllerActive(): Boolean = defaultController.isActive()
 	override fun isControllerActive(controllerName: String): Boolean =
-		(controllers[controllerName] ?: defaultController).isActive()
+		(controllerManager.get(controllerName) ?: defaultController).isActive()
 
 	override fun getController(): IAnimationController = defaultController
 	override fun getController(controllerName: String): IAnimationController =
-		controllers[controllerName] ?: defaultController
+		controllerManager.get(controllerName) ?: defaultController
 
-	override fun hasController(): Boolean = true
-	override fun controllers() = controllers.values
-	override fun hasController(controllerName: String): Boolean = controllerName in controllers
+	override fun hasController(): Boolean = controllerManager.getDefault() != null
+	override fun controllers() = controllerManager.getAll()
+	override fun hasController(controllerName: String): Boolean = controllerManager.has(controllerName)
 
 	override fun addController(name: String, controller: IAnimationController) {
 		if (name == IAnimationMapper.DEFAULT_CONTROLLER_NAME) return
-		controllers[name] = controller
+		controllerManager.add(name, controller)
 	}
 
 	override fun removeController(name: String) {
 		if (name == IAnimationMapper.DEFAULT_CONTROLLER_NAME) return
-		controllers.remove(name)?.stop()
+		controllerManager.remove(name)
 	}
 
 	override fun getActiveControllersSorted(): List<IAnimationController> =
-		controllers().filter { it.isActive() }.sortedByDescending { it.priority }
+		controllerManager.getSortedActive()
 
-	override fun findBlockingControllers(controller: IAnimationController): List<IAnimationController> {
-		if (!controller.isActive()) return emptyList()
-		val sorted = getActiveControllersSorted()
-		val myIndex = sorted.indexOf(controller)
-		if (myIndex < 0) return emptyList()
-		val blocking = mutableListOf<IAnimationController>()
-		for (i in 0 until myIndex) {
-			val higher = sorted[i]
-			if (higher.isOverriding && hasBoneConflict(higher, controller)) blocking.add(higher)
-		}
-		return blocking
-	}
+	override fun findBlockingControllers(controller: IAnimationController): List<IAnimationController> =
+		controllerManager.findBlocking(controller)
 
-	fun getRenderableControllers(): List<IAnimationController> {
-		val sorted = getActiveControllersSorted()
-		if (sorted.isEmpty()) return sorted
-		val result = mutableListOf(sorted.first())
-		val blockedBones = mutableSetOf<String>()
-		if (sorted.first().isOverriding) blockedBones.addAll(sorted.first().affectedBones)
-		for (i in 1 until sorted.size) {
-			val ctrl = sorted[i]
-			if (ctrl.affectedBones.isNotEmpty() && ctrl.affectedBones.any { it in blockedBones }) continue
-			result.add(ctrl)
-			if (ctrl.isOverriding) blockedBones.addAll(ctrl.affectedBones)
-		}
-		return result
-	}
+	fun getRenderableControllers(): List<IAnimationController> =
+		controllerManager.getRenderable()
 }
-

@@ -1,4 +1,4 @@
-// 动画控制器基类。包含状态机(IDLE/TRANSITIONING/PLAYING/PAUSED/FADING_OUT)、crossfade 过渡系统、blend 混合、播放边界检查。子类实现具体后端
+﻿// 动画控制器基类。包含状态机(IDLE/TRANSITIONING/PLAYING/PAUSED/FADING_OUT)、crossfade 过渡系统、blend 混合、播放边界检查。子类实现具体后端
 package architecture.resonator_combat_framework.module.player_animation.controller
 
 import architecture.resonator_combat_framework.module.player_animation.api.ProxyBone
@@ -19,14 +19,15 @@ abstract class BaseAnimationController(
 
 	val proxyModel = ProxyModel("base")
 	protected var state = State.IDLE
-	protected var transitionSource: ProxyModel? = null
 
 	/** 过渡开始时的骨骼快照，用于 crossfade */
-	protected var currentConfig: AnimationPlayConfig = AnimationPlayConfig.of("")
+	protected var transitionSource: ProxyModel? = null
 
 	/** 当前完整播放配置 */
-	internal var resolvedBoneConfig: ProxyBoneConfigData? = null
+	protected var currentConfig: AnimationPlayConfig = AnimationPlayConfig.of("")
+
 	/** trigger 时临时覆盖，设完后立即清空 */
+	internal var resolvedBoneConfig: ProxyBoneConfigData? = null
 
 	/** 当前活跃骨骼配置（crossfade 时保留引用），trigger 时设，forceClear 时清除 */
 	private var activeBoneConfig: ProxyBoneConfigData = ProxyBoneConfigData.EMPTY
@@ -35,7 +36,6 @@ abstract class BaseAnimationController(
 	override var blendTarget = 0f
 	override var currentTransitionTicks = ProxyBoneConfigData.DEFAULT_TRANSITION_TICKS
 	override var speedMultiplier = 1f
-	override var priority = 0
 	override var isOverriding = true
 	override var currentAnimId: String? = null
 	override var affectedBones = emptySet<String>()
@@ -89,7 +89,7 @@ abstract class BaseAnimationController(
 		// 保存活跃配置供 crossfade 使用
 		activeBoneConfig = finalConfig
 
-		snapshotTransitionSource()          // 重复播放同一动画也会过渡（带淡入）
+		snapshotTransitionSource()
 		proxyModel.bones.clear()
 
 		currentConfig = config

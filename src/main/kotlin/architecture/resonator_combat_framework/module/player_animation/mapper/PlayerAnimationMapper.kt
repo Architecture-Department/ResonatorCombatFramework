@@ -1,13 +1,10 @@
 ﻿package architecture.resonator_combat_framework.module.player_animation.mapper
 
-// 玩家动画映射器。玩家模型到动画骨骼的映射实现
-
 import architecture.resonator_combat_framework.module.player_animation.api.IAnimationMapper
 import architecture.resonator_combat_framework.module.player_animation.api.ProxyModel
 import architecture.resonator_combat_framework.module.player_animation.config.ProxyBoneFlags
 import architecture.resonator_combat_framework.module.player_animation.controller.BaseAnimationController
 import architecture.resonator_combat_framework.module.player_animation.controller.BedrockAnimationController
-import architecture.resonator_combat_framework.module.player_animation.controller.IAnimationController
 import com.mojang.blaze3d.vertex.PoseStack
 import net.minecraft.client.model.PlayerModel
 import net.minecraft.world.entity.player.Player
@@ -17,11 +14,11 @@ class PlayerAnimationMapper(
 	val player: Player
 ) : HumanoidEntityAnimationMapper<Player, PlayerModel<Player>>(player) {
 
-	override val controllers = linkedMapOf<String, IAnimationController>()
-	override val defaultController =
-		BedrockAnimationController(isClient).also { controllers[IAnimationMapper.DEFAULT_CONTROLLER_NAME] = it }
-
 	private var lastRenderTick = 0f
+
+	init {
+		controllerManager.add(IAnimationMapper.DEFAULT_CONTROLLER_NAME, BedrockAnimationController(isClient))
+	}
 
 	/** 附加层：外套/袖子/裤腿 */
 	override fun applyProxyToModel(
@@ -73,5 +70,3 @@ class PlayerAnimationMapper(
 		)
 	}
 }
-
-
