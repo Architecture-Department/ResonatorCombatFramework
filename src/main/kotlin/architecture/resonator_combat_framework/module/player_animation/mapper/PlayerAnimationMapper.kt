@@ -1,9 +1,9 @@
 package architecture.resonator_combat_framework.module.player_animation.mapper
 
 import architecture.resonator_combat_framework.module.player_animation.api.ProxyModel
-import architecture.resonator_combat_framework.module.player_animation.config.ProxyBoneFlags
 import architecture.resonator_combat_framework.module.player_animation.controller.BaseAnimationController
 import architecture.resonator_combat_framework.module.player_animation.event.AnimationControllerRegisterEvent
+import architecture.resonator_combat_framework.module.player_animation.flags.ProxyBoneFlags
 import com.mojang.blaze3d.vertex.PoseStack
 import net.minecraft.client.model.PlayerModel
 import net.minecraft.world.entity.player.Player

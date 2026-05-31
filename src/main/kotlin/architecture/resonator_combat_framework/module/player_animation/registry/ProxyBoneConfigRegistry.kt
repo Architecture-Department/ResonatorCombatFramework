@@ -1,9 +1,9 @@
 package architecture.resonator_combat_framework.module.player_animation.registry
 
 import architecture.resonator_combat_framework.core.RcfConstants
-import architecture.resonator_combat_framework.module.player_animation.config.ProxyBoneConfigData
-import architecture.resonator_combat_framework.module.player_animation.config.ProxyBoneFlags
-import architecture.resonator_combat_framework.module.player_animation.config.ProxyTimelineEntry
+import architecture.resonator_combat_framework.module.player_animation.flags.ProxyBoneConfigData
+import architecture.resonator_combat_framework.module.player_animation.flags.ProxyBoneFlags
+import architecture.resonator_combat_framework.module.player_animation.flags.ProxyTimelineEntry
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser

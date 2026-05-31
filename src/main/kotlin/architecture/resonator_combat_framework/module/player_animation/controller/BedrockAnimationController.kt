@@ -4,7 +4,7 @@ package architecture.resonator_combat_framework.module.player_animation.controll
 import architecture.resonator_combat_framework.module.player_animation.bedrock.BedrockAnimation
 import architecture.resonator_combat_framework.module.player_animation.bedrock.BedrockAnimator
 import architecture.resonator_combat_framework.module.player_animation.bedrock.molang.MolangQueries
-import architecture.resonator_combat_framework.module.player_animation.config.AnimationPlayData
+import architecture.resonator_combat_framework.module.player_animation.flags.AnimationPlayData
 import architecture.resonator_combat_framework.module.player_animation.registry.BedrockAnimationRegistry
 
 class BedrockAnimationController(

@@ -5,9 +5,9 @@ import architecture.resonator_combat_framework.module.player_animation.api.Proxy
 import architecture.resonator_combat_framework.module.player_animation.api.hasPos
 import architecture.resonator_combat_framework.module.player_animation.api.hasRot
 import architecture.resonator_combat_framework.module.player_animation.api.hasScale
-import architecture.resonator_combat_framework.module.player_animation.config.ProxyBoneFlags
-import architecture.resonator_combat_framework.module.player_animation.config.isEnabled
-import architecture.resonator_combat_framework.module.player_animation.config.shouldTransition
+import architecture.resonator_combat_framework.module.player_animation.flags.ProxyBoneFlags
+import architecture.resonator_combat_framework.module.player_animation.flags.isEnabled
+import architecture.resonator_combat_framework.module.player_animation.flags.shouldTransition
 import com.mojang.blaze3d.vertex.PoseStack
 import net.minecraft.client.model.geom.ModelPart
 import org.joml.Quaternionf

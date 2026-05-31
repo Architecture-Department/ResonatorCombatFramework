@@ -3,11 +3,11 @@ package architecture.resonator_combat_framework.module.player_animation.api
 
 import architecture.goldenboughs_lib.api.AllOpe
 import architecture.resonator_combat_framework.events.registry.AnimationControllerRegistry
-import architecture.resonator_combat_framework.module.player_animation.config.AnimationPlayData
-import architecture.resonator_combat_framework.module.player_animation.config.ProxyBoneConfigData
 import architecture.resonator_combat_framework.module.player_animation.controller.BaseAnimationController
 import architecture.resonator_combat_framework.module.player_animation.controller.ControllerManager
 import architecture.resonator_combat_framework.module.player_animation.controller.IAnimationController
+import architecture.resonator_combat_framework.module.player_animation.flags.AnimationPlayData
+import architecture.resonator_combat_framework.module.player_animation.flags.ProxyBoneConfigData
 import architecture.resonator_combat_framework.module.player_animation.registry.ProxyBoneConfigRegistry
 import net.minecraft.resources.ResourceLocation
 
@@ -159,6 +159,12 @@ interface IAnimationMapper {
 	}
 
 	fun resolveConfig(animId: String): ProxyBoneConfigData = configLoader.getConfig(animId)
+
+	fun tick() {
+		controllerManager.getAll().forEach {
+			it.tick(this)
+		}
+	}
 
 	fun tick(gameTime: Float, deltaSec: Float) {
 		for (ctrl in controllerManager.getAll()) ctrl.tick(gameTime, deltaSec)

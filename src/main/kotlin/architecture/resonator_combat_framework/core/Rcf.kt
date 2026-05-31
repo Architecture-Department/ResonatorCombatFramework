@@ -1,5 +1,6 @@
 package architecture.resonator_combat_framework.core
 
+import architecture.resonator_combat_framework.config.RcfConfig
 import architecture.resonator_combat_framework.core.RcfConstants.LOGGER
 import architecture.resonator_combat_framework.init.RcfDataComponentTypes
 import net.neoforged.bus.api.SubscribeEvent
@@ -20,6 +21,7 @@ object Rcf {
 	init {
 		val modContainer = LOADING_CONTEXT.activeContainer
 		val modBus = MOD_BUS
+		RcfConfig.register(modContainer)
 		RcfDataComponentTypes.REGISTRY.register(modBus)
 	}
 }

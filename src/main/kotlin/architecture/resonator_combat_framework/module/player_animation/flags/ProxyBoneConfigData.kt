@@ -1,4 +1,4 @@
-package architecture.resonator_combat_framework.module.player_animation.config
+package architecture.resonator_combat_framework.module.player_animation.flags
 
 import architecture.goldenboughs_lib.api.AllOpe
 

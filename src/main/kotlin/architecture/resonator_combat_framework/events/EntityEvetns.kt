@@ -8,7 +8,6 @@ import net.neoforged.neoforge.event.tick.EntityTickEvent
 @EventBusSubscriber(modid = LibConstants.ID)
 object EntityEvetns {
 	@SubscribeEvent
-	fun entityPre(pre: EntityTickEvent.Pre) {
-		val entity = pre.entity
+	fun tickPre(pre: EntityTickEvent.Pre) {
 	}
 }

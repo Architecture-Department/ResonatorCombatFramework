@@ -1,7 +1,8 @@
 package architecture.resonator_combat_framework.module.player_animation.controller
 
 import architecture.goldenboughs_lib.api.AllOpe
-import architecture.resonator_combat_framework.module.player_animation.config.AnimationPlayData
+import architecture.resonator_combat_framework.module.player_animation.api.IAnimationMapper
+import architecture.resonator_combat_framework.module.player_animation.flags.AnimationPlayData
 
 /**
  * 动画控制器接口。
@@ -56,6 +57,8 @@ interface IAnimationController {
 	 * @param deltaSec 距上一帧的秒数
 	 */
 	fun tick(partialTick: Float, deltaSec: Float)
+
+	fun tick(animationMapper: IAnimationMapper) {}
 
 	/** 使用完整配置触发动画 */
 	fun trigger(config: AnimationPlayData)

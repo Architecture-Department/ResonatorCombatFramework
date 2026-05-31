@@ -1,4 +1,4 @@
-﻿package architecture.resonator_combat_framework.module.player_animation.config
+﻿package architecture.resonator_combat_framework.module.player_animation.flags
 
 import architecture.resonator_combat_framework.events.registry.AnimationControllerRegistry
 import architecture.resonator_combat_framework.module.player_animation.mixed.PlayerProxyProvider.Companion.getAnimationTransformer

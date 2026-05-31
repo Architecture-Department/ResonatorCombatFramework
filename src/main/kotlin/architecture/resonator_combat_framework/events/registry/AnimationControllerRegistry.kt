@@ -1,6 +1,7 @@
-﻿package architecture.resonator_combat_framework.events.registry
+package architecture.resonator_combat_framework.events.registry
 
 import architecture.goldenboughs_lib.util.LibUtil.rlOf
+import architecture.resonator_combat_framework.animation_controller.ActionAnimationController
 import architecture.resonator_combat_framework.core.RcfConstants
 import architecture.resonator_combat_framework.module.player_animation.event.AnimationControllerRegisterEvent
 import net.minecraft.resources.ResourceLocation
@@ -20,7 +21,7 @@ object AnimationControllerRegistry {
 
 	@SubscribeEvent
 	fun registry(event: AnimationControllerRegisterEvent) {
-		event.register(ACTION, priority = 1000)
+		event.register(ACTION, ::ActionAnimationController, 1000)
 		event.register(MAIN, priority = 0)
 		event.register(COMMAND, priority = -1000)
 	}

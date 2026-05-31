@@ -1,6 +1,7 @@
 package architecture.resonator_combat_framework.datagen.i18n
 
 import architecture.goldenboughs_lib.datagen.i18n.DatagenI18n
+import architecture.resonator_combat_framework.config.RcfConfig
 import architecture.resonator_combat_framework.core.RcfConstants
 import net.minecraft.data.PackOutput
 import net.minecraft.sounds.SoundEvent
@@ -19,6 +20,8 @@ class RcfZhCn(output: PackOutput) : DatagenI18n(output, RcfConstants.ID, "zh_cn"
 
 		add("${RcfConstants.ID}.command.play_anim", "已给%s播放%s动画")
 		add("${RcfConstants.ID}.command.stop_anim", "已停止%s的动画")
+
+		add(RcfConfig.CLIENT.itemSwitchingAnimation, "物品切换动画")
 	}
 
 	companion object {

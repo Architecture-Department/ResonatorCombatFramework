@@ -3,7 +3,7 @@ package architecture.resonator_combat_framework.module.player_animation.controll
 
 import architecture.resonator_combat_framework.module.player_animation.api.ProxyBone
 import architecture.resonator_combat_framework.module.player_animation.api.ProxyModel
-import architecture.resonator_combat_framework.module.player_animation.config.*
+import architecture.resonator_combat_framework.module.player_animation.flags.*
 import architecture.resonator_combat_framework.module.player_animation.registry.ProxyBoneConfigRegistry
 
 abstract class BaseAnimationController @JvmOverloads constructor(
