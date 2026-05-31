@@ -1,15 +1,14 @@
-﻿package architecture.resonator_combat_framework.module.player_animation.command
+package architecture.resonator_combat_framework.module.player_animation.command
 
 // 玩家动画测试命令。用于在游戏中测试动画播放
 
 import architecture.goldenboughs_lib.util.CommandContextUtil.getArguments
-import architecture.resonator_combat_framework.module.player_animation.config.AnimationPlayConfig
-import architecture.resonator_combat_framework.module.player_animation.helper.PlayerAnimationHelper.pausePlayerAnimation
-import architecture.resonator_combat_framework.module.player_animation.helper.PlayerAnimationHelper.resumePlayerAnimation
-import architecture.resonator_combat_framework.module.player_animation.helper.PlayerAnimationHelper.stopPlayerAnimation
-import architecture.resonator_combat_framework.module.player_animation.helper.PlayerAnimationHelper.stopPlayerAnimationImmediate
-import architecture.resonator_combat_framework.module.player_animation.helper.PlayerAnimationHelper.triggerPlayerAnimation
-import architecture.resonator_combat_framework.module.player_animation.helper.PlayerAnimationHelper.triggerPlayerAnimationImmediate
+import architecture.resonator_combat_framework.events.registry.AnimationControllerRegistry
+import architecture.resonator_combat_framework.module.player_animation.config.AnimationPlayData
+import architecture.resonator_combat_framework.module.player_animation.helper.PlayerAnimationHelper.pauseAnima
+import architecture.resonator_combat_framework.module.player_animation.helper.PlayerAnimationHelper.resumeAnima
+import architecture.resonator_combat_framework.module.player_animation.helper.PlayerAnimationHelper.stopAnima
+import architecture.resonator_combat_framework.module.player_animation.helper.PlayerAnimationHelper.triggerPlayerAnima
 import com.mojang.brigadier.CommandDispatcher
 import com.mojang.brigadier.arguments.FloatArgumentType
 import com.mojang.brigadier.arguments.IntegerArgumentType
@@ -24,9 +23,7 @@ import net.minecraft.world.entity.player.Player
 /**
  * ```
  * /test_anim <target> play <animId> [speed] [fadeIn]
- * /test_anim <target> play_immediate <animId> [speed]
  * /test_anim <target> stop [fadeOut]
- * /test_anim <target> stop_immediate
  * /test_anim <target> pause
  * /test_anim <target> resume
  * ```
@@ -38,16 +35,34 @@ object TestAnimCommand {
 				.requires { it.hasPermission(2) }
 				.then(
 					Commands.argument("target", EntityArgument.player())
-						.then(playCommand())
-						.then(playImmediateCommand())
+						.then(
+							Commands.literal("play")
+								.then(
+									Commands.argument("anim_id", StringArgumentType.word())
+										.suggests(AnimationIdArgumentProvider)
+										.executes { handlePlay(it) }
+										.then(
+											Commands.argument("speed", FloatArgumentType.floatArg(Float.MIN_VALUE))
+												.executes { handlePlay(it) }
+												.then(
+													Commands.argument("fade_in", IntegerArgumentType.integer(-1))
+														.executes { handlePlay(it) }
+														.then(
+															Commands.argument("fade_out", IntegerArgumentType.integer(-1))
+																.executes { handlePlay(it) }
+														)
+												)
+										)
+								)
+						)
 						.then(
 							Commands.literal("stop")
-								.executes { action(it) { stopPlayerAnimation() } }
+								.executes { action(it) { stopAnima(AnimationControllerRegistry.COMMAND) } }
 								.then(
-									Commands.argument("fade_out", IntegerArgumentType.integer(0))
+									Commands.argument("fade_out", IntegerArgumentType.integer(-1))
 										.executes {
 											val target = getPlayer(it)
-											target.stopPlayerAnimation()
+											target.stopAnima(AnimationControllerRegistry.COMMAND)
 											it.source.sendSuccess({
 												Component.literal("Stopped animation on ${target.name.string}")
 											}, true)
@@ -56,48 +71,16 @@ object TestAnimCommand {
 								)
 						)
 						.then(
-							Commands.literal("stop_immediate")
-								.executes { action(it) { stopPlayerAnimationImmediate() } }
-						)
-						.then(
 							Commands.literal("pause")
-								.executes { action(it) { pausePlayerAnimation() } }
+								.executes { action(it) { pauseAnima(AnimationControllerRegistry.COMMAND) } }
 						)
 						.then(
 							Commands.literal("resume")
-								.executes { action(it) { resumePlayerAnimation() } }
+								.executes { action(it) { resumeAnima(AnimationControllerRegistry.COMMAND) } }
 						)
 				)
 		)
 	}
-
-	private fun playCommand() = Commands.literal("play").then(
-		Commands.argument("anim_id", StringArgumentType.word())
-			.suggests(AnimationIdArgumentProvider)
-			.executes { handlePlay(it) }
-			.then(
-				Commands.argument("speed", FloatArgumentType.floatArg(0.01f))
-					.executes { handlePlay(it) }
-					.then(
-						Commands.argument("fade_in", IntegerArgumentType.integer(0))
-							.executes { handlePlay(it) }
-							.then(
-								Commands.argument("fade_out", IntegerArgumentType.integer(0))
-									.executes { handlePlay(it) }
-							)
-					)
-			)
-	)
-
-	private fun playImmediateCommand() = Commands.literal("play_immediate").then(
-		Commands.argument("anim_id", StringArgumentType.word())
-			.suggests(AnimationIdArgumentProvider)
-			.executes { handlePlayImmediate(it) }
-			.then(
-				Commands.argument("speed", FloatArgumentType.floatArg(0.01f))
-					.executes { handlePlayImmediate(it) }
-			)
-	)
 
 	private fun handlePlay(ctx: CommandContext<CommandSourceStack>): Int {
 		val arguments = ctx.getArguments() ?: return 0
@@ -115,24 +98,16 @@ object TestAnimCommand {
 			"fade_out"
 		) else -1
 
-		val config = AnimationPlayConfig.builder(animId).speed(speed).also {
-			if (fadeIn >= 0) it.fadeIn(fadeIn)
-			if (fadeOut >= 0) it.fadeOut(fadeOut)
-		}.build()
+		val config = AnimationPlayData.builder(animId)
+			.controller(AnimationControllerRegistry.COMMAND)
+			.speed(speed)
+			.also {
+				if (fadeIn >= 0) it.fadeIn(fadeIn)
+				if (fadeOut >= 0) it.fadeOut(fadeOut)
+			}.build()
 
-		target.triggerPlayerAnimation(config)
+		target.triggerPlayerAnima(config)
 		ctx.source.sendSuccess({ Component.literal("Playing $animId on ${target.name.string}") }, true)
-		return 1
-	}
-
-	private fun handlePlayImmediate(ctx: CommandContext<CommandSourceStack>): Int {
-		val accessor = ctx.getArguments() ?: return 0
-
-		val target = getPlayer(ctx)
-		val animId = StringArgumentType.getString(ctx, "anim_id")
-		val speed = if (accessor.contains("speed")) FloatArgumentType.getFloat(ctx, "speed") else 1f
-		target.triggerPlayerAnimationImmediate(animId, speed)
-		ctx.source.sendSuccess({ Component.literal("Playing $animId immediate on ${target.name.string}") }, true)
 		return 1
 	}
 

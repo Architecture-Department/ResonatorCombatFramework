@@ -7,7 +7,7 @@ import architecture.goldenboughs_lib.core.LibConstants.OPTIONAL_RESOURCE_LOCATIO
 import architecture.resonator_combat_framework.core.RcfConstants
 import architecture.resonator_combat_framework.events.registry.AnimationControllerRegistry
 import architecture.resonator_combat_framework.module.player_animation.config.AnimType
-import architecture.resonator_combat_framework.module.player_animation.config.AnimationPlayConfig
+import architecture.resonator_combat_framework.module.player_animation.config.AnimationPlayData
 import architecture.resonator_combat_framework.module.player_animation.mixed.PlayerProxyProvider.Companion.getAnimationTransformer
 import io.netty.buffer.ByteBuf
 import net.minecraft.client.player.AbstractClientPlayer
@@ -57,9 +57,9 @@ data class PlayPlayerPayload(
 
 	override fun type() = TYPE
 
-	private fun buildConfig() = AnimationPlayConfig(
+	private fun buildConfig() = AnimationPlayData(
 		animId = animId,
-		controllerName = controllerName.orElse(AnimationControllerRegistry.DEFAULT)!!,
+		controllerName = controllerName.orElse(AnimationControllerRegistry.MAIN)!!,
 		animType = animType,
 		speedMultiplier = speedMultiplier,
 		startTime = startTime,

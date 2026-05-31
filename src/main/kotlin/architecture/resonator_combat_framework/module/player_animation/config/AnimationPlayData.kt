@@ -1,7 +1,9 @@
 ﻿package architecture.resonator_combat_framework.module.player_animation.config
 
 import architecture.resonator_combat_framework.events.registry.AnimationControllerRegistry
+import architecture.resonator_combat_framework.module.player_animation.mixed.PlayerProxyProvider.Companion.getAnimationTransformer
 import net.minecraft.resources.ResourceLocation
+import net.minecraft.world.entity.player.Player
 
 /**
  * 动画播放配置。
@@ -18,9 +20,9 @@ import net.minecraft.resources.ResourceLocation
  * @param fadeInTicks 淡入时间(tick)，-1 使用默认值
  * @param fadeOutTicks 淡出时间(tick)，-1 使用默认值
  */
-data class AnimationPlayConfig(
+data class AnimationPlayData(
 	val animId: String,
-	val controllerName: ResourceLocation = AnimationControllerRegistry.DEFAULT,
+	val controllerName: ResourceLocation = AnimationControllerRegistry.MAIN,
 	val animType: AnimType = AnimType.DEFAULT,
 	val startTime: Int = 0,
 	val endTime: Int = 0,
@@ -47,10 +49,14 @@ data class AnimationPlayConfig(
 	fun resolveFadeInTicks(defaultTicks: Int): Int =
 		if (fadeInTicks >= 0) fadeInTicks else defaultTicks
 
+	fun Player.playAnimation() {
+		getAnimationTransformer().trigger(this@AnimationPlayData)
+	}
+
 	companion object {
 		/** 快速构造：仅动画名称 */
 		@JvmStatic
-		fun of(animId: String) = AnimationPlayConfig(animId = animId)
+		fun of(animId: String) = AnimationPlayData(animId = animId)
 
 		/** 建造者入口 */
 		@JvmStatic
@@ -58,7 +64,7 @@ data class AnimationPlayConfig(
 	}
 
 	class Builder(private val animId: String) {
-		private var controllerName: ResourceLocation = AnimationControllerRegistry.DEFAULT
+		private var controllerName: ResourceLocation = AnimationControllerRegistry.MAIN
 		private var animType: AnimType = AnimType.DEFAULT
 		private var startTime: Int = 0
 		private var endTime: Int = 0
@@ -83,7 +89,7 @@ data class AnimationPlayConfig(
 		fun fadeIn(ticks: Int) = apply { fadeInTicks = ticks }
 		fun fadeOut(ticks: Int) = apply { fadeOutTicks = ticks }
 
-		fun build() = AnimationPlayConfig(
+		fun build() = AnimationPlayData(
 			animId = animId,
 			controllerName = controllerName,
 			animType = animType,

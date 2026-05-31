@@ -23,7 +23,7 @@ abstract class BaseAnimationController @JvmOverloads constructor(
 	protected var transitionSource: ProxyModel? = null
 
 	/** 当前完整播放配置 */
-	protected var currentConfig: AnimationPlayConfig = AnimationPlayConfig.of("")
+	protected var currentConfig: AnimationPlayData = AnimationPlayData.of("")
 
 	/** trigger 时临时覆盖，设完后立即清空 */
 	internal var resolvedBoneConfig: ProxyBoneConfigData? = null
@@ -92,7 +92,7 @@ abstract class BaseAnimationController @JvmOverloads constructor(
 
 	// ═══════════════════ 触发 ═══════════════════
 
-	override fun trigger(config: AnimationPlayConfig) {
+	override fun trigger(config: AnimationPlayData) {
 		speedMultiplier = config.resolveSpeedMultiplier()
 		if (!loadAnimation(config.animId)) return
 		val finalConfig = resolvedBoneConfig ?: config.boneConfig ?: configLoader.getConfig(config.animId)
@@ -117,34 +117,7 @@ abstract class BaseAnimationController @JvmOverloads constructor(
 		rebuildBackend()
 	}
 
-	override fun trigger(animId: String, transitionTicks: Int) {
-		trigger(AnimationPlayConfig(animId = animId, fadeInTicks = transitionTicks, speedMultiplier = speedMultiplier))
-	}
-
-	override fun trigger(animId: String, transitionTicks: Int, spd: Float) {
-		trigger(AnimationPlayConfig(animId = animId, fadeInTicks = transitionTicks, speedMultiplier = spd))
-	}
-
-	override fun triggerForDuration(
-		animId: String,
-		transitionTicks: Int,
-		durationTicks: Int,
-		originalAnimLengthSec: Float
-	) {
-		trigger(
-			AnimationPlayConfig(
-				animId = animId,
-				fadeInTicks = transitionTicks,
-				durationTicks = durationTicks,
-				originalAnimLengthSec = originalAnimLengthSec,
-				speedMultiplier = speedMultiplier
-			)
-		)
-	}
-
 	// ═══════════════════ 停止 ═══════════════════
-
-	override fun stop() = stop(-1)
 
 	override fun stop(fadeOutTicks: Int) {
 		if (state == State.IDLE || state == State.FADING_OUT) return
@@ -154,8 +127,6 @@ abstract class BaseAnimationController @JvmOverloads constructor(
 		else currentConfig.resolveFadeOutTicks(activeBoneConfig.transitionTicks)
 		if (currentTransitionTicks <= 0) forceClear()
 	}
-
-	override fun stopImmediate() = forceClear()
 
 	// ═══════════════════ 暂停 / 恢复 ═══════════════════
 
@@ -175,13 +146,9 @@ abstract class BaseAnimationController @JvmOverloads constructor(
 		state = if (isInFadeIn()) State.TRANSITIONING else State.PLAYING
 	}
 
-	override fun stopAnimation(animId: String) {
-		if (currentAnimId == animId) forceClear()
-	}
-
-	override fun restartAnimation(animId: String) {
-		restartInternal(animId, configLoader.getConfig(animId))
-	}
+//	override fun stop() {
+//		forceClear()
+//	}
 
 	// ═══════════════════ 每帧 ═══════════════════
 
@@ -311,7 +278,7 @@ abstract class BaseAnimationController @JvmOverloads constructor(
 	}
 
 	/** 重置动画时间并从开头重新播放 */
-	protected abstract fun resetAnimAndRestart(config: AnimationPlayConfig)
+	protected abstract fun resetAnimAndRestart(config: AnimationPlayData)
 
 	// ═══════════════════ 内部 ═══════════════════
 
@@ -350,7 +317,7 @@ abstract class BaseAnimationController @JvmOverloads constructor(
 		blendFactor = 0f; blendTarget = 0f
 		proxyModel.bones.clear()
 		transitionSource = null
-		currentConfig = AnimationPlayConfig.of("")
+		currentConfig = AnimationPlayData.of("")
 		currentAnimId = null; affectedBones = emptySet()
 		currentTransitionTicks = ProxyBoneConfigData.DEFAULT_TRANSITION_TICKS
 		speedMultiplier = 1f
@@ -361,7 +328,3 @@ abstract class BaseAnimationController @JvmOverloads constructor(
 	/** 当前是否处于淡入阶段（blendTarget > 0 且 blendFactor 未达目标） */
 	private fun isInFadeIn(): Boolean = blendTarget > 0f && blendFactor < 1f
 }
-
-
-
-

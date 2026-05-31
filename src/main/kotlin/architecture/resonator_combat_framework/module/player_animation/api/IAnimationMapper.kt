@@ -1,9 +1,14 @@
-﻿// 动画映射器接口。定义实体模型动画映射的生命周期，将玩家模型的特定部分映射到动画骨骼
+// 动画映射器接口。定义实体模型动画映射的生命周期，将玩家模型的特定部分映射到动画骨骼
 package architecture.resonator_combat_framework.module.player_animation.api
 
 import architecture.goldenboughs_lib.api.AllOpe
-import architecture.resonator_combat_framework.module.player_animation.config.AnimationPlayConfig
+import architecture.resonator_combat_framework.events.registry.AnimationControllerRegistry
+import architecture.resonator_combat_framework.module.player_animation.config.AnimationPlayData
+import architecture.resonator_combat_framework.module.player_animation.config.ProxyBoneConfigData
+import architecture.resonator_combat_framework.module.player_animation.controller.BaseAnimationController
+import architecture.resonator_combat_framework.module.player_animation.controller.ControllerManager
 import architecture.resonator_combat_framework.module.player_animation.controller.IAnimationController
+import architecture.resonator_combat_framework.module.player_animation.registry.ProxyBoneConfigRegistry
 import net.minecraft.resources.ResourceLocation
 
 /**
@@ -14,106 +19,138 @@ import net.minecraft.resources.ResourceLocation
  */
 @AllOpe
 interface IAnimationMapper {
+	// ==================== 核心属性 ====================
+	val isClient: Boolean
 
-	// ═══════════════════ 触发 ═══════════════════
+	val configLoader: ProxyBoneConfigRegistry
+		get() = ProxyBoneConfigRegistry.getInstance(isClient)
 
-	/** 使用完整配置触发动画（包含控制器路由、淡入淡出等） */
-	fun trigger(config: AnimationPlayConfig)
+	val controllerManager: ControllerManager
 
-	/** 触发动画，使用默认配置 */
-	fun trigger(animId: String) = trigger(AnimationPlayConfig.of(animId))
+	/** 主控制器 */
+	val mainController: IAnimationController
+		get() = controllerManager.get(AnimationControllerRegistry.MAIN)
+			?: controllerManager.getDefault()
+			?: error("Default controller not initialized")
+
+	// ==================== 动画触发方法 ====================
+	/**
+	 * 完整参数模式：控制器 + 动画 + 速度 + 淡入 + 淡出。
+	 * 速度在前（Float），淡入/淡出在后（Int），与 transitionTicks 模式通过类型区分。
+	 */
+	fun trigger(
+		controllerName: ResourceLocation = AnimationControllerRegistry.MAIN,
+		animId: String,
+		speedMultiplier: Float = 1f,
+		fadeInTicks: Int = -1,
+		fadeOutTicks: Int = -1
+	) = trigger(
+		AnimationPlayData(
+			animId = animId,
+			controllerName = controllerName,
+			fadeInTicks = fadeInTicks,
+			fadeOutTicks = fadeOutTicks,
+			speedMultiplier = speedMultiplier
+		)
+	)
 
 	/**
-	 * 在指定控制器上触发动画。
-	 * @param controllerName 目标控制器名称
-	 * @param animId 动画 ID
+	 * 简化过渡模式：控制器 + 动画 + 过渡时间 + 速度。
+	 * transitionTicks（Int）在速度（Float）前，与 fadeIn/fadeOut 模式通过类型区分。
 	 */
-	fun trigger(controllerName: ResourceLocation, animId: String) =
-		trigger(AnimationPlayConfig(animId = animId, controllerName = controllerName))
+	fun trigger(
+		controllerName: ResourceLocation = AnimationControllerRegistry.MAIN,
+		animId: String,
+		transitionTicks: Int = -1,
+		speedMultiplier: Float = 1f
+	) = trigger(
+		AnimationPlayData(
+			animId = animId,
+			controllerName = controllerName,
+			fadeInTicks = transitionTicks,
+			fadeOutTicks = transitionTicks,
+			speedMultiplier = speedMultiplier
+		)
+	)
 
-	// ═══════════════════ 停止 ═══════════════════
+	/** 核心触发动画方法 */
+	fun trigger(playData: AnimationPlayData) {
+		val controller = controllerManager.get(playData.controllerName) ?: mainController
+		val loaded = configLoader.getConfig(playData.animId)
+		val used = playData.boneConfig ?: loaded
+		val bac = controller as BaseAnimationController
+		bac.resolvedBoneConfig = used
+		bac.boneConfigs = used
+		controller.trigger(playData)
+	}
 
-	/** 停止指定控制器的动画（使用配置中的淡出时间） */
-	fun stop(controllerName: ResourceLocation)
+	// ==================== 动画停止方法 ====================
+	fun stop(controllerName: ResourceLocation = AnimationControllerRegistry.MAIN, fadeOutTicks: Int = -1) {
+		(controllerManager.get(controllerName) ?: mainController).stop(fadeOutTicks)
+	}
 
-	/** 立即停止指定控制器的动画，无过渡 */
-	fun stopImmediate(controllerName: ResourceLocation)
+	fun stopAll(fadeOutTicks: Int = -1) = controllerManager.getAll().forEach { it.stop(fadeOutTicks) }
 
-	/** 停止所有控制器的动画 */
-	fun stopAll() = controllers().forEach { it.stop() }
+	fun stopAnimation(animId: String, controllerName: ResourceLocation = AnimationControllerRegistry.MAIN) {
+		(controllerManager.get(controllerName) ?: mainController).stop()
+	}
 
-	/** 停止所有控制器的动画，指定淡出时间 */
-	fun stopAll(fadeOutTicks: Int) = controllers().forEach { it.stop(fadeOutTicks) }
-
-	/** 立即停止所有控制器的动画，无过渡 */
-	fun stopAllImmediate() = controllers().forEach { it.stopImmediate() }
-
-	// ═══════════════════ 暂停 / 恢复 ═══════════════════
-
-	/** 暂停指定控制器的动画 */
-	fun pause(controllerName: ResourceLocation)
-
-	/** 恢复指定控制器的动画 */
-	fun resume(controllerName: ResourceLocation)
-
+	// ==================== 动画暂停/恢复方法 ====================
 	/** 暂停所有控制器的动画 */
 	fun pauseAll() = controllers().forEach { it.pause() }
 
 	/** 恢复所有控制器的动画 */
 	fun resumeAll() = controllers().forEach { it.resume() }
 
-	// ═══════════════════ 动画管理 ═══════════════════
+	fun pause(controllerName: ResourceLocation = AnimationControllerRegistry.MAIN) {
+		(controllerManager.get(controllerName) ?: mainController).pause()
+	}
 
-	/** 在所有控制器中查找并停止指定动画 ID */
-	fun stopAnimation(animId: String)
+	fun resume(controllerName: ResourceLocation = AnimationControllerRegistry.MAIN) {
+		(controllerManager.get(controllerName) ?: mainController).resume()
+	}
 
-	/** 在指定控制器中停止指定动画 ID */
-	fun stopAnimation(controllerName: ResourceLocation, animId: String)
+	// ==================== 状态查询方法 ====================
+	fun isActive(): Boolean = controllerManager.isAnyActive()
+	fun isControllerActive(): Boolean = mainController.isActive()
+	fun isControllerActive(controllerName: ResourceLocation = AnimationControllerRegistry.MAIN): Boolean =
+		(controllerManager.get(controllerName) ?: mainController).isActive()
 
-	// ═══════════════════ 状态查询 ═══════════════════
+	// ==================== 控制器获取方法 ====================
+	fun getController(): IAnimationController = mainController
+	fun getController(controllerName: ResourceLocation = AnimationControllerRegistry.MAIN): IAnimationController =
+		controllerManager.get(controllerName) ?: mainController
 
-	/** 任意控制器是否有动画运行 */
-	fun isActive(): Boolean
+	fun hasController(): Boolean = controllerManager.getDefault() != null
+	fun controllers() = controllerManager.getAll()
+	fun hasController(controllerName: ResourceLocation = AnimationControllerRegistry.MAIN): Boolean =
+		controllerManager.has(controllerName)
 
-	/** 默认控制器是否有动画运行 */
-	fun isControllerActive(): Boolean
+	// ==================== 控制器管理方法 ====================
+	fun addController(name: ResourceLocation, controller: IAnimationController) {
+		if (name == AnimationControllerRegistry.MAIN) return
+		controllerManager.add(name, controller)
+	}
 
-	/** 指定控制器是否有动画运行 */
-	fun isControllerActive(controllerName: ResourceLocation): Boolean
+	fun removeController(name: ResourceLocation) {
+		if (name == AnimationControllerRegistry.MAIN) return
+		controllerManager.remove(name)
+	}
 
-	/** 获取默认控制器 */
-	fun getController(): IAnimationController
+	// ==================== 高级查询方法 ====================
+	fun getActiveControllersSorted(): List<IAnimationController> =
+		controllerManager.getSortedActive()
 
-	/** 获取指定控制器 */
-	fun getController(controllerName: ResourceLocation): IAnimationController
+	fun findBlockingControllers(controller: IAnimationController): List<IAnimationController> =
+		controllerManager.findBlocking(controller)
 
-	/** 是否有默认控制器 */
-	fun hasController(): Boolean
-
-	/** 是否有指定控制器 */
-	fun hasController(controllerName: ResourceLocation): Boolean
-
-	/** 当前活跃的控制器集，按优先级降序排列 */
-	fun getActiveControllersSorted(): List<IAnimationController>
-
-	// ═══════════════════ 控制器管理 ═══════════════════
-
-	/** 获取所有控制器 */
-	fun controllers(): Collection<IAnimationController>
-
-	/** 添加控制器 */
-	fun addController(name: ResourceLocation, controller: IAnimationController)
-
-	/** 移除控制器 */
-	fun removeController(name: ResourceLocation)
-
-	// ═══════════════════ 优先级与骨骼冲突 ═══════════════════
+	fun getRenderableControllers(): List<IAnimationController> =
+		controllerManager.getRenderable()
 
 	/**
 	 * 检查两个控制器是否存在骨骼冲突。
 	 * 当两者都有 affectedBones 且交集非空时返回 true。
 	 */
-	// TODO 确保是否需要
 	fun hasBoneConflict(ctrlA: IAnimationController, ctrlB: IAnimationController): Boolean {
 		val a = ctrlA.affectedBones
 		val b = ctrlB.affectedBones
@@ -121,6 +158,15 @@ interface IAnimationMapper {
 		return a.intersect(b).isNotEmpty()
 	}
 
-	/** 查找所有与指定控制器存在骨骼冲突的控制器 */
-	fun findBlockingControllers(controller: IAnimationController): List<IAnimationController>
+	fun resolveConfig(animId: String): ProxyBoneConfigData = configLoader.getConfig(animId)
+
+	fun tick(gameTime: Float, deltaSec: Float) {
+		for (ctrl in controllerManager.getAll()) ctrl.tick(gameTime, deltaSec)
+	}
+
+	fun collectProxyModels(): List<ProxyModel> =
+		controllerManager.getRenderable().map { (it as BaseAnimationController).proxyModel }
+
+	fun mergedWeight(): Float =
+		controllerManager.getRenderable().firstOrNull()?.effectiveWeight ?: mainController.effectiveWeight
 }

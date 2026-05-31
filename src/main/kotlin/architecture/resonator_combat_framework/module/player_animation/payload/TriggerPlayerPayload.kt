@@ -6,7 +6,7 @@ import architecture.goldenboughs_lib.api.payload.ToServerAndClientPayload
 import architecture.goldenboughs_lib.core.LibConstants.OPTIONAL_RESOURCE_LOCATION_STREAM_CODEC
 import architecture.resonator_combat_framework.core.RcfConstants
 import architecture.resonator_combat_framework.events.registry.AnimationControllerRegistry
-import architecture.resonator_combat_framework.module.player_animation.config.AnimationPlayConfig
+import architecture.resonator_combat_framework.module.player_animation.config.AnimationPlayData
 import architecture.resonator_combat_framework.module.player_animation.mixed.PlayerProxyProvider.Companion.getAnimationTransformer
 import io.netty.buffer.ByteBuf
 import net.minecraft.client.player.AbstractClientPlayer
@@ -43,9 +43,9 @@ data class TriggerPlayerPayload(
 	override fun toClient(context: IPayloadContext, player: AbstractClientPlayer) {
 		val level = context.player().level()
 		val target = (level.getPlayerByUUID(playerUuid) as? AbstractClientPlayer) ?: return
-		val config = AnimationPlayConfig(
+		val config = AnimationPlayData(
 			animId = animId,
-			controllerName = controllerName.orElse(AnimationControllerRegistry.DEFAULT)!!,
+			controllerName = controllerName.orElse(AnimationControllerRegistry.MAIN)!!,
 			speedMultiplier = speedMultiplier,
 			fadeInTicks = fadeInTicks,
 			fadeOutTicks = fadeOutTicks
@@ -54,9 +54,9 @@ data class TriggerPlayerPayload(
 	}
 
 	override fun toServer(context: IPayloadContext, player: ServerPlayer) {
-		val config = AnimationPlayConfig(
+		val config = AnimationPlayData(
 			animId = animId,
-			controllerName = controllerName.orElse(AnimationControllerRegistry.DEFAULT)!!,
+			controllerName = controllerName.orElse(AnimationControllerRegistry.MAIN)!!,
 			speedMultiplier = speedMultiplier,
 			fadeInTicks = fadeInTicks,
 			fadeOutTicks = fadeOutTicks

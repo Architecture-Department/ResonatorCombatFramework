@@ -1,7 +1,7 @@
-﻿package architecture.resonator_combat_framework.module.player_animation.controller
+package architecture.resonator_combat_framework.module.player_animation.controller
 
 import architecture.goldenboughs_lib.api.AllOpe
-import architecture.resonator_combat_framework.module.player_animation.config.AnimationPlayConfig
+import architecture.resonator_combat_framework.module.player_animation.config.AnimationPlayData
 
 /**
  * 动画控制器接口。
@@ -26,7 +26,6 @@ interface IAnimationController {
 	var speedMultiplier: Float
 
 	/** 是否覆盖低优先级控制器的骨骼 */
-	// TODO 完成作用
 	val isOverriding: Boolean
 
 	/** 当前播放的动画 ID */
@@ -58,44 +57,34 @@ interface IAnimationController {
 	 */
 	fun tick(partialTick: Float, deltaSec: Float)
 
-	// ═══════════════════ 触发 ═══════════════════
-
 	/** 使用完整配置触发动画 */
-	fun trigger(config: AnimationPlayConfig)
+	fun trigger(config: AnimationPlayData)
 
-	/** 触发动画，仅指定过渡 tick 数（沿用当前速度） */
-	fun trigger(animId: String, transitionTicks: Int)
+	fun trigger(
+		animId: String,
+		speedMultiplier: Float = 1f,
+		fadeInTicks: Int = -1,
+		fadeOutTicks: Int = -1
+	) {
+		trigger(
+			AnimationPlayData(
+				animId = animId,
+				speedMultiplier = speedMultiplier,
+				fadeInTicks = fadeInTicks,
+				fadeOutTicks = fadeOutTicks
+			)
+		)
+	}
 
-	/** 触发动画，指定过渡 tick 数和速度 */
-	fun trigger(animId: String, transitionTicks: Int, speedMultiplier: Float)
-
-	/** 触发动画，自动计算速度以在指定 tick 数内播完 */
-	fun triggerForDuration(animId: String, transitionTicks: Int, durationTicks: Int, originalAnimLengthSec: Float)
-
-	// ═══════════════════ 停止 ═══════════════════
-
-	/** 停止动画（使用配置中的淡出时间） */
-	fun stop() = stop(-1)
-
-	/** 停止动画，指定淡出时间（-1 使用配置值） */
-	fun stop(fadeOutTicks: Int)
-
-	/** 立即停止动画，无过渡 */
-	fun stopImmediate()
-
-	// ═══════════════════ 暂停 / 恢复 ═══════════════════
+	/**
+	 * 停止动画。
+	 * @param fadeOutTicks 淡出时间：-1 使用配置值，0 立即停止
+	 */
+	fun stop(fadeOutTicks: Int = -1)
 
 	/** 暂停动画，保持当前骨骼姿态 */
 	fun pause()
 
 	/** 恢复暂停的动画 */
 	fun resume()
-
-	// ═══════════════════ 动画管理 ═══════════════════
-
-	/** 停止指定动画 ID（在播放相同 id 时有效） */
-	fun stopAnimation(animId: String)
-
-	/** 重新启动当前动画 */
-	fun restartAnimation(animId: String)
 }

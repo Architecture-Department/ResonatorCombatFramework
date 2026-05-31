@@ -55,7 +55,7 @@ class ControllerManager {
 	/** 移除控制器并立即停止 */
 	fun remove(name: ResourceLocation) {
 		val ctrl = nameMap.remove(name) ?: return
-		ctrl.stopImmediate()
+		ctrl.stop(0)
 		ordered.remove(ctrl)
 	}
 
@@ -127,4 +127,5 @@ class ControllerManager {
 		return aBones.intersect(bBones).isNotEmpty()
 	}
 }
+
 

@@ -1,7 +1,7 @@
 package architecture.resonator_combat_framework.module.player_animation.helper
 
 import architecture.resonator_combat_framework.events.registry.AnimationControllerRegistry
-import architecture.resonator_combat_framework.module.player_animation.config.AnimationPlayConfig
+import architecture.resonator_combat_framework.module.player_animation.config.AnimationPlayData
 import architecture.resonator_combat_framework.module.player_animation.mixed.PlayerProxyProvider.Companion.getAnimationTransformer
 import architecture.resonator_combat_framework.module.player_animation.payload.PausePlayerPayload
 import architecture.resonator_combat_framework.module.player_animation.payload.PlayPlayerPayload
@@ -15,118 +15,113 @@ import net.neoforged.neoforge.network.PacketDistributor
 
 object PlayerAnimationHelper {
 
-	// ========== 触发 ==========
+	// ========== 触发（三种模式） ==========
 
+	/** 完整数据类模式 */
 	@JvmStatic
-	fun Player.triggerPlayerAnimation(animId: String) =
-		triggerPlayerAnimation(AnimationPlayConfig.of(animId))
-
-	@JvmStatic
-	fun Player.triggerPlayerAnimation(animId: String, speedMultiplier: Float) =
-		triggerPlayerAnimation(
-			AnimationPlayConfig.builder(animId).speed(speedMultiplier).build()
-		)
-
-	@JvmStatic
-	fun Player.triggerPlayerAnimation(animId: String, transitionTicks: Int, speedMultiplier: Float) =
-		triggerPlayerAnimation(
-			AnimationPlayConfig.builder(animId).fadeIn(transitionTicks).speed(speedMultiplier).build()
-		)
-
-	@JvmStatic
-	fun Player.triggerPlayerAnimationForDuration(animId: String, durationTicks: Int, originalAnimLengthSec: Float) =
-		triggerPlayerAnimation(
-			AnimationPlayConfig.builder(animId).duration(durationTicks, originalAnimLengthSec).build()
-		)
-
-	@JvmStatic
-	fun Player.triggerPlayerAnimationImmediate(animId: String) =
-		triggerPlayerAnimation(AnimationPlayConfig.builder(animId).fadeIn(0).build())
-
-	@JvmStatic
-	fun Player.triggerPlayerAnimationImmediate(animId: String, speedMultiplier: Float) =
-		triggerPlayerAnimation(
-			AnimationPlayConfig.builder(animId).speed(speedMultiplier).fadeIn(0).build()
-		)
-
-	@JvmStatic
-	fun Player.triggerPlayerAnimation(config: AnimationPlayConfig) {
-		if (this is AbstractClientPlayer) clientTriggerPlayerAnimation(config)
-		else if (this is ServerPlayer) serverTriggerPlayerAnimation(config)
+	@JvmOverloads
+	fun Player.triggerPlayerAnima(config: AnimationPlayData, isPayload: Boolean = true) {
+		if (this is AbstractClientPlayer) {
+			getAnimationTransformer().trigger(config)
+		} else if (this is ServerPlayer) {
+			getAnimationTransformer().trigger(config)
+			if (isPayload) {
+				PacketDistributor.sendToPlayersTrackingEntityAndSelf(
+					this, PlayPlayerPayload(
+						playerUuid = uuid, controllerName = null,
+						animId = config.animId, animType = config.animType,
+						speedMultiplier = config.resolveSpeedMultiplier(),
+						startTime = config.startTime, endTime = config.endTime,
+						fadeInTicks = config.fadeInTicks, fadeOutTicks = config.fadeOutTicks
+					)
+				)
+			}
+		}
 	}
 
+	/** 完整参数模式：速度 + 淡入 + 淡出 */
 	@JvmStatic
-	fun AbstractClientPlayer.clientTriggerPlayerAnimation(config: AnimationPlayConfig) {
-		getAnimationTransformer().trigger(config)
+	@JvmOverloads
+	fun Player.triggerPlayerAnima(
+		animId: String,
+		speedMultiplier: Float = 1f,
+		fadeInTicks: Int = -1,
+		fadeOutTicks: Int = -1,
+		isPayload: Boolean = true
+	) {
+		triggerPlayerAnima(
+			AnimationPlayData.builder(animId)
+				.speed(speedMultiplier)
+				.fadeIn(fadeInTicks)
+				.fadeOut(fadeOutTicks)
+				.build(), isPayload
+		)
 	}
 
+	/** 过渡时间模式：过渡时间 + 速度 */
 	@JvmStatic
-	fun ServerPlayer.serverTriggerPlayerAnimation(config: AnimationPlayConfig) {
-		getAnimationTransformer().trigger(config)
-		PacketDistributor.sendToPlayersTrackingEntityAndSelf(
-			this, PlayPlayerPayload(
-				playerUuid = uuid, controllerName = null,
-				animId = config.animId, animType = config.animType,
-				speedMultiplier = config.resolveSpeedMultiplier(),
-				startTime = config.startTime, endTime = config.endTime,
-				fadeInTicks = config.fadeInTicks, fadeOutTicks = config.fadeOutTicks
-			)
+	@JvmOverloads
+	fun Player.triggerPlayerAnima(
+		animId: String,
+		transitionTicks: Int,
+		speedMultiplier: Float = 1f,
+		isPayload: Boolean = true
+	) {
+		triggerPlayerAnima(
+			AnimationPlayData.builder(animId)
+				.fadeIn(transitionTicks)
+				.speed(speedMultiplier)
+				.build(), isPayload
 		)
 	}
 
 	// ========== 停止 ==========
 
 	@JvmStatic
-	fun Player.stopPlayerAnimation() {
-		if (this is AbstractClientPlayer) clientStopPlayerAnimation()
-		else if (this is ServerPlayer) serverStopPlayerAnimation()
-	}
-
-	@JvmStatic
-	fun Player.stopPlayerAnimationImmediate() {
-		if (this is AbstractClientPlayer) getAnimationTransformer().stopAllImmediate()
+	@JvmOverloads
+	fun Player.stopAnima(
+		name: ResourceLocation = AnimationControllerRegistry.MAIN,
+		fadeOutTicks: Int = -1,
+		isPayload: Boolean = true
+	) {
+		if (this is AbstractClientPlayer) getAnimationTransformer().stop(name, fadeOutTicks)
 		else if (this is ServerPlayer) {
-			getAnimationTransformer().stopAllImmediate()
-			PacketDistributor.sendToPlayersTrackingEntityAndSelf(
-				this, StopPlayerPayload(uuid, null as ResourceLocation?, 0)
-			)
+			getAnimationTransformer().stop(name, fadeOutTicks)
+			if (isPayload) {
+				PacketDistributor.sendToPlayersTrackingEntityAndSelf(
+					this, StopPlayerPayload(uuid, null as ResourceLocation?, fadeOutTicks)
+				)
+			}
 		}
-	}
-
-	@JvmStatic
-	fun AbstractClientPlayer.clientStopPlayerAnimation() {
-		getAnimationTransformer().stopAll()
-	}
-
-	@JvmStatic
-	fun ServerPlayer.serverStopPlayerAnimation() {
-		getAnimationTransformer().stopAll()
-		PacketDistributor.sendToPlayersTrackingEntityAndSelf(
-			this, StopPlayerPayload(uuid, null as ResourceLocation?)
-		)
 	}
 
 	// ========== 暂停 / 恢复 ==========
 
 	@JvmStatic
-	fun Player.pausePlayerAnimation() {
-		if (this is AbstractClientPlayer) getAnimationTransformer().pause(AnimationControllerRegistry.DEFAULT)
+	@JvmOverloads
+	fun Player.pauseAnima(name: ResourceLocation = AnimationControllerRegistry.MAIN, isPayload: Boolean = true) {
+		if (this is AbstractClientPlayer) getAnimationTransformer().pause(name)
 		else if (this is ServerPlayer) {
-			getAnimationTransformer().pause(AnimationControllerRegistry.DEFAULT)
-			PacketDistributor.sendToPlayersTrackingEntityAndSelf(
-				this, PausePlayerPayload(uuid, null as ResourceLocation?)
-			)
+			getAnimationTransformer().pause(name)
+			if (isPayload) {
+				PacketDistributor.sendToPlayersTrackingEntityAndSelf(
+					this, PausePlayerPayload(uuid, null as ResourceLocation?)
+				)
+			}
 		}
 	}
 
 	@JvmStatic
-	fun Player.resumePlayerAnimation() {
-		if (this is AbstractClientPlayer) getAnimationTransformer().resume(AnimationControllerRegistry.DEFAULT)
+	@JvmOverloads
+	fun Player.resumeAnima(name: ResourceLocation = AnimationControllerRegistry.MAIN, isPayload: Boolean = true) {
+		if (this is AbstractClientPlayer) getAnimationTransformer().resume(name)
 		else if (this is ServerPlayer) {
-			getAnimationTransformer().resume(AnimationControllerRegistry.DEFAULT)
-			PacketDistributor.sendToPlayersTrackingEntityAndSelf(
-				this, ResumePlayerPayload(uuid, null as ResourceLocation?)
-			)
+			getAnimationTransformer().resume(name)
+			if (isPayload) {
+				PacketDistributor.sendToPlayersTrackingEntityAndSelf(
+					this, ResumePlayerPayload(uuid, null as ResourceLocation?)
+				)
+			}
 		}
 	}
 }

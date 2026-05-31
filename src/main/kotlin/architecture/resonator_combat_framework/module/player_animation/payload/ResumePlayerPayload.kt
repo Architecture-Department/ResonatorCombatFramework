@@ -30,7 +30,7 @@ data class ResumePlayerPayload(
 
 	override fun type() = TYPE
 
-	private val ctrlName: ResourceLocation get() = controllerName.orElse(AnimationControllerRegistry.DEFAULT)!!
+	private val ctrlName: ResourceLocation get() = controllerName.orElse(AnimationControllerRegistry.MAIN)!!
 
 	override fun toClient(context: IPayloadContext, player: AbstractClientPlayer) {
 		val target = context.player().level().getPlayerByUUID(playerUuid) as? AbstractClientPlayer ?: return
