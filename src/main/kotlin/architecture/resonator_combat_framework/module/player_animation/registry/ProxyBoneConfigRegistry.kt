@@ -11,10 +11,6 @@ import net.minecraft.server.packs.resources.ResourceManager
 import net.minecraft.server.packs.resources.SimplePreparableReloadListener
 import net.minecraft.util.profiling.ProfilerFiller
 
-/**
- * 骨骼配置注册器（无 eyelib 依赖）。
- * 从 `assets/<namespace>/rcf/animdatas/` 目录加载 JSON 配置文件。
- */
 class ProxyBoneConfigRegistry : SimplePreparableReloadListener<Map<String, ProxyBoneConfigData>>() {
 
 	companion object {
@@ -74,7 +70,7 @@ class ProxyBoneConfigRegistry : SimplePreparableReloadListener<Map<String, Proxy
 			}
 			list
 		} else emptyList()
-		return ProxyBoneConfigData(bones, timeline, transitionTicks)
+		return ProxyBoneConfigData.create(bones, timeline, transitionTicks)
 	}
 
 	private fun parseBonesSection(section: JsonElement?): Map<String, ProxyBoneFlags> {

@@ -1,4 +1,4 @@
-﻿// 骨骼变换工具类
+// 骨骼变换工具类
 package architecture.resonator_combat_framework.module.player_animation.util
 
 import architecture.resonator_combat_framework.module.player_animation.api.ProxyBone
@@ -185,3 +185,4 @@ object BoneTransformUtil {
 		val scale: Vector3f
 	)
 }
+

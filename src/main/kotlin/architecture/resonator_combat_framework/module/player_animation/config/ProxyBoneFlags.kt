@@ -6,7 +6,6 @@ import architecture.goldenboughs_lib.api.AllOpe
  * 骨骼标志配置 — 内部用 Map<String, Boolean> 存储，第三方可通过自定义 key 扩展。
  *
  * 内置 key（用 . 分层）：
- * ```
  * lock           — 锁定整个骨骼
  * blend          — 是否参与 crossfade
  * transition     — 是否参与淡入淡出
@@ -22,48 +21,28 @@ import architecture.goldenboughs_lib.api.AllOpe
  * scale.y        — 缩放 Y 轴启用
  * scale.z        — 缩放 Z 轴启用
  * scale.lock     — 锁定缩放
- * ```
- *
- * JSON 示例：
- * ```
- * {
- *   "head": {
- *     "lock": false,
- *     "blend": true,
- *     "transition": true,
- *     "pos":  { "x": true,  "y": true,  "z": true,  "lock": false },
- *     "rot":  { "x": true,  "y": true,  "z": true,  "lock": false },
- *     "scale":{ "lock": false }
- *   }
- * }
- * ```
  */
 @AllOpe
 data class ProxyBoneFlags(
 	val flags: Map<String, Boolean> = emptyMap()
 ) {
-	companion object {
-		@JvmField
-		val DEFAULT = ProxyBoneFlags()
-	}
-
 	/** 第三方可直接读取 flags 中的 key */
 	operator fun get(key: String): Boolean? = flags[key]
 }
 
 // ═══════════════ Lock 控制（nullable receiver，null 时默认 true） ═══════════════
 
-fun ProxyBoneFlags?.lockVanilla(): Boolean = this?.flags?.get("lock") != false
-fun ProxyBoneFlags?.lockPos(): Boolean = lockVanilla() || this?.flags?.get("pos.lock") != false
-fun ProxyBoneFlags?.lockRotation(): Boolean = lockVanilla() || this?.flags?.get("rot.lock") != false
-fun ProxyBoneFlags?.lockScale(): Boolean = lockVanilla() || this?.flags?.get("scale.lock") != false
+fun ProxyBoneFlags?.lockVanilla(): Boolean = this?.flags?.get("lock") ?: true
+fun ProxyBoneFlags?.lockPos(): Boolean = lockVanilla() || (this?.flags?.get("pos.lock") ?: true)
+fun ProxyBoneFlags?.lockRotation(): Boolean = lockVanilla() || (this?.flags?.get("rot.lock") ?: true)
+fun ProxyBoneFlags?.lockScale(): Boolean = lockVanilla() || (this?.flags?.get("scale.lock") ?: true)
 fun ProxyBoneFlags?.hasAnyLockState(): Boolean = lockPos() || lockRotation() || lockScale()
 
 // ═══════════════ 过渡控制（nullable receiver，null 时默认 true） ═══════════════
 
-fun ProxyBoneFlags?.shouldBlend(): Boolean = this?.flags?.get("blend") != false
-fun ProxyBoneFlags?.shouldTransition(): Boolean = this?.flags?.get("transition") != false
+fun ProxyBoneFlags?.shouldBlend(): Boolean = this?.flags?.get("blend") ?: true
+fun ProxyBoneFlags?.shouldTransition(): Boolean = this?.flags?.get("transition") ?: true
 
 // ═══════════════ 轴启用控制（nullable receiver，null 时默认 true） ═══════════════
 
-fun ProxyBoneFlags?.isEnabled(axis: String): Boolean = this?.flags?.get(axis) != false
+fun ProxyBoneFlags?.isEnabled(axis: String): Boolean = this?.flags?.get(axis) ?: true

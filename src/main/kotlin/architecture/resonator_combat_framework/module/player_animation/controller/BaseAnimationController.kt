@@ -55,7 +55,7 @@ abstract class BaseAnimationController @JvmOverloads constructor(
 		val flags = activeBoneConfig.resolveBoneFlags(animTime).toMutableMap()
 		val overrideFlags = boneConfigs?.resolveBoneFlags(animTime) ?: return flags
 		for ((boneName, boneFlag) in overrideFlags) {
-			if (boneName in flags) flags[boneName] = boneFlag
+			flags[boneName] = boneFlag
 		}
 		return flags
 	}

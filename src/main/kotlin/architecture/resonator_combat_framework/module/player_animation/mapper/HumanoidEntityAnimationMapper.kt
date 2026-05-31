@@ -1,4 +1,4 @@
-﻿package architecture.resonator_combat_framework.module.player_animation.mapper
+package architecture.resonator_combat_framework.module.player_animation.mapper
 
 // 人形实体动画映射器
 
@@ -62,3 +62,4 @@ abstract class HumanoidEntityAnimationMapper<T : LivingEntity, M : HumanoidModel
 		}
 	}
 }
+

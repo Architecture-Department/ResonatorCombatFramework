@@ -1,5 +1,4 @@
-﻿package architecture.resonator_combat_framework.module.player_animation.config
-
+package architecture.resonator_combat_framework.module.player_animation.config
 
 import architecture.goldenboughs_lib.api.AllOpe
 
@@ -17,23 +16,23 @@ private constructor(
 		val DEFAULT_FLAGS = mapOf("head" to ProxyBoneFlags(mapOf("lock" to false)))
 
 		@JvmField
-		val EMPTY = ProxyBoneConfigData(v = null)
+		val EMPTY = create(emptyMap(), emptyList(), DEFAULT_TRANSITION_TICKS)
 
 		const val DEFAULT_TRANSITION_TICKS: Int = 3
+
+		fun create(
+			bones: Map<String, ProxyBoneFlags>,
+			timeline: List<ProxyTimelineEntry>,
+			transitionTicks: Int
+		): ProxyBoneConfigData {
+			val merged = mutableMapOf<String, ProxyBoneFlags>().apply {
+				putAll(DEFAULT_FLAGS)
+				putAll(bones)
+			}
+			return ProxyBoneConfigData(merged, timeline, transitionTicks)
+		}
 	}
 
-	constructor(
-		bones: Map<String, ProxyBoneFlags> = emptyMap(),
-		timeline: List<ProxyTimelineEntry> = emptyList(),
-		transitionTicks: Int = DEFAULT_TRANSITION_TICKS,
-		v: Any? = null
-	) : this(run {
-		val merged = mutableMapOf<String, ProxyBoneFlags>().apply {
-			putAll(DEFAULT_FLAGS)
-			putAll(bones)
-		}
-		merged
-	}, timeline, transitionTicks)
 
 	/** 根据当前动画时间合并基础配置和时间线配置 */
 	fun resolveBoneFlags(animTime: Float): Map<String, ProxyBoneFlags> {
@@ -55,3 +54,4 @@ private constructor(
 		return names
 	}
 }
+
