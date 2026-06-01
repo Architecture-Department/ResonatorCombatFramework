@@ -19,7 +19,7 @@ class PlayerAnimationMapper(
 	init {
 		NeoForge.EVENT_BUS.post(AnimationControllerRegisterEvent()).getSortedEntries()
 			.forEach { (controllerName, controllerFactory, priority) ->
-				controllerManager.add(controllerName, controllerFactory(isClient))
+				animationControllerManager.add(controllerName, controllerFactory(controllerName, isClient))
 			}
 	}
 
@@ -52,7 +52,7 @@ class PlayerAnimationMapper(
 		lastRenderTick = tickSec
 
 		tick(tickSec, deltaSec)
-		val renderable = controllerManager.getRenderable()
+		val renderable = animationControllerManager.getRenderable()
 		if (renderable.isEmpty()) return
 		for (ctrl in renderable) {
 			val bac = ctrl as BaseAnimationController

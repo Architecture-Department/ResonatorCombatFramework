@@ -1,12 +1,15 @@
 // 动画控制器基类。包含状态机(IDLE/TRANSITIONING/PLAYING/PAUSED/FADING_OUT)、crossfade 过渡系统、blend 混合、播放边界检查。子类实现具体后端
 package architecture.resonator_combat_framework.module.player_animation.controller
 
+import architecture.resonator_combat_framework.module.player_animation.api.IAnimationMapper
 import architecture.resonator_combat_framework.module.player_animation.api.ProxyBone
 import architecture.resonator_combat_framework.module.player_animation.api.ProxyModel
 import architecture.resonator_combat_framework.module.player_animation.flags.*
 import architecture.resonator_combat_framework.module.player_animation.registry.ProxyBoneConfigRegistry
+import net.minecraft.resources.ResourceLocation
 
 abstract class BaseAnimationController @JvmOverloads constructor(
+	override val id: ResourceLocation,
 	protected val isClient: Boolean,
 	override val isOverriding: Boolean = true
 ) : IAnimationController {
@@ -151,6 +154,9 @@ abstract class BaseAnimationController @JvmOverloads constructor(
 //	}
 
 	// ═══════════════════ 每帧 ═══════════════════
+
+	override fun tick(animationMapper: IAnimationMapper) {
+	}
 
 	override fun tick(partialTick: Float, deltaSec: Float) {
 		if (state == State.IDLE) return

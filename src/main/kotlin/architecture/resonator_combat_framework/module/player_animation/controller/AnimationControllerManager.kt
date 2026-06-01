@@ -1,19 +1,15 @@
 package architecture.resonator_combat_framework.module.player_animation.controller
 
+import architecture.goldenboughs_lib.api.AllOpe
+import architecture.resonator_combat_framework.events.registry.AnimationControllerRegistry
 import net.minecraft.resources.ResourceLocation
 
 /**
- * 控制器管理器。
- *
- * 双集合存储：Map 提供 O(1) 名称查找，List 保持插入顺序。
- * 先放入的视为优先级更高（排在前面）。
- * isOverriding 的处理范围为比这个控制器先放入的（也就是排在它前面的）。
+ * 动画控制器管理器
  */
-class ControllerManager {
-	/** 名称 → 控制器（O(1) 查找） */
+@AllOpe
+class AnimationControllerManager {
 	private val nameMap = mutableMapOf<ResourceLocation, IAnimationController>()
-
-	/** 保持插入顺序的控制器列表 */
 	private val ordered = mutableListOf<IAnimationController>()
 
 	/** 追加控制器到末尾 */
@@ -59,22 +55,23 @@ class ControllerManager {
 		ordered.remove(ctrl)
 	}
 
-	/** 按名称获取控制器（O(1)） */
+	/** 按名称获取控制器 */
 	fun get(name: ResourceLocation): IAnimationController? = nameMap[name]
 
-	/** 获取默认控制器（第一个添加的） */
-	fun getDefault(): IAnimationController? = ordered.firstOrNull()
+	/** 获取主控制器 */
+	fun getMainController(): IAnimationController = nameMap[AnimationControllerRegistry.MAIN]
+		?: error("Main controller not initialized")
 
 	/** 获取所有控制器（按添加顺序） */
 	fun getAll(): List<IAnimationController> = ordered
 
-	/** 是否存在指定控制器（O(1)） */
+	/** 是否存在指定控制器 */
 	fun has(name: ResourceLocation): Boolean = name in nameMap
 
 	/** 任意控制器是否活跃 */
 	fun isAnyActive(): Boolean = ordered.any { it.isActive() }
 
-	/** 指定控制器是否活跃（O(1)） */
+	/** 指定控制器是否活跃 */
 	fun isActive(name: ResourceLocation): Boolean = nameMap[name]?.isActive() == true
 
 	/** 获取所有活跃控制器（按添加顺序） */

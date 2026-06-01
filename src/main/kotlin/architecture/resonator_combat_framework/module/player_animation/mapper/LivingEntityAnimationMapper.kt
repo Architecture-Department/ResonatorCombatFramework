@@ -19,7 +19,7 @@ abstract class LivingEntityAnimationMapper<T : LivingEntity, M : EntityModel<T>>
 	/** 收集所有活跃可渲染控制器的骨骼标志 */
 	fun resolveBoneFlags(animTime: Float): Map<String, ProxyBoneFlags> {
 		val flags = mutableMapOf<String, ProxyBoneFlags>()
-		for (ctrl in controllerManager.getRenderable()) {
+		for (ctrl in animationControllerManager.getRenderable()) {
 			flags.putAll((ctrl as BaseAnimationController).resolveBoneFlags(animTime))
 		}
 		return flags

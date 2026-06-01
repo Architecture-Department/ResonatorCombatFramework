@@ -9,7 +9,7 @@ import net.minecraft.world.entity.player.Player
  * 动画播放配置。
  *
  * @param animId 动画名称
- * @param controllerName 控制器 ID，默认使用默认控制器
+ * @param controllerName 控制器 ID，默认使用主控制器
  * @param animType 动画类型：DEFAULT(按动画本身)、PLAY_ONCE(播放一次)、STOP_AT_LAST(停止于最后一帧)、LOOP(循环)
  * @param startTime 起始时间(tick)，默认 0
  * @param endTime 结束时间(tick)：0=持续到动画长度，负数=动画长度-N

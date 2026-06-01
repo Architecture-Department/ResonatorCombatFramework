@@ -4,11 +4,15 @@ import architecture.resonator_combat_framework.config.RcfConfig
 import architecture.resonator_combat_framework.module.player_animation.api.IAnimationMapper
 import architecture.resonator_combat_framework.module.player_animation.controller.BedrockAnimationController
 import architecture.resonator_combat_framework.module.player_animation.mapper.LivingEntityAnimationMapper
+import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.HumanoidArm
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.item.ItemStack
 
-class ActionAnimationController(isClient: Boolean) : BedrockAnimationController(isClient) {
+class ActionAnimationController(
+	id: ResourceLocation,
+	isClient: Boolean
+) : BedrockAnimationController(id, isClient) {
 	var mainHandItem: ItemStack? = null
 	var offhandItem: ItemStack? = null
 	override fun tick(animationMapper: IAnimationMapper) {

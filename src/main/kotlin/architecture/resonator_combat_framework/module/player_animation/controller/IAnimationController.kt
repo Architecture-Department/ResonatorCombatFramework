@@ -3,6 +3,7 @@ package architecture.resonator_combat_framework.module.player_animation.controll
 import architecture.goldenboughs_lib.api.AllOpe
 import architecture.resonator_combat_framework.module.player_animation.api.IAnimationMapper
 import architecture.resonator_combat_framework.module.player_animation.flags.AnimationPlayData
+import net.minecraft.resources.ResourceLocation
 
 /**
  * 动画控制器接口。
@@ -13,6 +14,7 @@ import architecture.resonator_combat_framework.module.player_animation.flags.Ani
 @AllOpe
 interface IAnimationController {
 	// ═══════════════════ 属性 ═══════════════════
+	val id: ResourceLocation
 
 	/** 当前混合因子 0..1，用于淡入淡出和过渡混合 */
 	var blendFactor: Float
@@ -58,7 +60,7 @@ interface IAnimationController {
 	 */
 	fun tick(partialTick: Float, deltaSec: Float)
 
-	fun tick(animationMapper: IAnimationMapper) {}
+	fun tick(animationMapper: IAnimationMapper)
 
 	/** 使用完整配置触发动画 */
 	fun trigger(config: AnimationPlayData)

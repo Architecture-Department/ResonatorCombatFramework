@@ -15,22 +15,32 @@ class AnimationControllerRegisterEvent : Event() {
 
 	/**
 	 * 注册动画 ID 到控制器的映射。
-	 * @param controllerName 目标控制器名称
+	 * @param id 目标控制器名称
 	 * @param priority 排序值（越大越优先添加，默认 1000）
 	 */
 	@JvmOverloads
 	fun register(
-		controllerName: ResourceLocation,
-		controllerFactory: (isClient: Boolean) -> IAnimationController = { BedrockAnimationController(it) },
+		id: ResourceLocation,
+		controllerFactory: (id: ResourceLocation, isClient: Boolean) -> IAnimationController = { id, isClient ->
+			BedrockAnimationController(id, isClient)
+		},
 		priority: Int
 	) {
-		entries[controllerName] = ControllerEntry(controllerName, controllerFactory, priority)
+		entries[id] = ControllerEntry(id, controllerFactory, priority)
+	}
+
+	fun register(
+		id: ResourceLocation,
+		controllerFactory: (isClient: Boolean) -> IAnimationController,
+		priority: Int
+	) {
+		register(id, { id, isClient -> controllerFactory(isClient) }, priority)
 	}
 
 	@JvmRecord
 	data class ControllerEntry(
 		val controllerName: ResourceLocation,
-		val controllerFactory: (isClient: Boolean) -> IAnimationController,
+		val controllerFactory: (id: ResourceLocation, isClient: Boolean) -> IAnimationController,
 		val priority: Int
 	)
 

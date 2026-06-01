@@ -2,7 +2,7 @@ package architecture.resonator_combat_framework.module.player_animation.mapper
 
 import architecture.resonator_combat_framework.module.player_animation.api.IAnimationMapper
 import architecture.resonator_combat_framework.module.player_animation.api.ProxyModel
-import architecture.resonator_combat_framework.module.player_animation.controller.ControllerManager
+import architecture.resonator_combat_framework.module.player_animation.controller.AnimationControllerManager
 import architecture.resonator_combat_framework.module.player_animation.flags.ProxyBoneFlags
 import architecture.resonator_combat_framework.module.player_animation.util.BoneTransformUtil
 import com.mojang.blaze3d.vertex.PoseStack
@@ -18,9 +18,9 @@ constructor(
 
 	/**
 	 * 控制器管理器。
-	 * 默认控制器由子类在 init 中添加，保证 getDefault() 可用。
+	 * 主控制器由子类在 init 中添加，保证 getDefault() 可用。
 	 */
-	override val controllerManager = ControllerManager()
+	override val animationControllerManager = AnimationControllerManager()
 
 	abstract fun applyProxyToModel(
 		proxyModels: List<ProxyModel>, model: M,

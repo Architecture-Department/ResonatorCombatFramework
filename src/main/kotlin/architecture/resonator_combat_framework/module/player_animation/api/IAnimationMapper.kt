@@ -3,8 +3,8 @@ package architecture.resonator_combat_framework.module.player_animation.api
 
 import architecture.goldenboughs_lib.api.AllOpe
 import architecture.resonator_combat_framework.events.registry.AnimationControllerRegistry
+import architecture.resonator_combat_framework.module.player_animation.controller.AnimationControllerManager
 import architecture.resonator_combat_framework.module.player_animation.controller.BaseAnimationController
-import architecture.resonator_combat_framework.module.player_animation.controller.ControllerManager
 import architecture.resonator_combat_framework.module.player_animation.controller.IAnimationController
 import architecture.resonator_combat_framework.module.player_animation.flags.AnimationPlayData
 import architecture.resonator_combat_framework.module.player_animation.flags.ProxyBoneConfigData
@@ -25,13 +25,11 @@ interface IAnimationMapper {
 	val configLoader: ProxyBoneConfigRegistry
 		get() = ProxyBoneConfigRegistry.getInstance(isClient)
 
-	val controllerManager: ControllerManager
+	val animationControllerManager: AnimationControllerManager
 
 	/** 主控制器 */
 	val mainController: IAnimationController
-		get() = controllerManager.get(AnimationControllerRegistry.MAIN)
-			?: controllerManager.getDefault()
-			?: error("Default controller not initialized")
+		get() = animationControllerManager.getMainController()
 
 	// ==================== 动画触发方法 ====================
 	/**
@@ -75,7 +73,7 @@ interface IAnimationMapper {
 
 	/** 核心触发动画方法 */
 	fun trigger(playData: AnimationPlayData) {
-		val controller = controllerManager.get(playData.controllerName) ?: mainController
+		val controller = animationControllerManager.get(playData.controllerName) ?: mainController
 		val loaded = configLoader.getConfig(playData.animId)
 		val used = playData.boneConfig ?: loaded
 		val bac = controller as BaseAnimationController
@@ -86,13 +84,13 @@ interface IAnimationMapper {
 
 	// ==================== 动画停止方法 ====================
 	fun stop(controllerName: ResourceLocation = AnimationControllerRegistry.MAIN, fadeOutTicks: Int = -1) {
-		(controllerManager.get(controllerName) ?: mainController).stop(fadeOutTicks)
+		(animationControllerManager.get(controllerName) ?: mainController).stop(fadeOutTicks)
 	}
 
-	fun stopAll(fadeOutTicks: Int = -1) = controllerManager.getAll().forEach { it.stop(fadeOutTicks) }
+	fun stopAll(fadeOutTicks: Int = -1) = animationControllerManager.getAll().forEach { it.stop(fadeOutTicks) }
 
 	fun stopAnimation(animId: String, controllerName: ResourceLocation = AnimationControllerRegistry.MAIN) {
-		(controllerManager.get(controllerName) ?: mainController).stop()
+		(animationControllerManager.get(controllerName) ?: mainController).stop()
 	}
 
 	// ==================== 动画暂停/恢复方法 ====================
@@ -103,49 +101,49 @@ interface IAnimationMapper {
 	fun resumeAll() = controllers().forEach { it.resume() }
 
 	fun pause(controllerName: ResourceLocation = AnimationControllerRegistry.MAIN) {
-		(controllerManager.get(controllerName) ?: mainController).pause()
+		(animationControllerManager.get(controllerName) ?: mainController).pause()
 	}
 
 	fun resume(controllerName: ResourceLocation = AnimationControllerRegistry.MAIN) {
-		(controllerManager.get(controllerName) ?: mainController).resume()
+		(animationControllerManager.get(controllerName) ?: mainController).resume()
 	}
 
 	// ==================== 状态查询方法 ====================
-	fun isActive(): Boolean = controllerManager.isAnyActive()
+	fun isActive(): Boolean = animationControllerManager.isAnyActive()
 	fun isControllerActive(): Boolean = mainController.isActive()
 	fun isControllerActive(controllerName: ResourceLocation = AnimationControllerRegistry.MAIN): Boolean =
-		(controllerManager.get(controllerName) ?: mainController).isActive()
+		(animationControllerManager.get(controllerName) ?: mainController).isActive()
 
 	// ==================== 控制器获取方法 ====================
 	fun getController(): IAnimationController = mainController
 	fun getController(controllerName: ResourceLocation = AnimationControllerRegistry.MAIN): IAnimationController =
-		controllerManager.get(controllerName) ?: mainController
+		animationControllerManager.get(controllerName) ?: mainController
 
-	fun hasController(): Boolean = controllerManager.getDefault() != null
-	fun controllers() = controllerManager.getAll()
+	fun hasController(): Boolean = animationControllerManager.getMainController() != null
+	fun controllers() = animationControllerManager.getAll()
 	fun hasController(controllerName: ResourceLocation = AnimationControllerRegistry.MAIN): Boolean =
-		controllerManager.has(controllerName)
+		animationControllerManager.has(controllerName)
 
 	// ==================== 控制器管理方法 ====================
 	fun addController(name: ResourceLocation, controller: IAnimationController) {
 		if (name == AnimationControllerRegistry.MAIN) return
-		controllerManager.add(name, controller)
+		animationControllerManager.add(name, controller)
 	}
 
 	fun removeController(name: ResourceLocation) {
 		if (name == AnimationControllerRegistry.MAIN) return
-		controllerManager.remove(name)
+		animationControllerManager.remove(name)
 	}
 
 	// ==================== 高级查询方法 ====================
 	fun getActiveControllersSorted(): List<IAnimationController> =
-		controllerManager.getSortedActive()
+		animationControllerManager.getSortedActive()
 
 	fun findBlockingControllers(controller: IAnimationController): List<IAnimationController> =
-		controllerManager.findBlocking(controller)
+		animationControllerManager.findBlocking(controller)
 
 	fun getRenderableControllers(): List<IAnimationController> =
-		controllerManager.getRenderable()
+		animationControllerManager.getRenderable()
 
 	/**
 	 * 检查两个控制器是否存在骨骼冲突。
@@ -161,18 +159,18 @@ interface IAnimationMapper {
 	fun resolveConfig(animId: String): ProxyBoneConfigData = configLoader.getConfig(animId)
 
 	fun tick() {
-		controllerManager.getAll().forEach {
+		animationControllerManager.getAll().forEach {
 			it.tick(this)
 		}
 	}
 
 	fun tick(gameTime: Float, deltaSec: Float) {
-		for (ctrl in controllerManager.getAll()) ctrl.tick(gameTime, deltaSec)
+		for (ctrl in animationControllerManager.getAll()) ctrl.tick(gameTime, deltaSec)
 	}
 
 	fun collectProxyModels(): List<ProxyModel> =
-		controllerManager.getRenderable().map { (it as BaseAnimationController).proxyModel }
+		animationControllerManager.getRenderable().map { (it as BaseAnimationController).proxyModel }
 
 	fun mergedWeight(): Float =
-		controllerManager.getRenderable().firstOrNull()?.effectiveWeight ?: mainController.effectiveWeight
+		animationControllerManager.getRenderable().firstOrNull()?.effectiveWeight ?: mainController.effectiveWeight
 }

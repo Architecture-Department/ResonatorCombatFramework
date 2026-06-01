@@ -6,10 +6,12 @@ import architecture.resonator_combat_framework.module.player_animation.bedrock.B
 import architecture.resonator_combat_framework.module.player_animation.bedrock.molang.MolangQueries
 import architecture.resonator_combat_framework.module.player_animation.flags.AnimationPlayData
 import architecture.resonator_combat_framework.module.player_animation.registry.BedrockAnimationRegistry
+import net.minecraft.resources.ResourceLocation
 
 class BedrockAnimationController(
+	id: ResourceLocation,
 	isClient: Boolean
-) : BaseAnimationController(isClient) {
+) : BaseAnimationController(id, isClient) {
 
 	/** 当前加载的动画数据 */
 	private var currentAnim: BedrockAnimation? = null
