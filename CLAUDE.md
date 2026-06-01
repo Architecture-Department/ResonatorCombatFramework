@@ -9,136 +9,147 @@ src/main/
 │       ├── mixin/                           — 核心 mixin（EntityMixin, PlayerMixin）
 │       │   └── gecko_lib/                   — GeckoLib 核心 mixin（AnimatableManager 相关）
 │       └── module/player_animation/mixin/   — 玩家动画模块 mixin
-│           ├── geckolib/                    — GeckoLib 渲染 mixin（MixinGeoRenderer, MixinGeoObjectRenderer）
-│           └── gecko_lib/                   — GeckoLib 缓存 mixin（GeckoLibCacheMixin, AnimatableManagerMixin 等）
+│           ├── client/                      — LivingEntityRendererMixin, ItemInHandLayerMixin
+│           └── gecko_lib/                   — GeckoLib 缓存/渲染 mixin
 │
 └── kotlin/ — 所有业务逻辑
     └── architecture/resonator_combat_framework/
         ├── api/           — 公开 API 接口
-        ├── core/          — 核心类（Rcf, RcfClient, 注册表）
-        ├── event/         — 事件类
-        ├── events/        — 事件处理（错误拼写但保持）
+        ├── core/          — 核心类（Rcf, RcfClient, RcfConstants, 注册表）
+        ├── event/         — 自定义事件类（AnimationControllerRegisterEvent 等）
+        ├── events/        — 事件监听器
+        │   └── registry/  — AnimationControllerRegistry 等
         ├── init/          — 初始化/注册类
-        ├── mixed/         — Mixin 接口（I-prefix）
-        ├── module/        — 功能模块
-        │   └── player_animation/  — 玩家动画模块
-        │       ├── api/       — 模块接口
-        │       ├── core/      — 核心代理/动画定义
-        │       ├── event/     — 事件监听
-        │       ├── helper/    — 辅助工具
-        │       ├── init/      — 模块注册
-        │       ├── model/     — 动画模型
-        │       ├── payload/   — 网络包
-        │       └── util/      — 工具类
+        ├── mixed/         — Mixin 接口（IPlayerRcf）
+        ├── module/player_animation/  — 玩家动画模块
+        │   ├── api/       — IAnimationMapper, ProxyBone, ProxyModel
+        │   ├── bedrock/   — BedrockAnimation, BedrockAnimator（插值引擎）
+        │   │   └── molang/— MolangQueries, EasingTypes, MathParser
+        │   ├── command/   — TestAnimCommand
+        │   ├── config/    — AnimationPlayData, ProxyBoneFlags, ProxyBoneConfigData
+        │   ├── controller/— IAnimationController, BaseAnimationController,
+        │   │                BedrockAnimationController, ControllerManager
+        │   ├── helper/    — PlayerAnimationHelper（双端便捷入口）
+        │   ├── mapper/    — EntityAnimationMapper → LivingEntity → HumanoidEntity
+        │   │                → PlayerAnimationMapper
+        │   ├── mixed/     — PlayerProxyProvider（Mixin 接口）
+        │   ├── payload/   — PlayPlayerPayload / StopPlayerPayload / PausePlayerPayload / ResumePlayerPayload
+        │   ├── registry/  — ProxyBoneConfigRegistry, BedrockAnimationRegistry
+        │   └── util/      — BoneTransformUtil
         └── util/          — 通用工具
 ```
 
 ## 事件规则
 
 - **`@EventBusSubscriber`**: 自动选择对应 bus，通常只需定义 `modid` 和 `value`（如 `value = [Dist.CLIENT]`）
-- **事件分类**: 按事件的类分类（不是按作用），放在 `events/` 包下。公共事件放 `events/`，客户端专属放 `events/client/`
-- **工具类模式**: 事件 subscriber 只做转发，业务逻辑放在工具类中（如 `PlayerAnimationSetup.refresh()`）
+- **事件分类**: 按事件的类分类（不是按作用），放在 `events/` 包下
+- **工具类模式**: 事件 subscriber 只做转发，业务逻辑放在工具类中
 
 ## 命名规范
 
-- **接口**: `I` 前缀（如 `IPlayerRcf`, `IHasHoldAnim`, `IAppurtenance`）
-- **工具类/Object**: 名词直接命名（如 `PlayerAnimationHelper`, `AnimationUtils`, `ItemCodecs`）
-- **数据类**: 直接使用 `data class`，不加前缀
-- **Mixin 唯一字段/方法**: 使用 `resonator_combat_framework$` 前缀。**必须保持此前缀不变**，否则混淆后会与其他 mod 冲突
-- **包名**: 全小写 snake_case（`resonator_combat_framework`, `player_animation`）
-- **常量/枚举值**: `UPPER_SNAKE_CASE`, 放在 `companion object` 或 `object` 中
-- **静态方法调用**: 跨类调用必须带类名（`ClassName.method()`），无论 Kotlin 还是 Java
-- **ID/常用值**: 使用静态变量引用（如 `Rcf.ID`），不硬编码字符串
+- **接口**: `I` 前缀（如 `IPlayerRcf`, `IAnimationController`, `IAnimationMapper`）
+- **Mixin 唯一字段/方法**: 使用 `resonator_combat_framework$` 前缀
+- **包名**: 全小写 snake_case
+- **常量/枚举值**: `UPPER_SNAKE_CASE`
+- **ID/常用值**: 使用静态变量引用（如 `RcfConstants.ID`），不硬编码
 
 ## 注册体系
 
-- **`Rcf.kt`**: 主 `@Mod` 入口，在 `init` 块中注册所有 DeferredRegister
+- **`Rcf.kt`**: 主 `@Mod` 入口，`init` 块中注册所有 DeferredRegister
 - **`RcfClient.kt`**: 客户端侧注册
-- **注册表**: 每个域有独立文件（`PayloadRegistry.kt`, `CapabilityRegistry.kt` 等），通过 `Rcf.modRegister()` 创建
-- **网络包**: 实现 `CustomPacketPayload`，在 `PayloadRegistry` 中注册 TYPE + STREAM_CODEC
+- **网络包**: 实现 `CustomPacketPayload`，在 `PayloadRegistry` 中注册
 
-### 玩家动画注册示例（Rcf.kt）:
+## 玩家动画系统
 
-```kotlin
-init {
-  val modBus = MOD_BUS
-  RcfDataComponentTypes.REGISTRY.register(modBus)
-  PlayerAnimationAttachments.ATTACHMENT_TYPES.register(modBus)
-}
+### 引擎
+
+使用自研 `BedrockAnimator` 引擎，支持 Bedrock 1.8.0 格式动画关键帧：
+
+- LINEAR / CATMULLROM / STEP 三种插值模式
+- `pos`、`rotation`、`scale` 独立插值
+- Molang 表达式支持（`query.anim_time`、`query.delta_time`）
+
+### 继承链
+
 ```
+IAnimationMapper
+  ↑
+EntityAnimationMapper<T:Entity, M>      — ControllerManager + tick/trigger/stop + root PoseStack
+  ↑
+LivingEntityAnimationMapper<T, M>       — resolveBoneFlags
+  ↑
+HumanoidEntityAnimationMapper<T, M>     — 6人形骨骼 applyProxyBone + 物品 applyProxyToItem
+  ↑
+PlayerAnimationMapper                   — init注册控制器 + tickAndRender 入口
 
-## 玩家动画系统架构
-
-### 动画引擎
-
-使用 **eyelib 21.1.14** (TT432/eyelib) 作为动画计算引擎，不替换原版渲染。
-`AnimationComponent.setup()` 直接注册 `BrAnimationEntry` / `BrAnimationController`，原生支持多动画并发和状态机。
+IAnimationController
+  ↑
+BaseAnimationController                 — 状态机(IDLE/TRANSITIONING/PLAYING/PAUSED/FADING_OUT) + crossfade
+  ↑
+BedrockAnimationController              — BedrockAnimator 后端适配
+```
 
 ### 数据流
 
 ```
-物品/命令触发
-  → PlayerAnimationHelper.trigger/stop (通过 IPlayerAnimator)
-  → AnimatePlayerPayload 双端网络包
-  → PlayerAnimationTransformer.trigger(animId)
-  → 过渡: blendFactor lerp (由 currentTransitionTicks 控制速度)
-  → LivingEntityRendererMixin.applyTransform()
-  → BrAnimator.tickAnimation() → BoneRenderInfos
-  → applyBone() → 叠加到 ModelPart
+触发:
+PlayerAnimationHelper.triggerPlayerAnimation(config)
+  → 客户端: clientTrigger → IAnimationMapper.trigger(playData)
+  → 服务端: serverTrigger + PlayPlayerPayload 广播
+    → EntityAnimationMapper.trigger(playData)
+      → controllerManager.get(controllerName) → controller
+      → controller.boneConfigs = used
+      → controller.trigger(playData)
+        → loadAnimation → snapshotTransitionSource → 清空 proxyModel
+        → state = TRANSITIONING → blendFactor 0→1
+        → freezeAllAtFrameZero + rebuildBackend
+
+每帧渲染:
+PlayerAnimationMapper.tickAndRender(model, partialTick, poseStack)
+  → tick() → 每个控制器.tick(deltaSec)
+    → tickBlend → 过渡渐变
+    → 清除不属于 affectedBones 的旧骨骼
+    → checkPlaybackBounds → 动画结束处理
+    → tickBackend → BedrockAnimator.computeAndWrite → proxyModel
+    → crossfadeStep → 逐骨骼lerp(transitionSource, proxyModel, blendFactor)
+  → controllerManager.getRenderable() → 可渲染控制器列表
+  → 逐控制器: resolveBoneFlags + effectiveWeight → applyProxyToModel
 ```
 
-### 核心类
+### 多控制器管理
 
-| 类                                   | 作用                                           |
-|-------------------------------------|----------------------------------------------|
-| `IAnimationMapper` (`api/`)         | 根接口: 生命周期+控制器管理+骨骼冲突                         |
-| `EntityAnimationMapper<T, M>`       | 控制器注册+tick/trigger/stop+root PoseStack       |
-| `HumanoidEntityAnimationMapper`     | 6人形骨骼 applyProxyBone + 物品 applyProxyToItem   |
-| `PlayerAnimationMapper`             | EyeLibAnimationController+渲染入口+jacket/sleeve |
-| `BaseAnimationController`           | 状态机+过渡+crossfade(含shouldBlend检查)             |
-| `EyeLibAnimationController`         | eyelib 后端适配                                  |
-| `AnimationPlayConfig`               | 播放配置: 类型/时间/速率/淡入淡出/骨骼配置(Builder)            |
-| `ProxyBoneFlags`                    | 骨骼标志: Map存储+扩展函数 per-axis lock/enable        |
-| `ProxyBoneConfigData`               | 骨骼配置容器: bones+timeline+transitionTicks       |
-| `PlayerAnimationHelper` (`helper/`) | 双端便捷: trigger/stop/pause/resume              |
-| `AnimatePlayerPayload` (`payload/`) | 双端网络包(PLAY/STOP/PAUSE/RESUME)                |
-| `PlayerProxyProvider` (`mixed/`)    | Mixin 接口，返回 IAnimationMapper                 |
-| `LivingEntityRendererMixin`         | 注入渲染，调用 tickAndRender                        |
-| `ItemInHandLayerMixin`              | 注入物品渲染，调用 applyItemTransform                 |
+`ControllerManager` 双集合存储（Map O(1) + List 顺序），由 `PlayerAnimationMapper.init` 通过
+`AnimationControllerRegisterEvent` 注册。
 
-### 过渡系统
+预置控制器（在 `AnimationControllerRegistry` 中定义）：
 
-- 淡入淡出分离: `AnimationPlayConfig.fadeInTicks` / `fadeOutTicks` 各自独立默认值
-- Crossfade: `BaseAnimationController` 自动快照旧帧 → lerp 到新帧
-- `ProxyBoneFlags.shouldBlend()` 控制每骨骼是否参与 crossfade (默认 true)
-- `ProxyBoneFlags.shouldTransition()` 控制每骨骼是否参与 weight (默认 true)
+| 名称      | Priority | 角色    |
+|---------|----------|-------|
+| ACTION  | 1000     | 动作层   |
+| MAIN    | 0        | 默认控制器 |
+| COMMAND | -1000    | 命令层   |
 
-### 骨骼配置 JSON 格式
+`getRenderable()` 按优先级遍历，`isOverriding` 允许低优先级控制器覆盖高优先级控制器的活跃骨骼。
 
-嵌套 JSON → 加载时打平为 dot-notation key:
-
-```json
-{ "head": { "pos": { "lock": true, "x": false }, "blend": false } }
-  → ProxyBoneFlags({ "pos.lock":true, "pos.x":false, "blend":false })
-```
-
-### 测试命令
+### 状态机
 
 ```
-/test_anim <target> <anim_id>    — 触发动画
-/test_anim_stop <target>         — 停止动画
+IDLE → trigger → TRANSITIONING → blendFactor→1 → PLAYING → checkPlaybackBounds
+                                                                  ↓
+                                                         FADING_OUT → blendFactor→0 → IDLE
+PLAYING/TRANSITIONING → pause → PAUSED → resume → TRANSITIONING/PLAYING
 ```
 
-### 资源位置
-
-eyelib 21.1.14 资源路径以 `eyelib/` 为前缀：
+### 骨骼配置 JSON
 
 ```
-assets/<modid>/eyelib/
-├── animations/player/     — Bedrock 动画关键帧 JSON
-├── animation_controllers/ — 动画控制器 JSON
-├── animdata/player/       — RCF 骨骼状态配置 JSON
-├── bedrock_models/        — 模型几何体 JSON
-└── textures/              — 纹理
+assets/<modid>/rcf/animdatas/<anim_id>.json
+
+{ "bones": { "head": { "lock": false } }, "transition": 3 }
 ```
 
+- `transition`（顶层）: 淡入淡出 tick 数，默认 3
+- `bones`: 骨骼名 → ProxyBoneFlags
+- `timeline`: 时间段覆盖 `"0.0-1.0": { "bones": {...} }`
+
+ProxyBoneFlags key: `lock`, `blend`, `transition`, `pos.x/y/z`, `pos.lock`, `rot.*`, `scale.*`
