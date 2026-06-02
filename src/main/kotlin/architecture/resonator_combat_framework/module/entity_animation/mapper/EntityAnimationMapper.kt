@@ -35,7 +35,6 @@ constructor(
 		val used = playData.boneConfig ?: loaded
 		val bac = controller as BaseAnimationController
 		bac.resolvedBoneConfig = used
-		bac.boneConfigs = used
 		controller.trigger(playData)
 	}
 

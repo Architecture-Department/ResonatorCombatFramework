@@ -177,6 +177,10 @@ class AnimationControllerManager {
 	fun isActive(name: ResourceLocation): Boolean = nameMap[name]?.isActive() == true
 	fun getSortedActive(): List<IAnimationController> = ordered.filter { it.isActive() }
 
+	/**
+	 * 获取可渲染的控制器列表（用于 root 变换）。
+	 * 从高到低遍历，isOverriding=true 的控制器若骨骼全被高优先级渲染过则跳过。
+	 */
 	fun getRenderable(): List<IAnimationController> {
 		val active = getSortedActive()
 		val result = mutableListOf<IAnimationController>()
@@ -191,6 +195,7 @@ class AnimationControllerManager {
 		return result
 	}
 
+	/** 查找排在 controller 之前、isOverriding 且骨骼冲突的更高优先级控制器 */
 	fun findBlocking(controller: IAnimationController): List<IAnimationController> {
 		if (!controller.isActive()) return emptyList()
 		val active = getSortedActive()
@@ -204,6 +209,7 @@ class AnimationControllerManager {
 		return blocking
 	}
 
+	/** 两控制器的 affectedBones 是否有交集 */
 	private fun hasBoneConflict(a: IAnimationController, b: IAnimationController): Boolean {
 		val aBones = a.affectedBones
 		val bBones = b.affectedBones

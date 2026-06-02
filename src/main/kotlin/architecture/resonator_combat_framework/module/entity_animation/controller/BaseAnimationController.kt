@@ -101,7 +101,6 @@ abstract class BaseAnimationController @JvmOverloads constructor(
 	// ---- 触发
 
 	override fun trigger(config: AnimationPlayData) {
-		boneConfigs = null
 		speedMultiplier = config.resolveSpeedMultiplier()
 		if (!loadAnimation(config.animId)) return
 		val finalConfig = resolvedBoneConfig ?: config.boneConfig ?: configLoader.getConfig(config.animId)
@@ -122,7 +121,8 @@ abstract class BaseAnimationController @JvmOverloads constructor(
 
 		currentTransitionTicks = config.resolveFadeInTicks(finalConfig.transitionTicks)
 		state = State.TRANSITIONING
-		blendFactor = 0f; blendTarget = 1f
+		blendFactor = 0f
+		blendTarget = 1f
 		freezeAllAtFrameZero()
 		rebuildBackend()
 	}
@@ -156,9 +156,6 @@ abstract class BaseAnimationController @JvmOverloads constructor(
 		state = if (isInFadeIn()) State.TRANSITIONING else State.PLAYING
 	}
 
-//	override fun stop() {
-//		forceClear()
-//	}
 
 	// ---- 每帧
 
@@ -189,10 +186,11 @@ abstract class BaseAnimationController @JvmOverloads constructor(
 
 		// 旧动画独有骨骼：每帧重置为 identity
 		for ((name, bone) in proxyModel.bones) {
-			if (name !in affectedBones)
+			if (name !in affectedBones) {
 				bone.pos.set(0f)
-			bone.rotation.set(0f)
-			bone.scale.set(1f)
+				bone.rotation.set(0f)
+				bone.scale.set(1f)
+			}
 		}
 		// 新动画骨骼：source 补 identity
 		for ((name, _) in proxyModel.bones) {
@@ -360,15 +358,6 @@ abstract class BaseAnimationController @JvmOverloads constructor(
 
 // ---- 内部
 
-	/** 内部：无过渡地立即重新播放（仅 restartAnimation 使用） */
-	private fun restartInternal(animId: String, config: ProxyBoneConfigData) {
-		currentAnimId = animId
-		activeBoneConfig = config
-		state = State.PLAYING; blendTarget = 1f; blendFactor = 1f
-		transitionSource = null
-		resetAnimAndRestart(currentConfig)
-	}
-
 	/** 将当前动画 ID 和速度同步到后端 */
 	private fun rebuildBackend() {
 		val ids = currentAnimId?.let { listOf(it) } ?: emptyList()
@@ -380,7 +369,8 @@ abstract class BaseAnimationController @JvmOverloads constructor(
 	private fun tickBlend(ds: Float) {
 		if (blendFactor == blendTarget) return
 		if (currentTransitionTicks <= 0) {
-			blendFactor = blendTarget; return
+			blendFactor = blendTarget
+			return
 		}
 		val step = (ds * 20f) / currentTransitionTicks
 		blendFactor = if (blendFactor < blendTarget)
@@ -392,15 +382,16 @@ abstract class BaseAnimationController @JvmOverloads constructor(
 	/** 强制清除所有状态，回到 IDLE */
 	private fun forceClear() {
 		state = State.IDLE
-		blendFactor = 0f; blendTarget = 0f
+		blendFactor = 0f
+		blendTarget = 0f
 		proxyModel.bones.clear()
 		prevProxyModel.bones.clear()
 		transitionSource = null
 		currentConfig = AnimationPlayData.of("")
-		currentAnimId = null; affectedBones = emptySet()
+		currentAnimId = null
+		affectedBones = emptySet()
 		currentTransitionTicks = ProxyBoneConfigData.DEFAULT_TRANSITION_TICKS
 		speedMultiplier = 1f
-		boneConfigs = null
 		activeBoneConfig = ProxyBoneConfigData.EMPTY
 		rebuildBackend()
 	}
