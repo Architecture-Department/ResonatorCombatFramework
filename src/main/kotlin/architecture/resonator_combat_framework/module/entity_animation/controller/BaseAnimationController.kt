@@ -101,6 +101,7 @@ abstract class BaseAnimationController @JvmOverloads constructor(
 	// ---- 触发
 
 	override fun trigger(config: AnimationPlayData) {
+		boneConfigs = null
 		speedMultiplier = config.resolveSpeedMultiplier()
 		if (!loadAnimation(config.animId)) return
 		val finalConfig = resolvedBoneConfig ?: config.boneConfig ?: configLoader.getConfig(config.animId)
@@ -171,7 +172,9 @@ abstract class BaseAnimationController @JvmOverloads constructor(
 		transitionSource = ProxyModel("src")
 		for ((name, bone) in proxyModel.bones) {
 			val copy = ProxyBone(name)
-			copy.pos.set(bone.pos); copy.rotation.set(bone.rotation); copy.scale.set(bone.scale)
+			copy.pos.set(bone.pos)
+			copy.rotation.set(bone.rotation)
+			copy.scale.set(bone.scale)
 			transitionSource!!.addBone(copy)
 		}
 	}
@@ -187,7 +190,9 @@ abstract class BaseAnimationController @JvmOverloads constructor(
 		// 旧动画独有骨骼：每帧重置为 identity
 		for ((name, bone) in proxyModel.bones) {
 			if (name !in affectedBones)
-				bone.pos.set(0f).also { bone.rotation.set(0f); bone.scale.set(1f) }
+				bone.pos.set(0f)
+			bone.rotation.set(0f)
+			bone.scale.set(1f)
 		}
 		// 新动画骨骼：source 补 identity
 		for ((name, _) in proxyModel.bones) {
@@ -377,6 +382,7 @@ abstract class BaseAnimationController @JvmOverloads constructor(
 		currentAnimId = null; affectedBones = emptySet()
 		currentTransitionTicks = ProxyBoneConfigData.DEFAULT_TRANSITION_TICKS
 		speedMultiplier = 1f
+		boneConfigs = null
 		activeBoneConfig = ProxyBoneConfigData.EMPTY
 		rebuildBackend()
 	}
@@ -384,4 +390,3 @@ abstract class BaseAnimationController @JvmOverloads constructor(
 	/** 当前是否处于淡入阶段（blendTarget > 0 且 blendFactor 未达目标） */
 	private fun isInFadeIn(): Boolean = blendTarget > 0f && blendFactor < 1f
 }
-

@@ -1,6 +1,6 @@
 {
 	"required": true,
-	"package": "architecture.resonator_combat_framework.module.player_animation.mixin",
+	"package": "architecture.resonator_combat_framework.module.entity_animation.mixin",
 	"compatibilityLevel": "JAVA_21",
 	"client": [
 		"client.CameraAccessor",

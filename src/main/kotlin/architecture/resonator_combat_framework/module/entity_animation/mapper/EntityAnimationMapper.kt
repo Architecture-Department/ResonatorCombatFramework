@@ -27,7 +27,7 @@ constructor(
 	override val configLoader: ProxyBoneConfigRegistry
 		get() = ProxyBoneConfigRegistry.getInstance(isClient)
 
-	// ==================== 触发 ====================
+	// ---- 触发 ----
 
 	override fun trigger(playData: AnimationPlayData) {
 		val controller = animationControllerManager.get(playData.controllerName) ?: mainController
@@ -39,7 +39,7 @@ constructor(
 		controller.trigger(playData)
 	}
 
-	// ==================== 停止 ====================
+	// ---- 停止 ----
 
 	override fun stop(controllerName: ResourceLocation, fadeOutTicks: Int) {
 		(animationControllerManager.get(controllerName) ?: mainController).stop(fadeOutTicks)
@@ -49,7 +49,7 @@ constructor(
 		animationControllerManager.getAll().forEach { it.stop(fadeOutTicks) }
 	}
 
-	// ==================== 暂停/恢复 ====================
+	// ---- 暂停/恢复 ----
 
 	override fun pause(controllerName: ResourceLocation) {
 		(animationControllerManager.get(controllerName) ?: mainController).pause()
@@ -63,7 +63,7 @@ constructor(
 
 	override fun resumeAll() = animationControllerManager.getAll().forEach { it.resume() }
 
-	// ==================== 状态查询 ====================
+	// ---- 状态查询 ----
 
 	override fun isActive(): Boolean = animationControllerManager.isAnyActive()
 
@@ -75,7 +75,7 @@ constructor(
 	override fun hasController(controllerName: ResourceLocation): Boolean =
 		animationControllerManager.has(controllerName)
 
-	// ==================== 控制器管理 ====================
+	// ---- 控制器管理 ----
 
 	override fun addController(name: ResourceLocation, controller: IAnimationController) {
 		if (name == AnimationControllerRegistry.MAIN) return
@@ -87,7 +87,7 @@ constructor(
 		animationControllerManager.remove(name)
 	}
 
-	// ==================== 高级查询 ====================
+	// ---- 高级查询 ----
 
 	override fun getActiveControllersSorted(): List<IAnimationController> =
 		animationControllerManager.getSortedActive()
@@ -98,36 +98,29 @@ constructor(
 	override fun findBlockingControllers(controller: IAnimationController): List<IAnimationController> =
 		animationControllerManager.findBlocking(controller)
 
-	// ==================== Tick ====================
+	// ---- Tick ----
 
-	override fun tickAnimations() {
-		for (ctrl in animationControllerManager.getAll()) {
-			ctrl.tickAdvance(this)
-		}
-	}
+	override fun tickAnimations() = animationControllerManager.tickAnimations(this)
 
-	// ==================== 配置 ====================
+	// ---- 配置 ----
 
 	override fun resolveConfig(animId: String): ProxyBoneConfigData = configLoader.getConfig(animId)
 
-	// ==================== 骨骼应用 ====================
+	// ---- 骨骼应用 ----
 
 	abstract fun applyProxyToModel(
-		proxyModels: List<ProxyModel>, model: M,
+		proxyModel: ProxyModel, model: M,
 		flags: Map<String, ProxyBoneFlags>, weight: Float
 	)
 
 	fun applyRootTransform(
-		proxyModels: List<ProxyModel>, poseStack: PoseStack,
+		proxyModel: ProxyModel, poseStack: PoseStack,
 		flags: Map<String, ProxyBoneFlags>, weight: Float
 	) {
 		if (!isClient) return
 		if (weight <= 0f) return
-		for (proxy in proxyModels) {
-			val bone = proxy.getBone("root") ?: continue
-			val t = BoneTransformUtil.computeForPoseStack(bone, flags["root"], weight, flipY = true)
-			BoneTransformUtil.applyTo(poseStack, t)
-			return
-		}
+		val bone = proxyModel.getBone("root") ?: return
+		val t = BoneTransformUtil.computeForPoseStack(bone, flags["root"], weight, flipY = true)
+		BoneTransformUtil.applyTo(poseStack, t)
 	}
 }

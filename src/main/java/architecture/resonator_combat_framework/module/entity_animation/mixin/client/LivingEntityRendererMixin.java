@@ -1,6 +1,6 @@
 package architecture.resonator_combat_framework.module.entity_animation.mixin.client;
 
-import architecture.resonator_combat_framework.module.entity_animation.mapper.PlayerAnimationMapper;
+import architecture.resonator_combat_framework.module.entity_animation.api.IAnimationMapper;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.model.PlayerModel;
@@ -35,8 +35,7 @@ public abstract class LivingEntityRendererMixin<T extends LivingEntity> {
 		if (!(entity instanceof Player player) || !(model instanceof PlayerModel<?> playerModel)) {
 			return;
 		}
-		PlayerAnimationMapper transformer = player.resonator_combat_framework$getAnimationTransformer();
+		IAnimationMapper transformer = player.resonator_combat_framework$getAnimationTransformer();
 		transformer.tickAndRender(playerModel, partialTicks, poseStack);
 	}
 }
-

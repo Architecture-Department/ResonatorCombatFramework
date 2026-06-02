@@ -8,7 +8,7 @@ src/main/
 │   └── architecture/resonator_combat_framework/
 │       ├── mixin/                           — 核心 mixin（EntityMixin, PlayerMixin）
 │       │   └── gecko_lib/                   — GeckoLib 核心 mixin（AnimatableManager 相关）
-│       └── module/player_animation/mixin/   — 玩家动画模块 mixin
+│       └── module/entity_animation/mixin/   — 玩家动画模块 mixin
 │           ├── client/                      — LivingEntityRendererMixin, ItemInHandLayerMixin
 │           └── gecko_lib/                   — GeckoLib 缓存/渲染 mixin
 │
@@ -21,7 +21,7 @@ src/main/
         │   └── registry/  — AnimationControllerRegistry 等
         ├── init/          — 初始化/注册类
         ├── mixed/         — Mixin 接口（IPlayerRcf）
-        ├── module/player_animation/  — 玩家动画模块
+        ├── module/entity_animation/  — 玩家动画模块
         │   ├── api/       — IAnimationMapper, ProxyBone, ProxyModel
         │   ├── bedrock/   — BedrockAnimation, BedrockAnimator（插值引擎）
         │   │   └── molang/— MolangQueries, EasingTypes, MathParser

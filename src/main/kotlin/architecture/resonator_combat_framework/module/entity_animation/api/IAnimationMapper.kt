@@ -7,6 +7,8 @@ import architecture.resonator_combat_framework.module.entity_animation.controlle
 import architecture.resonator_combat_framework.module.entity_animation.data.AnimationPlayData
 import architecture.resonator_combat_framework.module.entity_animation.data.ProxyBoneConfigData
 import architecture.resonator_combat_framework.module.entity_animation.registry.ProxyBoneConfigRegistry
+import com.mojang.blaze3d.vertex.PoseStack
+import net.minecraft.client.model.EntityModel
 import net.minecraft.resources.ResourceLocation
 
 @AllOpe
@@ -49,5 +51,7 @@ interface IAnimationMapper : IAnimationTrigger, IAnimationControl, IControllerQu
 	fun removeController(name: ResourceLocation)
 	fun tickAnimations()
 	fun resolveConfig(animId: String): ProxyBoneConfigData
-}
 
+	/** 客户端类 */
+	fun tickAndRender(model: EntityModel<*>, partialTick: Float, poseStack: PoseStack) = Unit
+}

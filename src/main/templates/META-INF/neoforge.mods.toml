@@ -5,7 +5,7 @@ file = "META-INF/accesstransformer.cfg"
 config = "${mod_id}.mixins.json"
 
 [[mixins]]
-config = "player_animation.mixins.json"
+config = "entity_animation.mixins.json"
 
 [[dependencies.${ mod_id }]]
 modId = "eyelib"

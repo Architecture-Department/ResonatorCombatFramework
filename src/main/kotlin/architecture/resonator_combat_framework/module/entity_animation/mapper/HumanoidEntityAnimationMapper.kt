@@ -17,17 +17,15 @@ abstract class HumanoidEntityAnimationMapper<T : LivingEntity, M : HumanoidModel
 ) : LivingEntityAnimationMapper<T, M>(livingEntity) {
 
 	override fun applyProxyToModel(
-		proxyModels: List<ProxyModel>, model: M, flags: Map<String, ProxyBoneFlags>, weight: Float
+		proxyModel: ProxyModel, model: M, flags: Map<String, ProxyBoneFlags>, weight: Float
 	) {
 		if (!isClient) return
-		for (proxyModel in proxyModels) {
-			applyProxyBone(proxyModel, "head", flags, weight, model.head, model.hat)
-			applyProxyBone(proxyModel, "body", flags, weight, model.body)
-			applyProxyBone(proxyModel, "left_arm", flags, weight, model.leftArm)
-			applyProxyBone(proxyModel, "right_arm", flags, weight, model.rightArm)
-			applyProxyBone(proxyModel, "left_leg", flags, weight, model.leftLeg)
-			applyProxyBone(proxyModel, "right_leg", flags, weight, model.rightLeg)
-		}
+		applyProxyBone(proxyModel, "head", flags, weight, model.head, model.hat)
+		applyProxyBone(proxyModel, "body", flags, weight, model.body)
+		applyProxyBone(proxyModel, "left_arm", flags, weight, model.leftArm)
+		applyProxyBone(proxyModel, "right_arm", flags, weight, model.rightArm)
+		applyProxyBone(proxyModel, "left_leg", flags, weight, model.leftLeg)
+		applyProxyBone(proxyModel, "right_leg", flags, weight, model.rightLeg)
 	}
 
 	protected fun applyProxyBone(
@@ -44,7 +42,7 @@ abstract class HumanoidEntityAnimationMapper<T : LivingEntity, M : HumanoidModel
 	}
 
 	fun applyProxyToItem(
-		proxyModels: List<ProxyModel>,
+		proxyModel: ProxyModel,
 		isLeft: Boolean,
 		poseStack: PoseStack,
 		flags: Map<String, ProxyBoneFlags>,
@@ -52,14 +50,11 @@ abstract class HumanoidEntityAnimationMapper<T : LivingEntity, M : HumanoidModel
 	) {
 		if (weight <= 0f) return
 		val name = if (isLeft) "left_item" else "right_item"
-		for (proxy in proxyModels) {
-			val bone = proxy.getBone(name) ?: continue
-			val t = BoneTransformUtil.computeForPoseStack(bone, flags[name], weight)
-			poseStack.mulPose(Axis.XP.rotationDegrees(90.0f))
-			BoneTransformUtil.applyTo(poseStack, t)
-			poseStack.mulPose(Axis.XP.rotationDegrees(-90.0f))
-			return
-		}
+		val bone = proxyModel.getBone(name) ?: return
+		val t = BoneTransformUtil.computeForPoseStack(bone, flags[name], weight)
+		poseStack.mulPose(Axis.XP.rotationDegrees(90.0f))
+		BoneTransformUtil.applyTo(poseStack, t)
+		poseStack.mulPose(Axis.XP.rotationDegrees(-90.0f))
 	}
 }
 
