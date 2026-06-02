@@ -15,15 +15,22 @@ class AnimationControllerManager {
 	private val nameMap = mutableMapOf<ResourceLocation, IAnimationController>()
 	private val ordered = mutableListOf<IAnimationController>()
 
+	/** 当前 tick 合并后的代理骨骼 */
 	val mergedProxy = ProxyModel("merged")
+
+	/** 上一 tick 合并结果（用于渲染帧插值） */
 	val prevMergedProxy = ProxyModel("prevMerged")
+
+	/** 合并后的骨骼标志 */
 	val mergedFlags = mutableMapOf<String, ProxyBoneFlags>()
 
+	/** 追加控制器到末尾 */
 	fun add(name: ResourceLocation, controller: IAnimationController) {
 		nameMap[name] = controller
 		ordered.add(controller)
 	}
 
+	/** 在指定索引插入控制器 */
 	fun add(index: Int, name: ResourceLocation, controller: IAnimationController) {
 		nameMap[name] = controller
 		ordered.add(index, controller)
@@ -51,12 +58,14 @@ class AnimationControllerManager {
 		}
 	}
 
+	/** 移除控制器并立即停止 */
 	fun remove(name: ResourceLocation) {
 		val ctrl = nameMap.remove(name) ?: return
 		ctrl.stop(0)
 		ordered.remove(ctrl)
 	}
 
+	/** 推进所有控制器的动画时间并重新合并 */
 	fun tickAnimations(mapper: IAnimationMapper) {
 		interpCache = null
 		prevMergedProxy.bones.clear()
@@ -79,11 +88,10 @@ class AnimationControllerManager {
 		mergedFlags.clear()
 		val coveredBones = mutableSetOf<String>()
 		for (ctrl in ordered.filter { it.isActive() }) {
-			val bac = ctrl as BaseAnimationController
+			val bac = ctrl as BedrockAnimationController
 			val weight = ctrl.effectiveWeight
 			mergedFlags.putAll(bac.resolveBoneFlags(bac.currentAnimTime))
 			for ((name, bone) in bac.proxyModel.bones) {
-				if (name == "root") continue
 				if (name in coveredBones && ctrl.isOverriding) continue
 				val mb = mergedProxy.getBone(name) ?: run {
 					val nb = ProxyBone(name)
@@ -152,9 +160,13 @@ class AnimationControllerManager {
 
 	fun getInterpolatedBone(name: String, partialTick: Float): ProxyBone? = interpolateBone(name, partialTick)
 
+	/** 插值缓存，tickAnimations 时失效 */
 	private var interpCache: ProxyModel? = null
+
+	/** 上次缓存的 partialTick */
 	private var cachedPartialTick: Float = -1f
 
+	/** 获取合并后的插值代理骨骼（缓存，仅 partialTick 变化或源数据更新时重算） */
 	fun getInterpolatedProxy(partialTick: Float): ProxyModel {
 		var cached = interpCache
 		if (cached == null || cachedPartialTick != partialTick) {
@@ -168,13 +180,26 @@ class AnimationControllerManager {
 		return cached
 	}
 
+	/** 按名称获取控制器 */
 	fun get(name: ResourceLocation): IAnimationController? = nameMap[name]
+
+	/** 获取主控制器 */
 	fun getMainController(): IAnimationController = nameMap[AnimationControllerRegistry.MAIN]
 		?: error("Main controller not initialized")
+
+	/** 获取所有控制器（按添加顺序） */
 	fun getAll(): List<IAnimationController> = ordered
+
+	/** 是否存在指定控制器 */
 	fun has(name: ResourceLocation): Boolean = name in nameMap
+
+	/** 是否有任意控制器活跃 */
 	fun isAnyActive(): Boolean = ordered.any { it.isActive() }
+
+	/** 指定控制器是否活跃 */
 	fun isActive(name: ResourceLocation): Boolean = nameMap[name]?.isActive() == true
+
+	/** 获取所有活跃控制器 */
 	fun getSortedActive(): List<IAnimationController> = ordered.filter { it.isActive() }
 
 	/**
@@ -217,4 +242,3 @@ class AnimationControllerManager {
 		return aBones.intersect(bBones).isNotEmpty()
 	}
 }
-

@@ -14,34 +14,35 @@ class ActionAnimationController(
 ) : BedrockAnimationController(id, isClient) {
 	var mainHandItem: ItemStack? = null
 	var offhandItem: ItemStack? = null
+
+	/** 每 tick 检测物品变化，触发切换动画 */
 	override fun tickHandler(animationMapper: IAnimationMapper) {
 		super.tickHandler(animationMapper)
 		if (animationMapper !is LivingEntityAnimationMapper<*, *>) return
 		val entity = animationMapper.entity
 
-		if (entity.level().isClientSide) {
+		if (!entity.level().isClientSide) return
+		if (entity !is Player) return
+		if (!RcfConfig.CLIENT.itemSwitchingAnimation.get()) return
 
-			if (entity is Player) {
-				if (RcfConfig.CLIENT.itemSwitchingAnimation.get()) {
-					val mainHandItem = entity.mainHandItem
-					val offhandItem = entity.offhandItem
-					if (mainHandItem != this.mainHandItem) {
-						this.mainHandItem = entity.mainHandItem
-						if (mainHandItem != ItemStack.EMPTY) {
-							trigger(getSwitchingAnimId(entity.mainArm == HumanoidArm.RIGHT))
-						}
-					} else if (offhandItem != this.offhandItem) {
-						this.offhandItem = entity.offhandItem
-						if (offhandItem != ItemStack.EMPTY) {
-							trigger(getSwitchingAnimId(entity.mainArm != HumanoidArm.RIGHT))
-						}
-					}
-				}
+		val mainHandItem = entity.mainHandItem
+		val offhandItem = entity.offhandItem
+		if (mainHandItem != this.mainHandItem) {
+			this.mainHandItem = entity.mainHandItem
+			if (mainHandItem != ItemStack.EMPTY) {
+				trigger(getSwitchingAnimId(entity.mainArm == HumanoidArm.RIGHT))
+			}
+		}
+
+		if (offhandItem != this.offhandItem) {
+			this.offhandItem = entity.offhandItem
+			if (offhandItem != ItemStack.EMPTY) {
+				trigger(getSwitchingAnimId(entity.mainArm != HumanoidArm.RIGHT))
 			}
 		}
 	}
 
-	private fun getSwitchingAnimId(isRight: Boolean): String = "player." +
-		if (isRight) "item_switching_right"
-		else "item_switching_left"
+	/** 获取切换动画 ID */
+	private fun getSwitchingAnimId(isRight: Boolean): String =
+		"player." + if (isRight) "item_switching_right" else "item_switching_left"
 }

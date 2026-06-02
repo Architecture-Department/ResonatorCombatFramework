@@ -11,11 +11,13 @@ import com.mojang.blaze3d.vertex.PoseStack
 import net.minecraft.client.model.EntityModel
 import net.minecraft.resources.ResourceLocation
 
+/** 动画触发接口 */
 @AllOpe
 interface IAnimationTrigger {
 	fun trigger(playData: AnimationPlayData)
 }
 
+/** 动画控制接口（停止/暂停/恢复） */
 @AllOpe
 interface IAnimationControl {
 	fun stop(controllerName: ResourceLocation = AnimationControllerRegistry.MAIN, fadeOutTicks: Int = -1)
@@ -26,6 +28,7 @@ interface IAnimationControl {
 	fun resumeAll()
 }
 
+/** 控制器查询接口 */
 @AllOpe
 interface IControllerQuery {
 	val animationControllerManager: AnimationControllerManager
@@ -41,6 +44,7 @@ interface IControllerQuery {
 	fun findBlockingControllers(controller: IAnimationController): List<IAnimationController>
 }
 
+/** 动画映射器接口，整合触发/控制/查询 */
 @AllOpe
 interface IAnimationMapper : IAnimationTrigger, IAnimationControl, IControllerQuery {
 	val configLoader: ProxyBoneConfigRegistry
@@ -52,6 +56,6 @@ interface IAnimationMapper : IAnimationTrigger, IAnimationControl, IControllerQu
 	fun tickAnimations()
 	fun resolveConfig(animId: String): ProxyBoneConfigData
 
-	/** 客户端类 */
+	/** 客户端 */
 	fun tickAndRender(model: EntityModel<*>, partialTick: Float, poseStack: PoseStack) = Unit
 }

@@ -1,9 +1,4 @@
-package architecture.resonator_combat_framework.module.entity_animation.event
-
-// 动画控制器注册事件。NeoForge 事件，用于注册各部位的动画控制器到 AnimationController 管理器
-
-// 动画控制器注册事件。NeoForge 事件，用于注册各部位的动画控制器到 AnimationController 管理器
-
+package architecture.resonator_combat_framework.module.entity_animation.event
 import architecture.resonator_combat_framework.module.entity_animation.controller.BedrockAnimationController
 import architecture.resonator_combat_framework.module.entity_animation.controller.IAnimationController
 import net.minecraft.resources.ResourceLocation

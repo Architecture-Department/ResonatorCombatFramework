@@ -1,6 +1,7 @@
 package architecture.resonator_combat_framework.module.entity_animation.engine
 
-import architecture.resonator_combat_framework.module.entity_animation.api.*
+import architecture.resonator_combat_framework.module.entity_animation.api.ProxyBone
+import architecture.resonator_combat_framework.module.entity_animation.api.ProxyModel
 import architecture.resonator_combat_framework.module.entity_animation.engine.molang.EasingTypes
 import org.joml.Vector2f
 import org.joml.Vector3f
@@ -8,6 +9,7 @@ import kotlin.math.floor
 
 object BedrockAnimator {
 
+	/** 计算动画在 time 时刻的骨骼变换并写入 proxyModel，返回受影响骨骼集合 */
 	fun computeAndWrite(anim: BedrockAnimation, time: Float, proxyModel: ProxyModel): Set<String> {
 		val affected = mutableSetOf<String>()
 		for ((boneName, boneAnim) in anim.bones) {
@@ -27,6 +29,7 @@ object BedrockAnimator {
 		return affected
 	}
 
+	/** 插值关键帧序列，返回 time 时刻的值 */
 	private fun interpolate(frames: List<BrBoneKeyFrame>, time: Float): Vector3f? {
 		if (frames.isEmpty()) return null
 

@@ -79,7 +79,7 @@ object MolangQueries {
 	const val MOVEMENT_DIRECTION: String = "query.movement_direction"
 	const val PLAYER_LEVEL: String = "query.player_level"
 	const val REMAINING_DURABILITY: String = "query.remaining_durability"
-	private val VARIABLE_MAP: MutableMap<String, Variable> = HashMap<String, Variable>()
+	private val VARIABLE_MAP = HashMap<String, Variable>()
 
 	@Synchronized
 	fun registerVariable(name: String): Variable {

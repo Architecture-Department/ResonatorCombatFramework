@@ -54,6 +54,9 @@ data class AnimationPlayData(
 	}
 
 	companion object {
+		@JvmField
+		val EMPTY = AnimationPlayData("")
+
 		/** 快速构造：仅动画名称 */
 		@JvmStatic
 		fun of(animId: String) = AnimationPlayData(animId = animId)

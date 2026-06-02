@@ -1,6 +1,6 @@
 package architecture.resonator_combat_framework.module.entity_animation.mapper
 
-import architecture.resonator_combat_framework.module.entity_animation.controller.BaseAnimationController
+import architecture.resonator_combat_framework.module.entity_animation.controller.BedrockAnimationController
 import architecture.resonator_combat_framework.module.entity_animation.data.ProxyBoneFlags
 import net.minecraft.client.model.EntityModel
 import net.minecraft.world.entity.LivingEntity
@@ -14,7 +14,7 @@ abstract class LivingEntityAnimationMapper<T : LivingEntity, M : EntityModel<T>>
 	fun resolveBoneFlags(animTime: Float): Map<String, ProxyBoneFlags> {
 		val flags = mutableMapOf<String, ProxyBoneFlags>()
 		for (ctrl in animationControllerManager.getRenderable()) {
-			flags.putAll((ctrl as BaseAnimationController).resolveBoneFlags(animTime))
+			flags.putAll((ctrl as BedrockAnimationController).resolveBoneFlags(animTime))
 		}
 		return flags
 	}
