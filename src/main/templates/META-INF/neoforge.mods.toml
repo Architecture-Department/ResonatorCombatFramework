@@ -8,13 +8,6 @@ config = "${mod_id}.mixins.json"
 config = "entity_animation.mixins.json"
 
 [[dependencies.${ mod_id }]]
-modId = "eyelib"
-type = "required"
-versionRange = "${eyelib_version}"
-ordering = "NONE"
-side = "BOTH"
-
-[[dependencies.${ mod_id }]]
 modId = "geckolib"
 type = "required"
 versionRange = "${geckolib_version}"

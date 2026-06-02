@@ -51,6 +51,7 @@ class PlayerAnimationMapper(
 		for (ctrl in animationControllerManager.getAll()) {
 			(ctrl as BaseAnimationController).tickRender(partialTick, deltaSec)
 		}
+		animationControllerManager.remerge()
 		val renderable = animationControllerManager.getRenderable()
 		if (renderable.isEmpty()) return
 

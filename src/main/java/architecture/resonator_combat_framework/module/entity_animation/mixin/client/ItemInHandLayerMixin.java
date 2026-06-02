@@ -14,10 +14,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-/**
- * 从 PlayerAnimationTransformer 读取 eyelib 虚拟骨骼 "right_item"/"left_item" 的动画数据，
- * 应用到 PoseStack，实现物品独立于手臂的动画。
- */
 @Mixin(ItemInHandLayer.class)
 public class ItemInHandLayerMixin {
 

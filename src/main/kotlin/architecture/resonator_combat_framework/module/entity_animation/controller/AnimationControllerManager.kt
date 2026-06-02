@@ -1,7 +1,6 @@
 package architecture.resonator_combat_framework.module.entity_animation.controller
 
 import architecture.goldenboughs_lib.api.AllOpe
-import architecture.goldenboughs_lib.util.lerp
 import architecture.resonator_combat_framework.events.registry.AnimationControllerRegistry
 import architecture.resonator_combat_framework.module.entity_animation.api.IAnimationMapper
 import architecture.resonator_combat_framework.module.entity_animation.api.ProxyBone
@@ -16,13 +15,8 @@ class AnimationControllerManager {
 	private val nameMap = mutableMapOf<ResourceLocation, IAnimationController>()
 	private val ordered = mutableListOf<IAnimationController>()
 
-	/** 当前 tick 合并后的代理骨骼数据 */
 	val mergedProxy = ProxyModel("merged")
-
-	/** 上一 tick 合并后的代理骨骼数据（用于渲染帧插值） */
 	val prevMergedProxy = ProxyModel("prevMerged")
-
-	/** 合并后的骨骼标志 */
 	val mergedFlags = mutableMapOf<String, ProxyBoneFlags>()
 
 	fun add(name: ResourceLocation, controller: IAnimationController) {
@@ -64,7 +58,6 @@ class AnimationControllerManager {
 	}
 
 	fun tickAnimations(mapper: IAnimationMapper) {
-		// 保存上一帧合并结果用于插值
 		interpCache = null
 		prevMergedProxy.bones.clear()
 		for ((name, bone) in mergedProxy.bones) {
@@ -74,26 +67,24 @@ class AnimationControllerManager {
 			copy.scale.set(bone.scale)
 			prevMergedProxy.addBone(copy)
 		}
-
 		for (ctrl in ordered) {
 			ctrl.tickAdvance(mapper)
 		}
-
-		// 合并当前所有可渲染控制器的骨骼数据
 		remerge()
 	}
 
-	/** 重新合并所有可渲染控制器的骨骼数据（tickAnimations 和 crossfade 后均调用） */
 	fun remerge() {
 		interpCache = null
 		mergedProxy.bones.clear()
 		mergedFlags.clear()
-		for (ctrl in getRenderable()) {
+		val coveredBones = mutableSetOf<String>()
+		for (ctrl in ordered.filter { it.isActive() }) {
 			val bac = ctrl as BaseAnimationController
 			val weight = ctrl.effectiveWeight
 			mergedFlags.putAll(bac.resolveBoneFlags(bac.currentAnimTime))
 			for ((name, bone) in bac.proxyModel.bones) {
-//				if (name == "root") continue
+				if (name == "root") continue
+				if (name in coveredBones && ctrl.isOverriding) continue
 				val mb = mergedProxy.getBone(name) ?: run {
 					val nb = ProxyBone(name)
 					mergedProxy.addBone(nb)
@@ -112,10 +103,10 @@ class AnimationControllerManager {
 					mb.scale.add(Vector3f(bone.scale).sub(1f, 1f, 1f).mul(weight))
 				}
 			}
+			coveredBones.addAll(bac.affectedBones)
 		}
 	}
 
-	/** 骨骼插值：prev → curr 按 partialTick lerp */
 	private fun interpolateBone(name: String, partialTick: Float): ProxyBone? {
 		val currBone = mergedProxy.getBone(name) ?: return null
 		val prevBone = prevMergedProxy.getBone(name)
@@ -123,21 +114,21 @@ class AnimationControllerManager {
 		if (prevBone != null) {
 			if (currBone.hasPos()) {
 				mb.setPosEmpty(false)
-				mb.pos.set(lerp(prevBone.pos, currBone.pos, partialTick))
+				mb.pos.set(prevBone.pos).lerp(currBone.pos, partialTick)
 			} else if (prevBone.hasPos()) {
 				mb.setPosEmpty(false)
 				mb.pos.set(prevBone.pos)
 			}
 			if (currBone.hasRot()) {
 				mb.setRotEmpty(false)
-				mb.rotation.set(lerp(prevBone.rotation, currBone.rotation, partialTick))
+				mb.rotation.set(prevBone.rotation).lerp(currBone.rotation, partialTick)
 			} else if (prevBone.hasRot()) {
 				mb.setRotEmpty(false)
 				mb.rotation.set(prevBone.rotation)
 			}
 			if (currBone.hasScale()) {
 				mb.setScaleEmpty(false)
-				mb.scale.set(lerp(prevBone.scale, currBone.scale, partialTick))
+				mb.scale.set(prevBone.scale).lerp(currBone.scale, partialTick)
 			} else if (prevBone.hasScale()) {
 				mb.setScaleEmpty(false)
 				mb.scale.set(prevBone.scale)
@@ -159,12 +150,9 @@ class AnimationControllerManager {
 		return mb
 	}
 
-	fun getInterEmptypolatedBone(name: String, partialTick: Float): ProxyBone? = interpolateBone(name, partialTick)
+	fun getInterpolatedBone(name: String, partialTick: Float): ProxyBone? = interpolateBone(name, partialTick)
 
-	/** 插值缓存，tickAnimations 时失效 */
 	private var interpCache: ProxyModel? = null
-
-	/** 上次缓存的 partialTick */
 	private var cachedPartialTick: Float = -1f
 
 	fun getInterpolatedProxy(partialTick: Float): ProxyModel {
@@ -181,27 +169,20 @@ class AnimationControllerManager {
 	}
 
 	fun get(name: ResourceLocation): IAnimationController? = nameMap[name]
-
 	fun getMainController(): IAnimationController = nameMap[AnimationControllerRegistry.MAIN]
 		?: error("Main controller not initialized")
-
 	fun getAll(): List<IAnimationController> = ordered
-
 	fun has(name: ResourceLocation): Boolean = name in nameMap
-
 	fun isAnyActive(): Boolean = ordered.any { it.isActive() }
-
 	fun isActive(name: ResourceLocation): Boolean = nameMap[name]?.isActive() == true
-
-	fun getSortedActive(): List<IAnimationController> =
-		ordered.filter { it.isActive() }
+	fun getSortedActive(): List<IAnimationController> = ordered.filter { it.isActive() }
 
 	fun getRenderable(): List<IAnimationController> {
 		val active = getSortedActive()
 		val result = mutableListOf<IAnimationController>()
 		val renderedBones = mutableSetOf<String>()
 		for (ctrl in active) {
-			if (ctrl.affectedBones.isNotEmpty() && ctrl.affectedBones.all { it in renderedBones } && ctrl.isOverriding) {
+			if (ctrl.affectedBones.isNotEmpty() && ctrl.affectedBones.all { it in renderedBones } && !ctrl.isOverriding) {
 				continue
 			}
 			result.add(ctrl)
@@ -230,3 +211,4 @@ class AnimationControllerManager {
 		return aBones.intersect(bBones).isNotEmpty()
 	}
 }
+

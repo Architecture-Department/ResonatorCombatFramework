@@ -327,13 +327,31 @@ abstract class BaseAnimationController @JvmOverloads constructor(
 			val prev = prevProxyModel.getBone(name)
 			val interp = ProxyBone(name)
 			if (prev != null) {
-				interp.pos.set(prev.pos).lerp(currBone.pos, partialTick)
-				interp.rotation.set(prev.rotation).lerp(currBone.rotation, partialTick)
-				interp.scale.set(prev.scale).lerp(currBone.scale, partialTick)
+				if (currBone.hasPos()) {
+					interp.setPosEmpty(false)
+					interp.pos.set(prev.pos).lerp(currBone.pos, partialTick)
+				}
+				if (currBone.hasRot()) {
+					interp.setRotEmpty(false)
+					interp.rotation.set(prev.rotation).lerp(currBone.rotation, partialTick)
+				}
+				if (currBone.hasScale()) {
+					interp.setScaleEmpty(false)
+					interp.scale.set(prev.scale).lerp(currBone.scale, partialTick)
+				}
 			} else {
-				interp.pos.set(currBone.pos)
-				interp.rotation.set(currBone.rotation)
-				interp.scale.set(currBone.scale)
+				if (currBone.hasPos()) {
+					interp.setPosEmpty(false)
+					interp.pos.set(currBone.pos)
+				}
+				if (currBone.hasRot()) {
+					interp.setRotEmpty(false)
+					interp.rotation.set(currBone.rotation)
+				}
+				if (currBone.hasScale()) {
+					interp.setScaleEmpty(false)
+					interp.scale.set(currBone.scale)
+				}
 			}
 			result.addBone(interp)
 		}
