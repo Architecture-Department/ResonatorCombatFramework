@@ -1,7 +1,7 @@
 package architecture.resonator_combat_framework.events.client
 
 import architecture.resonator_combat_framework.core.RcfConstants
-import architecture.resonator_combat_framework.module.player_animation.client.RcfFirstPersonRender
+import architecture.resonator_combat_framework.module.entity_animation.render.RcfFirstPersonRender
 import net.minecraft.client.Minecraft
 import net.neoforged.api.distmarker.Dist
 import net.neoforged.bus.api.SubscribeEvent

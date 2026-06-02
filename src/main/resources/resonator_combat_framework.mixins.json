@@ -4,7 +4,9 @@
 	"compatibilityLevel": "JAVA_21",
 	"mixins": [
 		"EntityMixin",
-		"PlayerMixin"
+		"PlayerMixin",
+		"gecko_lib.GeckoLibCacheAccessor",
+		"gecko_lib.GeckoLibCacheMixin"
 	],
 	"client": [
 	],

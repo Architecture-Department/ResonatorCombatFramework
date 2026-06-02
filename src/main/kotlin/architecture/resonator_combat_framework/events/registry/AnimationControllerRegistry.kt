@@ -1,9 +1,9 @@
 package architecture.resonator_combat_framework.events.registry
 
 import architecture.goldenboughs_lib.util.LibUtil.rlOf
-import architecture.resonator_combat_framework.animation_controller.ActionAnimationController
 import architecture.resonator_combat_framework.core.RcfConstants
-import architecture.resonator_combat_framework.module.player_animation.event.AnimationControllerRegisterEvent
+import architecture.resonator_combat_framework.module.entity_animation.controller.ActionAnimationController
+import architecture.resonator_combat_framework.module.entity_animation.event.AnimationControllerRegisterEvent
 import net.minecraft.resources.ResourceLocation
 import net.neoforged.bus.api.SubscribeEvent
 import net.neoforged.fml.common.EventBusSubscriber
@@ -26,3 +26,4 @@ object AnimationControllerRegistry {
 		event.register(COMMAND, priority = -1000)
 	}
 }
+

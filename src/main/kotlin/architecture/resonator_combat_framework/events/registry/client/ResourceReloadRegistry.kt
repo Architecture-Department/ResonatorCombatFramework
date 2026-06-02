@@ -1,9 +1,9 @@
 package architecture.resonator_combat_framework.events.registry.client
 
 import architecture.resonator_combat_framework.core.RcfConstants
-import architecture.resonator_combat_framework.module.player_animation.registry.BedrockAnimationRegistry
-import architecture.resonator_combat_framework.module.player_animation.registry.BedrockModelRegistry
-import architecture.resonator_combat_framework.module.player_animation.registry.ProxyBoneConfigRegistry
+import architecture.resonator_combat_framework.module.entity_animation.registry.BedrockAnimationRegistry
+import architecture.resonator_combat_framework.module.entity_animation.registry.BedrockModelRegistry
+import architecture.resonator_combat_framework.module.entity_animation.registry.ProxyBoneConfigRegistry
 import net.neoforged.api.distmarker.Dist
 import net.neoforged.bus.api.SubscribeEvent
 import net.neoforged.fml.common.EventBusSubscriber
