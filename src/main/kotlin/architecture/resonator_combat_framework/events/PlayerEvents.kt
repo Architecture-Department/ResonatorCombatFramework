@@ -9,7 +9,7 @@ import net.neoforged.neoforge.event.tick.PlayerTickEvent
 @EventBusSubscriber(modid = RcfConstants.ID)
 object PlayerEvents {
 	@SubscribeEvent
-	fun tickPre(event: PlayerTickEvent.Post) {
+	fun onTickPre(event: PlayerTickEvent.Post) {
 		val player = event.entity
 		player.getAnimationTransformer().tickAnimations()
 	}

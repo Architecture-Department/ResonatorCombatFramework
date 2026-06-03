@@ -12,14 +12,14 @@ import net.neoforged.neoforge.client.event.RenderHandEvent
 @EventBusSubscriber(modid = RcfConstants.ID, value = [Dist.CLIENT])
 object RendererEvets {
 	@SubscribeEvent
-	fun renderHand(event: RenderHandEvent) {
+	fun onRenderHand(event: RenderHandEvent) {
 		if (RcfFirstPersonRender.isFirstPersonPass()) {
 			event.isCanceled = true
 		}
 	}
 
 	@SubscribeEvent
-	fun renderArm(event: RenderArmEvent) {
+	fun onRenderArm(event: RenderArmEvent) {
 		val minecraft = Minecraft.getInstance()
 		if (RcfFirstPersonRender.isFirstPersonPass() && event.player == minecraft.player) {
 			event.isCanceled = true
