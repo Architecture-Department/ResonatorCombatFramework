@@ -11,11 +11,12 @@ import net.minecraft.server.packs.resources.ResourceManager
 import net.minecraft.server.packs.resources.SimplePreparableReloadListener
 import net.minecraft.util.profiling.ProfilerFiller
 
-class ProxyBoneConfigRegistry : SimplePreparableReloadListener<Map<String, ProxyBoneConfigData>>() {
+class ProxyBoneConfigRegistry(private val side: String = "?") :
+	SimplePreparableReloadListener<Map<String, ProxyBoneConfigData>>() {
 
 	companion object {
-		private val INSTANCE = ProxyBoneConfigRegistry()
-		private val INSTANCE_SERVER = ProxyBoneConfigRegistry()
+		private val INSTANCE = ProxyBoneConfigRegistry("CLIENT")
+		private val INSTANCE_SERVER = ProxyBoneConfigRegistry("SERVER")
 
 		@JvmStatic
 		fun getInstance(isClient: Boolean): ProxyBoneConfigRegistry {
@@ -39,7 +40,7 @@ class ProxyBoneConfigRegistry : SimplePreparableReloadListener<Map<String, Proxy
 				val json = JsonParser.parseReader(entry.value.openAsReader()).asJsonObject
 				result[animId] = parseConfig(json)
 			} catch (e: Exception) {
-				RcfConstants.LOGGER.error("Failed to load bone config: {}", entry.key, e)
+				RcfConstants.LOGGER.error("[CONFIG/{}] Failed to load: {} - {}", side, entry.key, e.message)
 			}
 		}
 		return result
@@ -48,11 +49,18 @@ class ProxyBoneConfigRegistry : SimplePreparableReloadListener<Map<String, Proxy
 	override fun apply(loaded: Map<String, ProxyBoneConfigData>, manager: ResourceManager, profiler: ProfilerFiller) {
 		configs.clear()
 		configs.putAll(loaded)
-		RcfConstants.LOGGER.info("Loaded {} bone configs", loaded.size)
+		RcfConstants.LOGGER.info(
+			"[CONFIG/{}] Applied {} bone configs: {}",
+			side,
+			loaded.size,
+			loaded.keys.sorted().joinToString(", ")
+		)
 	}
 
 	private fun parseConfig(json: JsonObject): ProxyBoneConfigData {
 		val transitionTicks = json.get("transition")?.asInt ?: ProxyBoneConfigData.DEFAULT_TRANSITION_TICKS
+		val fadeInTicks = json.get("fade_in")?.asInt ?: -1
+		val fadeOutTicks = json.get("fade_out")?.asInt ?: -1
 		val bones = parseBonesSection(json.get("bones"))
 		val timelineJson = json.getAsJsonObject("timeline")
 		val timeline = if (timelineJson != null) {
@@ -70,7 +78,7 @@ class ProxyBoneConfigRegistry : SimplePreparableReloadListener<Map<String, Proxy
 			}
 			list
 		} else emptyList()
-		return ProxyBoneConfigData.create(bones, timeline, transitionTicks)
+		return ProxyBoneConfigData.create(bones, timeline, transitionTicks, fadeInTicks, fadeOutTicks)
 	}
 
 	private fun parseBonesSection(section: JsonElement?): Map<String, ProxyBoneFlags> {

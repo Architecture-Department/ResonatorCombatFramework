@@ -14,11 +14,12 @@ import net.minecraft.util.profiling.ProfilerFiller
  * 每个 JSON 文件可包含多个模型（minecraft:geometry[] 下的所有条目），
  * 使用模型自身的 identifier（如 "geometry.default"）作为注册键。
  */
-class BedrockModelRegistry : SimplePreparableReloadListener<Map<String, BedrockModel>>() {
+class BedrockModelRegistry(private val side: String = "?") :
+	SimplePreparableReloadListener<Map<String, BedrockModel>>() {
 
 	companion object {
-		private val CLIENT = BedrockModelRegistry()
-		private val SERVER = BedrockModelRegistry()
+		private val CLIENT = BedrockModelRegistry("CLIENT")
+		private val SERVER = BedrockModelRegistry("SERVER")
 
 		@JvmStatic
 		fun getInstance(isClient: Boolean): BedrockModelRegistry {
@@ -45,7 +46,7 @@ class BedrockModelRegistry : SimplePreparableReloadListener<Map<String, BedrockM
 					result[model.identifier] = model
 				}
 			} catch (e: Exception) {
-				RcfConstants.LOGGER.error("Failed to load model: {}", entry.key, e)
+				RcfConstants.LOGGER.error("[MODEL/{}] Failed to load: {} - {}", side, entry.key, e.message)
 			}
 		}
 		return result
@@ -54,7 +55,12 @@ class BedrockModelRegistry : SimplePreparableReloadListener<Map<String, BedrockM
 	override fun apply(loaded: Map<String, BedrockModel>, manager: ResourceManager, profiler: ProfilerFiller) {
 		models.clear()
 		models.putAll(loaded)
-		RcfConstants.LOGGER.info("Loaded {} bedrock models", loaded.size)
+		RcfConstants.LOGGER.info(
+			"[MODEL/{}] Applied {} bedrock models: {}",
+			side,
+			loaded.size,
+			loaded.keys.sorted().joinToString(", ")
+		)
 	}
 }
 

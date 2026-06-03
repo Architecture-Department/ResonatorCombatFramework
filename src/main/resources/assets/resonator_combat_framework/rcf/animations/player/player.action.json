@@ -2,7 +2,7 @@
 	"format_version": "1.8.0",
 	"animations": {
 		"player.item_switching_left": {
-			"animation_length": 1.25,
+			"animation_length": 1,
 			"bones": {
 				"left_arm": {
 					"rotation": {
@@ -129,11 +129,18 @@
 							0,
 							0
 						],
-						"0.4583": [
-							0,
-							0,
-							0
-						],
+						"0.4583": {
+							"pre": [
+								0,
+								0,
+								0
+							],
+							"post": [
+								0,
+								0,
+								0
+							]
+						},
 						"0.5": [
 							1,
 							1,
@@ -144,7 +151,7 @@
 			}
 		},
 		"player.item_switching_right": {
-			"animation_length": 1.25,
+			"animation_length": 1,
 			"bones": {
 				"right_arm": {
 					"rotation": {
@@ -271,11 +278,18 @@
 							0,
 							0
 						],
-						"0.4583": [
-							0,
-							0,
-							0
-						],
+						"0.4583": {
+							"pre": [
+								0,
+								0,
+								0
+							],
+							"post": [
+								0,
+								0,
+								0
+							]
+						},
 						"0.5": [
 							1,
 							1,

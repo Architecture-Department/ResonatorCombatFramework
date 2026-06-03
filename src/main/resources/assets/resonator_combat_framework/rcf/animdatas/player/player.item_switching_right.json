@@ -1,7 +1,3 @@
 {
-	"bones": {
-		"right_arm": {
-			"transition": false
-		}
-	}
+	"fade_out": 0
 }

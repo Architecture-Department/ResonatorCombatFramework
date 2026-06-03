@@ -8,7 +8,9 @@ import architecture.goldenboughs_lib.api.AllOpe
  * 内置 key（用 . 分层）：
  * lock           — 锁定整个骨骼
  * blend          — 是否参与 crossfade
- * transition     — 是否参与淡入淡出
+ * transition     — 是否参与淡入淡出（fadeIn/fadeOut 未设置时退化到此值）
+ * fade_in        — 是否参与淡入
+ * fade_out       — 是否参与淡出
  * pos.x          — 位置 X 轴启用
  * pos.y          — 位置 Y 轴启用
  * pos.z          — 位置 Z 轴启用
@@ -42,6 +44,8 @@ fun ProxyBoneFlags?.hasAnyLockState(): Boolean = lockPos() || lockRotation() || 
 
 fun ProxyBoneFlags?.shouldBlend(): Boolean = this?.flags?.get("blend") ?: true
 fun ProxyBoneFlags?.shouldTransition(): Boolean = this?.flags?.get("transition") ?: true
+fun ProxyBoneFlags?.shouldFadeIn(): Boolean = this?.flags?.get("fade_in") ?: shouldTransition()
+fun ProxyBoneFlags?.shouldFadeOut(): Boolean = this?.flags?.get("fade_out") ?: shouldTransition()
 
 // ═══════════════ 轴启用控制（nullable receiver，null 时默认 true） ═══════════════
 

@@ -9,7 +9,6 @@ import net.minecraft.client.model.PlayerModel
 import net.minecraft.world.entity.player.Player
 import net.neoforged.neoforge.common.NeoForge
 
-/** 玩家动画映射器：零外部依赖 + 渲染入口 */
 /** 玩家动画映射器——零外部依赖 + 渲染入口 */
 class PlayerAnimationMapper(
 	val player: Player

@@ -38,6 +38,9 @@ interface IAnimationController {
 	/** 有效权重（含过渡状态） */
 	val effectiveWeight: Float
 
+	/** 是否正在淡出 */
+	val isFadingOut: Boolean
+
 	/** 当前动画播放时间（秒） */
 	val currentAnimTime: Float
 

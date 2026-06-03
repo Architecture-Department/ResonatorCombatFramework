@@ -90,28 +90,68 @@ class AnimationControllerManager {
 		for (ctrl in ordered.filter { it.isActive() }) {
 			val bac = ctrl as BedrockAnimationController
 			val weight = ctrl.effectiveWeight
+
+			// 保存当前 mergedProxy 快照（供淡出 blend）
+			val snapshot = ProxyModel("snap")
+			for ((sn, sb) in mergedProxy.bones) {
+				val copy = ProxyBone(sn)
+				copy.pos.set(sb.pos)
+				copy.rotation.set(sb.rotation)
+				copy.scale.set(sb.scale)
+				if (sb.hasPos()) copy.setPosEmpty(false)
+				if (sb.hasRot()) copy.setRotEmpty(false)
+				if (sb.hasScale()) copy.setScaleEmpty(false)
+				snapshot.addBone(copy)
+			}
+
 			mergedFlags.putAll(bac.resolveBoneFlags(bac.currentAnimTime))
 			for ((name, bone) in bac.proxyModel.bones) {
-				if (name in coveredBones && ctrl.isOverriding) continue
 				val mb = mergedProxy.getBone(name) ?: run {
 					val nb = ProxyBone(name)
 					mergedProxy.addBone(nb)
 					nb
 				}
+
+				if (name in coveredBones && ctrl.isOverriding) {
+					mb.pos.set(0f)
+					mb.rotation.set(0f)
+					mb.scale.set(1f, 1f, 1f)
+					mb.setPosEmpty(true)
+					mb.setRotEmpty(true)
+					mb.setScaleEmpty(true)
+				}
+
 				if (bone.hasPos()) {
 					mb.setPosEmpty(false)
 					mb.pos.add(Vector3f(bone.pos).mul(weight))
 				}
+
 				if (bone.hasRot()) {
 					mb.setRotEmpty(false)
 					mb.rotation.add(Vector3f(bone.rotation).mul(weight))
 				}
+
 				if (bone.hasScale()) {
 					mb.setScaleEmpty(false)
 					mb.scale.add(Vector3f(bone.scale).sub(1f, 1f, 1f).mul(weight))
 				}
 			}
 			coveredBones.addAll(bac.affectedBones)
+
+			// 淡出时 blend 到低优先级控制器的快照
+			if (ctrl.isFadingOut && weight < 1f) {
+				for ((name, bone) in mergedProxy.bones) {
+					val snapBone = snapshot.getBone(name)
+					if (snapBone != null) {
+						if (bone.hasPos() && snapBone.hasPos())
+							bone.pos.set(snapBone.pos).lerp(bone.pos, weight)
+						if (bone.hasRot() && snapBone.hasRot())
+							bone.rotation.set(snapBone.rotation).lerp(bone.rotation, weight)
+						if (bone.hasScale() && snapBone.hasScale())
+							bone.scale.set(snapBone.scale).lerp(bone.scale, weight)
+					}
+				}
+			}
 		}
 	}
 

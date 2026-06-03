@@ -9,7 +9,9 @@ data class ProxyBoneConfigData
 private constructor(
 	val bones: Map<String, ProxyBoneFlags> = DEFAULT_FLAGS,
 	val timeline: List<ProxyTimelineEntry> = emptyList(),
-	val transitionTicks: Int = DEFAULT_TRANSITION_TICKS
+	val transitionTicks: Int = DEFAULT_TRANSITION_TICKS,
+	private val fadeInTicks: Int = -1,
+	private val fadeOutTicks: Int = -1
 ) {
 	companion object {
 		@JvmField
@@ -23,16 +25,23 @@ private constructor(
 		fun create(
 			bones: Map<String, ProxyBoneFlags>,
 			timeline: List<ProxyTimelineEntry>,
-			transitionTicks: Int
+			transitionTicks: Int,
+			fadeInTicks: Int = -1,
+			fadeOutTicks: Int = -1
 		): ProxyBoneConfigData {
 			val merged = mutableMapOf<String, ProxyBoneFlags>().apply {
 				putAll(DEFAULT_FLAGS)
 				putAll(bones)
 			}
-			return ProxyBoneConfigData(merged, timeline, transitionTicks)
+			return ProxyBoneConfigData(merged, timeline, transitionTicks, fadeInTicks, fadeOutTicks)
 		}
 	}
 
+	/** 获取淡入 tick 数，未设置时退化为 transitionTicks */
+	fun getFadeInTicks(): Int = if (fadeInTicks >= 0) fadeInTicks else transitionTicks
+
+	/** 获取淡出 tick 数，未设置时退化为 transitionTicks */
+	fun getFadeOutTicks(): Int = if (fadeOutTicks >= 0) fadeOutTicks else transitionTicks
 
 	/** 根据当前动画时间合并基础配置和时间线配置 */
 	fun resolveBoneFlags(animTime: Float): Map<String, ProxyBoneFlags> {

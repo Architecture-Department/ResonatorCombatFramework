@@ -84,6 +84,8 @@ class BedrockAnimationController @JvmOverloads constructor(
 
 	override val effectiveWeight: Float get() = if (transitionSource != null) 1f else blendFactor
 
+	override val isFadingOut: Boolean get() = state == State.FADING_OUT
+
 	/** 获取当前活跃骨骼配置的骨骼标志 */
 	fun resolveBoneFlags(animTime: Float): Map<String, ProxyBoneFlags> {
 		val flags = activeBoneConfig.resolveBoneFlags(animTime).toMutableMap()
@@ -120,7 +122,7 @@ class BedrockAnimationController @JvmOverloads constructor(
 		currentAnimId = config.animId
 		if (config.startTime > 0)
 			setAnimStartTime(config.startTime / 20f)
-		currentTransitionTicks = config.resolveFadeInTicks(finalConfig.transitionTicks)
+		currentTransitionTicks = config.resolveFadeInTicks(finalConfig.getFadeInTicks())
 		state = State.TRANSITIONING
 		blendFactor = 0f
 		blendTarget = 1f
@@ -134,7 +136,7 @@ class BedrockAnimationController @JvmOverloads constructor(
 		state = State.FADING_OUT
 		blendTarget = 0f
 		currentTransitionTicks = if (fadeOutTicks >= 0) fadeOutTicks
-		else currentConfig.resolveFadeOutTicks(activeBoneConfig.transitionTicks)
+		else currentConfig.resolveFadeOutTicks(activeBoneConfig.getFadeOutTicks())
 		if (currentTransitionTicks <= 0) forceClear()
 	}
 
@@ -228,7 +230,7 @@ class BedrockAnimationController @JvmOverloads constructor(
 				pause()
 				state = State.FADING_OUT
 				blendTarget = 0f
-				currentTransitionTicks = currentConfig.resolveFadeOutTicks(activeBoneConfig.transitionTicks)
+				currentTransitionTicks = currentConfig.resolveFadeOutTicks(activeBoneConfig.getFadeOutTicks())
 			}
 
 			AnimType.LOOP -> {
@@ -243,7 +245,7 @@ class BedrockAnimationController @JvmOverloads constructor(
 						pause()
 						state = State.FADING_OUT
 						blendTarget = 0f
-						currentTransitionTicks = currentConfig.resolveFadeOutTicks(activeBoneConfig.transitionTicks)
+						currentTransitionTicks = currentConfig.resolveFadeOutTicks(activeBoneConfig.getFadeOutTicks())
 					}
 
 					LoopType.LOOP -> resetAnimAndRestart()
