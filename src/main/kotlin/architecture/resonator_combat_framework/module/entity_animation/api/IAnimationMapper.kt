@@ -6,7 +6,6 @@ import architecture.resonator_combat_framework.module.entity_animation.controlle
 import architecture.resonator_combat_framework.module.entity_animation.controller.IAnimationController
 import architecture.resonator_combat_framework.module.entity_animation.data.AnimationPlayData
 import architecture.resonator_combat_framework.module.entity_animation.data.ProxyBoneConfigData
-import architecture.resonator_combat_framework.module.entity_animation.registry.ProxyBoneConfigRegistry
 import com.mojang.blaze3d.vertex.PoseStack
 import net.minecraft.client.model.EntityModel
 import net.minecraft.resources.ResourceLocation
@@ -47,8 +46,6 @@ interface IControllerQuery {
 /** 动画映射器接口，整合触发/控制/查询 */
 @AllOpe
 interface IAnimationMapper : IAnimationTrigger, IAnimationControl, IControllerQuery {
-	val configLoader: ProxyBoneConfigRegistry
-		get() = ProxyBoneConfigRegistry.getInstance(isClient)
 	val isClient: Boolean
 
 	fun addController(name: ResourceLocation, controller: IAnimationController)

@@ -1,5 +1,6 @@
 package architecture.resonator_combat_framework.module.entity_animation.mapper
 
+import architecture.resonator_combat_framework.core.RcfConstants
 import architecture.resonator_combat_framework.events.registry.AnimationControllerRegistry
 import architecture.resonator_combat_framework.module.entity_animation.api.IAnimationMapper
 import architecture.resonator_combat_framework.module.entity_animation.api.ProxyModel
@@ -9,6 +10,7 @@ import architecture.resonator_combat_framework.module.entity_animation.controlle
 import architecture.resonator_combat_framework.module.entity_animation.data.AnimationPlayData
 import architecture.resonator_combat_framework.module.entity_animation.data.ProxyBoneConfigData
 import architecture.resonator_combat_framework.module.entity_animation.data.ProxyBoneFlags
+import architecture.resonator_combat_framework.module.entity_animation.registry.BedrockAnimationRegistry
 import architecture.resonator_combat_framework.module.entity_animation.registry.ProxyBoneConfigRegistry
 import architecture.resonator_combat_framework.module.entity_animation.util.BoneTransformUtil
 import com.mojang.blaze3d.vertex.PoseStack
@@ -24,14 +26,20 @@ constructor(
 	override val isClient: Boolean = entity.level().isClientSide
 ) : IAnimationMapper {
 
+	val configLoader: ProxyBoneConfigRegistry = ProxyBoneConfigRegistry.getInstance(isClient)
+
+	val animationLoader: BedrockAnimationRegistry = BedrockAnimationRegistry.getInstance(isClient)
+
 	override val animationControllerManager = AnimationControllerManager()
-	override val configLoader: ProxyBoneConfigRegistry
-		get() = ProxyBoneConfigRegistry.getInstance(isClient)
 
 	// ---- 触发 ----
 
 	/** 触发动画：解析控制器 → 设置骨骼配置 → 触发控制器 */
 	override fun trigger(playData: AnimationPlayData) {
+		if (animationLoader.get(playData.animId) == null) {
+			RcfConstants.LOGGER.warn("[AnimDebug] Animation not found: " + playData.animId)
+			return
+		}
 		val controller = animationControllerManager.get(playData.controllerName) ?: mainController
 		val loaded = configLoader.getConfig(playData.animId)
 		val used = playData.boneConfig ?: loaded

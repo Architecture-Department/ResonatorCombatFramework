@@ -12,6 +12,7 @@ import architecture.resonator_combat_framework.module.entity_animation.helper.Pl
 import architecture.resonator_combat_framework.module.entity_animation.helper.PlayerAnimationHelper.resumeAnima
 import architecture.resonator_combat_framework.module.entity_animation.helper.PlayerAnimationHelper.stopAnima
 import architecture.resonator_combat_framework.module.entity_animation.helper.PlayerAnimationHelper.triggerPlayerAnima
+import architecture.resonator_combat_framework.module.entity_animation.registry.BedrockAnimationRegistry
 import com.mojang.brigadier.CommandDispatcher
 import com.mojang.brigadier.arguments.FloatArgumentType
 import com.mojang.brigadier.arguments.IntegerArgumentType
@@ -109,6 +110,10 @@ object TestAnimCommand {
 				if (fadeOut >= 0) it.fadeOut(fadeOut)
 			}.build()
 
+		if (BedrockAnimationRegistry.getInstance(true).get(animId) == null) {
+			ctx.source.sendFailure(Component.literal("Animation not found: $animId"))
+			return 0
+		}
 		target.triggerPlayerAnima(config)
 		ctx.source.sendSuccess({ Component.literal("Playing $animId on ${target.name.string}") }, true)
 		return 1

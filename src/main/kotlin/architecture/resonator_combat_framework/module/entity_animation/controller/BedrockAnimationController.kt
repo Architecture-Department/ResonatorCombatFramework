@@ -1,5 +1,6 @@
 package architecture.resonator_combat_framework.module.entity_animation.controller
 
+import architecture.resonator_combat_framework.core.RcfConstants
 import architecture.resonator_combat_framework.module.entity_animation.api.IAnimationMapper
 import architecture.resonator_combat_framework.module.entity_animation.api.ProxyBone
 import architecture.resonator_combat_framework.module.entity_animation.api.ProxyModel
@@ -19,6 +20,7 @@ class BedrockAnimationController @JvmOverloads constructor(
 	protected val isClient: Boolean,
 	override val isOverriding: Boolean = true
 ) : IAnimationController {
+	protected val animationLoader = BedrockAnimationRegistry.getInstance(isClient)
 
 	protected val configLoader: ProxyBoneConfigRegistry = ProxyBoneConfigRegistry.getInstance(isClient)
 
@@ -111,8 +113,11 @@ class BedrockAnimationController @JvmOverloads constructor(
 	// ---- 触发 ----
 
 	override fun trigger(config: AnimationPlayData) {
+		if (!loadAnimation(config.animId)) {
+			RcfConstants.LOGGER.warn("[AnimDebug] Animation not found: " + config.animId)
+			return
+		}
 		speedMultiplier = config.resolveSpeedMultiplier()
-		if (!loadAnimation(config.animId)) return
 		val finalConfig = resolvedBoneConfig ?: config.boneConfig ?: configLoader.getConfig(config.animId)
 		resolvedBoneConfig = null
 		activeBoneConfig = finalConfig
@@ -298,7 +303,7 @@ class BedrockAnimationController @JvmOverloads constructor(
 
 	/** 加载 BedrockAnimation */
 	fun loadAnimation(animId: String): Boolean {
-		currentAnim = BedrockAnimationRegistry.getInstance(isClient).get(animId)
+		currentAnim = animationLoader.get(animId)
 		return currentAnim != null
 	}
 
