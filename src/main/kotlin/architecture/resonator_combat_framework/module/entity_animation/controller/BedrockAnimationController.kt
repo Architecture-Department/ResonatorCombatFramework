@@ -5,8 +5,8 @@ import architecture.resonator_combat_framework.module.entity_animation.api.IAnim
 import architecture.resonator_combat_framework.module.entity_animation.api.ProxyBone
 import architecture.resonator_combat_framework.module.entity_animation.api.ProxyModel
 import architecture.resonator_combat_framework.module.entity_animation.data.*
-import architecture.resonator_combat_framework.module.entity_animation.engine.BedrockAnimation
 import architecture.resonator_combat_framework.module.entity_animation.engine.BedrockAnimator
+import architecture.resonator_combat_framework.module.entity_animation.engine.BrBedrockAnimation
 import architecture.resonator_combat_framework.module.entity_animation.engine.molang.MolangQueries
 import architecture.resonator_combat_framework.module.entity_animation.event.AnimationControllerEvent
 import architecture.resonator_combat_framework.module.entity_animation.registry.BedrockAnimationRegistry
@@ -70,7 +70,7 @@ class BedrockAnimationController @JvmOverloads constructor(
 	protected var advanceTickCount = 0L
 
 	/** 当前加载的动画数据 */
-	private var currentAnim: BedrockAnimation? = null
+	private var currentAnim: BrBedrockAnimation? = null
 
 	/** 当前动画播放位置（秒） */
 	private var animTime = 0f
@@ -381,9 +381,9 @@ class BedrockAnimationController @JvmOverloads constructor(
 	private fun isInFadeIn(): Boolean = blendTarget > 0f && blendFactor < 1f
 
 	/** 转换 Bedrock 循环类型到枚举 */
-	fun BedrockAnimation.LoopType.toLoopType() = when (this) {
-		BedrockAnimation.LoopType.ONCE -> LoopType.ONCE
-		BedrockAnimation.LoopType.LOOP -> LoopType.LOOP
-		BedrockAnimation.LoopType.HOLD_ON_LAST -> LoopType.HOLD_ON_LAST
+	fun BrBedrockAnimation.LoopType.toLoopType() = when (this) {
+		BrBedrockAnimation.LoopType.ONCE -> LoopType.ONCE
+		BrBedrockAnimation.LoopType.LOOP -> LoopType.LOOP
+		BrBedrockAnimation.LoopType.HOLD_ON_LAST -> LoopType.HOLD_ON_LAST
 	}
 }

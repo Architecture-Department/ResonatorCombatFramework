@@ -1,4 +1,5 @@
-package architecture.resonator_combat_framework.module.entity_animation.network
+package architecture.resonator_combat_framework.module.entity_animation.network
+
 
 // 触发动画数据包
 
@@ -7,7 +8,7 @@ package architecture.resonator_combat_framework.module.entity_animation.network
 import architecture.goldenboughs_lib.api.payload.ToServerAndClientPayload
 import architecture.goldenboughs_lib.core.LibConstants.OPTIONAL_RESOURCE_LOCATION_STREAM_CODEC
 import architecture.resonator_combat_framework.core.RcfConstants
-import architecture.resonator_combat_framework.events.registry.AnimationControllerRegistry
+import architecture.resonator_combat_framework.events.registry.AnimationControllers
 import architecture.resonator_combat_framework.module.entity_animation.data.AnimationPlayData
 import architecture.resonator_combat_framework.module.entity_animation.mixed.PlayerProxyProvider.Companion.getAnimationTransformer
 import io.netty.buffer.ByteBuf
@@ -47,7 +48,7 @@ data class TriggerPlayerPayload(
 		val target = (level.getPlayerByUUID(playerUuid) as? AbstractClientPlayer) ?: return
 		val config = AnimationPlayData(
 			animId = animId,
-			controllerName = controllerName.orElse(AnimationControllerRegistry.MAIN)!!,
+			controllerName = controllerName.orElse(AnimationControllers.MAIN)!!,
 			speedMultiplier = speedMultiplier,
 			fadeInTicks = fadeInTicks,
 			fadeOutTicks = fadeOutTicks
@@ -58,7 +59,7 @@ data class TriggerPlayerPayload(
 	override fun toServer(context: IPayloadContext, player: ServerPlayer) {
 		val config = AnimationPlayData(
 			animId = animId,
-			controllerName = controllerName.orElse(AnimationControllerRegistry.MAIN)!!,
+			controllerName = controllerName.orElse(AnimationControllers.MAIN)!!,
 			speedMultiplier = speedMultiplier,
 			fadeInTicks = fadeInTicks,
 			fadeOutTicks = fadeOutTicks

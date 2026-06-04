@@ -1,13 +1,14 @@
 package architecture.resonator_combat_framework.module.entity_animation.controller
 
 import architecture.goldenboughs_lib.api.AllOpe
-import architecture.resonator_combat_framework.events.registry.AnimationControllerRegistry
+import architecture.resonator_combat_framework.events.registry.AnimationControllers
 import architecture.resonator_combat_framework.module.entity_animation.api.IAnimationMapper
 import architecture.resonator_combat_framework.module.entity_animation.api.ProxyBone
 import architecture.resonator_combat_framework.module.entity_animation.api.ProxyModel
 import architecture.resonator_combat_framework.module.entity_animation.data.ProxyBoneFlags
 import net.minecraft.resources.ResourceLocation
 import org.joml.Vector3f
+import java.util.function.DoubleSupplier
 
 /** 动画控制器管理器 */
 @AllOpe
@@ -23,6 +24,9 @@ class AnimationControllerManager {
 
 	/** 合并后的骨骼标志 */
 	val mergedFlags = mutableMapOf<String, ProxyBoneFlags>()
+
+	/** 实体级 MoLang 变量作用域（tickAnimations 时自动压入/弹出） */
+	val molangScope: MutableMap<String, DoubleSupplier> = HashMap()
 
 	/** 追加控制器到末尾 */
 	fun add(name: ResourceLocation, controller: IAnimationController) {
@@ -224,7 +228,7 @@ class AnimationControllerManager {
 	fun get(name: ResourceLocation): IAnimationController? = nameMap[name]
 
 	/** 获取主控制器 */
-	fun getMainController(): IAnimationController = nameMap[AnimationControllerRegistry.MAIN]
+	fun getMainController(): IAnimationController = nameMap[AnimationControllers.MAIN]
 		?: error("Main controller not initialized")
 
 	/** 获取所有控制器（按添加顺序） */

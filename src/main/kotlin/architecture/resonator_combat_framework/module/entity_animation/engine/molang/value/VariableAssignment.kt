@@ -1,13 +1,13 @@
-// MoLang AST 节点: 变量赋值 variable = expr
+// MoLang AST 节点: 变量赋值 variable = expr，通过 MoLang 作用域链写入
 package architecture.resonator_combat_framework.module.entity_animation.engine.molang.value
 
-import architecture.resonator_combat_framework.module.entity_animation.engine.molang.MathValue
-import java.util.function.DoubleSupplier
+import architecture.resonator_combat_framework.module.entity_animation.engine.molang.MoLang
+import architecture.resonator_combat_framework.module.entity_animation.engine.molang.MolangValue
 
-class VariableAssignment(private val variable: Variable, private val value: MathValue) : MathValue {
+class VariableAssignment(private val variable: Variable, private val value: MolangValue) : MolangValue {
 	override fun get(): Double {
 		val result = value.get()
-		variable.set(DoubleSupplier { result })
+		MoLang.assign(variable.name, result)
 		return result
 	}
 
@@ -19,4 +19,3 @@ class VariableAssignment(private val variable: Variable, private val value: Math
 		return variable.name + " = " + value
 	}
 }
-

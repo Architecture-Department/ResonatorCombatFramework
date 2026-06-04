@@ -1,6 +1,6 @@
 package architecture.resonator_combat_framework.module.entity_animation.data
 
-import architecture.resonator_combat_framework.events.registry.AnimationControllerRegistry
+import architecture.resonator_combat_framework.events.registry.AnimationControllers
 import architecture.resonator_combat_framework.module.entity_animation.mixed.PlayerProxyProvider.Companion.getAnimationTransformer
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.player.Player
@@ -22,7 +22,7 @@ import net.minecraft.world.entity.player.Player
  */
 data class AnimationPlayData(
 	val animId: String,
-	val controllerName: ResourceLocation = AnimationControllerRegistry.MAIN,
+	val controllerName: ResourceLocation = AnimationControllers.MAIN,
 	val animType: AnimType = AnimType.DEFAULT,
 	val startTime: Int = 0,
 	val endTime: Int = 0,
@@ -67,7 +67,7 @@ data class AnimationPlayData(
 	}
 
 	class Builder(private val animId: String) {
-		private var controllerName: ResourceLocation = AnimationControllerRegistry.MAIN
+		private var controllerName: ResourceLocation = AnimationControllers.MAIN
 		private var animType: AnimType = AnimType.DEFAULT
 		private var startTime: Int = 0
 		private var endTime: Int = 0

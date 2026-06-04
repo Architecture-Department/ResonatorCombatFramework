@@ -1,6 +1,6 @@
 package architecture.resonator_combat_framework.module.entity_animation.helper
 
-import architecture.resonator_combat_framework.events.registry.AnimationControllerRegistry
+import architecture.resonator_combat_framework.events.registry.AnimationControllers
 import architecture.resonator_combat_framework.module.entity_animation.data.AnimationPlayData
 import architecture.resonator_combat_framework.module.entity_animation.mixed.PlayerProxyProvider.Companion.getAnimationTransformer
 import architecture.resonator_combat_framework.module.entity_animation.network.PausePlayerPayload
@@ -80,7 +80,7 @@ object PlayerAnimationHelper {
 	@JvmStatic
 	@JvmOverloads
 	fun Player.stopAnima(
-		name: ResourceLocation = AnimationControllerRegistry.MAIN,
+		name: ResourceLocation = AnimationControllers.MAIN,
 		fadeOutTicks: Int = -1,
 		isPayload: Boolean = true
 	) {
@@ -99,7 +99,7 @@ object PlayerAnimationHelper {
 
 	@JvmStatic
 	@JvmOverloads
-	fun Player.pauseAnima(name: ResourceLocation = AnimationControllerRegistry.MAIN, isPayload: Boolean = true) {
+	fun Player.pauseAnima(name: ResourceLocation = AnimationControllers.MAIN, isPayload: Boolean = true) {
 		if (this is AbstractClientPlayer) getAnimationTransformer().pause(name)
 		else if (this is ServerPlayer) {
 			getAnimationTransformer().pause(name)
@@ -113,7 +113,7 @@ object PlayerAnimationHelper {
 
 	@JvmStatic
 	@JvmOverloads
-	fun Player.resumeAnima(name: ResourceLocation = AnimationControllerRegistry.MAIN, isPayload: Boolean = true) {
+	fun Player.resumeAnima(name: ResourceLocation = AnimationControllers.MAIN, isPayload: Boolean = true) {
 		if (this is AbstractClientPlayer) getAnimationTransformer().resume(name)
 		else if (this is ServerPlayer) {
 			getAnimationTransformer().resume(name)

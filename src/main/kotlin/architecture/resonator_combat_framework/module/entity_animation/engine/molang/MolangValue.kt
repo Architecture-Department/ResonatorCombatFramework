@@ -3,7 +3,7 @@ package architecture.resonator_combat_framework.module.entity_animation.engine.m
 
 import java.util.function.DoubleSupplier
 
-interface MathValue : DoubleSupplier {
+interface MolangValue : DoubleSupplier {
 	fun get(): Double
 
 	override fun getAsDouble(): Double = get()

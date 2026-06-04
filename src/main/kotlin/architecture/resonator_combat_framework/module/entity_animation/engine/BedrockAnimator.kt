@@ -10,7 +10,7 @@ import kotlin.math.floor
 object BedrockAnimator {
 
 	/** 计算动画在 time 时刻的骨骼变换并写入 proxyModel，返回受影响骨骼集合 */
-	fun computeAndWrite(anim: BedrockAnimation, time: Float, proxyModel: ProxyModel): Set<String> {
+	fun computeAndWrite(anim: BrBedrockAnimation, time: Float, proxyModel: ProxyModel): Set<String> {
 		val affected = mutableSetOf<String>()
 		for ((boneName, boneAnim) in anim.bones) {
 			val pos = interpolate(boneAnim.pos, time)

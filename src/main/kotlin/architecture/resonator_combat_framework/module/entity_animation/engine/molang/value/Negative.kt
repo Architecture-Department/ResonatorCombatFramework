@@ -1,9 +1,9 @@
 // MoLang AST 节点: 一元负号 -expr
 package architecture.resonator_combat_framework.module.entity_animation.engine.molang.value
 
-import architecture.resonator_combat_framework.module.entity_animation.engine.molang.MathValue
+import architecture.resonator_combat_framework.module.entity_animation.engine.molang.MolangValue
 
-class Negative(private val value: MathValue) : MathValue {
+class Negative(private val value: MolangValue) : MolangValue {
 	override fun get(): Double {
 		return -value.get()
 	}

@@ -61,6 +61,10 @@ interface IAnimationController {
 		)
 	)
 
+	fun equalsCurrentAnimId(id: String): Boolean {
+		return currentAnimId == id
+	}
+
 	/** 停止动画 */
 	fun stop(fadeOutTicks: Int = -1)
 

@@ -1,4 +1,5 @@
-package architecture.resonator_combat_framework.module.entity_animation.network
+package architecture.resonator_combat_framework.module.entity_animation.network
+
 
 // 停止动画数据包。从服务端发送到客户端，停止指定动画
 
@@ -39,7 +40,7 @@ data class StopPlayerPayload(
 		val target = (level.getPlayerByUUID(playerUuid) as? AbstractClientPlayer) ?: return
 		val transformer = target.getAnimationTransformer()
 		if (controllerName.isPresent) {
-			transformer.getController(controllerName.get()).stop(fadeOutTicks)
+			transformer.getController(controllerName.get())?.stop(fadeOutTicks)
 		} else {
 			transformer.stopAll(fadeOutTicks)
 		}
@@ -48,7 +49,7 @@ data class StopPlayerPayload(
 	override fun toServer(context: IPayloadContext, player: ServerPlayer) {
 		player.getAnimationTransformer().let { transformer ->
 			if (controllerName.isPresent) {
-				transformer.getController(controllerName.get()).stop(fadeOutTicks)
+				transformer.getController(controllerName.get())?.stop(fadeOutTicks)
 			} else {
 				transformer.stopAll(fadeOutTicks)
 			}

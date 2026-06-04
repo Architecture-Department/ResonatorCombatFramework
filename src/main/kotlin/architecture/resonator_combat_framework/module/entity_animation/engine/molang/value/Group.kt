@@ -1,9 +1,9 @@
 // MoLang AST 节点: 括号分组 (expr)
 package architecture.resonator_combat_framework.module.entity_animation.engine.molang.value
 
-import architecture.resonator_combat_framework.module.entity_animation.engine.molang.MathValue
+import architecture.resonator_combat_framework.module.entity_animation.engine.molang.MolangValue
 
-class Group(private val value: MathValue) : MathValue {
+class Group(private val value: MolangValue) : MolangValue {
 	override fun get(): Double {
 		return value.get()
 	}

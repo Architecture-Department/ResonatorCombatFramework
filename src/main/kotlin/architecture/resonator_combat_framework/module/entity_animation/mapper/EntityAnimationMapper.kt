@@ -1,7 +1,7 @@
 package architecture.resonator_combat_framework.module.entity_animation.mapper
 
 import architecture.resonator_combat_framework.core.RcfConstants
-import architecture.resonator_combat_framework.events.registry.AnimationControllerRegistry
+import architecture.resonator_combat_framework.events.registry.AnimationControllers
 import architecture.resonator_combat_framework.module.entity_animation.api.IAnimationMapper
 import architecture.resonator_combat_framework.module.entity_animation.api.ProxyModel
 import architecture.resonator_combat_framework.module.entity_animation.controller.AnimationControllerManager
@@ -84,7 +84,7 @@ constructor(
 	override fun isActive(): Boolean = animationControllerManager.isAnyActive()
 
 	/** 获取指定控制器（不存在返回主控制器） */
-	override fun getController(controllerName: ResourceLocation): IAnimationController =
+	override fun getController(controllerName: ResourceLocation): IAnimationController? =
 		animationControllerManager.get(controllerName) ?: mainController
 
 	/** 获取所有控制器 */
@@ -97,14 +97,14 @@ constructor(
 	// ---- 控制器管理 ----
 
 	/** 添加控制器（禁止覆盖 MAIN） */
-	override fun addController(name: ResourceLocation, controller: IAnimationController) {
-		if (name == AnimationControllerRegistry.MAIN) return
+	protected fun addController(name: ResourceLocation, controller: IAnimationController) {
+		if (name == AnimationControllers.MAIN) return
 		animationControllerManager.add(name, controller)
 	}
 
 	/** 移除控制器（禁止移除 MAIN） */
-	override fun removeController(name: ResourceLocation) {
-		if (name == AnimationControllerRegistry.MAIN) return
+	protected fun removeController(name: ResourceLocation) {
+		if (name == AnimationControllers.MAIN) return
 		animationControllerManager.remove(name)
 	}
 

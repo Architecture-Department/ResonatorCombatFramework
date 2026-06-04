@@ -1,12 +1,7 @@
 package architecture.resonator_combat_framework.module.entity_animation.command
 
-
-// 玩家动画测试命令。用于在游戏中测试动画播放
-
-// 玩家动画测试命令。用于在游戏中测试动画播放
-
 import architecture.goldenboughs_lib.util.CommandContextUtil.getArguments
-import architecture.resonator_combat_framework.events.registry.AnimationControllerRegistry
+import architecture.resonator_combat_framework.events.registry.AnimationControllers
 import architecture.resonator_combat_framework.module.entity_animation.data.AnimationPlayData
 import architecture.resonator_combat_framework.module.entity_animation.helper.PlayerAnimationHelper.pauseAnima
 import architecture.resonator_combat_framework.module.entity_animation.helper.PlayerAnimationHelper.resumeAnima
@@ -61,12 +56,12 @@ object TestAnimCommand {
 						)
 						.then(
 							Commands.literal("stop")
-								.executes { action(it) { stopAnima(AnimationControllerRegistry.COMMAND) } }
+								.executes { action(it) { stopAnima(AnimationControllers.COMMAND) } }
 								.then(
 									Commands.argument("fade_out", IntegerArgumentType.integer(-1))
 										.executes {
 											val target = getPlayer(it)
-											target.stopAnima(AnimationControllerRegistry.COMMAND)
+											target.stopAnima(AnimationControllers.COMMAND)
 											it.source.sendSuccess({
 												Component.literal("Stopped animation on ${target.name.string}")
 											}, true)
@@ -76,11 +71,11 @@ object TestAnimCommand {
 						)
 						.then(
 							Commands.literal("pause")
-								.executes { action(it) { pauseAnima(AnimationControllerRegistry.COMMAND) } }
+								.executes { action(it) { pauseAnima(AnimationControllers.COMMAND) } }
 						)
 						.then(
 							Commands.literal("resume")
-								.executes { action(it) { resumeAnima(AnimationControllerRegistry.COMMAND) } }
+								.executes { action(it) { resumeAnima(AnimationControllers.COMMAND) } }
 						)
 				)
 		)
@@ -103,7 +98,7 @@ object TestAnimCommand {
 		) else -1
 
 		val config = AnimationPlayData.builder(animId)
-			.controller(AnimationControllerRegistry.COMMAND)
+			.controller(AnimationControllers.COMMAND)
 			.speed(speed)
 			.also {
 				if (fadeIn >= 0) it.fadeIn(fadeIn)

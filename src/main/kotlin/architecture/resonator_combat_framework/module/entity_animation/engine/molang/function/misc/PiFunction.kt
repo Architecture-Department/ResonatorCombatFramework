@@ -1,9 +1,9 @@
 // MoLang 函数: math.pi() — 圆周率常数
 package architecture.resonator_combat_framework.module.entity_animation.engine.molang.function.misc
 
-import architecture.resonator_combat_framework.module.entity_animation.engine.molang.function.MathFunction
+import architecture.resonator_combat_framework.module.entity_animation.engine.molang.function.MolangFunction
 
-class PiFunction : MathFunction {
+class PiFunction : MolangFunction {
 	override fun get(): Double {
 		return Math.PI
 	}

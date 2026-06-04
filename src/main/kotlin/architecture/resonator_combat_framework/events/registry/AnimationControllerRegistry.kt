@@ -7,8 +7,7 @@ import net.minecraft.resources.ResourceLocation
 import net.neoforged.bus.api.SubscribeEvent
 import net.neoforged.fml.common.EventBusSubscriber
 
-@EventBusSubscriber(modid = RcfConstants.ID)
-object AnimationControllerRegistry {
+object AnimationControllers {
 	@JvmField
 	val BACKGROUND_ACTION: ResourceLocation = RcfConstants.modRl("background_action")
 
@@ -20,13 +19,15 @@ object AnimationControllerRegistry {
 
 	@JvmField
 	val COMMAND: ResourceLocation = RcfConstants.modRl("command")
-
-	@SubscribeEvent
-	fun registry(event: AnimationControllerRegisterEvent) {
-		event.register(BACKGROUND_ACTION, priority = 3000)
-		event.register(ACTION, ::ActionAnimationController, 4000)
-		event.register(MAIN, priority = 5000)
-		event.register(COMMAND, priority = 6000)
-	}
 }
 
+@EventBusSubscriber(modid = RcfConstants.ID)
+object AnimationControllerRegistry {
+	@SubscribeEvent
+	fun registry(event: AnimationControllerRegisterEvent) {
+		event.register(AnimationControllers.BACKGROUND_ACTION, priority = 3000)
+		event.register(AnimationControllers.ACTION, ::ActionAnimationController, 4000)
+		event.register(AnimationControllers.MAIN, priority = 5000)
+		event.register(AnimationControllers.COMMAND, priority = 6000)
+	}
+}

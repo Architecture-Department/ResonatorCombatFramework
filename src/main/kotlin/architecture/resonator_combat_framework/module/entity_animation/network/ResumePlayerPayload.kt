@@ -1,4 +1,5 @@
-package architecture.resonator_combat_framework.module.entity_animation.network
+package architecture.resonator_combat_framework.module.entity_animation.network
+
 
 // 恢复动画数据包
 
@@ -7,7 +8,7 @@ package architecture.resonator_combat_framework.module.entity_animation.network
 import architecture.goldenboughs_lib.api.payload.ToServerAndClientPayload
 import architecture.goldenboughs_lib.core.LibConstants.OPTIONAL_RESOURCE_LOCATION_STREAM_CODEC
 import architecture.resonator_combat_framework.core.RcfConstants
-import architecture.resonator_combat_framework.events.registry.AnimationControllerRegistry
+import architecture.resonator_combat_framework.events.registry.AnimationControllers
 import architecture.resonator_combat_framework.module.entity_animation.mixed.PlayerProxyProvider.Companion.getAnimationTransformer
 import io.netty.buffer.ByteBuf
 import net.minecraft.client.player.AbstractClientPlayer
@@ -32,7 +33,7 @@ data class ResumePlayerPayload(
 
 	override fun type() = TYPE
 
-	private val ctrlName: ResourceLocation get() = controllerName.orElse(AnimationControllerRegistry.MAIN)!!
+	private val ctrlName: ResourceLocation get() = controllerName.orElse(AnimationControllers.MAIN)!!
 
 	override fun toClient(context: IPayloadContext, player: AbstractClientPlayer) {
 		val target = context.player().level().getPlayerByUUID(playerUuid) as? AbstractClientPlayer ?: return

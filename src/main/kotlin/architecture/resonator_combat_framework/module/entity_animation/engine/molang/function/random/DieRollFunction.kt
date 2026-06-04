@@ -1,10 +1,10 @@
 // MoLang 函数: math.die_roll(sides, rolls) — 骰子投掷（浮点和）
 package architecture.resonator_combat_framework.module.entity_animation.engine.molang.function.random
 
-import architecture.resonator_combat_framework.module.entity_animation.engine.molang.MathValue
-import architecture.resonator_combat_framework.module.entity_animation.engine.molang.function.MathFunction
+import architecture.resonator_combat_framework.module.entity_animation.engine.molang.MolangValue
+import architecture.resonator_combat_framework.module.entity_animation.engine.molang.function.MolangFunction
 
-class DieRollFunction(private val sides: MathValue, private val rolls: MathValue) : MathFunction {
+class DieRollFunction(private val sides: MolangValue, private val rolls: MolangValue) : MolangFunction {
 	override fun get(): Double {
 		val s = sides.get()
 		val r = rolls.get()

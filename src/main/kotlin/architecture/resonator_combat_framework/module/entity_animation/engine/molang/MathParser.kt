@@ -1,9 +1,10 @@
 // MoLang 表达式解析器。字符串→分词→递归下降构建 AST。支持四则运算、比较、逻辑、三元、函数调用、变量/查询引用、赋值
-package architecture.resonator_combat_framework.module.entity_animation.engine.molang
+package architecture.resonator_combat_framework.module.entity_animation.engine.molang
+
 
 // MoLang 表达式解析器。字符串→分词→递归下降构建 AST。支持四则运算、比较、逻辑、三元、函数调用、变量/查询引用、赋值
 
-import architecture.resonator_combat_framework.module.entity_animation.engine.molang.function.MathFunction
+import architecture.resonator_combat_framework.module.entity_animation.engine.molang.function.MolangFunction
 import architecture.resonator_combat_framework.module.entity_animation.engine.molang.function.generic.*
 import architecture.resonator_combat_framework.module.entity_animation.engine.molang.function.limit.ClampFunction
 import architecture.resonator_combat_framework.module.entity_animation.engine.molang.function.limit.MaxFunction
@@ -27,37 +28,37 @@ object MathParser {
 	private val WHITESPACE: Pattern = Pattern.compile("\\s")
 	private val NUMERIC_PATTERN: Pattern = Pattern.compile("^-?\\d+(\\.\\d+)?$")
 
-	private val FUNCTION_FACTORIES: MutableMap<String, MathFunction.Factory<*>> =
-		ConcurrentHashMap<String, MathFunction.Factory<*>>()
+	private val FUNCTION_FACTORIES: MutableMap<String, MolangFunction.Factory<*>> =
+		ConcurrentHashMap<String, MolangFunction.Factory<*>>()
 
 	// ============== PUBLIC API ==============
 	fun isFunctionRegistered(name: String?): Boolean {
 		return FUNCTION_FACTORIES.containsKey(name)
 	}
 
-	fun registerFunction(name: String, factory: MathFunction.Factory<*>) {
+	fun registerFunction(name: String, factory: MolangFunction.Factory<*>) {
 		FUNCTION_FACTORIES[name] = factory
 	}
 
-	fun <T : MathFunction> buildFunction(name: String, vararg args: MathValue): T? {
+	fun <T : MolangFunction> buildFunction(name: String, vararg args: MolangValue): T? {
 		val factory = FUNCTION_FACTORIES[name] ?: return null
 		return factory.create(*args) as T?
 	}
 
 	fun registerVariable(variable: Variable) {
-		MolangQueries.registerVariable(variable.name)
+		MoLang.registerVariable(variable.name)
 	}
 
 	fun getVariableFor(name: String): Variable {
-		return MolangQueries.getVariableFor(name)
+		return MoLang.getVariableFor(name)
 	}
 
 	fun setVariable(name: String, supplier: DoubleSupplier) {
-		getVariableFor(name).set(supplier)
+		MoLang.set(name, supplier)
 	}
 
 	/** Entry point: parse a Molang expression string into an executable MathValue  */
-	fun compileMolang(expression: String): MathValue {
+	fun compileMolang(expression: String): MolangValue {
 		if (expression.startsWith("return")) {
 			var trimmed = expression.substring("return".length).trim { it <= ' ' }
 			val semiColonIdx = trimmed.indexOf(';')
@@ -69,7 +70,7 @@ object MathParser {
 
 		if (expression.contains(";")) {
 			val parts = expression.split(";".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
-			val compiled: MutableList<MathValue> = ArrayList<MathValue>()
+			val compiled: MutableList<MolangValue> = ArrayList<MolangValue>()
 			for (part in parts) {
 				var part = part
 				part = part.trim { it <= ' ' }
@@ -88,7 +89,7 @@ object MathParser {
 	}
 
 	/** Parse a single Molang expression string into an executable MathValue  */
-	fun compileExpression(expression: String): MathValue {
+	fun compileExpression(expression: String): MolangValue {
 		try {
 			val chars = decomposeExpression(expression)
 			val tokens = compileSymbols(chars)
@@ -216,14 +217,14 @@ object MathParser {
 	}
 
 	/** Parse function arguments from inner parentheses content, splitting by commas  */
-	private fun parseFunctionArguments(inner: CharArray): MutableList<MathValue> {
+	private fun parseFunctionArguments(inner: CharArray): MutableList<MolangValue> {
 		if (inner.isEmpty()) return mutableListOf()
 
 		// Tokenize the inner content
 		val innerTokens = compileSymbols(inner)
 
 		// Split by commas
-		val args = ArrayList<MathValue>()
+		val args = ArrayList<MolangValue>()
 		var lastComma = -1
 
 		for (i in 0..innerTokens.size) {
@@ -260,7 +261,7 @@ object MathParser {
 	}
 
 	// ============== AST BUILDING ==============
-	fun parseSymbols(tokens: MutableList<Token>): MathValue {
+	fun parseSymbols(tokens: MutableList<Token>): MolangValue {
 		if (tokens.isEmpty()) return Constant(0.0)
 
 		// Single token cases
@@ -308,7 +309,7 @@ object MathParser {
 		if (calc != null) return calc
 
 		// Fallback: wrap remaining tokens
-		val values: MutableList<MathValue> = ArrayList<MathValue>()
+		val values: MutableList<MolangValue> = ArrayList<MolangValue>()
 		for (token in tokens) {
 			if (token.isString()) {
 				values.add(compileSingleValue(token.string!!))
@@ -322,7 +323,7 @@ object MathParser {
 		return CompoundValue(*values.toTypedArray())
 	}
 
-	private fun compileTernary(tokens: MutableList<Token>): MathValue? {
+	private fun compileTernary(tokens: MutableList<Token>): MolangValue? {
 		var qIndex = -1
 		var depth = 0
 		for (i in tokens.indices) {
@@ -357,7 +358,7 @@ object MathParser {
 		return Ternary(condition, trueVal, falseVal)
 	}
 
-	private fun compileCalculation(tokens: MutableList<Token>): MathValue? {
+	private fun compileCalculation(tokens: MutableList<Token>): MolangValue? {
 		if (tokens.size < 3) return null
 
 		// Collect operator positions
@@ -375,7 +376,7 @@ object MathParser {
 		if (operators.isEmpty()) return null
 
 		// Collect operands (values between operators)
-		val operands: MutableList<MathValue> = ArrayList<MathValue>()
+		val operands: MutableList<MolangValue> = ArrayList<MolangValue>()
 		operands.add(parseSymbols(tokens.subList(0, opPositions[0])))
 
 		for (i in opPositions.indices) {
@@ -391,7 +392,7 @@ object MathParser {
 				if (left !is Variable) {
 					throw CompoundException("Attempted to assign a value to a non-variable")
 				}
-				val right: MathValue = if (i + 1 < operators.size) {
+				val right: MolangValue = if (i + 1 < operators.size) {
 					buildCalculationTree(
 						operators.subList(i + 1, operators.size),
 						operands.subList(i + 1, operands.size)
@@ -408,8 +409,8 @@ object MathParser {
 
 	private fun buildCalculationTree(
 		operators: MutableList<Operator>,
-		operands: MutableList<MathValue>
-	): MathValue {
+		operands: MutableList<MolangValue>
+	): MolangValue {
 		if (operators.isEmpty()) {
 			return if (operands.isEmpty()) Constant(0.0) else operands[0]
 		}
@@ -438,7 +439,7 @@ object MathParser {
 	}
 
 	// ============== SINGLE VALUE ==============
-	private fun compileSingleValue(token: String): MathValue {
+	private fun compileSingleValue(token: String): MolangValue {
 		if (token.isNullOrEmpty() || token[0].code == 0) {
 			return Constant(0.0)
 		}
@@ -453,16 +454,16 @@ object MathParser {
 		if ("false" == token) return Constant(0.0)
 
 		// Try 0-arg function (e.g., math.pi)
-		val zeroArgFunc = buildFunction<MathFunction>(token)
+		val zeroArgFunc = buildFunction<MolangFunction>(token)
 		if (zeroArgFunc != null) return zeroArgFunc
 
 		// Variable or query reference
 		return getVariableFor(token)
 	}
 
-	private fun tryBuildFunction(name: String, args: MutableList<MathValue>): MathValue? {
+	private fun tryBuildFunction(name: String, args: MutableList<MolangValue>): MolangValue? {
 		if (!isFunctionRegistered(name)) return null
-		return buildFunction<MathFunction>(name, *args.toTypedArray())
+		return buildFunction<MolangFunction>(name, *args.toTypedArray())
 	}
 
 	// ============== HELPERS ==============
@@ -484,83 +485,83 @@ object MathParser {
 	// ============== STATIC FUNCTION REGISTRATION ==============
 	init {
 		// Generic
-		registerFunction("math.abs", MathFunction.Factory { args -> AbsFunction(args[0]) })
-		registerFunction("math.acos", MathFunction.Factory { args -> ACosFunction(args[0]) })
-		registerFunction("math.asin", MathFunction.Factory { args -> ASinFunction(args[0]) })
-		registerFunction("math.atan", MathFunction.Factory { args -> ATanFunction(args[0]) })
+		registerFunction("math.abs", MolangFunction.Factory { args -> AbsFunction(args[0]) })
+		registerFunction("math.acos", MolangFunction.Factory { args -> ACosFunction(args[0]) })
+		registerFunction("math.asin", MolangFunction.Factory { args -> ASinFunction(args[0]) })
+		registerFunction("math.atan", MolangFunction.Factory { args -> ATanFunction(args[0]) })
 		registerFunction(
 			"math.atan2",
-			MathFunction.Factory { args -> ATan2Function(args[0], args[1]) })
-		registerFunction("math.cos", MathFunction.Factory { args -> CosFunction(args[0]) })
-		registerFunction("math.exp", MathFunction.Factory { args -> ExpFunction(args[0]) })
-		registerFunction("math.ln", MathFunction.Factory { args -> LogFunction(args[0]) })
-		registerFunction("math.log", MathFunction.Factory { args -> LogFunction(args[0]) })
+			MolangFunction.Factory { args -> ATan2Function(args[0], args[1]) })
+		registerFunction("math.cos", MolangFunction.Factory { args -> CosFunction(args[0]) })
+		registerFunction("math.exp", MolangFunction.Factory { args -> ExpFunction(args[0]) })
+		registerFunction("math.ln", MolangFunction.Factory { args -> LogFunction(args[0]) })
+		registerFunction("math.log", MolangFunction.Factory { args -> LogFunction(args[0]) })
 		registerFunction(
 			"math.mod",
-			MathFunction.Factory { args -> ModFunction(args[0], args[1]) })
+			MolangFunction.Factory { args -> ModFunction(args[0], args[1]) })
 		registerFunction(
 			"math.pow",
-			MathFunction.Factory { args -> PowFunction(args[0], args[1]) })
-		registerFunction("math.sin", MathFunction.Factory { args -> SinFunction(args[0]) })
-		registerFunction("math.sqrt", MathFunction.Factory { args -> SqrtFunction(args[0]) })
+			MolangFunction.Factory { args -> PowFunction(args[0], args[1]) })
+		registerFunction("math.sin", MolangFunction.Factory { args -> SinFunction(args[0]) })
+		registerFunction("math.sqrt", MolangFunction.Factory { args -> SqrtFunction(args[0]) })
 
 		// Limit
 		registerFunction(
 			"math.clamp",
-			MathFunction.Factory { args -> ClampFunction(args[0], args[1], args[2]) })
+			MolangFunction.Factory { args -> ClampFunction(args[0], args[1], args[2]) })
 		registerFunction(
 			"math.max",
-			MathFunction.Factory { args -> MaxFunction(args[0], args[1]) })
+			MolangFunction.Factory { args -> MaxFunction(args[0], args[1]) })
 		registerFunction(
 			"math.min",
-			MathFunction.Factory { args -> MinFunction(args[0], args[1]) })
+			MolangFunction.Factory { args -> MinFunction(args[0], args[1]) })
 
 		// Misc
-		registerFunction("math.pi", MathFunction.Factory { args -> PiFunction() })
-		registerFunction("math.to_deg", MathFunction.Factory { args -> ToDegFunction(args[0]) })
-		registerFunction("math.to_rad", MathFunction.Factory { args -> ToRadFunction(args[0]) })
+		registerFunction("math.pi", MolangFunction.Factory { args -> PiFunction() })
+		registerFunction("math.to_deg", MolangFunction.Factory { args -> ToDegFunction(args[0]) })
+		registerFunction("math.to_rad", MolangFunction.Factory { args -> ToRadFunction(args[0]) })
 
 		// Random
 		registerFunction(
 			"math.die_roll",
-			MathFunction.Factory { args -> DieRollFunction(args[0], args[1]) })
+			MolangFunction.Factory { args -> DieRollFunction(args[0], args[1]) })
 		registerFunction(
 			"math.die_roll_integer",
-			MathFunction.Factory { args -> DieRollIntegerFunction(args[0], args[1]) })
+			MolangFunction.Factory { args -> DieRollIntegerFunction(args[0], args[1]) })
 		registerFunction(
 			"math.random",
-			MathFunction.Factory { args -> RandomFunction(args[0], args[1]) })
+			MolangFunction.Factory { args -> RandomFunction(args[0], args[1]) })
 		registerFunction(
 			"math.random_integer",
-			MathFunction.Factory { args -> RandomIntegerFunction(args[0], args[1]) })
+			MolangFunction.Factory { args -> RandomIntegerFunction(args[0], args[1]) })
 
 		// Round
-		registerFunction("math.ceil", MathFunction.Factory { args -> CeilFunction(args[0]) })
-		registerFunction("math.floor", MathFunction.Factory { args -> FloorFunction(args[0]) })
-		registerFunction("math.round", MathFunction.Factory { args -> RoundFunction(args[0]) })
-		registerFunction("math.trunc", MathFunction.Factory { args -> TruncateFunction(args[0]) })
+		registerFunction("math.ceil", MolangFunction.Factory { args -> CeilFunction(args[0]) })
+		registerFunction("math.floor", MolangFunction.Factory { args -> FloorFunction(args[0]) })
+		registerFunction("math.round", MolangFunction.Factory { args -> RoundFunction(args[0]) })
+		registerFunction("math.trunc", MolangFunction.Factory { args -> TruncateFunction(args[0]) })
 		registerFunction(
 			"math.hermite_blend",
-			MathFunction.Factory { args -> HermiteBlendFunction(args[0]) })
+			MolangFunction.Factory { args -> HermiteBlendFunction(args[0]) })
 		registerFunction(
 			"math.lerp",
-			MathFunction.Factory { args -> LerpFunction(args[0], args[1], args[2]) })
+			MolangFunction.Factory { args -> LerpFunction(args[0], args[1], args[2]) })
 		registerFunction(
 			"math.lerprotate",
-			MathFunction.Factory { args -> LerpRotFunction(args[0], args[1], args[2]) })
+			MolangFunction.Factory { args -> LerpRotFunction(args[0], args[1], args[2]) })
 	}
 
 	// ============== TOKEN TYPES ==============
 	class Token {
 		val string: String?
-		val subExpr: MutableList<MathValue>?
+		val subExpr: MutableList<MolangValue>?
 
 		constructor(string: String?) {
 			this.string = string
 			this.subExpr = null
 		}
 
-		constructor(subExpr: MutableList<MathValue>?) {
+		constructor(subExpr: MutableList<MolangValue>?) {
 			this.string = null
 			this.subExpr = subExpr
 		}

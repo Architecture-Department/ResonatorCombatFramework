@@ -1,4 +1,5 @@
-package architecture.resonator_combat_framework.module.entity_animation.network
+package architecture.resonator_combat_framework.module.entity_animation.network
+
 
 // 播放动画数据包。从服务端发送到客户端，触发动画播放
 
@@ -7,7 +8,7 @@ package architecture.resonator_combat_framework.module.entity_animation.network
 import architecture.goldenboughs_lib.api.payload.ToServerAndClientPayload
 import architecture.goldenboughs_lib.core.LibConstants.OPTIONAL_RESOURCE_LOCATION_STREAM_CODEC
 import architecture.resonator_combat_framework.core.RcfConstants
-import architecture.resonator_combat_framework.events.registry.AnimationControllerRegistry
+import architecture.resonator_combat_framework.events.registry.AnimationControllers
 import architecture.resonator_combat_framework.module.entity_animation.data.AnimType
 import architecture.resonator_combat_framework.module.entity_animation.data.AnimationPlayData
 import architecture.resonator_combat_framework.module.entity_animation.mixed.PlayerProxyProvider.Companion.getAnimationTransformer
@@ -61,7 +62,7 @@ data class PlayPlayerPayload(
 
 	private fun buildConfig() = AnimationPlayData(
 		animId = animId,
-		controllerName = controllerName.orElse(AnimationControllerRegistry.MAIN)!!,
+		controllerName = controllerName.orElse(AnimationControllers.MAIN)!!,
 		animType = animType,
 		speedMultiplier = speedMultiplier,
 		startTime = startTime,

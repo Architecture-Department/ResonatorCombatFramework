@@ -1,7 +1,4 @@
-// 命令补全提供器。为 /player_anim 命令提供已加载的 Bedrock 动画 ID 列表作为 tab 补全
-package architecture.resonator_combat_framework.module.entity_animation.command
-
-// 命令补全提供器。为 /player_anim 命令提供已加载的 Bedrock 动画 ID 列表作为 tab 补全
+package architecture.resonator_combat_framework.module.entity_animation.command
 
 import architecture.resonator_combat_framework.module.entity_animation.registry.BedrockAnimationRegistry
 import com.mojang.brigadier.context.CommandContext

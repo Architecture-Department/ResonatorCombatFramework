@@ -1,14 +1,14 @@
 // MoLang AST 节点: 二元运算（如 a + b），带不可变节点缓存优化
 package architecture.resonator_combat_framework.module.entity_animation.engine.molang.value
 
-import architecture.resonator_combat_framework.module.entity_animation.engine.molang.MathValue
+import architecture.resonator_combat_framework.module.entity_animation.engine.molang.MolangValue
 import architecture.resonator_combat_framework.module.entity_animation.engine.molang.Operator
 
 class Calculation(
 	private val operator: Operator,
-	private val argA: MathValue,
-	private val argB: MathValue
-) : MathValue {
+	private val argA: MolangValue,
+	private val argB: MolangValue
+) : MolangValue {
 	private val isMutable: Boolean = argA.isMutable() || argB.isMutable()
 	private var cachedValue = Double.MIN_VALUE
 
@@ -30,11 +30,11 @@ class Calculation(
 		return operator
 	}
 
-	fun argA(): MathValue {
+	fun argA(): MolangValue {
 		return argA
 	}
 
-	fun argB(): MathValue {
+	fun argB(): MolangValue {
 		return argB
 	}
 
