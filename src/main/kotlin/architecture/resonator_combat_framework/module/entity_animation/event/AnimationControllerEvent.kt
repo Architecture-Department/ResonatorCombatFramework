@@ -1,41 +1,39 @@
 package architecture.resonator_combat_framework.module.entity_animation.event
 
-import architecture.resonator_combat_framework.module.entity_animation.api.IAnimationMapper
-import architecture.resonator_combat_framework.module.entity_animation.controller.IAnimationController
+import architecture.resonator_combat_framework.module.entity_animation.controller.IEntityAnimationController
+import architecture.resonator_combat_framework.module.entity_animation.mapper.IEntityAnimationMapper
 import net.minecraft.resources.ResourceLocation
+import net.minecraft.world.entity.Entity
 import net.neoforged.bus.api.Event
 import net.neoforged.bus.api.ICancellableEvent
 
-abstract class AnimationControllerEvent(
+abstract class AnimationControllerEvent<T : Entity>(
 	val id: ResourceLocation,
-	val animaController: IAnimationController,
-	val animaMapper: IAnimationMapper
+	val animaController: IEntityAnimationController<T>,
+	val animaMapper: IEntityAnimationMapper<T, *>
 ) : Event() {
-	class TickHandlerPre(
+
+	class TickHandlerPre<T : Entity>(
 		id: ResourceLocation,
-		animaController: IAnimationController,
-		animaMapper: IAnimationMapper
-	) : AnimationControllerEvent(id, animaController, animaMapper), ICancellableEvent
+		animaController: IEntityAnimationController<T>,
+		animaMapper: IEntityAnimationMapper<T, *>
+	) : AnimationControllerEvent<T>(id, animaController, animaMapper), ICancellableEvent
 
-	class TickHandlerPost(
+	class TickHandlerPost<T : Entity>(
 		id: ResourceLocation,
-		animaController: IAnimationController,
-		animaMapper: IAnimationMapper
-	) : AnimationControllerEvent(id, animaController, animaMapper) {
+		animaController: IEntityAnimationController<T>,
+		animaMapper: IEntityAnimationMapper<T, *>
+	) : AnimationControllerEvent<T>(id, animaController, animaMapper)
 
-	}
-
-	class TickPre(
+	class TickPre<T : Entity>(
 		id: ResourceLocation,
-		animaController: IAnimationController,
-		animaMapper: IAnimationMapper
-	) : AnimationControllerEvent(id, animaController, animaMapper), ICancellableEvent
+		animaController: IEntityAnimationController<T>,
+		animaMapper: IEntityAnimationMapper<T, *>
+	) : AnimationControllerEvent<T>(id, animaController, animaMapper), ICancellableEvent
 
-	class TickPost(
+	class TickPost<T : Entity>(
 		id: ResourceLocation,
-		animaController: IAnimationController,
-		animaMapper: IAnimationMapper
-	) : AnimationControllerEvent(id, animaController, animaMapper) {
-
-	}
+		animaController: IEntityAnimationController<T>,
+		animaMapper: IEntityAnimationMapper<T, *>
+	) : AnimationControllerEvent<T>(id, animaController, animaMapper)
 }

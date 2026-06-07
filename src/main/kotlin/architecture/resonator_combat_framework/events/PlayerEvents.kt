@@ -1,7 +1,7 @@
 package architecture.resonator_combat_framework.events
 
 import architecture.resonator_combat_framework.core.RcfConstants
-import architecture.resonator_combat_framework.module.entity_animation.mixed.PlayerProxyProvider.Companion.getAnimationTransformer
+import architecture.resonator_combat_framework.module.entity_animation.mixed.IAnimationProxyProvider.Companion.getAnimationTransformer
 import net.neoforged.bus.api.SubscribeEvent
 import net.neoforged.fml.common.EventBusSubscriber
 import net.neoforged.neoforge.event.tick.PlayerTickEvent

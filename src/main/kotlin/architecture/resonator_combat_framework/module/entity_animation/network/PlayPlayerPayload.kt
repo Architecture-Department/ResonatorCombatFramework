@@ -11,7 +11,7 @@ import architecture.resonator_combat_framework.core.RcfConstants
 import architecture.resonator_combat_framework.events.registry.AnimationControllers
 import architecture.resonator_combat_framework.module.entity_animation.data.AnimType
 import architecture.resonator_combat_framework.module.entity_animation.data.AnimationPlayData
-import architecture.resonator_combat_framework.module.entity_animation.mixed.PlayerProxyProvider.Companion.getAnimationTransformer
+import architecture.resonator_combat_framework.module.entity_animation.mixed.IAnimationProxyProvider.Companion.getAnimationTransformer
 import io.netty.buffer.ByteBuf
 import net.minecraft.client.player.AbstractClientPlayer
 import net.minecraft.core.UUIDUtil

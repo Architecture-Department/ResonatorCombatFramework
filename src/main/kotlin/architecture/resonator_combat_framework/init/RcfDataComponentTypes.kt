@@ -17,12 +17,6 @@ object RcfDataComponentTypes {
 	val REGISTRY: DeferredRegister<DataComponentType<*>> =
 		modRegister<DataComponentType<*>>(BuiltInRegistries.DATA_COMPONENT_TYPE)
 
-	@JvmField
-	val STACK_ANIMATABLE_ID_COMPONENT: Supplier<DataComponentType<Long>> = register<Long>(
-		"stack_animatable_id",
-		Codec.LONG, ByteBufCodecs.VAR_LONG, false
-	)
-
 	private fun recordBoolean(name: String, isCacheEncoding: Boolean): Supplier<DataComponentType<Boolean>> {
 		return register<Boolean>(name, Codec.BOOL, ByteBufCodecs.BOOL, isCacheEncoding)
 	}

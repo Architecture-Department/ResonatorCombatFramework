@@ -4,6 +4,7 @@ import architecture.resonator_combat_framework.core.RcfConstants
 import architecture.resonator_combat_framework.module.entity_animation.data.ProxyBoneConfigData
 import architecture.resonator_combat_framework.module.entity_animation.data.ProxyBoneFlags
 import architecture.resonator_combat_framework.module.entity_animation.data.ProxyTimelineEntry
+import architecture.resonator_combat_framework.module.entity_animation.engine.BrBone
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
@@ -11,15 +12,15 @@ import net.minecraft.server.packs.resources.ResourceManager
 import net.minecraft.server.packs.resources.SimplePreparableReloadListener
 import net.minecraft.util.profiling.ProfilerFiller
 
-class ProxyBoneConfigRegistry(private val side: String = "?") :
+class ProxyBoneConfigDataRegistry(private val side: String = "?") :
 	SimplePreparableReloadListener<Map<String, ProxyBoneConfigData>>() {
 
 	companion object {
-		private val INSTANCE = ProxyBoneConfigRegistry("CLIENT")
-		private val INSTANCE_SERVER = ProxyBoneConfigRegistry("SERVER")
+		private val INSTANCE = ProxyBoneConfigDataRegistry("CLIENT")
+		private val INSTANCE_SERVER = ProxyBoneConfigDataRegistry("SERVER")
 
 		@JvmStatic
-		fun getInstance(isClient: Boolean): ProxyBoneConfigRegistry {
+		fun getInstance(isClient: Boolean): ProxyBoneConfigDataRegistry {
 			return if (isClient) INSTANCE else INSTANCE_SERVER
 		}
 	}
@@ -62,6 +63,10 @@ class ProxyBoneConfigRegistry(private val side: String = "?") :
 		val fadeInTicks = json.get("fade_in")?.asInt ?: -1
 		val fadeOutTicks = json.get("fade_out")?.asInt ?: -1
 		val bones = parseBonesSection(json.get("bones"))
+		// 解析额外骨骼定义（动画期间动态添加的 BrBone 几何数据）
+		val extraBonesJson = json.getAsJsonArray("extra_bones")
+		val extraBones = if (extraBonesJson != null)
+			BrBone.parses(extraBonesJson).associateBy { it.name } else emptyMap()
 		val timelineJson = json.getAsJsonObject("timeline")
 		val timeline = if (timelineJson != null) {
 			val list = mutableListOf<ProxyTimelineEntry>()
@@ -78,7 +83,7 @@ class ProxyBoneConfigRegistry(private val side: String = "?") :
 			}
 			list
 		} else emptyList()
-		return ProxyBoneConfigData.create(bones, timeline, transitionTicks, fadeInTicks, fadeOutTicks)
+		return ProxyBoneConfigData.create(bones, timeline, transitionTicks, fadeInTicks, fadeOutTicks, extraBones)
 	}
 
 	private fun parseBonesSection(section: JsonElement?): Map<String, ProxyBoneFlags> {

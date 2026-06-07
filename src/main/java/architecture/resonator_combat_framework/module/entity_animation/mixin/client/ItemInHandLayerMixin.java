@@ -1,6 +1,7 @@
 package architecture.resonator_combat_framework.module.entity_animation.mixin.client;
 
-import architecture.resonator_combat_framework.module.entity_animation.mapper.PlayerAnimationMapper;
+import architecture.resonator_combat_framework.module.entity_animation.mapper.HumanoidEntityAnimationMapper;
+import architecture.resonator_combat_framework.module.entity_animation.mapper.IEntityAnimationMapper;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -29,9 +30,11 @@ public class ItemInHandLayerMixin {
 		CallbackInfo ci
 	) {
 		if (!(livingEntity instanceof AbstractClientPlayer player)) return;
-		PlayerAnimationMapper transformer = player.resonator_combat_framework$getAnimationTransformer();
-		if (!transformer.isActive()) return;
-		transformer.applyItemTransform(arm == HumanoidArm.LEFT, poseStack);
+		IEntityAnimationMapper<?, ?> iAnimationMapper = player.resonator_combat_framework$getAnimationTransformer();
+		if (!iAnimationMapper.isActive() || !(iAnimationMapper instanceof HumanoidEntityAnimationMapper<?, ?> humanoidEntityAnimationMapper)) {
+			return;
+		}
+		humanoidEntityAnimationMapper.applyItemTransform(arm == HumanoidArm.LEFT, poseStack);
 	}
 }
 

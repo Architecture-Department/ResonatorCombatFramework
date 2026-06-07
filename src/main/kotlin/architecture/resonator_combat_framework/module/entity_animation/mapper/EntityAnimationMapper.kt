@@ -2,35 +2,43 @@ package architecture.resonator_combat_framework.module.entity_animation.mapper
 
 import architecture.resonator_combat_framework.core.RcfConstants
 import architecture.resonator_combat_framework.events.registry.AnimationControllers
-import architecture.resonator_combat_framework.module.entity_animation.api.IAnimationMapper
-import architecture.resonator_combat_framework.module.entity_animation.api.ProxyModel
+import architecture.resonator_combat_framework.module.entity_animation.ProxyModel
 import architecture.resonator_combat_framework.module.entity_animation.controller.AnimationControllerManager
 import architecture.resonator_combat_framework.module.entity_animation.controller.BedrockAnimationController
-import architecture.resonator_combat_framework.module.entity_animation.controller.IAnimationController
+import architecture.resonator_combat_framework.module.entity_animation.controller.IEntityAnimationController
 import architecture.resonator_combat_framework.module.entity_animation.data.AnimationPlayData
 import architecture.resonator_combat_framework.module.entity_animation.data.ProxyBoneConfigData
 import architecture.resonator_combat_framework.module.entity_animation.data.ProxyBoneFlags
+import architecture.resonator_combat_framework.module.entity_animation.engine.BrAnimationParticle
+import architecture.resonator_combat_framework.module.entity_animation.engine.BrAnimationSound
+import architecture.resonator_combat_framework.module.entity_animation.engine.molang.MolangData
 import architecture.resonator_combat_framework.module.entity_animation.registry.BedrockAnimationRegistry
-import architecture.resonator_combat_framework.module.entity_animation.registry.ProxyBoneConfigRegistry
+import architecture.resonator_combat_framework.module.entity_animation.registry.ProxyBoneConfigDataRegistry
 import architecture.resonator_combat_framework.module.entity_animation.util.BoneTransformUtil
 import com.mojang.blaze3d.vertex.PoseStack
 import net.minecraft.client.model.EntityModel
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.Entity
+import org.joml.Vector3d
 
 /** 实体动画映射器基类——管理控制器生命周期、触发/停止/暂停/恢复 */
 abstract class EntityAnimationMapper<T : Entity, M : EntityModel<T>>
 @JvmOverloads
 constructor(
-	val entity: T,
-	override val isClient: Boolean = entity.level().isClientSide
-) : IAnimationMapper {
+	override val holder: T,
+	override val isClient: Boolean = holder.level().isClientSide
+) : IEntityAnimationMapper<T, M> {
+	/** 上一渲染帧的 tickSec，用于计算 deltaSec */
+	protected var lastRenderTick = 0f
 
-	val configLoader: ProxyBoneConfigRegistry = ProxyBoneConfigRegistry.getInstance(isClient)
+	/** 当前渲染帧的 partialTick，供 applyItemTransform 使用 */
+	protected var currentPartialTick = 0f
+
+	val configLoader: ProxyBoneConfigDataRegistry = ProxyBoneConfigDataRegistry.getInstance(isClient)
 
 	val animationLoader: BedrockAnimationRegistry = BedrockAnimationRegistry.getInstance(isClient)
 
-	override val animationControllerManager = AnimationControllerManager()
+	override val animationControllerManager = AnimationControllerManager(this)
 
 	// ---- 触发 ----
 
@@ -84,11 +92,11 @@ constructor(
 	override fun isActive(): Boolean = animationControllerManager.isAnyActive()
 
 	/** 获取指定控制器（不存在返回主控制器） */
-	override fun getController(controllerName: ResourceLocation): IAnimationController? =
+	override fun getController(controllerName: ResourceLocation): IEntityAnimationController<T>? =
 		animationControllerManager.get(controllerName) ?: mainController
 
 	/** 获取所有控制器 */
-	override fun controllers(): List<IAnimationController> = animationControllerManager.getAll()
+	override fun controllers(): List<IEntityAnimationController<T>> = animationControllerManager.getAll()
 
 	/** 是否存在指定控制器 */
 	override fun hasController(controllerName: ResourceLocation): Boolean =
@@ -97,7 +105,7 @@ constructor(
 	// ---- 控制器管理 ----
 
 	/** 添加控制器（禁止覆盖 MAIN） */
-	protected fun addController(name: ResourceLocation, controller: IAnimationController) {
+	protected fun addController(name: ResourceLocation, controller: IEntityAnimationController<T>) {
 		if (name == AnimationControllers.MAIN) return
 		animationControllerManager.add(name, controller)
 	}
@@ -111,21 +119,21 @@ constructor(
 	// ---- 高级查询 ----
 
 	/** 获取所有活跃控制器（按优先级排序） */
-	override fun getActiveControllersSorted(): List<IAnimationController> =
+	override fun getActiveControllersSorted(): List<IEntityAnimationController<T>> =
 		animationControllerManager.getSortedActive()
 
 	/** 获取可渲染的控制器列表 */
-	override fun getRenderableControllers(): List<IAnimationController> =
+	override fun getRenderableControllers(): List<IEntityAnimationController<T>> =
 		animationControllerManager.getRenderable()
 
 	/** 查找阻塞指定控制器的高优先级控制器 */
-	override fun findBlockingControllers(controller: IAnimationController): List<IAnimationController> =
+	override fun findBlockingControllers(controller: IEntityAnimationController<T>): List<IEntityAnimationController<T>> =
 		animationControllerManager.findBlocking(controller)
 
-	// ---- Tick ----
+	// ---- 游戏刻推进 ----
 
 	/** 游戏刻推进 */
-	override fun tickAnimations() = animationControllerManager.tickAnimations(this)
+	override fun tickAnimations() = animationControllerManager.tickAnimations()
 
 	// ---- 配置 ----
 
@@ -140,6 +148,27 @@ constructor(
 		flags: Map<String, ProxyBoneFlags>
 	)
 
+	/** 由 Mixin 每帧调用：更新过渡状态 → 重新合并 → 渲染到模型 */
+	override fun tickAndRender(model: M, partialTick: Float, poseStack: PoseStack) {
+		if (!isClient || !isActive()) return
+		val tickSec = (holder.tickCount + partialTick) / 20f
+		val deltaSec = if (lastRenderTick == 0f) 0f else tickSec - lastRenderTick
+		lastRenderTick = tickSec
+		currentPartialTick = partialTick
+
+		for (ctrl in animationControllerManager.getAll()) {
+			ctrl.tickRender(deltaSec)
+		}
+		animationControllerManager.remerge()
+		val renderable = animationControllerManager.getRenderable()
+		if (renderable.isEmpty()) return
+
+		val interpolatedProxyModel = animationControllerManager.getInterpolatedProxy(partialTick)
+		applyRootTransform(interpolatedProxyModel, poseStack, animationControllerManager.mergedFlags)
+
+		applyProxyToModel(interpolatedProxyModel, model, animationControllerManager.mergedFlags)
+	}
+
 	/** 将 root 骨骼变换应用到 PoseStack */
 	fun applyRootTransform(
 		proxyModel: ProxyModel, poseStack: PoseStack,
@@ -149,5 +178,39 @@ constructor(
 		val bone = proxyModel.getBone("root") ?: return
 		val t = BoneTransformUtil.computeForPoseStack(bone, flags["root"], 1f, flipY = true)
 		BoneTransformUtil.applyTo(poseStack, t)
+	}
+	// ---- 模型方法覆写 ----
+
+	/** 播放音效（模型方法）：从合并后的代理模型中查找骨骼位置 */
+	override fun playSoundEffect(sound: BrAnimationSound, model: M, molangData: MolangData?) {
+		if (!isClient) return
+		val bonePos = sound.effects.firstOrNull()?.boneName
+			?.let { resolveBoneWorldPos(it, model) }
+			?: Vector3d(holder.x, holder.y, holder.z)
+		sound.apply(holder, bonePos, molangData)
+	}
+
+	/** 播放粒子（模型方法）：从合并后的代理模型中查找骨骼位置 */
+	override fun playParticleEffect(particle: BrAnimationParticle, model: M, molangData: MolangData?) {
+		if (!isClient) return
+		val bonePos = particle.effects.firstOrNull()?.boneName
+			?.let { resolveBoneWorldPos(it, model) }
+			?: Vector3d(holder.x, holder.y, holder.z)
+		particle.apply(holder, bonePos, molangData)
+	}
+
+	/**
+	 * 从合并后的代理模型 mergedProxy 中查找骨骼/定位器位置。
+	 * 子类可覆写实现具体的 ModelPart 查找（如 HumanoidEntityAnimationMapper）。
+	 */
+	override fun resolveBoneWorldPos(boneName: String, model: M): Vector3d {
+		val proxy = animationControllerManager.mergedProxy.getBone(boneName)
+		proxy?.getLocator(boneName)?.let {
+			return Vector3d(holder.x + it.pos.x.toDouble(), holder.y + it.pos.y.toDouble(), holder.z + it.pos.z.toDouble())
+		}
+		proxy?.let {
+			return Vector3d(holder.x + it.pos.x.toDouble(), holder.y + it.pos.y.toDouble(), holder.z + it.pos.z.toDouble())
+		}
+		return Vector3d(holder.x, holder.y, holder.z)
 	}
 }

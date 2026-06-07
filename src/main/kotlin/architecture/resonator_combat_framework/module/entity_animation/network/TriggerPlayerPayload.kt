@@ -1,16 +1,12 @@
 package architecture.resonator_combat_framework.module.entity_animation.network
 
 
-// 触发动画数据包
-
-// 触发动画数据包
-
 import architecture.goldenboughs_lib.api.payload.ToServerAndClientPayload
 import architecture.goldenboughs_lib.core.LibConstants.OPTIONAL_RESOURCE_LOCATION_STREAM_CODEC
 import architecture.resonator_combat_framework.core.RcfConstants
 import architecture.resonator_combat_framework.events.registry.AnimationControllers
 import architecture.resonator_combat_framework.module.entity_animation.data.AnimationPlayData
-import architecture.resonator_combat_framework.module.entity_animation.mixed.PlayerProxyProvider.Companion.getAnimationTransformer
+import architecture.resonator_combat_framework.module.entity_animation.mixed.IAnimationProxyProvider.Companion.getAnimationTransformer
 import io.netty.buffer.ByteBuf
 import net.minecraft.client.player.AbstractClientPlayer
 import net.minecraft.core.UUIDUtil
@@ -23,6 +19,7 @@ import net.neoforged.neoforge.network.PacketDistributor
 import net.neoforged.neoforge.network.handling.IPayloadContext
 import java.util.*
 
+// 触发动画数据包
 data class TriggerPlayerPayload(
 	val playerUuid: UUID,
 	val controllerName: Optional<ResourceLocation>,

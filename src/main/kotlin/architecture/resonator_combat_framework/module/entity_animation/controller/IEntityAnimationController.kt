@@ -1,15 +1,21 @@
 package architecture.resonator_combat_framework.module.entity_animation.controller
 
 import architecture.goldenboughs_lib.api.AllOpe
-import architecture.resonator_combat_framework.module.entity_animation.api.IAnimationMapper
 import architecture.resonator_combat_framework.module.entity_animation.data.AnimationPlayData
+import architecture.resonator_combat_framework.module.entity_animation.engine.molang.MolangData
 import net.minecraft.resources.ResourceLocation
+import net.minecraft.world.entity.Entity
 
 @AllOpe
 /** 动画控制器接口 */
-interface IAnimationController {
+interface IEntityAnimationController<T : Entity> {
+	val manager: AnimationControllerManager<T>
+
 	/** 控制器唯一标识 */
 	val id: ResourceLocation
+
+	val currentData: MolangData
+		get() = manager.mapper.molangData
 
 	/** 当前混合因子 0~1 */
 	var blendFactor: Float
@@ -40,6 +46,9 @@ interface IAnimationController {
 
 	/** 是否正在淡出 */
 	val isFadingOut: Boolean
+
+	/** 是否正在淡入 */
+	val isFadingIn: Boolean
 
 	/** 当前动画播放时间（秒） */
 	val currentAnimTime: Float
@@ -75,7 +84,7 @@ interface IAnimationController {
 	fun resume()
 
 	/** 游戏刻推进（20tps） */
-	fun tickAdvance(animationMapper: IAnimationMapper)
+	fun tickAdvance()
 
 	/** 渲染帧更新过渡状态 */
 	fun tickRender(deltaSec: Float)

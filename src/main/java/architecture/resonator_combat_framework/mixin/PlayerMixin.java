@@ -1,8 +1,10 @@
 package architecture.resonator_combat_framework.mixin;
 
 import architecture.resonator_combat_framework.mixed.IPlayerRcf;
+import architecture.resonator_combat_framework.module.entity_animation.mapper.IEntityAnimationMapper;
 import architecture.resonator_combat_framework.module.entity_animation.mapper.PlayerAnimationMapper;
 import com.mojang.authlib.GameProfile;
+import net.minecraft.client.model.PlayerModel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
@@ -30,8 +32,7 @@ public abstract class PlayerMixin extends LivingEntity implements IPlayerRcf {
 	}
 
 	@Override
-	public @NotNull PlayerAnimationMapper resonator_combat_framework$getAnimationTransformer() {
+	public @NotNull IEntityAnimationMapper<Player, PlayerModel<Player>> resonator_combat_framework$getAnimationTransformer() {
 		return resonator_combat_framework$transformer;
 	}
 }
-

@@ -1,13 +1,30 @@
-// MoLang AST 节点接口。所有可求值的表达式节点都实现此接口，继承 java.util.function.DoubleSupplier
 package architecture.resonator_combat_framework.module.entity_animation.engine.molang
 
-import java.util.function.DoubleSupplier
+import architecture.resonator_combat_framework.module.entity_animation.controller.AnimationControllerManager
+import architecture.resonator_combat_framework.module.entity_animation.controller.IEntityAnimationController
+import architecture.resonator_combat_framework.module.entity_animation.mixed.IAnimationProxyProvider
+import architecture.resonator_combat_framework.module.entity_animation.mixed.IAnimationProxyProvider.Companion.getAnimationTransformer
+import net.minecraft.world.entity.Entity
 
-interface MolangValue : DoubleSupplier {
-	fun get(): Double
+interface MolangValue {
+	fun get(context: MolangData? = null): Double
 
-	override fun getAsDouble(): Double = get()
+	fun get(entity: Entity): Double {
+		if (entity !is IAnimationProxyProvider) return 0.0
+		return get(entity as IAnimationProxyProvider)
+	}
+
+	fun get(proxyProvider: IAnimationProxyProvider): Double {
+		return get(MolangData.of(proxyProvider.getAnimationTransformer().holder))
+	}
+
+	fun get(controller: IEntityAnimationController<*>): Double {
+		return get(controller.currentData)
+	}
+
+	fun get(controllerManager: AnimationControllerManager<*>): Double {
+		return get(controllerManager.mapper.holder)
+	}
 
 	fun isMutable(): Boolean = true
 }
-

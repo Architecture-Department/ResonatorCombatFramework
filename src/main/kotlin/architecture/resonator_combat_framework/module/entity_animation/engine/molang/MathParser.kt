@@ -1,8 +1,4 @@
-// MoLang 表达式解析器。字符串→分词→递归下降构建 AST。支持四则运算、比较、逻辑、三元、函数调用、变量/查询引用、赋值
 package architecture.resonator_combat_framework.module.entity_animation.engine.molang
-
-
-// MoLang 表达式解析器。字符串→分词→递归下降构建 AST。支持四则运算、比较、逻辑、三元、函数调用、变量/查询引用、赋值
 
 import architecture.resonator_combat_framework.module.entity_animation.engine.molang.function.MolangFunction
 import architecture.resonator_combat_framework.module.entity_animation.engine.molang.function.generic.*
@@ -19,19 +15,19 @@ import architecture.resonator_combat_framework.module.entity_animation.engine.mo
 import architecture.resonator_combat_framework.module.entity_animation.engine.molang.function.round.*
 import architecture.resonator_combat_framework.module.entity_animation.engine.molang.value.*
 import java.util.concurrent.ConcurrentHashMap
-import java.util.function.DoubleSupplier
 import java.util.regex.Pattern
 import kotlin.math.min
 
+// MoLang 表达式解析器。字符串→分词→递归下降构建 AST。支持四则运算、比较、逻辑、三元、函数调用、变量/查询引用、赋值
 object MathParser {
-	private val EXPRESSION_FORMAT: Pattern = Pattern.compile("^[\\w\\s_+\\-/*%^&|<>=!?:.,()]+$")
+	private val EXPRESSION_FORMAT: Pattern = Pattern.compile("^[\\w\\s_+\\-/*%^&|<>=!?:.,(){}]+$")
 	private val WHITESPACE: Pattern = Pattern.compile("\\s")
 	private val NUMERIC_PATTERN: Pattern = Pattern.compile("^-?\\d+(\\.\\d+)?$")
 
 	private val FUNCTION_FACTORIES: MutableMap<String, MolangFunction.Factory<*>> =
 		ConcurrentHashMap<String, MolangFunction.Factory<*>>()
 
-	// ============== PUBLIC API ==============
+	// ============== 公开 API ==============
 	fun isFunctionRegistered(name: String?): Boolean {
 		return FUNCTION_FACTORIES.containsKey(name)
 	}
@@ -45,19 +41,11 @@ object MathParser {
 		return factory.create(*args) as T?
 	}
 
-	fun registerVariable(variable: Variable) {
-		MoLang.registerVariable(variable.name)
-	}
-
 	fun getVariableFor(name: String): Variable {
-		return MoLang.getVariableFor(name)
+		return Variable(name)
 	}
 
-	fun setVariable(name: String, supplier: DoubleSupplier) {
-		MoLang.set(name, supplier)
-	}
-
-	/** Entry point: parse a Molang expression string into an executable MathValue  */
+	/** 入口：将 MoLang 表达式字符串解析为可执行 AST */
 	fun compileMolang(expression: String): MolangValue {
 		if (expression.startsWith("return")) {
 			var trimmed = expression.substring("return".length).trim { it <= ' ' }
@@ -65,7 +53,7 @@ object MathParser {
 			if (semiColonIdx >= 0) {
 				trimmed = trimmed.substring(0, semiColonIdx)
 			}
-			return compileExpression(trimmed)
+			return ReturnExpr(compileExpression(trimmed))
 		}
 
 		if (expression.contains(";")) {
@@ -79,7 +67,7 @@ object MathParser {
 				if (isReturn) {
 					part = part.substring("return".length).trim { it <= ' ' }
 				}
-				compiled.add(compileExpression(part))
+				compiled.add(if (isReturn) ReturnExpr(compileExpression(part)) else compileExpression(part))
 				if (isReturn) break
 			}
 			return CompoundValue(*compiled.toTypedArray())
@@ -88,7 +76,7 @@ object MathParser {
 		return compileExpression(expression)
 	}
 
-	/** Parse a single Molang expression string into an executable MathValue  */
+	/** 解析单个 MoLang 表达式字符串为可执行 AST */
 	fun compileExpression(expression: String): MolangValue {
 		try {
 			val chars = decomposeExpression(expression)
@@ -99,7 +87,7 @@ object MathParser {
 		}
 	}
 
-	// ============== DECOMPOSITION ==============
+	// ============== 表达式预处理 ==============
 	fun decomposeExpression(expression: String): CharArray {
 		var expression = expression
 		if (expression.isEmpty()) {
@@ -112,12 +100,12 @@ object MathParser {
 			throw CompoundException("Invalid characters in expression: $expression")
 		}
 
-		// Remove whitespace, lowercase
+		// 移除空白字符，转小写
 		val cleaned = WHITESPACE.matcher(expression).replaceAll("")
 			.lowercase()
 		val chars = cleaned.toCharArray()
 
-		// Check bracket balance
+		// 检查括号平衡
 		var depth = 0
 		for (c in chars) {
 			if (c == '(') depth++
@@ -133,7 +121,7 @@ object MathParser {
 		return chars
 	}
 
-	// ============== TOKENIZATION ==============
+	// ============== 分词 ==============
 	fun compileSymbols(chars: CharArray): MutableList<Token> {
 		val tokens: MutableList<Token> = ArrayList<Token>()
 		val buf = StringBuilder()
@@ -143,8 +131,8 @@ object MathParser {
 		while (i < chars.size) {
 			val c = chars[i]
 
-			// Special handling for negative sign (unary minus)
-			if (c == '-') {
+			// 特殊处理一元负号和逻辑非
+			if (c == '-' || c == '!') {
 				if (buf.isEmpty() && (tokens.isEmpty() || lastOperatorIndex == tokens.size - 1)) {
 					buf.append(c)
 					i++
@@ -152,7 +140,7 @@ object MathParser {
 				}
 			}
 
-			// Try to match a multi-character operator
+			// 尝试匹配多字符运算符
 			val op = tryMergeOperativeSymbols(chars, i)
 			if (op != null) {
 				i += op.length - 1
@@ -166,22 +154,26 @@ object MathParser {
 				continue
 			}
 
-			if (c == '(') {
+			if (c == '{' || c == '(') {
 				if (buf.isNotEmpty()) {
 					tokens.add(Token(buf.toString()))
 					buf.setLength(0)
 				}
-				// Find matching closing paren
+				// 查找匹配的右括号/花括号
+				val closeChar = if (c == '(') ')' else '}'
 				var depth = 1
 				val start = i + 1
 				var found = false
 				for (j in i + 1..<chars.size) {
 					if (chars[j] == '(') depth++
-					else if (chars[j] == ')') depth--
+					else if (chars[j] == closeChar) depth--
 					if (depth == 0) {
-						// Parse inner content, split by commas for function arguments
+						// 解析括号内内容，按逗号分隔为参数
 						val inner = chars.copyOfRange(start, j)
-						val args = parseFunctionArguments(inner)
+						val args: MutableList<MolangValue> = if (c == '(') parseFunctionArguments(inner) else {
+							val blockExpr = BlockExpr(compileExpression(String(inner)))
+							mutableListOf(blockExpr)
+						}
 						tokens.add(Token(args))
 						i = j
 						found = true
@@ -216,14 +208,14 @@ object MathParser {
 		return tokens
 	}
 
-	/** Parse function arguments from inner parentheses content, splitting by commas  */
+	/** 解析括号内的函数参数，按逗号分隔  */
 	private fun parseFunctionArguments(inner: CharArray): MutableList<MolangValue> {
 		if (inner.isEmpty()) return mutableListOf()
 
-		// Tokenize the inner content
+		// 对内层内容进行分词
 		val innerTokens = compileSymbols(inner)
 
-		// Split by commas
+		// 按逗号分隔
 		val args = ArrayList<MolangValue>()
 		var lastComma = -1
 
@@ -260,55 +252,64 @@ object MathParser {
 		return null
 	}
 
-	// ============== AST BUILDING ==============
+	// ============== AST 构建 ==============
 	fun parseSymbols(tokens: MutableList<Token>): MolangValue {
 		if (tokens.isEmpty()) return Constant(0.0)
 
-		// Single token cases
+		// 单个 token 的情况
 		if (tokens.size == 1) {
 			val token = tokens[0]
 			if (token.isString()) {
 				return compileSingleValue(token.string!!)
 			}
-			// Sub-expression token: could be function arguments or parenthesized expression
-			// If it's a single value, return it; otherwise wrap in compound
+			// 子表达式 token：可能是函数参数或括号表达式
+			// 若只有一个值则直接返回，否则包装为复合值's a single value, return it; otherwise wrap in compound
 			if (token.isSubExpr()) {
 				if (token.subExpr!!.size == 1) {
 					return token.subExpr[0]
 				}
 				if (token.subExpr.isEmpty()) return Constant(0.0)
-				// Check if it's a function call context (the previous token would be the function name)
-				// This case is handled by the function-call path below
+				// 检查是否为函数调用上下文（前一 token 是函数名）
+				// 此情况由下方的函数调用路径处理
 			}
 		}
 
-		// Check for function call pattern: name (sub-expr with args)
+		// 检查函数调用模式：名称（子表达式参数）
 		if (tokens.size >= 2) {
 			val first = tokens[0]
 			val second = tokens[1]
 			if (first.isString() && second.isSubExpr()) {
-				val funcResult = tryBuildFunction(first.string!!, second.subExpr!!)
+				val name = first.string!!
+				val args = second.subExpr!!
+
+				// 内置控制结构（loop/for_each）
+				// 一元非：!(expr) 或 !{block}
+				if (name == "!") return BooleanNegate(Group(args[0]))
+				if (name == "loop" && args.size >= 2) return LoopExpr(args[0], args[1])
+				if (name == "for_each" && args.size >= 3) return ForEachExpr(args[0].toString(), args[1], args[2])
+
+				val funcResult = tryBuildFunction(name, args)
 				if (funcResult != null) {
 					return funcResult
 				}
-				// Not a function - treat as variable (first) wrapped around group
-				// (e.g., just a parenthesized expression)
+				// 不是函数——将第一个 token 作为变量，其余视为括号分组
+				// 例如：仅括号包裹的表达式
 				if (second.subExpr.size == 1) {
-					// Handle (expr) as group
+					// 将 (expr) 作为分组处理
 					return Group(second.subExpr[0])
 				}
 			}
 		}
 
-		// Handle ternary operator
+		// 处理三元运算符
 		val ternary = compileTernary(tokens)
 		if (ternary != null) return ternary
 
-		// Handle calculation with operator precedence
+		// 按运算符优先级处理计算
 		val calc = compileCalculation(tokens)
 		if (calc != null) return calc
 
-		// Fallback: wrap remaining tokens
+		// 兜底：将剩余 token 包装为复合值
 		val values: MutableList<MolangValue> = ArrayList<MolangValue>()
 		for (token in tokens) {
 			if (token.isString()) {
@@ -361,7 +362,7 @@ object MathParser {
 	private fun compileCalculation(tokens: MutableList<Token>): MolangValue? {
 		if (tokens.size < 3) return null
 
-		// Collect operator positions
+		// 收集运算符位置
 		val opPositions = ArrayList<Int>()
 		val operators = ArrayList<Operator>()
 
@@ -375,7 +376,7 @@ object MathParser {
 
 		if (operators.isEmpty()) return null
 
-		// Collect operands (values between operators)
+		// 收集操作数（运算符之间的值）
 		val operands: MutableList<MolangValue> = ArrayList<MolangValue>()
 		operands.add(parseSymbols(tokens.subList(0, opPositions[0])))
 
@@ -385,7 +386,7 @@ object MathParser {
 			operands.add(parseSymbols(tokens.subList(from, to)))
 		}
 
-		// Handle assignment operator specially
+		// 特殊处理赋值运算符
 		for (i in operators.indices) {
 			if (operators[i] === Operator.ASSIGN_VARIABLE) {
 				val left = operands[i]
@@ -415,7 +416,7 @@ object MathParser {
 			return if (operands.isEmpty()) Constant(0.0) else operands[0]
 		}
 
-		// Find lowest precedence operator
+		// 查找最低优先级的运算符
 		var lowest: Operator? = null
 		var lowestIndex = -1
 		for (i in operators.indices) {
@@ -438,26 +439,37 @@ object MathParser {
 		return Calculation(lowest!!, left, right)
 	}
 
-	// ============== SINGLE VALUE ==============
+	// ============== 单值处理 ==============
 	private fun compileSingleValue(token: String): MolangValue {
 		if (token.isNullOrEmpty() || token[0].code == 0) {
 			return Constant(0.0)
 		}
 
-		// Numeric literal
+		// 数值字面量
 		if (NUMERIC_PATTERN.matcher(token).matches()) {
 			return Constant(token.toDouble())
 		}
 
-		// Boolean literals
+		// 布尔字面量
 		if ("true" == token) return Constant(1.0)
 		if ("false" == token) return Constant(0.0)
 
-		// Try 0-arg function (e.g., math.pi)
+		// this 关键字：返回当前上下文值
+		if (token == "this") return This
+
+		// break/continue 循环控制关键字
+		if (token == "break") return BreakExpr
+		if (token == "continue") return ContinueExpr
+
+		// 尝试无参函数调用（如 math.pi）
 		val zeroArgFunc = buildFunction<MolangFunction>(token)
 		if (zeroArgFunc != null) return zeroArgFunc
 
-		// Variable or query reference
+		// 变量或查询引用
+		// 一元非：!expr
+		if (token.startsWith("!") && token.length > 1) {
+			return BooleanNegate(compileSingleValue(token.substring(1)))
+		}
 		return getVariableFor(token)
 	}
 
@@ -466,7 +478,7 @@ object MathParser {
 		return buildFunction<MolangFunction>(name, *args.toTypedArray())
 	}
 
-	// ============== HELPERS ==============
+	// ============== 辅助方法 ==============
 	fun isNumeric(token: String): Boolean {
 		return NUMERIC_PATTERN.matcher(token).matches()
 	}
@@ -478,13 +490,14 @@ object MathParser {
 
 	fun isLikelyVariable(token: String): Boolean {
 		if (token.startsWith("temp.") || token.startsWith("variable.")) return true
+		if (token.startsWith("geometry.") || token.startsWith("material.") || token.startsWith("texture.")) return true
 		if (token.startsWith("query.")) return true
 		return token.matches("[a-zA-Z_][a-zA-Z0-9_.]*".toRegex())
 	}
 
-	// ============== STATIC FUNCTION REGISTRATION ==============
+	// ============== 静态函数注册 ==============
 	init {
-		// Generic
+		// 通用数学函数
 		registerFunction("math.abs", MolangFunction.Factory { args -> AbsFunction(args[0]) })
 		registerFunction("math.acos", MolangFunction.Factory { args -> ACosFunction(args[0]) })
 		registerFunction("math.asin", MolangFunction.Factory { args -> ASinFunction(args[0]) })
@@ -505,7 +518,7 @@ object MathParser {
 		registerFunction("math.sin", MolangFunction.Factory { args -> SinFunction(args[0]) })
 		registerFunction("math.sqrt", MolangFunction.Factory { args -> SqrtFunction(args[0]) })
 
-		// Limit
+		// 数值限制函数
 		registerFunction(
 			"math.clamp",
 			MolangFunction.Factory { args -> ClampFunction(args[0], args[1], args[2]) })
@@ -516,12 +529,12 @@ object MathParser {
 			"math.min",
 			MolangFunction.Factory { args -> MinFunction(args[0], args[1]) })
 
-		// Misc
+		// 杂项函数
 		registerFunction("math.pi", MolangFunction.Factory { args -> PiFunction() })
 		registerFunction("math.to_deg", MolangFunction.Factory { args -> ToDegFunction(args[0]) })
 		registerFunction("math.to_rad", MolangFunction.Factory { args -> ToRadFunction(args[0]) })
 
-		// Random
+		// 随机数函数
 		registerFunction(
 			"math.die_roll",
 			MolangFunction.Factory { args -> DieRollFunction(args[0], args[1]) })
@@ -535,7 +548,7 @@ object MathParser {
 			"math.random_integer",
 			MolangFunction.Factory { args -> RandomIntegerFunction(args[0], args[1]) })
 
-		// Round
+		// 取整/插值函数
 		registerFunction("math.ceil", MolangFunction.Factory { args -> CeilFunction(args[0]) })
 		registerFunction("math.floor", MolangFunction.Factory { args -> FloorFunction(args[0]) })
 		registerFunction("math.round", MolangFunction.Factory { args -> RoundFunction(args[0]) })
@@ -551,7 +564,7 @@ object MathParser {
 			MolangFunction.Factory { args -> LerpRotFunction(args[0], args[1], args[2]) })
 	}
 
-	// ============== TOKEN TYPES ==============
+	// ============== Token 类型 ==============
 	class Token {
 		val string: String?
 		val subExpr: MutableList<MolangValue>?

@@ -1,25 +1,27 @@
 package architecture.resonator_combat_framework.module.entity_animation.controller
 
 import architecture.resonator_combat_framework.config.RcfConfig
-import architecture.resonator_combat_framework.module.entity_animation.api.IAnimationMapper
+import architecture.resonator_combat_framework.module.entity_animation.mapper.IEntityAnimationMapper
 import architecture.resonator_combat_framework.module.entity_animation.mapper.LivingEntityAnimationMapper
 import net.minecraft.resources.ResourceLocation
+import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.HumanoidArm
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.item.ItemStack
 
-class ActionAnimationController(
+class ActionAnimationController<T : Entity>(
+	manager: AnimationControllerManager<T>,
 	id: ResourceLocation,
 	isClient: Boolean
-) : BedrockAnimationController(id, isClient) {
+) : BedrockAnimationController<T>(manager, id, isClient) {
 	var mainHandItem: ItemStack? = null
 	var offhandItem: ItemStack? = null
 
 	/** 每 tick 检测物品变化，触发切换动画 */
-	override fun tickHandler(animationMapper: IAnimationMapper) {
+	override fun tickHandler(animationMapper: IEntityAnimationMapper<T, *>) {
 		super.tickHandler(animationMapper)
 		if (animationMapper !is LivingEntityAnimationMapper<*, *>) return
-		val entity = animationMapper.entity
+		val entity = animationMapper.holder
 
 		if (!entity.level().isClientSide) return
 		if (entity !is Player) return

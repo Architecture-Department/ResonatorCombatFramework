@@ -1,6 +1,6 @@
 package architecture.resonator_combat_framework.module.entity_animation.util
 
-import architecture.resonator_combat_framework.module.entity_animation.api.ProxyBone
+import architecture.resonator_combat_framework.module.entity_animation.ProxyBone
 import architecture.resonator_combat_framework.module.entity_animation.data.ProxyBoneFlags
 import architecture.resonator_combat_framework.module.entity_animation.data.isEnabled
 import architecture.resonator_combat_framework.module.entity_animation.data.shouldTransition

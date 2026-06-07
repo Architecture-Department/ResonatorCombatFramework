@@ -47,7 +47,14 @@ data class Operator(
 		val EQUAL = register("==", 5) { a, b -> if (a == b) 1.0 else 0.0 }
 		val NOT_EQUAL = register("!=", 5) { a, b -> if (a != b) 1.0 else 0.0 }
 
+		/** 空值合并：a ?? b，a 不为 0.0 时返回 a，否则返回 b */
+		val NULL_COALESCE = register("??", 4) { a, b -> if (a == 0.0) b else a }
+
+
 		val ASSIGN_VARIABLE = register("=", Int.MAX_VALUE) { _, b -> b }
+
+		/** 箭头运算符：左 -> 右，将左侧值作为上下文传递给右侧 */
+		val ARROW = register("->", 3) { a, b -> b }
 
 		fun register(symbol: String, precedence: Int, operation: Operation): Operator {
 			val op = Operator(symbol, precedence, operation)

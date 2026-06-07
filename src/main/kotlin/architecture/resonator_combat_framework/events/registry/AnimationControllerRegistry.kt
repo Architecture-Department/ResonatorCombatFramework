@@ -24,7 +24,7 @@ object AnimationControllers {
 @EventBusSubscriber(modid = RcfConstants.ID)
 object AnimationControllerRegistry {
 	@SubscribeEvent
-	fun registry(event: AnimationControllerRegisterEvent) {
+	fun registry(event: AnimationControllerRegisterEvent<*>) {
 		event.register(AnimationControllers.BACKGROUND_ACTION, priority = 3000)
 		event.register(AnimationControllers.ACTION, ::ActionAnimationController, 4000)
 		event.register(AnimationControllers.MAIN, priority = 5000)

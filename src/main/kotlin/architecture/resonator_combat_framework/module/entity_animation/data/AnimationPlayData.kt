@@ -1,7 +1,7 @@
 package architecture.resonator_combat_framework.module.entity_animation.data
 
 import architecture.resonator_combat_framework.events.registry.AnimationControllers
-import architecture.resonator_combat_framework.module.entity_animation.mixed.PlayerProxyProvider.Companion.getAnimationTransformer
+import architecture.resonator_combat_framework.module.entity_animation.mixed.IAnimationProxyProvider.Companion.getAnimationTransformer
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.player.Player
 

@@ -2,7 +2,7 @@ package architecture.resonator_combat_framework.module.entity_animation.mapper
 
 // 人形实体动画映射器
 
-import architecture.resonator_combat_framework.module.entity_animation.api.ProxyModel
+import architecture.resonator_combat_framework.module.entity_animation.ProxyModel
 import architecture.resonator_combat_framework.module.entity_animation.data.ProxyBoneFlags
 import architecture.resonator_combat_framework.module.entity_animation.data.lockPos
 import architecture.resonator_combat_framework.module.entity_animation.data.lockRotation
@@ -57,6 +57,15 @@ abstract class HumanoidEntityAnimationMapper<T : LivingEntity, M : HumanoidModel
 		poseStack.mulPose(Axis.XP.rotationDegrees(90.0f))
 		BoneTransformUtil.applyTo(poseStack, t)
 		poseStack.mulPose(Axis.XP.rotationDegrees(-90.0f))
+	}
+
+	/** ItemInHandLayerMixin 调用：物品定位器 → PoseStack */
+	fun applyItemTransform(isLeft: Boolean, poseStack: PoseStack) {
+		if (!isClient) return
+		applyProxyToItem(
+			animationControllerManager.getInterpolatedProxy(currentPartialTick),
+			isLeft, poseStack, animationControllerManager.mergedFlags
+		)
 	}
 }
 

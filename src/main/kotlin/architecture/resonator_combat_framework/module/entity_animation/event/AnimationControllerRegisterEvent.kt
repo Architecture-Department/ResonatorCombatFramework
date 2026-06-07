@@ -1,14 +1,17 @@
 package architecture.resonator_combat_framework.module.entity_animation.event
+
+import architecture.resonator_combat_framework.module.entity_animation.controller.AnimationControllerManager
 import architecture.resonator_combat_framework.module.entity_animation.controller.BedrockAnimationController
-import architecture.resonator_combat_framework.module.entity_animation.controller.IAnimationController
+import architecture.resonator_combat_framework.module.entity_animation.controller.IEntityAnimationController
 import net.minecraft.resources.ResourceLocation
+import net.minecraft.world.entity.Entity
 import net.neoforged.bus.api.Event
 
 /**
  * 动画控制器注册事件
  */
-class AnimationControllerRegisterEvent : Event() {
-	private val entries = mutableMapOf<ResourceLocation, ControllerEntry>()
+class AnimationControllerRegisterEvent<T : Entity> : Event() {
+	private val entries = mutableMapOf<ResourceLocation, ControllerEntry<T>>()
 
 	/**
 	 * 注册动画 ID 到控制器的映射。
@@ -18,8 +21,8 @@ class AnimationControllerRegisterEvent : Event() {
 	@JvmOverloads
 	fun register(
 		id: ResourceLocation,
-		controllerFactory: (id: ResourceLocation, isClient: Boolean) -> IAnimationController = { id, isClient ->
-			BedrockAnimationController(id, isClient)
+		controllerFactory: (manager: AnimationControllerManager<T>, id: ResourceLocation, isClient: Boolean) -> IEntityAnimationController<T> = { manager, id, isClient ->
+			BedrockAnimationController(manager, id, isClient)
 		},
 		priority: Int
 	) {
@@ -28,20 +31,20 @@ class AnimationControllerRegisterEvent : Event() {
 
 	fun register(
 		id: ResourceLocation,
-		controllerFactory: (isClient: Boolean) -> IAnimationController,
+		controllerFactory: (manager: AnimationControllerManager<T>, isClient: Boolean) -> IEntityAnimationController<T>,
 		priority: Int
 	) {
-		register(id, { id, isClient -> controllerFactory(isClient) }, priority)
+		register(id, { manager, id, isClient -> controllerFactory(manager, isClient) }, priority)
 	}
 
 	@JvmRecord
-	data class ControllerEntry(
+	data class ControllerEntry<T : Entity>(
 		val controllerName: ResourceLocation,
-		val controllerFactory: (id: ResourceLocation, isClient: Boolean) -> IAnimationController,
+		val controllerFactory: (manager: AnimationControllerManager<T>, id: ResourceLocation, isClient: Boolean) -> IEntityAnimationController<T>,
 		val priority: Int
 	)
 
 	/** 按 order 升序返回所有注册项 */
-	fun getSortedEntries(): List<ControllerEntry> = entries.values.sortedBy { it.priority }
+	fun getSortedEntries(): List<ControllerEntry<T>> = entries.values.sortedBy { it.priority }
 }
 

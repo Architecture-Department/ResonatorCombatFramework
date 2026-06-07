@@ -1,8 +1,7 @@
 package architecture.resonator_combat_framework.module.entity_animation.registry
 
 import architecture.resonator_combat_framework.core.RcfConstants
-import architecture.resonator_combat_framework.module.entity_animation.engine.BedrockModel
-import architecture.resonator_combat_framework.module.entity_animation.engine.BedrockModelParser
+import architecture.resonator_combat_framework.module.entity_animation.engine.BrModel
 import com.google.gson.JsonParser
 import net.minecraft.server.packs.resources.ResourceManager
 import net.minecraft.server.packs.resources.SimplePreparableReloadListener
@@ -15,7 +14,7 @@ import net.minecraft.util.profiling.ProfilerFiller
  * 使用模型自身的 identifier（如 "geometry.default"）作为注册键。
  */
 class BedrockModelRegistry(private val side: String = "?") :
-	SimplePreparableReloadListener<Map<String, BedrockModel>>() {
+	SimplePreparableReloadListener<Map<String, BrModel>>() {
 
 	companion object {
 		private val CLIENT = BedrockModelRegistry("CLIENT")
@@ -27,21 +26,21 @@ class BedrockModelRegistry(private val side: String = "?") :
 		}
 	}
 
-	private val models = mutableMapOf<String, BedrockModel>()
+	private val models = mutableMapOf<String, BrModel>()
 
 	/** 按模型 identifier（如 "geometry.default"）获取模型 */
-	fun get(identifier: String): BedrockModel? = models[identifier]
+	fun get(identifier: String): BrModel? = models[identifier]
 
 	fun getAllModelIds(): Set<String> = models.keys
 
-	fun getAllModels(): Map<String, BedrockModel> = models.toMap()
+	fun getAllModels(): Map<String, BrModel> = models.toMap()
 
-	override fun prepare(manager: ResourceManager, profiler: ProfilerFiller): Map<String, BedrockModel> {
-		val result = mutableMapOf<String, BedrockModel>()
+	override fun prepare(manager: ResourceManager, profiler: ProfilerFiller): Map<String, BrModel> {
+		val result = mutableMapOf<String, BrModel>()
 		for (entry in manager.listResources("rcf/models") { it.path.endsWith(".json") }) {
 			try {
 				val json = JsonParser.parseReader(entry.value.openAsReader())
-				val parsedModels = BedrockModelParser.parse(json)
+				val parsedModels = BrModel.parse(json)
 				for (model in parsedModels) {
 					result[model.identifier] = model
 				}
@@ -52,7 +51,7 @@ class BedrockModelRegistry(private val side: String = "?") :
 		return result
 	}
 
-	override fun apply(loaded: Map<String, BedrockModel>, manager: ResourceManager, profiler: ProfilerFiller) {
+	override fun apply(loaded: Map<String, BrModel>, manager: ResourceManager, profiler: ProfilerFiller) {
 		models.clear()
 		models.putAll(loaded)
 		RcfConstants.LOGGER.info(

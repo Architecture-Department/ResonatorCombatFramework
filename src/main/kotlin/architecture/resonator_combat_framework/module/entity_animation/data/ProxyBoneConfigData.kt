@@ -1,6 +1,7 @@
 package architecture.resonator_combat_framework.module.entity_animation.data
 
 import architecture.goldenboughs_lib.api.AllOpe
+import architecture.resonator_combat_framework.module.entity_animation.engine.BrBone
 
 // 骨骼配置数据。包含过渡时间、骨骼标志、时间线
 @ExposedCopyVisibility
@@ -11,7 +12,9 @@ private constructor(
 	val timeline: List<ProxyTimelineEntry> = emptyList(),
 	val transitionTicks: Int = DEFAULT_TRANSITION_TICKS,
 	private val fadeInTicks: Int = -1,
-	private val fadeOutTicks: Int = -1
+	private val fadeOutTicks: Int = -1,
+	/** 额外骨骼定义（动画期间动态添加的骨骼） */
+	val extraBones: Map<String, BrBone> = emptyMap()
 ) {
 	companion object {
 		@JvmField
@@ -27,13 +30,15 @@ private constructor(
 			timeline: List<ProxyTimelineEntry>,
 			transitionTicks: Int,
 			fadeInTicks: Int = -1,
-			fadeOutTicks: Int = -1
+			fadeOutTicks: Int = -1,
+			/* 额外骨骼定义（JSON extra_bones 段） */
+			extraBones: Map<String, BrBone> = emptyMap()
 		): ProxyBoneConfigData {
 			val merged = mutableMapOf<String, ProxyBoneFlags>().apply {
 				putAll(DEFAULT_FLAGS)
 				putAll(bones)
 			}
-			return ProxyBoneConfigData(merged, timeline, transitionTicks, fadeInTicks, fadeOutTicks)
+			return ProxyBoneConfigData(merged, timeline, transitionTicks, fadeInTicks, fadeOutTicks, extraBones)
 		}
 	}
 

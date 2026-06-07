@@ -2,7 +2,9 @@ package architecture.resonator_combat_framework.module.entity_animation.engine
 
 import architecture.resonator_combat_framework.core.RcfConstants
 import architecture.resonator_combat_framework.module.entity_animation.engine.molang.MathParser
+import architecture.resonator_combat_framework.module.entity_animation.engine.molang.MolangData
 import architecture.resonator_combat_framework.module.entity_animation.engine.molang.MolangValue
+import architecture.resonator_combat_framework.module.entity_animation.engine.molang.MolangVector3
 import architecture.resonator_combat_framework.module.entity_animation.engine.molang.value.Constant
 import com.google.gson.JsonArray
 import com.google.gson.JsonElement
@@ -21,26 +23,26 @@ data class BrBoneKeyFrame(
 	val post: MolangVector3 = MolangVector3()
 ) {
 	/** 取关键帧值：value → post → pre → (0,0,0) */
-	fun evaluateValue(out: Vector3f = Vector3f()): Vector3f {
-		if (!value.allNull()) return value.evaluate(out)
-		if (!post.allNull()) return post.evaluate(out)
-		if (!pre.allNull()) return pre.evaluate(out)
+	fun evaluateValue(out: Vector3f = Vector3f(), context: MolangData? = null): Vector3f {
+		if (!value.allNull()) return value.evaluate(out, context)
+		if (!post.allNull()) return post.evaluate(out, context)
+		if (!pre.allNull()) return pre.evaluate(out, context)
 		return out.set(0f, 0f, 0f)
 	}
 
 	/** 取入切线：pre → value → post → (0,0,0) */
-	fun evaluatePre(out: Vector3f = Vector3f()): Vector3f {
-		if (!pre.allNull()) return pre.evaluate(out)
-		if (!value.allNull()) return value.evaluate(out)
-		if (!post.allNull()) return post.evaluate(out)
+	fun evaluatePre(out: Vector3f = Vector3f(), context: MolangData? = null): Vector3f {
+		if (!pre.allNull()) return pre.evaluate(out, context)
+		if (!value.allNull()) return value.evaluate(out, context)
+		if (!post.allNull()) return post.evaluate(out, context)
 		return out.set(0f, 0f, 0f)
 	}
 
 	/** 取出切线：post → value → pre → (0,0,0) */
-	fun evaluatePost(out: Vector3f = Vector3f()): Vector3f {
-		if (!post.allNull()) return post.evaluate(out)
-		if (!value.allNull()) return value.evaluate(out)
-		if (!pre.allNull()) return pre.evaluate(out)
+	fun evaluatePost(out: Vector3f = Vector3f(), context: MolangData? = null): Vector3f {
+		if (!post.allNull()) return post.evaluate(out, context)
+		if (!value.allNull()) return value.evaluate(out, context)
+		if (!pre.allNull()) return pre.evaluate(out, context)
 		return out.set(0f, 0f, 0f)
 	}
 
@@ -82,13 +84,13 @@ data class BrBoneKeyFrame(
 							o.get("post")?.takeIf { it.isJsonArray }?.let { parseMolangVector(it.asJsonArray) } ?: MolangVector3()
 						val lerpMode = o.get("lerp_mode")?.run {
 							when (val mode = asString) {
-								"catmullrom" -> BrBoneKeyFrame.LerpMode.CATMULLROM
+								"catmullrom" -> LerpMode.CATMULLROM
 								else -> {
 									RcfConstants.LOGGER.warn("Unknown lerp_mode: {}", mode)
-									BrBoneKeyFrame.LerpMode.LINEAR
+									LerpMode.LINEAR
 								}
 							}
-						} ?: BrBoneKeyFrame.LerpMode.STEP
+						} ?: LerpMode.STEP
 						frames.add(BrBoneKeyFrame(time = time, pre = pre, post = post, lerp = lerpMode))
 					}
 

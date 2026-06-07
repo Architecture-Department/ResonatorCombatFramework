@@ -1,6 +1,6 @@
 package architecture.resonator_combat_framework.mixed
 
-import architecture.resonator_combat_framework.module.entity_animation.mixed.PlayerProxyProvider
+import architecture.resonator_combat_framework.module.entity_animation.mixed.IAnimationProxyProvider
 
-interface IPlayerRcf : PlayerProxyProvider
+interface IPlayerRcf : IAnimationProxyProvider
 
