@@ -91,7 +91,7 @@ interface IEntityAnimationMapper<T : Entity, M : EntityModel<T>> {
 	/** 播放音效（模型方法，仅客户端）。从 EntityModel 中查找骨骼名称获取位置 */
 	fun playSoundEffect(sound: BrAnimationSound, model: M, molangData: MolangData?) {
 		if (!isClient) return
-		val bonePos = sound.effects.firstOrNull()?.boneName
+		val bonePos = sound.effects.firstOrNull()?.locator
 			?.let { resolveBoneWorldPos(it, model) }
 			?: Vector3d(holder.x, holder.y, holder.z)
 		sound.apply(holder, bonePos, molangData)
@@ -100,7 +100,7 @@ interface IEntityAnimationMapper<T : Entity, M : EntityModel<T>> {
 	/** 播放粒子（模型方法，仅客户端）。从 EntityModel 中查找骨骼名称获取位置 */
 	fun playParticleEffect(particle: BrAnimationParticle, model: M, molangData: MolangData?) {
 		if (!isClient) return
-		val bonePos = particle.effects.firstOrNull()?.boneName
+		val bonePos = particle.effects.firstOrNull()?.locator
 			?.let { resolveBoneWorldPos(it, model) }
 			?: Vector3d(holder.x, holder.y, holder.z)
 		particle.apply(holder, bonePos, molangData)
@@ -113,10 +113,4 @@ interface IEntityAnimationMapper<T : Entity, M : EntityModel<T>> {
 	fun resolveBoneWorldPos(boneName: String, model: M): Vector3d {
 		return Vector3d(holder.x, holder.y, holder.z)
 	}
-
-	/** 播放音效（模型方法，仅客户端）。从 EntityModel + PoseStack 计算骨骼世界坐标 */
-
-	/** 播放粒子（模型方法，仅客户端）。从 EntityModel + PoseStack 计算骨骼世界坐标 */
-
-	/** 解析骨骼在世界空间中的位置（模型方法默认实现，子类可覆盖） */
 }

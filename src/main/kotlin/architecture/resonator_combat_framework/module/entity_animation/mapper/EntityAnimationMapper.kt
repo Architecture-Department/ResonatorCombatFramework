@@ -162,7 +162,6 @@ constructor(
 		animationControllerManager.remerge()
 		val renderable = animationControllerManager.getRenderable()
 		if (renderable.isEmpty()) return
-
 		val interpolatedProxyModel = animationControllerManager.getInterpolatedProxy(partialTick)
 		applyRootTransform(interpolatedProxyModel, poseStack, animationControllerManager.mergedFlags)
 
@@ -184,7 +183,7 @@ constructor(
 	/** 播放音效（模型方法）：从合并后的代理模型中查找骨骼位置 */
 	override fun playSoundEffect(sound: BrAnimationSound, model: M, molangData: MolangData?) {
 		if (!isClient) return
-		val bonePos = sound.effects.firstOrNull()?.boneName
+		val bonePos = sound.effects.firstOrNull()?.locator
 			?.let { resolveBoneWorldPos(it, model) }
 			?: Vector3d(holder.x, holder.y, holder.z)
 		sound.apply(holder, bonePos, molangData)
@@ -193,7 +192,7 @@ constructor(
 	/** 播放粒子（模型方法）：从合并后的代理模型中查找骨骼位置 */
 	override fun playParticleEffect(particle: BrAnimationParticle, model: M, molangData: MolangData?) {
 		if (!isClient) return
-		val bonePos = particle.effects.firstOrNull()?.boneName
+		val bonePos = particle.effects.firstOrNull()?.locator
 			?.let { resolveBoneWorldPos(it, model) }
 			?: Vector3d(holder.x, holder.y, holder.z)
 		particle.apply(holder, bonePos, molangData)

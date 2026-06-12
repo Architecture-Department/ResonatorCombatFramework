@@ -4,20 +4,32 @@ import com.google.gson.JsonElement
 
 data class BrModel(
 	val identifier: String,
-	val bones: List<BrBone> = emptyList()
+	val bones: List<BrBone> = emptyList(),
+	val locators: Map<String, BrLocator> = emptyMap()
 ) {
 	companion object {
 		@JvmStatic
-		fun parse(json: JsonElement): List<BrModel> {
+		fun parses(json: JsonElement): List<BrModel> {
 			val root = json.asJsonObject
 			val result = mutableListOf<BrModel>()
 			val geometryArray = root.getAsJsonArray("minecraft:geometry") ?: return result
 			for (element in geometryArray) {
-				val geo = element.asJsonObject
-				val desc = geo.getAsJsonObject("description")
+				val obj = element.asJsonObject
+				val desc = obj.getAsJsonObject("description")
 				val identifier = desc?.get("identifier")?.asString ?: "unknown"
-				val bones = geo.get("bones")?.run { BrBone.parses(this) } ?: emptyList()
-				result.add(BrModel(identifier, bones))
+				val bones = obj.get("bones")?.run { BrBone.parses(this) } ?: emptyList()
+
+				// 解析几何级别定位器
+				val locators = BrLocator.parses(obj)
+
+				// 解析骨骼级别的定位器
+				for (bone in bones) {
+					for ((name, loc) in bone.locators) {
+						locators[name] = loc
+					}
+				}
+
+				result.add(BrModel(identifier, bones, locators))
 			}
 			return result
 		}

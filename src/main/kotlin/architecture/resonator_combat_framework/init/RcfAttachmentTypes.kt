@@ -18,7 +18,7 @@ object RcfAttachmentTypes {
 	val MOLANG_DATA: DeferredHolder<AttachmentType<*>, AttachmentType<MolangData>> =
 		REGISTRY.register("molang_data") { ->
 			AttachmentType.builder { holder ->
-				val data = MolangData.of(holder)
+				val data = MolangData()
 				if (holder is Entity) {
 					data.initEntityQueries(holder)
 					return@builder data

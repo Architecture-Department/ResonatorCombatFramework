@@ -2,6 +2,8 @@ package architecture.resonator_combat_framework.module.entity_animation.data
 
 import architecture.goldenboughs_lib.api.AllOpe
 import architecture.resonator_combat_framework.module.entity_animation.engine.BrBone
+import com.google.gson.JsonElement
+import com.google.gson.JsonObject
 
 // 骨骼配置数据。包含过渡时间、骨骼标志、时间线
 @ExposedCopyVisibility
@@ -40,6 +42,66 @@ private constructor(
 			}
 			return ProxyBoneConfigData(merged, timeline, transitionTicks, fadeInTicks, fadeOutTicks, extraBones)
 		}
+
+		/** 从 JSON 解析骨骼配置 */
+		@JvmStatic
+		fun parse(json: JsonObject): ProxyBoneConfigData {
+			val transitionTicks = json.get("transition")?.asInt ?: DEFAULT_TRANSITION_TICKS
+			val fadeInTicks = json.get("fade_in")?.asInt ?: -1
+			val fadeOutTicks = json.get("fade_out")?.asInt ?: -1
+			val bones = parseBonesSection(json.get("bones"))
+
+			// 解析额外骨骼定义（动画期间动态添加的 BrBone 几何数据）
+			val extraBonesJson = json.getAsJsonArray("extra_bones")
+			val extraBones = if (extraBonesJson != null)
+				BrBone.parses(extraBonesJson).associateBy { it.name } else emptyMap()
+
+			val timelineJson = json.getAsJsonObject("timeline")
+			val timeline = if (timelineJson != null) {
+				val list = mutableListOf<ProxyTimelineEntry>()
+				for ((timeRange, data) in timelineJson.entrySet()) {
+					val parts = timeRange.split("-")
+					val entry = data.asJsonObject
+					list.add(
+						ProxyTimelineEntry(
+							from = parts.getOrNull(0)?.toFloatOrNull() ?: 0f,
+							to = parts.getOrNull(1)?.toFloatOrNull() ?: 0f,
+							bones = parseBonesSection(entry.get("bones"))
+						)
+					)
+				}
+				list
+			} else emptyList()
+
+			return create(bones, timeline, transitionTicks, fadeInTicks, fadeOutTicks, extraBones)
+		}
+
+		private fun parseBonesSection(section: JsonElement?): Map<String, ProxyBoneFlags> {
+			if (section == null || !section.isJsonObject) return emptyMap()
+			val obj = section.asJsonObject
+			val result = mutableMapOf<String, ProxyBoneFlags>()
+			for ((boneName, boneElement) in obj.entrySet()) {
+				if (!boneElement.isJsonObject) continue
+				val boneObj = boneElement.asJsonObject
+				result[boneName] = ProxyBoneFlags(flattenBoneFlags(boneObj))
+			}
+			return result
+		}
+
+		private fun flattenBoneFlags(obj: JsonObject): Map<String, Boolean> {
+			val flat = mutableMapOf<String, Boolean>()
+			for ((key, value) in obj.entrySet()) {
+				when {
+					value.isJsonPrimitive -> flat[key] = value.asBoolean
+					value.isJsonObject -> {
+						for ((subKey, subValue) in value.asJsonObject.entrySet()) {
+							if (subValue.isJsonPrimitive) flat["$key.$subKey"] = subValue.asBoolean
+						}
+					}
+				}
+			}
+			return flat
+		}
 	}
 
 	/** 获取淡入 tick 数，未设置时退化为 transitionTicks */
@@ -68,4 +130,3 @@ private constructor(
 		return names
 	}
 }
-

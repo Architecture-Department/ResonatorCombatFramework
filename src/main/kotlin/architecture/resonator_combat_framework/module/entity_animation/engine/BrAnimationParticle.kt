@@ -23,7 +23,7 @@ data class BrAnimationParticle(
 
 	data class Effect(
 		val particleId: ResourceLocation,
-		val boneName: String? = null,
+		val locator: String? = null,
 		val bindToActor: Boolean = true,
 		val preEffectScript: MolangValue? = null
 	) {

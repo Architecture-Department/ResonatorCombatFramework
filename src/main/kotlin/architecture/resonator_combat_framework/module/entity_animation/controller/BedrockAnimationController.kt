@@ -26,7 +26,7 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 	protected val configLoader: ProxyBoneConfigDataRegistry = ProxyBoneConfigDataRegistry.getInstance(isClient)
 
 	/** 控制器状态机 */
-	protected enum class State { IDLE, TRANSITIONING, PLAYING, PAUSED, FADING_IN, FADING_OUT }
+	protected enum class State { IDLE, TRANSITIONING, PLAYING, PAUSED, FADING_OUT }
 
 	/** 当前游戏刻的骨骼状态 */
 	val proxyModel = ProxyModel("base")
@@ -98,7 +98,7 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 
 	override val isFadingOut: Boolean get() = state == State.FADING_OUT
 
-	override val isFadingIn: Boolean get() = state == State.FADING_IN
+	override val isFadingIn: Boolean get() = state == State.TRANSITIONING
 
 	/** 获取当前活跃骨骼配置的骨骼标志 */
 	fun resolveBoneFlags(animTime: Float): Map<String, ProxyBoneFlags> {
@@ -141,10 +141,17 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 		if (config.startTime > 0)
 			setAnimStartTime(config.startTime / 20f)
 		currentTransitionTicks = config.resolveFadeInTicks(finalConfig.getFadeInTicks())
-		state = if (transitionSource != null) State.TRANSITIONING else State.FADING_IN
+		state = State.TRANSITIONING
 		blendFactor = 0f
 		blendTarget = 1f
 		freezeAllAtFrameZero()
+		// 立即写入第0帧骨骼，防止 trigger→下一 tick 之间的渲染帧拿到空的 proxyModel
+		// 同时更新 affectedBones（crossfadeStep 依赖其判断骨骼归属）
+		affectedBones = currentAnim?.computeAndWrite(animTime, proxyModel, currentData) ?: emptySet()
+		// 有 crossfade 源时立即混合，使 trigger 后的首帧也保持旧动画姿态
+		if (transitionSource != null) {
+			crossfadeStep()
+		}
 		extraBones.clear()
 		extraBones.putAll(finalConfig.extraBones)
 		manager.rebuildBones()
@@ -156,6 +163,7 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 		if (state == State.IDLE || state == State.FADING_OUT) return
 		state = State.FADING_OUT
 		blendTarget = 0f
+		transitionSource = null // 清除 crossfade 源，使 effectiveWeight = blendFactor
 		currentTransitionTicks = if (fadeOutTicks >= 0) fadeOutTicks
 		else currentConfig.resolveFadeOutTicks(activeBoneConfig.getFadeOutTicks())
 		if (currentTransitionTicks <= 0) forceClear()
@@ -164,7 +172,7 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 	// ---- 暂停 / 恢复 ----
 
 	override fun pause() {
-		if (state == State.PLAYING || state == State.TRANSITIONING || state == State.FADING_IN) {
+		if (state == State.PLAYING || state == State.TRANSITIONING) {
 			state = State.PAUSED
 			transitionSource = null
 		}
@@ -176,7 +184,7 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 		if (info != null && info.animTime * speedMultiplier >= info.animLength
 			&& info.loopType == LoopType.HOLD_ON_LAST
 		) return
-		state = if (isInFadeIn()) State.FADING_IN else State.PLAYING
+		state = if (isInFadeIn()) State.TRANSITIONING else State.PLAYING
 	}
 
 	// ---- 每帧 ----
@@ -193,9 +201,13 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 		transitionSource = ProxyModel("src")
 		for ((name, bone) in proxyModel.bones) {
 			val copy = ProxyBone(name)
-			copy.localPos.set(bone.localPos)
-			copy.localRot.set(bone.localRot)
-			copy.localScale.set(bone.localScale)
+			copy.pos.set(bone.pos)
+			copy.rotation.set(bone.rotation)
+			copy.scale.set(bone.scale)
+			// 复制 emptyMask，使过渡源骨骼的 hasPos/hasRot/hasScale 正确反映数据状态
+			if (bone.hasPos()) copy.setPosEmpty(false)
+			if (bone.hasRot()) copy.setRotEmpty(false)
+			if (bone.hasScale()) copy.setScaleEmpty(false)
 			transitionSource!!.addBone(copy)
 		}
 	}
@@ -207,9 +219,9 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 		// 旧动画独有骨骼：每帧重置为 identity
 		for ((name, bone) in proxyModel.bones) {
 			if (name !in affectedBones) {
-				bone.localPos.set(0f)
-				bone.localRot.set(0f)
-				bone.localScale.set(1f)
+				bone.pos.set(0f)
+				bone.rotation.set(0f)
+				bone.scale.set(1f)
 			}
 		}
 		for ((name, _) in proxyModel.bones) {
@@ -226,9 +238,13 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 				fromBone.scale.set(toBone.scale)
 				continue
 			}
-			fromBone.localPos.lerp(toBone.localPos, blendFactor, toBone.localPos)
-			fromBone.localRot.lerp(toBone.localRot, blendFactor, toBone.localRot)
-			fromBone.localScale.lerp(toBone.localScale, blendFactor, toBone.localScale)
+			fromBone.pos.lerp(toBone.pos, blendFactor, toBone.pos)
+			fromBone.rotation.lerp(toBone.rotation, blendFactor, toBone.rotation)
+			fromBone.scale.lerp(toBone.scale, blendFactor, toBone.scale)
+			// lerp 写入 Vector3f 但不更新 emptyMask，需根据源/目标数据状态同步
+			if (fromBone.hasPos() || toBone.hasPos()) toBone.setPosEmpty(false)
+			if (fromBone.hasRot() || toBone.hasRot()) toBone.setRotEmpty(false)
+			if (fromBone.hasScale() || toBone.hasScale()) toBone.setScaleEmpty(false)
 		}
 	}
 
@@ -291,34 +307,44 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 		val preHandler = NeoForge.EVENT_BUS.post(AnimationControllerEvent.TickHandlerPre(id, this, manager.mapper))
 		if (!preHandler.isCanceled) {
 			tickHandler(manager.mapper)
-			NeoForge.EVENT_BUS.post(AnimationControllerEvent.TickHandlerPre(id, this, manager.mapper))
+			NeoForge.EVENT_BUS.post(AnimationControllerEvent.TickHandlerPost(id, this, manager.mapper))
 		}
 
 		if (state != State.IDLE && state != State.PAUSED) {
 			checkPlaybackBounds()
-			advanceTickCount++
-			tickBackend(advanceTickCount / 20f, manager.mapper.holder, manager.mapper.molangData)
+			tickBlend() // 基于 tick 推进 blendFactor
+			if (state == State.PLAYING) {
+				advanceTickCount++
+				tickBackend(advanceTickCount / 20f, manager.mapper.holder, manager.mapper.molangData)
+			} else {
+				// TRANSITIONING / FADING_OUT：使用当前（冻结的）animTime 计算骨骼，不推进时间
+				tickBackend(0f, manager.mapper.holder, manager.mapper.molangData, freezeTime = true)
+			}
+			// 跨动画过渡混合（仅在有 transitionSource 时执行）
+			if (state == State.TRANSITIONING && transitionSource != null) {
+				crossfadeStep()
+			}
+			// 状态转移检查（基于 tick 推进后的 blendFactor）
+			if (state == State.TRANSITIONING && blendFactor >= 1f) {
+				state = State.PLAYING
+				transitionSource = null
+				// 初始化 lastRawGameTime，避免首个 PLAYING tick 因 lastRawGameTime=-1 而 delta=0
+				lastRawGameTime = advanceTickCount / 20f
+			}
+			if (state == State.FADING_OUT && blendFactor <= 0f) {
+				forceClear()
+			}
 		}
 		NeoForge.EVENT_BUS.post(AnimationControllerEvent.TickPost(id, this, manager.mapper))
 	}
 
 	override fun tickRender(deltaSec: Float) {
-		if (state == State.IDLE) return
-		tickBlend(deltaSec)
+		// 骨骼清理仅在 PLAYING 时执行（TRANSITIONING 中旧动画骨骼由 crossfadeStep 维护）
+		if (state != State.PLAYING) return
 		if (affectedBones.isNotEmpty()) {
 			val toRemove = proxyModel.bones.keys.filter { it !in affectedBones }.toList()
 			for (name in toRemove) proxyModel.bones.remove(name)
 		}
-		if (state == State.PAUSED) return
-		if (state == State.TRANSITIONING && transitionSource != null) crossfadeStep()
-		if (state == State.FADING_IN && blendFactor >= 1f) {
-			state = State.PLAYING
-		}
-		if (state == State.TRANSITIONING && blendFactor >= 1f) {
-			state = State.PLAYING
-			transitionSource = null
-		}
-		if (state == State.FADING_OUT && blendFactor <= 0f) forceClear()
 	}
 
 	/** 加载 BedrockAnimation */
@@ -345,8 +371,15 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 	}
 
 	/** 驱动 MoLang anim_time_update 并写骨骼到 proxyModel */
-	fun tickBackend(gameTime: Float, entity: Entity, data: MolangData) {
+	fun tickBackend(gameTime: Float, entity: Entity, data: MolangData, freezeTime: Boolean = false) {
 		val anim = currentAnim ?: return
+		if (freezeTime) {
+			// 过渡模式：不推进 animTime，只基于当前时间重新计算骨骼
+			affectedBones = anim.computeAndWrite(animTime, proxyModel, data)
+			val events = collectEventsAt(anim)
+			manager.queueEvents(events)
+			return
+		}
 		val scaledDelta: Float
 		if (lastRawGameTime < 0f) {
 			lastRawGameTime = gameTime
@@ -407,13 +440,14 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 		return AnimationEventsToFire(soundsToFire, particlesToFire, timelinesToFire)
 	}
 
-	private fun tickBlend(ds: Float) {
+	private fun tickBlend() {
+		// 基于 tick 推进 blendFactor：每 tick 前进 1/currentTransitionTicks
 		if (blendFactor == blendTarget) return
 		if (currentTransitionTicks <= 0) {
 			blendFactor = blendTarget
 			return
 		}
-		val step = (ds * 20f) / currentTransitionTicks
+		val step = 1f / currentTransitionTicks
 		blendFactor = if (blendFactor < blendTarget) {
 			(blendFactor + step).coerceAtMost(blendTarget)
 		} else {
@@ -437,7 +471,7 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 		manager.rebuildBones()
 	}
 
-	private fun isInFadeIn(): Boolean = blendTarget > 0f && blendFactor < 1f
+	private fun isInFadeIn(): Boolean = isFadingIn
 
 	/** 转换 Bedrock 循环类型到枚举 */
 	fun BrAnimation.LoopType.toLoopType() = when (this) {

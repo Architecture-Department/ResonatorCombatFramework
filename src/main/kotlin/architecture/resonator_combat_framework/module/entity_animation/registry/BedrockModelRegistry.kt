@@ -40,7 +40,7 @@ class BedrockModelRegistry(private val side: String = "?") :
 		for (entry in manager.listResources("rcf/models") { it.path.endsWith(".json") }) {
 			try {
 				val json = JsonParser.parseReader(entry.value.openAsReader())
-				val parsedModels = BrModel.parse(json)
+				val parsedModels = BrModel.parses(json)
 				for (model in parsedModels) {
 					result[model.identifier] = model
 				}

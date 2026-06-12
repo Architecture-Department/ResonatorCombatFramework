@@ -21,7 +21,7 @@ data class BrAnimationSound(
 
 	data class Effect(
 		val soundId: ResourceLocation,
-		val boneName: String? = null,
+		val locator: String? = null,
 		val bindToActor: Boolean = true,
 		val preEffectScript: MolangValue? = null
 	) {
@@ -54,8 +54,8 @@ data class BrAnimationSound(
 			element ?: return null
 			val obj = element.asJsonObject
 			val soundId = rlOf(obj.get("effect").asString)
-			val boneName = obj.get("locator")?.asString
-			return Effect(soundId, boneName)
+			val locators = obj.get("locator")?.asString
+			return Effect(soundId, locators)
 		}
 	}
 }

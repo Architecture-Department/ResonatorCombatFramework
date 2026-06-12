@@ -13,47 +13,12 @@ data class ProxyModel(
 	/** 按名称获取骨骼 */
 	fun getBone(boneName: String): ProxyBone? = bones[boneName]
 
-	/** 创建深拷贝快照（所有 Vector3f 和 HashMap 均独立副本） */
-	fun toSnapshot(): ProxyModel {
-		val snap = ProxyModel(name + "_snap")
-		for ((boneName, bone) in bones) {
-			val copy = ProxyBone(boneName)
-			copy.localPos.set(bone.localPos)
-			copy.localRot.set(bone.localRot)
-			copy.localScale.set(bone.localScale)
-			copy.pos.set(bone.pos)
-			copy.rotation.set(bone.rotation)
-			copy.scale.set(bone.scale)
-			copy.setPosEmpty(!bone.hasPos())
-			copy.setRotEmpty(!bone.hasRot())
-			copy.setScaleEmpty(!bone.hasScale())
-			for ((locName, loc) in bone.locators) {
-				val locCopy = ProxyLocator(locName)
-				locCopy.pos.set(loc.pos)
-				locCopy.rotation.set(loc.rotation)
-				locCopy.scale.set(loc.scale)
-				locCopy.ignoreInheritedScale = loc.ignoreInheritedScale
-				copy.addLocator(locCopy)
-			}
-			snap.addBone(copy)
-		}
-		return snap
-	}
 }
 
 data class ProxyBone(
 	val name: String,
-	/** 局部动画变换 —— 位移（computeAndWrite 写入，remerge 合并） */
-	val localPos: Vector3f = Vector3f(),
-	/** 局部动画变换 —— 旋转 */
-	val localRot: Vector3f = Vector3f(),
-	/** 局部动画变换 —— 缩放 */
-	val localScale: Vector3f = Vector3f(1f, 1f, 1f),
-	/** 模型空间累积变换 —— 位移（computeInheritedTransforms 计算，供渲染使用） */
 	val pos: Vector3f = Vector3f(),
-	/** 模型空间累积变换 —— 旋转 */
 	val rotation: Vector3f = Vector3f(),
-	/** 模型空间累积变换 —— 缩放 */
 	val scale: Vector3f = Vector3f(1f, 1f, 1f),
 	val locators: HashMap<String, ProxyLocator> = hashMapOf(),
 	/** 位标记：0x1=pos空, 0x2=rot空, 0x4=scale空。setXxxEmpty 系列函数操作此字段 */

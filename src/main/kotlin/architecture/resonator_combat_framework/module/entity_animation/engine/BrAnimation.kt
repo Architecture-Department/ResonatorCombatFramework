@@ -101,11 +101,11 @@ data class BrAnimation(
 
 			val bone = proxyModel.getBone(boneName) ?: ProxyBone(boneName).also { proxyModel.addBone(it) }
 			bone.setPosEmpty(pos == null)
-			if (pos != null) bone.localPos.set(pos) else bone.localPos.set(0f, 0f, 0f)
+			if (pos != null) bone.pos.set(pos) else bone.pos.set(0f, 0f, 0f)
 			bone.setRotEmpty(rot == null)
-			if (rot != null) bone.localRot.set(rot) else bone.localRot.set(0f, 0f, 0f)
+			if (rot != null) bone.rotation.set(rot) else bone.rotation.set(0f, 0f, 0f)
 			bone.setScaleEmpty(scale == null)
-			if (scale != null) bone.localScale.set(scale) else bone.localScale.set(1f, 1f, 1f)
+			if (scale != null) bone.scale.set(scale) else bone.scale.set(1f, 1f, 1f)
 			affected.add(boneName)
 		}
 		return affected

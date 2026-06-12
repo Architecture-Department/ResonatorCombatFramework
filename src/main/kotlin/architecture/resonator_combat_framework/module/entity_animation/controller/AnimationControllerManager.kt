@@ -89,7 +89,7 @@ class AnimationControllerManager<T : Entity>(val mapper: IEntityAnimationMapper<
 
 	/** 推进所有控制器的动画时间并重新合并 */
 	fun tickAnimations() {
-		interpCache = null
+		// 保存当前帧快照供渲染插值（prev -> current）
 		prevMergedProxy.bones.clear()
 		for ((name, bone) in mergedProxy.bones) {
 			val copy = ProxyBone(name)
@@ -99,7 +99,6 @@ class AnimationControllerManager<T : Entity>(val mapper: IEntityAnimationMapper<
 			prevMergedProxy.addBone(copy)
 		}
 
-		// 3. 运行动画控制器
 		for (ctrl in ordered) {
 			ctrl.tickAdvance()
 		}
@@ -108,17 +107,12 @@ class AnimationControllerManager<T : Entity>(val mapper: IEntityAnimationMapper<
 	}
 
 	fun remerge() {
-		interpCache = null
 		mergedFlags.clear()
-		// 保存当前 mergedProxy 快照（供淡出 blend），先于 clear()
-		val fadeSnapshot = mergedProxy.toSnapshot()
 		mergedProxy.bones.clear()
 		val coveredBones = mutableSetOf<String>()
 		for (ctrl in ordered.filter { it.isActive() }) {
 			val bac = ctrl as BedrockAnimationController
 			val weight = ctrl.effectiveWeight
-
-
 
 			mergedFlags.putAll(bac.resolveBoneFlags(bac.currentAnimTime))
 			for ((name, bone) in bac.proxyModel.bones) {
@@ -129,9 +123,9 @@ class AnimationControllerManager<T : Entity>(val mapper: IEntityAnimationMapper<
 				}
 
 				if (name in coveredBones && ctrl.isOverriding) {
-					mb.localPos.set(0f)
-					mb.localRot.set(0f)
-					mb.localScale.set(1f, 1f, 1f)
+					mb.pos.set(0f)
+					mb.rotation.set(0f)
+					mb.scale.set(1f, 1f, 1f)
 					mb.setPosEmpty(true)
 					mb.setRotEmpty(true)
 					mb.setScaleEmpty(true)
@@ -139,36 +133,21 @@ class AnimationControllerManager<T : Entity>(val mapper: IEntityAnimationMapper<
 
 				if (bone.hasPos()) {
 					mb.setPosEmpty(false)
-					mb.localPos.add(Vector3f(bone.localPos).mul(weight))
+					mb.pos.add(Vector3f(bone.pos).mul(weight))
 				}
 
 				if (bone.hasRot()) {
 					mb.setRotEmpty(false)
-					mb.localRot.add(Vector3f(bone.localRot).mul(weight))
+					mb.rotation.add(Vector3f(bone.rotation).mul(weight))
 				}
 
 				if (bone.hasScale()) {
 					mb.setScaleEmpty(false)
-					mb.localScale.add(Vector3f(bone.localScale).sub(1f, 1f, 1f).mul(weight))
+					mb.scale.add(Vector3f(bone.scale).sub(1f, 1f, 1f).mul(weight))
 				}
 			}
 			coveredBones.addAll(bac.affectedBones)
 
-			// 淡出时 blend 到低优先级控制器的快照
-			if (ctrl.isFadingOut && weight < 1f) {
-				for ((name, bone) in mergedProxy.bones) {
-					val snapBone = fadeSnapshot.getBone(name) ?: continue
-					if (bone.hasPos() && snapBone.hasPos()) {
-						bone.localPos.set(snapBone.localPos).lerp(bone.localPos, weight)
-					}
-					if (bone.hasRot() && snapBone.hasRot()) {
-						bone.localRot.set(snapBone.localRot).lerp(bone.localRot, weight)
-					}
-					if (bone.hasScale() && snapBone.hasScale()) {
-						bone.localScale.set(snapBone.localScale).lerp(bone.localScale, weight)
-					}
-				}
-			}
 		}
 	}
 
@@ -217,24 +196,13 @@ class AnimationControllerManager<T : Entity>(val mapper: IEntityAnimationMapper<
 
 	fun getInterpolatedBone(name: String, partialTick: Float): ProxyBone? = interpolateBone(name, partialTick)
 
-	/** 插值缓存，tickAnimations 时失效 */
-	private var interpCache: ProxyModel? = null
-
-	/** 上次缓存的 partialTick */
-	private var cachedPartialTick: Float = -1f
-
-	/** 获取合并后的插值代理骨骼（缓存，仅 partialTick 变化或源数据更新时重算） */
+	/** 获取合并后的插值代理骨骼（逐帧在 prevMergedProxy 和 mergedProxy 之间线性插值） */
 	fun getInterpolatedProxy(partialTick: Float): ProxyModel {
-		var cached = interpCache
-		if (cached == null || cachedPartialTick != partialTick) {
-			cached = ProxyModel("interp")
-			for ((name, _) in mergedProxy.bones) {
-				interpolateBone(name, partialTick)?.let { cached.addBone(it) }
-			}
-			interpCache = cached
-			cachedPartialTick = partialTick
+		val result = ProxyModel("interp")
+		for ((name, _) in mergedProxy.bones) {
+			interpolateBone(name, partialTick)?.let { result.addBone(it) }
 		}
-		return cached
+		return result
 	}
 
 	/** 按名称获取控制器 */
@@ -308,27 +276,6 @@ class AnimationControllerManager<T : Entity>(val mapper: IEntityAnimationMapper<
 		return bone.let { Vector3d(it.pos.x.toDouble(), it.pos.y.toDouble(), it.pos.z.toDouble()) }
 	}
 
-	/** 按父→子顺序构建骨骼层次列表（拓扑排序，父骨骼先于子骨骼） */
-	private fun buildHierarchyOrder(): List<String> {
-		val result = mutableListOf<String>()
-		val visited = mutableSetOf<String>()
-		for (name in bones.keys) {
-			addWithParents(name, result, visited)
-		}
-		return result
-	}
-
-	/** 递归添加父骨骼及其子骨骼到有序列表 */
-	private fun addWithParents(name: String, result: MutableList<String>, visited: MutableSet<String>) {
-		if (name in visited) return
-		visited.add(name)
-		val brBone = bones[name] ?: return
-		if (brBone.parent != null && brBone.parent !in visited) {
-			addWithParents(brBone.parent, result, visited)
-		}
-		result.add(name)
-	}
-
 	/** 合并所有控制器的额外骨骼到 [bones] */
 	fun rebuildBones() {
 		val merged = brModel.bones.associateBy { it.name }.toMutableMap()
@@ -337,31 +284,6 @@ class AnimationControllerManager<T : Entity>(val mapper: IEntityAnimationMapper<
 			merged.putAll(controller.getExtraBones())
 		}
 		bones = merged
-	}
-
-	/**
-	 * 计算骨骼层级继承变换。
-	 * 遍历骨骼层级，从父到子累加 localPos/localRot/localScale 到 pos/rotation/scale。
-	 * @param enableInheritance false 时不计算继承，pos/rotation/scale 直接等于 local 值
-	 * @param noInheritNames 不继承父变换的骨骼名集合
-	 */
-	fun computeInheritedTransforms(enableInheritance: Boolean, noInheritNames: Set<String>) {
-		val ordered = buildHierarchyOrder()
-		for (boneName in ordered) {
-			val pb = mergedProxy.getBone(boneName) ?: continue
-			val brBone = bones[boneName] ?: continue
-			val skip = !enableInheritance || boneName in noInheritNames || brBone.parent == null
-			val parentPb = if (!skip) mergedProxy.getBone(brBone.parent) else null
-			if (skip || parentPb == null) {
-				pb.pos.set(pb.localPos)
-				pb.rotation.set(pb.localRot)
-				pb.scale.set(pb.localScale)
-			} else {
-				pb.pos.set(parentPb.pos).add(pb.localPos)
-				pb.rotation.set(parentPb.rotation).add(pb.localRot)
-				pb.scale.set(parentPb.scale).mul(pb.localScale)
-			}
-		}
 	}
 
 	/** 两控制器的 affectedBones 是否有交集 */

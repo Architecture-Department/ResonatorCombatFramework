@@ -2,11 +2,6 @@ package architecture.resonator_combat_framework.module.entity_animation.registry
 
 import architecture.resonator_combat_framework.core.RcfConstants
 import architecture.resonator_combat_framework.module.entity_animation.data.ProxyBoneConfigData
-import architecture.resonator_combat_framework.module.entity_animation.data.ProxyBoneFlags
-import architecture.resonator_combat_framework.module.entity_animation.data.ProxyTimelineEntry
-import architecture.resonator_combat_framework.module.entity_animation.engine.BrBone
-import com.google.gson.JsonElement
-import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import net.minecraft.server.packs.resources.ResourceManager
 import net.minecraft.server.packs.resources.SimplePreparableReloadListener
@@ -39,7 +34,7 @@ class ProxyBoneConfigDataRegistry(private val side: String = "?") :
 			val animId = entry.key.path.substringAfterLast("/").removeSuffix(".json")
 			try {
 				val json = JsonParser.parseReader(entry.value.openAsReader()).asJsonObject
-				result[animId] = parseConfig(json)
+				result[animId] = ProxyBoneConfigData.parse(json)
 			} catch (e: Exception) {
 				RcfConstants.LOGGER.error("[CONFIG/{}] Failed to load: {} - {}", side, entry.key, e.message)
 			}
@@ -57,60 +52,4 @@ class ProxyBoneConfigDataRegistry(private val side: String = "?") :
 			loaded.keys.sorted().joinToString(", ")
 		)
 	}
-
-	private fun parseConfig(json: JsonObject): ProxyBoneConfigData {
-		val transitionTicks = json.get("transition")?.asInt ?: ProxyBoneConfigData.DEFAULT_TRANSITION_TICKS
-		val fadeInTicks = json.get("fade_in")?.asInt ?: -1
-		val fadeOutTicks = json.get("fade_out")?.asInt ?: -1
-		val bones = parseBonesSection(json.get("bones"))
-		// 解析额外骨骼定义（动画期间动态添加的 BrBone 几何数据）
-		val extraBonesJson = json.getAsJsonArray("extra_bones")
-		val extraBones = if (extraBonesJson != null)
-			BrBone.parses(extraBonesJson).associateBy { it.name } else emptyMap()
-		val timelineJson = json.getAsJsonObject("timeline")
-		val timeline = if (timelineJson != null) {
-			val list = mutableListOf<ProxyTimelineEntry>()
-			for ((timeRange, data) in timelineJson.entrySet()) {
-				val parts = timeRange.split("-")
-				val entry = data.asJsonObject
-				list.add(
-					ProxyTimelineEntry(
-						from = parts.getOrNull(0)?.toFloatOrNull() ?: 0f,
-						to = parts.getOrNull(1)?.toFloatOrNull() ?: 0f,
-						bones = parseBonesSection(entry.get("bones"))
-					)
-				)
-			}
-			list
-		} else emptyList()
-		return ProxyBoneConfigData.create(bones, timeline, transitionTicks, fadeInTicks, fadeOutTicks, extraBones)
-	}
-
-	private fun parseBonesSection(section: JsonElement?): Map<String, ProxyBoneFlags> {
-		if (section == null || !section.isJsonObject) return emptyMap()
-		val obj = section.asJsonObject
-		val result = mutableMapOf<String, ProxyBoneFlags>()
-		for ((boneName, boneElement) in obj.entrySet()) {
-			if (!boneElement.isJsonObject) continue
-			val boneObj = boneElement.asJsonObject
-			result[boneName] = ProxyBoneFlags(flattenBoneFlags(boneObj))
-		}
-		return result
-	}
-
-	private fun flattenBoneFlags(obj: JsonObject): Map<String, Boolean> {
-		val flat = mutableMapOf<String, Boolean>()
-		for ((key, value) in obj.entrySet()) {
-			when {
-				value.isJsonPrimitive -> flat[key] = value.asBoolean
-				value.isJsonObject -> {
-					for ((subKey, subValue) in value.asJsonObject.entrySet()) {
-						if (subValue.isJsonPrimitive) flat["$key.$subKey"] = subValue.asBoolean
-					}
-				}
-			}
-		}
-		return flat
-	}
 }
-

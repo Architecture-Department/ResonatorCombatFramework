@@ -47,7 +47,7 @@ interface IEntityAnimationController<T : Entity> {
 	/** 是否正在淡出 */
 	val isFadingOut: Boolean
 
-	/** 是否正在淡入 */
+	/** 是否正在淡入（TRANSITIONING 状态） */
 	val isFadingIn: Boolean
 
 	/** 当前动画播放时间（秒） */
