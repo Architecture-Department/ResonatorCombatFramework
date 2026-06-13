@@ -1,8 +1,8 @@
 package architecture.resonator_combat_framework.init
 
 import architecture.resonator_combat_framework.core.RcfConstants.modRegister
-import architecture.resonator_combat_framework.module.entity_animation.engine.molang.MolangData
-import architecture.resonator_combat_framework.module.entity_animation.engine.molang.MolangData.Companion.initEntityQueries
+import architecture.resonator_combat_framework.module.entity_animation.animation.molang.MolangData
+import architecture.resonator_combat_framework.module.entity_animation.animation.molang.MolangData.Companion.initEntityQueries
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.level.Level
 import net.neoforged.neoforge.attachment.AttachmentType

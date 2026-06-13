@@ -1,8 +1,8 @@
 package architecture.resonator_combat_framework.module.entity_animation.registry
 
 import architecture.resonator_combat_framework.core.RcfConstants
-import architecture.resonator_combat_framework.module.entity_animation.engine.BrAnimation
-import architecture.resonator_combat_framework.module.entity_animation.engine.molang.MolangValue
+import architecture.resonator_combat_framework.module.entity_animation.animation.BakingBrAnimation
+import architecture.resonator_combat_framework.module.entity_animation.animation.molang.MolangValue
 import com.google.gson.JsonParser
 import net.minecraft.server.packs.resources.ResourceManager
 import net.minecraft.server.packs.resources.SimplePreparableReloadListener
@@ -13,12 +13,15 @@ import net.minecraft.util.profiling.ProfilerFiller
  * 从 `assets/<namespace>/rcf/animations/` 加载动画 JSON 文件。
  * 每个 JSON 文件可包含多个动画（animations 对象下的所有条目均独立注册）。
  */
-class BedrockAnimationRegistry(private val side: String = "?") :
-	SimplePreparableReloadListener<Map<String, BrAnimation>>() {
+class BedrockAnimationRegistry(
+	val isClient: Boolean,
+	private val side: String = if (isClient) "CLIENT" else "SERVER"
+) :
+	SimplePreparableReloadListener<Map<String, BakingBrAnimation>>() {
 
 	companion object {
-		private val CLIENT = BedrockAnimationRegistry("CLIENT")
-		private val SERVER = BedrockAnimationRegistry("SERVER")
+		private val CLIENT = BedrockAnimationRegistry(true)
+		private val SERVER = BedrockAnimationRegistry(false)
 
 		@JvmStatic
 		fun getInstance(isClient: Boolean): BedrockAnimationRegistry {
@@ -26,22 +29,22 @@ class BedrockAnimationRegistry(private val side: String = "?") :
 		}
 	}
 
-	private val animations = mutableMapOf<String, BrAnimation>()
+	private val animations = mutableMapOf<String, BakingBrAnimation>()
 	private val exprCache = mutableMapOf<String, MolangValue>()
 
-	fun get(animId: String): BrAnimation? = animations[animId]
+	fun get(animId: String): BakingBrAnimation? = animations[animId]
 
 	fun getAllAnimIds(): Set<String> = animations.keys
 
-	override fun prepare(manager: ResourceManager, profiler: ProfilerFiller): Map<String, BrAnimation> {
-		val result = mutableMapOf<String, BrAnimation>()
+	override fun prepare(manager: ResourceManager, profiler: ProfilerFiller): Map<String, BakingBrAnimation> {
+		val result = mutableMapOf<String, BakingBrAnimation>()
 		var totalFiles = 0
 		var totalAnims = 0
 		for (entry in manager.listResources("rcf/animations") { it.path.endsWith(".json") }) {
 			val before = result.size
 			try {
 				val json = JsonParser.parseReader(entry.value.openAsReader()).asJsonObject
-				result.putAll(BrAnimation.parses(json, side, exprCache))
+				result.putAll(BakingBrAnimation.parses(json, side, exprCache))
 			} catch (e: Exception) {
 				RcfConstants.LOGGER.error("[ANIMATION/{}] Failed to load: {} - {}", side, entry.key, e.message)
 			}
@@ -55,7 +58,7 @@ class BedrockAnimationRegistry(private val side: String = "?") :
 		return result
 	}
 
-	override fun apply(loaded: Map<String, BrAnimation>, manager: ResourceManager, profiler: ProfilerFiller) {
+	override fun apply(loaded: Map<String, BakingBrAnimation>, manager: ResourceManager, profiler: ProfilerFiller) {
 		animations.clear()
 		animations.putAll(loaded)
 		RcfConstants.LOGGER.info(

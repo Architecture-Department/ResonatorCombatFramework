@@ -1,9 +1,9 @@
 package architecture.resonator_combat_framework.module.entity_animation.util
 
-import architecture.resonator_combat_framework.module.entity_animation.ProxyBone
-import architecture.resonator_combat_framework.module.entity_animation.data.ProxyBoneFlags
-import architecture.resonator_combat_framework.module.entity_animation.data.isEnabled
-import architecture.resonator_combat_framework.module.entity_animation.data.shouldTransition
+import architecture.resonator_combat_framework.module.entity_animation.animation.data.ProxyBoneFlags
+import architecture.resonator_combat_framework.module.entity_animation.animation.data.isEnabled
+import architecture.resonator_combat_framework.module.entity_animation.animation.data.shouldTransition
+import architecture.resonator_combat_framework.module.entity_animation.animation.model.ProxyBone
 import com.mojang.blaze3d.vertex.PoseStack
 import net.minecraft.client.model.geom.ModelPart
 import org.joml.Quaternionf

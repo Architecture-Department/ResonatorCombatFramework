@@ -1,0 +1,19 @@
+package architecture.resonator_combat_framework.module.entity_animation.animation.molang.function.round
+
+import architecture.resonator_combat_framework.module.entity_animation.animation.molang.MolangData
+import architecture.resonator_combat_framework.module.entity_animation.animation.molang.MolangValue
+
+// MoLang 函数: math.hermite_blend(a) — Hermite 平滑插值
+import architecture.resonator_combat_framework.module.entity_animation.animation.molang.function.MolangFunction
+
+class HermiteBlendFunction(private val value: MolangValue) : MolangFunction {
+	override fun get(context: MolangData?): Double {
+		val v = value.get(context)
+		return v * v * (3 - 2 * v)
+	}
+
+	override fun isMutable(): Boolean {
+		return value.isMutable()
+	}
+}
+

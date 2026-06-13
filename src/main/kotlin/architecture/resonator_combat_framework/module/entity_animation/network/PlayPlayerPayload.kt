@@ -1,16 +1,11 @@
 package architecture.resonator_combat_framework.module.entity_animation.network
 
-
-// 播放动画数据包。从服务端发送到客户端，触发动画播放
-
-// 播放动画数据包。从服务端发送到客户端，触发动画播放
-
 import architecture.goldenboughs_lib.api.payload.ToServerAndClientPayload
 import architecture.goldenboughs_lib.core.LibConstants.OPTIONAL_RESOURCE_LOCATION_STREAM_CODEC
 import architecture.resonator_combat_framework.core.RcfConstants
 import architecture.resonator_combat_framework.events.registry.AnimationControllers
-import architecture.resonator_combat_framework.module.entity_animation.data.AnimType
-import architecture.resonator_combat_framework.module.entity_animation.data.AnimationPlayData
+import architecture.resonator_combat_framework.module.entity_animation.animation.data.AnimType
+import architecture.resonator_combat_framework.module.entity_animation.animation.data.AnimationPlayData
 import architecture.resonator_combat_framework.module.entity_animation.mixed.IAnimationProxyProvider.Companion.getAnimationTransformer
 import io.netty.buffer.ByteBuf
 import net.minecraft.client.player.AbstractClientPlayer
@@ -24,9 +19,12 @@ import net.neoforged.neoforge.network.PacketDistributor
 import net.neoforged.neoforge.network.handling.IPayloadContext
 import java.util.*
 
-data class PlayPlayerPayload(
+/**播放动画数据包。从服务端发送到客户端，触发动画播放*/
+data class PlayPlayerPayload
+@JvmOverloads
+constructor(
 	val playerUuid: UUID,
-	val controllerName: Optional<ResourceLocation>,
+	val controllerName: Optional<ResourceLocation> = Optional.empty(),
 	val animId: String,
 	val animType: AnimType = AnimType.DEFAULT,
 	val speedMultiplier: Float = 1f,
@@ -36,6 +34,7 @@ data class PlayPlayerPayload(
 	val fadeOutTicks: Int = -1
 ) : ToServerAndClientPayload {
 
+	@JvmOverloads
 	constructor(
 		playerUuid: UUID,
 		controllerName: ResourceLocation?,

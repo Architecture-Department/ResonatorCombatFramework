@@ -17,13 +17,16 @@ import net.neoforged.neoforge.network.PacketDistributor
 import net.neoforged.neoforge.network.handling.IPayloadContext
 import java.util.*
 
-// 停止动画数据包。从服务端发送到客户端，停止指定动画
-data class StopPlayerPayload(
+/** 停止动画数据包。从服务端发送到客户端，停止指定动画*/
+data class StopPlayerPayload
+@JvmOverloads
+constructor(
 	val playerUuid: UUID,
-	val controllerName: Optional<ResourceLocation>,
+	val controllerName: Optional<ResourceLocation> = Optional.empty(),
 	val fadeOutTicks: Int = -1
 ) : ToServerAndClientPayload {
 
+	@JvmOverloads
 	constructor(
 		playerUuid: UUID,
 		controllerName: ResourceLocation?,

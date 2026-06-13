@@ -1,8 +1,8 @@
 package architecture.resonator_combat_framework.mixin;
 
 import architecture.resonator_combat_framework.mixed.IPlayerRcf;
-import architecture.resonator_combat_framework.module.entity_animation.mapper.IEntityAnimationMapper;
-import architecture.resonator_combat_framework.module.entity_animation.mapper.PlayerAnimationMapper;
+import architecture.resonator_combat_framework.module.entity_animation.animation.mapper.IEntityAnimationMapper;
+import architecture.resonator_combat_framework.module.entity_animation.animation.mapper.PlayerAnimationMapper;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.client.model.PlayerModel;
 import net.minecraft.core.BlockPos;

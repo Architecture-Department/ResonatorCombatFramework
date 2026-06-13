@@ -1,7 +1,7 @@
 package architecture.resonator_combat_framework.module.entity_animation.mixin.client;
 
-import architecture.resonator_combat_framework.module.entity_animation.mapper.HumanoidEntityAnimationMapper;
-import architecture.resonator_combat_framework.module.entity_animation.mapper.IEntityAnimationMapper;
+import architecture.resonator_combat_framework.module.entity_animation.animation.mapper.HumanoidEntityAnimationMapper;
+import architecture.resonator_combat_framework.module.entity_animation.animation.mapper.IEntityAnimationMapper;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.MultiBufferSource;

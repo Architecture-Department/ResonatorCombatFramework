@@ -1,10 +1,6 @@
 package architecture.resonator_combat_framework.module.entity_animation.network
 
 
-// 恢复动画数据包
-
-// 恢复动画数据包
-
 import architecture.goldenboughs_lib.api.payload.ToServerAndClientPayload
 import architecture.goldenboughs_lib.core.LibConstants.OPTIONAL_RESOURCE_LOCATION_STREAM_CODEC
 import architecture.resonator_combat_framework.core.RcfConstants
@@ -21,9 +17,12 @@ import net.neoforged.neoforge.network.PacketDistributor
 import net.neoforged.neoforge.network.handling.IPayloadContext
 import java.util.*
 
-data class ResumePlayerPayload(
+/** 恢复动画数据包 */
+data class ResumePlayerPayload
+@JvmOverloads
+constructor(
 	val playerUuid: UUID,
-	val controllerName: Optional<ResourceLocation>
+	val controllerName: Optional<ResourceLocation> = Optional.empty(),
 ) : ToServerAndClientPayload {
 
 	constructor(playerUuid: UUID, controllerName: ResourceLocation?) : this(

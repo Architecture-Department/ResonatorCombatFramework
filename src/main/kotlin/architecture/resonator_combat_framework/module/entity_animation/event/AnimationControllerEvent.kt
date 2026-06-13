@@ -1,7 +1,7 @@
 package architecture.resonator_combat_framework.module.entity_animation.event
 
-import architecture.resonator_combat_framework.module.entity_animation.controller.IEntityAnimationController
-import architecture.resonator_combat_framework.module.entity_animation.mapper.IEntityAnimationMapper
+import architecture.resonator_combat_framework.module.entity_animation.animation.controller.IEntityAnimationController
+import architecture.resonator_combat_framework.module.entity_animation.animation.mapper.IEntityAnimationMapper
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.Entity
 import net.neoforged.bus.api.Event
