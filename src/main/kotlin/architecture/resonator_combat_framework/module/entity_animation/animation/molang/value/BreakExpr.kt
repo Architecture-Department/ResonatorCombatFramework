@@ -6,7 +6,7 @@ import architecture.resonator_combat_framework.module.entity_animation.animation
 // MoLang AST 节点: break 语句——退出当前循环
 
 object BreakExpr : MolangValue {
-	override fun get(context: MolangData?): Double = 0.0
+	override fun eval(context: MolangData?): Double = 0.0
 
 	override fun isMutable(): Boolean = false
 

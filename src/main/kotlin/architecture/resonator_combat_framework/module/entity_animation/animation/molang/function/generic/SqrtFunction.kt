@@ -8,8 +8,8 @@ import architecture.resonator_combat_framework.module.entity_animation.animation
 import kotlin.math.sqrt
 
 class SqrtFunction(private val value: MolangValue) : MolangFunction {
-	override fun get(context: MolangData?): Double {
-		return sqrt(value.get(context))
+	override fun eval(context: MolangData?): Double {
+		return sqrt(value.eval(context))
 	}
 
 	override fun isMutable(): Boolean {

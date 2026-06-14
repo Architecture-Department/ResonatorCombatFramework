@@ -7,9 +7,9 @@ import architecture.resonator_combat_framework.module.entity_animation.animation
 import architecture.resonator_combat_framework.module.entity_animation.animation.molang.function.MolangFunction
 
 class DieRollIntegerFunction(private val sides: MolangValue, private val rolls: MolangValue) : MolangFunction {
-	override fun get(context: MolangData?): Double {
-		val s = sides.get(context)
-		val r = rolls.get(context)
+	override fun eval(context: MolangData?): Double {
+		val s = sides.eval(context)
+		val r = rolls.eval(context)
 		var sum = 0.0
 		for (i in 0..<r.toInt()) sum += (1 + (Math.random() * s).toInt()).toDouble()
 		return sum.toInt().toDouble()

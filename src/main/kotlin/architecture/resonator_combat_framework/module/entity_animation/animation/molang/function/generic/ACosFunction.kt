@@ -7,8 +7,8 @@ import kotlin.math.acos
 
 // MoLang 函数: math.acos(a) — 反余弦
 class ACosFunction(private val value: MolangValue) : MolangFunction {
-	override fun get(context: MolangData?): Double {
-		return acos(value.get(context))
+	override fun eval(context: MolangData?): Double {
+		return acos(value.eval(context))
 	}
 
 	override fun isMutable(): Boolean {

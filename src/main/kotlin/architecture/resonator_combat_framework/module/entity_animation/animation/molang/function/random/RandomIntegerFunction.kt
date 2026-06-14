@@ -8,8 +8,8 @@ import architecture.resonator_combat_framework.module.entity_animation.animation
 import kotlin.math.floor
 
 class RandomIntegerFunction(private val a: MolangValue, private val b: MolangValue) : MolangFunction {
-	override fun get(context: MolangData?): Double {
-		return floor(a.get(context) + Math.random() * (b.get(context) - a.get(context) + 1))
+	override fun eval(context: MolangData?): Double {
+		return floor(a.eval(context) + Math.random() * (b.eval(context) - a.eval(context) + 1))
 	}
 
 	override fun isMutable(): Boolean {

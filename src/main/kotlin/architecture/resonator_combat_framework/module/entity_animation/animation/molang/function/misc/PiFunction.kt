@@ -6,7 +6,7 @@ import architecture.resonator_combat_framework.module.entity_animation.animation
 import architecture.resonator_combat_framework.module.entity_animation.animation.molang.function.MolangFunction
 
 class PiFunction : MolangFunction {
-	override fun get(context: MolangData?): Double {
+	override fun eval(context: MolangData?): Double {
 		return Math.PI
 	}
 

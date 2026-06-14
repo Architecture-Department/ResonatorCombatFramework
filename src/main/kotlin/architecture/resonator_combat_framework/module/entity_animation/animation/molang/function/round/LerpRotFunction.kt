@@ -8,10 +8,10 @@ import architecture.resonator_combat_framework.module.entity_animation.animation
 
 class LerpRotFunction(private val a: MolangValue, private val b: MolangValue, private val t: MolangValue) :
 	MolangFunction {
-	override fun get(context: MolangData?): Double {
-		val va = a.get(context)
-		val vb = b.get(context)
-		val vt = t.get(context)
+	override fun eval(context: MolangData?): Double {
+		val va = a.eval(context)
+		val vb = b.eval(context)
+		val vt = t.eval(context)
 		val diff = ((vb - va) % 360 + 540) % 360 - 180
 		return va + diff * vt
 	}

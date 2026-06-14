@@ -1,7 +1,9 @@
 package architecture.resonator_combat_framework.module.entity_animation.animation
 
 import architecture.goldenboughs_lib.util.LibUtil
+import architecture.goldenboughs_lib.util.toVector3d
 import architecture.resonator_combat_framework.core.RcfConstants
+import architecture.resonator_combat_framework.module.entity_animation.animation.model.BrModel
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.ProxyBone
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.ProxyModel
 import architecture.resonator_combat_framework.module.entity_animation.animation.molang.*
@@ -17,15 +19,12 @@ import net.minecraft.server.level.ServerLevel
 import net.minecraft.sounds.SoundSource
 import net.minecraft.util.StringUtil
 import net.minecraft.world.entity.Entity
-import net.minecraft.world.phys.Vec3
 import org.joml.Vector2f
-import org.joml.Vector3d
 import org.joml.Vector3f
 import kotlin.math.floor
 
 data class BakingBrAnimation
-@JvmOverloads
-constructor(
+@JvmOverloads constructor(
 	val animId: String,
 	/** 播放模式：ONCE / LOOP / HOLD_ON_LAST */
 	val loop: LoopType = LoopType.ONCE,
@@ -45,9 +44,7 @@ constructor(
 		/** 解析 JSON 根对象的 "animations" 段，每个条目注册为一个 BedrockAnimation */
 		@JvmStatic
 		fun parses(
-			root: JsonObject,
-			side: String = "?",
-			exprCache: MutableMap<String, MolangValue> = mutableMapOf()
+			root: JsonObject, side: String = "?", exprCache: MutableMap<String, MolangValue> = mutableMapOf()
 		): MutableMap<String, BakingBrAnimation> {
 			val result = mutableMapOf<String, BakingBrAnimation>()
 			val animations = root.getAsJsonObject("animations") ?: return result
@@ -63,20 +60,16 @@ constructor(
 				}
 
 				val bonesJson = animDef.getAsJsonObject("bones")
-				val bones = if (bonesJson != null)
-					BakingBrBoneAnimation.parses(bonesJson) else emptyMap()
+				val bones = if (bonesJson != null) BakingBrBoneAnimation.parses(bonesJson) else emptyMap()
 
 				val soundsJson = animDef.getAsJsonObject("sound_effects")
-				val sounds = if (soundsJson != null)
-					BakingBrAnimationSound.parses(soundsJson) else emptyList()
+				val sounds = if (soundsJson != null) BakingBrAnimationSound.parses(soundsJson) else emptyList()
 
 				val particlesJson = animDef.getAsJsonObject("particle_effects")
-				val particles = if (particlesJson != null)
-					BakingBrAnimationParticle.parses(particlesJson) else emptyList()
+				val particles = if (particlesJson != null) BakingBrAnimationParticle.parses(particlesJson) else emptyList()
 
 				val timelinesJson = animDef.getAsJsonObject("timeline")
-				val timelines = if (timelinesJson != null)
-					BakingBrAnimationTimeline.parses(timelinesJson) else emptyList()
+				val timelines = if (timelinesJson != null) BakingBrAnimationTimeline.parses(timelinesJson) else emptyList()
 
 				val length = animDef.get("animation_length")?.asFloat ?: BakingBrBoneAnimation.calcAnimLength(bones)
 				// 解析 Molang anim_time_update
@@ -87,11 +80,7 @@ constructor(
 					result[animId] = BakingBrAnimation(animId, loop, length, bones, sounds, particles, timelines, expr)
 				} catch (e: Exception) {
 					RcfConstants.LOGGER.warn(
-						"[ANIMATION/{}] Failed to parse anim_time_update: '{}' for {} exception: {}",
-						side,
-						exprStr,
-						animId,
-						e
+						"[ANIMATION/{}] Failed to parse anim_time_update: '{}' for {} exception: {}", side, exprStr, animId, e
 					)
 					result[animId] = BakingBrAnimation(animId, loop, length, bones, sounds, particles, timelines)
 				}
@@ -102,9 +91,7 @@ constructor(
 
 	/** 计算动画在 time 时刻的骨骼变换并写入 proxyModel.localPos/localRot/localScale（局部变换） */
 	fun computeAndWrite(
-		time: Float,
-		proxyModel: ProxyModel,
-		context: MolangData? = null
+		time: Float, proxyModel: ProxyModel, context: MolangData? = null
 	): Set<String> {
 		val affected = mutableSetOf<String>()
 		for ((boneName, boneAnim) in bones) {
@@ -128,9 +115,7 @@ constructor(
 	 * 插值关键帧序列，返回 time 时刻的值
 	 */
 	internal fun interpolateFrames(
-		frames: List<BakingBrBoneKeyFrame>,
-		time: Float,
-		context: MolangData? = null
+		frames: List<BakingBrBoneKeyFrame>, time: Float, context: MolangData? = null
 	): Vector3f? {
 		if (frames.isEmpty()) return null
 		val afterIdx = frames.indexOfFirst { it.time > time }
@@ -169,20 +154,17 @@ constructor(
 					{ it.evaluatePost(context = context).x },
 					{ it.evaluatePost(context = context).x },
 					{ it.evaluatePre(context = context).x },
-					{ it.evaluatePre(context = context).x }
-				)
+					{ it.evaluatePre(context = context).x })
 				val cy = buildAxis(
 					{ it.evaluatePost(context = context).y },
 					{ it.evaluatePost(context = context).y },
 					{ it.evaluatePre(context = context).y },
-					{ it.evaluatePre(context = context).y }
-				)
+					{ it.evaluatePre(context = context).y })
 				val cz = buildAxis(
 					{ it.evaluatePost(context = context).z },
 					{ it.evaluatePost(context = context).z },
 					{ it.evaluatePre(context = context).z },
-					{ it.evaluatePre(context = context).z }
-				)
+					{ it.evaluatePre(context = context).z })
 				Vector3f(cx, cy, cz)
 			}
 
@@ -206,39 +188,50 @@ constructor(
 		val idx2 = if (intPoint > points.size - 2) points.size - 1 else intPoint + 1
 		val idx3 = if (intPoint > points.size - 3) points.size - 1 else intPoint + 2
 		return EasingTypes.catmullRom(
-			weight.toDouble(), points[idx0].y.toDouble(), points[idx1].y.toDouble(),
-			points[idx2].y.toDouble(), points[idx3].y.toDouble()
+			weight.toDouble(),
+			points[idx0].y.toDouble(),
+			points[idx1].y.toDouble(),
+			points[idx2].y.toDouble(),
+			points[idx3].y.toDouble()
 		).toFloat()
 	}
 }
 
 data class BakingBrAnimationParticle
-@JvmOverloads
-constructor(
-	val time: Float,
-	val effects: List<Effect> = emptyList()
+@JvmOverloads constructor(
+	val time: Float, val effects: List<Effect> = emptyList()
 ) {
-	fun apply(entity: Entity, pos: Vector3d, context: MolangData? = null) {
-		effects.forEach { it.apply(entity, pos, context) }
+	fun apply(entity: Entity, brModel: BrModel, animationData: ProxyModel, context: MolangData? = null) {
+		effects.forEach { it.apply(entity, brModel, animationData, context) }
 	}
 
 	data class Effect(
 		val particleId: ResourceLocation,
-		val locator: String? = null,
+		val locatorName: String? = null,
 		val bindToActor: Boolean = true,
 		val preEffectScript: MolangValue? = null
 	) {
-		fun apply(entity: Entity, pos: Vector3d, context: MolangData? = null) {
-			preEffectScript?.get(context)
-			val particleType = BuiltInRegistries.PARTICLE_TYPE.get(particleId) ?: return
-			val emitPos = if (bindToActor) entity.position() else Vec3(pos.x, pos.y, pos.z)
-			if (entity.level().isClientSide) {
-				@Suppress("UNCHECKED_CAST")
-				val particle = particleType as? ParticleOptions
-				if (particle != null) {
-					entity.level().addParticle(particle, emitPos.x, emitPos.y, emitPos.z, 0.0, 0.0, 0.0)
+		fun apply(entity: Entity, brModel: BrModel, animationData: ProxyModel, context: MolangData? = null) {
+			var xSpeed = 0.0
+			var ySpeed = 0.0
+			var zSpeed = 0.0
+			if (preEffectScript != null) {
+				context?.withScope { scope ->
+					preEffectScript.eval(scope)
+					xSpeed = scope.getLocal("temp.xSpeed") ?: 0.0
+					ySpeed = scope.getLocal("temp.ySpeed") ?: 0.0
+					zSpeed = scope.getLocal("temp.zSpeed") ?: 0.0
 				}
 			}
+			val particle = BuiltInRegistries.PARTICLE_TYPE.get(particleId) as? ParticleOptions ?: return
+
+			val entityPos = entity.position().toVector3f()
+			val pos = brModel.computeLocatorGlobalMatrix(locatorName, animationData)
+				.transformPosition(Vector3f(entityPos.x, entityPos.y, entityPos.z)).toVector3d()
+
+			entity.level().addParticle(
+				particle, pos.x, pos.y, pos.z, xSpeed, ySpeed, zSpeed
+			)
 		}
 	}
 
@@ -270,28 +263,37 @@ constructor(
 }
 
 data class BakingBrAnimationSound
-@JvmOverloads
-constructor(
-	val time: Float,
-	val effects: List<Effect> = emptyList()
+@JvmOverloads constructor(
+	val time: Float, val effects: List<Effect> = emptyList()
 ) {
-	fun apply(entity: Entity, pos: Vector3d, context: MolangData? = null) {
-		effects.forEach { it.apply(entity, pos, context) }
+	fun apply(entity: Entity, brModel: BrModel, animationData: ProxyModel, context: MolangData? = null) {
+		effects.forEach { it.apply(entity, brModel, animationData, context) }
 	}
 
 	data class Effect(
 		val soundId: ResourceLocation,
-		val locator: String? = null,
+		val locatorName: String? = null,
 		val bindToActor: Boolean = true,
 		val preEffectScript: MolangValue? = null
 	) {
-		fun apply(entity: Entity, pos: Vector3d, context: MolangData? = null) {
-			preEffectScript?.get(context)
+		fun apply(entity: Entity, brModel: BrModel, animationData: ProxyModel, context: MolangData? = null) {
+			var volume = 1.0f
+			var pitch = 1.0f
+			if (preEffectScript != null) {
+				context?.withScope { scope ->
+					preEffectScript.eval(scope)
+					volume = scope.getLocal("temp.volume")?.toFloat() ?: 1.0f
+					pitch = scope.getLocal("temp.pitch")?.toFloat() ?: 1.0f
+				}
+			}
 			val soundEvent = BuiltInRegistries.SOUND_EVENT.get(soundId) ?: return
-			val x = if (bindToActor) entity.x else pos.x
-			val y = if (bindToActor) entity.y else pos.y
-			val z = if (bindToActor) entity.z else pos.z
-			entity.level().playSound(null, x, y, z, soundEvent, SoundSource.PLAYERS, 1f, 1f)
+			val entityPos = entity.position().toVector3f()
+			val pos = brModel.computeLocatorGlobalMatrix(locatorName, animationData)
+				.transformPosition(Vector3f(entityPos.x, entityPos.y, entityPos.z)).toVector3d()
+
+			entity.level().playSound(
+				null, pos.x, pos.y, pos.z, soundEvent, SoundSource.PLAYERS, volume, pitch
+			)
 		}
 	}
 
@@ -321,15 +323,14 @@ constructor(
 }
 
 data class BakingBrAnimationTimeline
-@JvmOverloads
-constructor(
+@JvmOverloads constructor(
 	val time: Float,
 	val molangs: List<MolangValue> = emptyList(),
 	val commands: List<String> = emptyList(),
 	val entityEvents: List<String> = emptyList()
 ) {
 	fun apply(entity: Entity, context: MolangData? = null) {
-		molangs.forEach { it.get(context) }
+		molangs.forEach { it.eval(context) }
 
 		entityEvents.forEach { event -> processEntityEvent(entity, event) }
 
@@ -338,10 +339,8 @@ constructor(
 		val server = level.server
 		if (commands.isEmpty()) return
 
-		@Suppress("TYPE_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
-		val source = CommandSourceStack(
-			entity, entity.position(), entity.rotationVector,
-			level, 2, entity.name.string, entity.displayName, server, entity
+		@Suppress("TYPE_MISMATCH_BASED_ON_JAVA_ANNOTATIONS") val source = CommandSourceStack(
+			entity, entity.position(), entity.rotationVector, level, 2, entity.name.string, entity.displayName, server, entity
 		)
 		commands.forEach { cmd ->
 			if (StringUtil.isNullOrEmpty(cmd)) return@forEach
@@ -370,18 +369,24 @@ constructor(
 	}
 
 	companion object {
+		@JvmStatic
 		fun parses(timelinesJson: JsonObject): List<BakingBrAnimationTimeline> {
 			val list = mutableListOf<BakingBrAnimationTimeline>()
 			timelinesJson.asMap().forEach { (key, value) ->
 				val molangs = mutableListOf<MolangValue>()
 				val commands = mutableListOf<String>()
 				val entityEvents = mutableListOf<String>()
-				value.asString.split(";").forEach {
-					val trimmed = it.trim()
+				val parts = if (value.isJsonArray) {
+					value.asJsonArray.map { it.asString }
+				} else {
+					value.asString.split(";").filter { it.isNotBlank() }
+				}
+				parts.forEach { raw ->
+					val trimmed = raw.trim()
 					when {
-						trimmed.startsWith("/") -> commands.add(it)
-						trimmed.startsWith("@") -> entityEvents.add(it)
-						else -> molangs.add(MathParser.compileMolang(it))
+						trimmed.startsWith("/") -> commands.add(trimmed)
+						trimmed.startsWith("@") -> entityEvents.add(trimmed)
+						else -> molangs.add(MathParser.compileMolang(trimmed))
 					}
 				}
 				list.add(BakingBrAnimationTimeline(key.toFloat(), molangs, commands, entityEvents))
@@ -392,8 +397,7 @@ constructor(
 }
 
 data class BakingBrBoneAnimation
-@JvmOverloads
-constructor(
+@JvmOverloads constructor(
 	val pos: List<BakingBrBoneKeyFrame> = emptyList(),
 	val rot: List<BakingBrBoneKeyFrame> = emptyList(),
 	val scale: List<BakingBrBoneKeyFrame> = emptyList()
@@ -435,8 +439,7 @@ constructor(
 }
 
 data class BakingBrBoneKeyFrame
-@JvmOverloads
-constructor(
+@JvmOverloads constructor(
 	/** 关键帧时间（秒） */
 	val time: Float,
 	/** 插值模式 */
@@ -540,9 +543,7 @@ constructor(
 		private fun parseMolangVector(arr: JsonArray): MolangVector3 {
 			if (arr.size() < 3) return MolangVector3()
 			return MolangVector3(
-				x = parseAxisExpr(arr[0]),
-				y = parseAxisExpr(arr[1]),
-				z = parseAxisExpr(arr[2])
+				x = parseAxisExpr(arr[0]), y = parseAxisExpr(arr[1]), z = parseAxisExpr(arr[2])
 			)
 		}
 

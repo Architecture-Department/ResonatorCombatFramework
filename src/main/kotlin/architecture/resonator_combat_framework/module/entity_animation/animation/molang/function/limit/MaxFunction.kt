@@ -8,8 +8,8 @@ import architecture.resonator_combat_framework.module.entity_animation.animation
 import kotlin.math.max
 
 class MaxFunction(private val a: MolangValue, private val b: MolangValue) : MolangFunction {
-	override fun get(context: MolangData?): Double {
-		return max(a.get(context), b.get(context))
+	override fun eval(context: MolangData?): Double {
+		return max(a.eval(context), b.eval(context))
 	}
 
 	override fun isMutable(): Boolean {

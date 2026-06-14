@@ -13,7 +13,7 @@ constructor(
 	/**
 	 * 对父骨骼链应用变换矩阵（直接使用骨骼引用，无需Map查找）
 	 */
-	internal fun applyParentChainTransform(chain: List<Pair<BrBone, ProxyBone?>>, matrix: Matrix4f) {
+	private fun applyParentChainTransform(chain: List<Pair<BrBone, ProxyBone?>>, matrix: Matrix4f) {
 		for ((bone, proxyBone) in chain) {
 			matrix.translate(bone.pivot)
 			matrix.rotateXYZ(bone.rotation)
@@ -25,46 +25,86 @@ constructor(
 		}
 	}
 
-	fun resolveLocatorGlobal(name: String, proxyModel: ProxyModel): Matrix4fc {
-		val locator = locators[name] ?: return Matrix4f()
+	/**
+	 * 构建从指定骨骼到根节点的父骨骼链（存储骨骼对象引用，避免重复Map查找）
+	 */
+	private fun buildParentChain(startBone: BrBone, animationData: ProxyModel): List<Pair<BrBone, ProxyBone?>> {
+		val chain = mutableListOf<Pair<BrBone, ProxyBone?>>()
+		var currentBone: BrBone? = startBone
+		while (true) {
+			val parentName = currentBone?.parent ?: break
+			val parentBone = bones[parentName] ?: break
+			val parentProxy = animationData.bones[parentName]
+			chain.add(parentBone to parentProxy)
+			currentBone = parentBone
+		}
+		return chain.reversed()
+	}
 
-		// 使用定位器的缓存全局矩阵
-		locator.getCachedGlobalMatrix()?.let { return it }
+	/**
+	 * 计算定位器的全局变换矩阵
+	 */
+	fun computeLocatorGlobalMatrix(name: String?, animationData: ProxyModel): Matrix4fc {
+		val matrix = Matrix4f()
+		name ?: return matrix
+		val locator = locators[name] ?: return matrix
+		val bone = bones[locator.boneName] ?: return matrix
+		val proxyBone = animationData.bones[locator.boneName]
 
-		val bone = bones[locator.boneName] ?: return Matrix4f()
-		val proxyBone = proxyModel.bones[locator.boneName]
+		// 构建并应用父骨骼链变换
+		val parentChain = buildParentChain(bone, animationData)
+		applyParentChainTransform(parentChain, matrix)
 
-		// 使用缓存的全局矩阵
-		val boneMatrix = bone.getOrComputeGlobalMatrix(this, proxyModel)
+		// 应用当前骨骼变换
+		matrix.translate(bone.pivot)
+		matrix.rotateXYZ(bone.rotation)
 
-		// 在骨骼全局矩阵基础上应用定位器偏移
-		val result = Matrix4f(boneMatrix)
-		result.translate(locator.position)
+		// 应用代理骨骼变换
+		if (proxyBone != null) {
+			matrix.translate(proxyBone.pos)
+			matrix.rotateXYZ(proxyBone.rotation)
+		}
+
+		// 应用定位器自身位置
+		matrix.translate(locator.position)
 
 		// 如果有代理骨骼，应用缩放（影响定位器位置）
 		if (proxyBone != null) {
-			result.scale(proxyBone.scale)
+			matrix.scale(proxyBone.scale)
 		}
 
-		// 缓存结果
-		locator.cacheGlobalMatrix(result)
-		return result
+		return matrix
 	}
 
-	fun resolveBoneGlobal(name: String, proxyModel: ProxyModel): Matrix4fc {
-		val bone = bones[name] ?: return Matrix4f()
+	/**
+	 * 计算骨骼的全局变换矩阵
+	 */
+	fun computeBoneGlobalMatrix(name: String?, proxyModel: ProxyModel): Matrix4fc {
+		val matrix = Matrix4f()
+		name ?: return matrix
+		val bone = bones[name] ?: return matrix
+		val proxyBone = proxyModel.bones[name]
 
-		// 直接使用缓存的全局矩阵
-		return bone.getOrComputeGlobalMatrix(this, proxyModel)
+		// 构建并应用父骨骼链变换
+		val parentChain = buildParentChain(bone, proxyModel)
+		applyParentChainTransform(parentChain, matrix)
+
+		// 应用当前骨骼变换
+		matrix.translate(bone.pivot)
+		matrix.rotateXYZ(bone.rotation)
+
+		// 应用代理骨骼变换
+		if (proxyBone != null) {
+			matrix.translate(proxyBone.pos)
+			matrix.rotateXYZ(proxyBone.rotation)
+			matrix.scale(proxyBone.scale)
+		}
+		return matrix
 	}
 
 	fun clear() {
 		bones.clear()
 		locators.clear()
-		// 清除所有骨骼的缓存
-		bones.values.forEach { it.invalidateCache() }
-		// 清除所有定位器的缓存
-		locators.values.forEach { it.invalidateCache() }
 	}
 
 	fun add(model: BakingBrModel?) {
@@ -80,7 +120,6 @@ constructor(
 
 		for (locator in model.locators.values) {
 			if (locators[locator.name] == null) locators[locator.name] = BrLocator.of(locator)
-			else locators[locator.name]?.invalidateCache()  // 如果已存在，清除缓存
 		}
 	}
 
@@ -96,7 +135,6 @@ constructor(
 		}
 
 		for (locator in model.locators.values) {
-			locators[locator.name]?.invalidateCache()  // 清除旧定位器缓存
 			locators[locator.name] = BrLocator.of(locator)
 		}
 	}
@@ -134,70 +172,10 @@ constructor(
 	val cubes: MutableList<BrCube> = mutableListOf(),
 	val locators: MutableMap<String, BrLocator> = mutableMapOf()
 ) {
-	// 缓存的全局变换矩阵（null表示需要重新计算）
-	@Volatile
-	private var cachedGlobalMatrix: Matrix4f? = null
-
-	/**
-	 * 标记缓存为无效（当骨骼数据变化时调用）
-	 */
-	fun invalidateCache() {
-		cachedGlobalMatrix = null
-	}
-
-	/**
-	 * 获取或计算全局变换矩阵（带缓存）
-	 */
-	fun getOrComputeGlobalMatrix(brModel: BrModel, proxyModel: ProxyModel): Matrix4f {
-		// 检查缓存是否有效
-		cachedGlobalMatrix?.let { return it }
-
-		// 计算新的全局矩阵
-		val matrix = Matrix4f()
-		val proxyBone = proxyModel.bones[name]
-
-		// 构建并应用父骨骼链变换
-		val parentChain = buildParentChainFromBone(brModel, proxyModel)
-		brModel.applyParentChainTransform(parentChain, matrix)
-
-		// 应用当前骨骼变换
-		matrix.translate(pivot)
-		matrix.rotateXYZ(rotation)
-
-		// 应用代理骨骼变换
-		if (proxyBone != null) {
-			matrix.translate(proxyBone.pos)
-			matrix.rotateXYZ(proxyBone.rotation)
-			matrix.scale(proxyBone.scale)
-		}
-
-		// 缓存结果
-		cachedGlobalMatrix = matrix.clone() as Matrix4f
-		return matrix
-	}
-
-	/**
-	 * 构建从指定骨骼到根节点的父骨骼链（存储骨骼对象引用，避免重复Map查找）
-	 */
-	private fun buildParentChainFromBone(brModel: BrModel, proxyModel: ProxyModel): List<Pair<BrBone, ProxyBone?>> {
-		val chain = mutableListOf<Pair<BrBone, ProxyBone?>>()
-		var currentBone: BrBone? = this
-		while (true) {
-			val parentName = currentBone?.parent ?: break
-			val parentBone = brModel.bones[parentName] ?: break
-			val parentProxy = proxyModel.bones[parentName]
-			chain.add(parentBone to parentProxy)
-			currentBone = parentBone
-		}
-		// 反转列表，使其从根节点到当前骨骼的顺序
-		return chain.reversed()
-	}
-
 	fun add(model: BakingBrModel) {
 		model.bones[name]?.let {
 			cubes.addAll(it.cubes.map(BrCube::of))
 			locators.putAll(it.locators.map { (k, v) -> k to BrLocator.of(v) })
-			invalidateCache()  // 数据变化，清除缓存
 		}
 	}
 
@@ -207,7 +185,6 @@ constructor(
 			locators.clear()
 			cubes.addAll(it.cubes.map(BrCube::of))
 			locators.putAll(it.locators.map { (k, v) -> k to BrLocator.of(v) })
-			invalidateCache()  // 数据变化，清除缓存
 		}
 	}
 
@@ -254,31 +231,6 @@ constructor(
 	val boneName: String,
 	val position: Vector3f = Vector3f()
 ) {
-	// 缓存的全局变换矩阵（null表示需要重新计算）
-	@Volatile
-	private var cachedGlobalMatrix: Matrix4f? = null
-
-	/**
-	 * 标记缓存为无效（当定位器数据变化时调用）
-	 */
-	fun invalidateCache() {
-		cachedGlobalMatrix = null
-	}
-
-	/**
-	 * 缓存全局矩阵
-	 */
-	internal fun cacheGlobalMatrix(matrix: Matrix4f) {
-		cachedGlobalMatrix = matrix
-	}
-
-	/**
-	 * 获取缓存的全局矩阵（如果有效）
-	 */
-	internal fun getCachedGlobalMatrix(): Matrix4f? {
-		return cachedGlobalMatrix
-	}
-
 	companion object {
 		@JvmStatic
 		fun of(locator: BakingBrLocator): BrLocator {

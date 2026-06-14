@@ -20,7 +20,7 @@ import kotlin.math.min
 
 // MoLang 表达式解析器。字符串→分词→递归下降构建 AST。支持四则运算、比较、逻辑、三元、函数调用、变量/查询引用、赋值
 object MathParser {
-	private val EXPRESSION_FORMAT: Pattern = Pattern.compile("^[\\w\\s_+\\-/*%^&|<>=!?:.,(){}]+$")
+	private val EXPRESSION_FORMAT: Pattern = Pattern.compile("^[\\w\\s_+\\-/*%^&|<>=!?:.,(){};]+$")
 	private val WHITESPACE: Pattern = Pattern.compile("\\s")
 	private val NUMERIC_PATTERN: Pattern = Pattern.compile("^-?\\d+(\\.\\d+)?$")
 
@@ -455,7 +455,12 @@ object MathParser {
 		if ("false" == token) return Constant(0.0)
 
 		// this 关键字：返回当前上下文值
-		if (token == "this") return This
+		if (token == "this") return Constant(0.0)
+
+		// 一元负号：-expr 转 0 - expr
+		if (token.startsWith("-") && token.length > 1 && !NUMERIC_PATTERN.matcher(token).matches()) {
+			return Calculation(Operator.SUB, Constant(0.0), compileSingleValue(token.substring(1)))
+		}
 
 		// break/continue 循环控制关键字
 		if (token == "break") return BreakExpr
@@ -507,7 +512,6 @@ object MathParser {
 			MolangFunction.Factory { args -> ATan2Function(args[0], args[1]) })
 		registerFunction("math.cos", MolangFunction.Factory { args -> CosFunction(args[0]) })
 		registerFunction("math.exp", MolangFunction.Factory { args -> ExpFunction(args[0]) })
-		registerFunction("math.ln", MolangFunction.Factory { args -> LogFunction(args[0]) })
 		registerFunction("math.log", MolangFunction.Factory { args -> LogFunction(args[0]) })
 		registerFunction(
 			"math.mod",

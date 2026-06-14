@@ -7,8 +7,8 @@ import architecture.resonator_combat_framework.module.entity_animation.animation
 import architecture.resonator_combat_framework.module.entity_animation.animation.molang.function.MolangFunction
 
 class HermiteBlendFunction(private val value: MolangValue) : MolangFunction {
-	override fun get(context: MolangData?): Double {
-		val v = value.get(context)
+	override fun eval(context: MolangData?): Double {
+		val v = value.eval(context)
 		return v * v * (3 - 2 * v)
 	}
 

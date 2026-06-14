@@ -10,36 +10,35 @@ import net.minecraft.world.level.Level
 import java.util.function.DoubleSupplier
 import kotlin.math.atan2
 
-class MolangData(
-	variables: MutableMap<String, DoubleSupplier> = HashMap()
-) {
+open class MolangData {
 
-	/** 只读外部值层（渲染上下文等系统值） */
-	private val contexts = HashMap<String, DoubleSupplier>()
+	/** 全局可读写变量层 */
+	private val vars = HashMap<String, DoubleSupplier>()
 
-	/** 可读写变量层 */
-	val vars: MutableMap<String, DoubleSupplier> = variables
+	/** 由子类（MolangScope）提供的局部变量查找 */
+	protected open fun resolveLocal(name: String): Double? = null
 
-	/** "this" 指针 */
-	var thisValue: DoubleSupplier? = null
+	/** 由子类（MolangScope）处理的局部变量赋值，返回 true 表示已由子类处理 */
+	protected open fun assignLocal(name: String, value: Double): Boolean = false
 
-	fun resolve(name: String): Double {
-		contexts[name]?.let { return it.asDouble }
+	open fun resolve(name: String): Double {
+		resolveLocal(name)?.let { return it }
 		return vars[name]?.asDouble ?: 0.0
 	}
 
-	fun assign(name: String, value: Double) {
-		assign(name) { value }
-	}
-
-	fun assign(name: String, value: DoubleSupplier) {
+	open fun assign(name: String, value: Double) {
+		if (assignLocal(name, value)) return
 		if (name.startsWith("query.") ||
 			name.startsWith("context.") ||
 			name.startsWith("geometry.") ||
 			name.startsWith("material.") ||
 			name.startsWith("texture.")
 		) return
-		vars[name] = value
+		vars[name] = DoubleSupplier { value }
+	}
+
+	open fun assign(name: String, value: DoubleSupplier) {
+		assign(name, value.asDouble)
 	}
 
 	fun get(name: String): Double = resolve(name)

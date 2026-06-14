@@ -7,8 +7,8 @@ import architecture.resonator_combat_framework.module.entity_animation.animation
 import architecture.resonator_combat_framework.module.entity_animation.animation.molang.function.MolangFunction
 
 class RandomFunction(private val a: MolangValue, private val b: MolangValue) : MolangFunction {
-	override fun get(context: MolangData?): Double {
-		return a.get(context) + Math.random() * (b.get(context) - a.get(context))
+	override fun eval(context: MolangData?): Double {
+		return a.eval(context) + Math.random() * (b.eval(context) - a.eval(context))
 	}
 
 	override fun isMutable(): Boolean {

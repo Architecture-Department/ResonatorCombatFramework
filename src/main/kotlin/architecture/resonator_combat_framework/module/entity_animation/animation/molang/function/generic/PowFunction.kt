@@ -8,8 +8,8 @@ import architecture.resonator_combat_framework.module.entity_animation.animation
 import kotlin.math.pow
 
 class PowFunction(private val a: MolangValue, private val b: MolangValue) : MolangFunction {
-	override fun get(context: MolangData?): Double {
-		return a.get(context).pow(b.get(context))
+	override fun eval(context: MolangData?): Double {
+		return a.eval(context).pow(b.eval(context))
 	}
 
 	override fun isMutable(): Boolean {

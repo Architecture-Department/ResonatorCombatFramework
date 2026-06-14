@@ -7,8 +7,8 @@ import architecture.resonator_combat_framework.module.entity_animation.animation
 
 @JvmRecord
 data class Ternary(val condition: MolangValue, val trueValue: MolangValue, val falseValue: MolangValue) : MolangValue {
-	override fun get(context: MolangData?): Double {
-		return if (condition.get(context) != 0.0) trueValue.get(context) else falseValue.get(context)
+	override fun eval(context: MolangData?): Double {
+		return if (condition.eval(context) != 0.0) trueValue.eval(context) else falseValue.eval(context)
 	}
 
 	override fun isMutable(): Boolean {

@@ -7,8 +7,8 @@ class VariableAssignment(
 	private val variable: Variable,
 	private val value: MolangValue
 ) : MolangValue {
-	override fun get(context: MolangData?): Double {
-		val result = value.get(context)
+	override fun eval(context: MolangData?): Double {
+		val result = value.eval(context)
 		if (context != null) context.assign(variable.name, result)
 		return result
 	}

@@ -7,8 +7,8 @@ import architecture.resonator_combat_framework.module.entity_animation.animation
 import architecture.resonator_combat_framework.module.entity_animation.animation.molang.function.MolangFunction
 
 class ToRadFunction(private val value: MolangValue) : MolangFunction {
-	override fun get(context: MolangData?): Double {
-		return Math.toRadians(value.get(context))
+	override fun eval(context: MolangData?): Double {
+		return Math.toRadians(value.eval(context))
 	}
 
 	override fun isMutable(): Boolean {

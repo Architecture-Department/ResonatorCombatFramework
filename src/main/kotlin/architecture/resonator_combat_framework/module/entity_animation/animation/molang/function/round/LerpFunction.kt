@@ -8,8 +8,8 @@ import architecture.resonator_combat_framework.module.entity_animation.animation
 
 class LerpFunction(private val a: MolangValue, private val b: MolangValue, private val t: MolangValue) :
 	MolangFunction {
-	override fun get(context: MolangData?): Double {
-		return a.get(context) + (b.get(context) - a.get(context)) * t.get(context)
+	override fun eval(context: MolangData?): Double {
+		return a.eval(context) + (b.eval(context) - a.eval(context)) * t.eval(context)
 	}
 
 	override fun isMutable(): Boolean {

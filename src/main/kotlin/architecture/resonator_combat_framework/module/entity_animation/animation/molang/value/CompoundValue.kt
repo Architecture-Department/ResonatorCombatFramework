@@ -6,10 +6,10 @@ import architecture.resonator_combat_framework.module.entity_animation.animation
 // MoLang AST 节点: 多条语句组合（; 分隔），返回最后一条的值
 
 class CompoundValue(private vararg val values: MolangValue) : MolangValue {
-	override fun get(context: MolangData?): Double {
+	override fun eval(context: MolangData?): Double {
 		var result = 0.0
 		for (value in values) {
-			result = value.get(context)
+			result = value.eval(context)
 		}
 		return result
 	}

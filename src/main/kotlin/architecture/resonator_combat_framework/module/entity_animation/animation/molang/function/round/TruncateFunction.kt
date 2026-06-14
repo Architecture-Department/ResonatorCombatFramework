@@ -9,8 +9,8 @@ import kotlin.math.ceil
 import kotlin.math.floor
 
 class TruncateFunction(private val value: MolangValue) : MolangFunction {
-	override fun get(context: MolangData?): Double {
-		return if (value.get(context) < 0) ceil(value.get(context)) else floor(value.get(context))
+	override fun eval(context: MolangData?): Double {
+		return if (value.eval(context) < 0) ceil(value.eval(context)) else floor(value.eval(context))
 	}
 
 	override fun isMutable(): Boolean {

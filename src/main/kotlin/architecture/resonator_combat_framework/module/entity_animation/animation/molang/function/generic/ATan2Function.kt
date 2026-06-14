@@ -8,8 +8,8 @@ import architecture.resonator_combat_framework.module.entity_animation.animation
 import kotlin.math.atan2
 
 class ATan2Function(private val y: MolangValue, private val x: MolangValue) : MolangFunction {
-	override fun get(context: MolangData?): Double {
-		return atan2(y.get(context), x.get(context))
+	override fun eval(context: MolangData?): Double {
+		return atan2(y.eval(context), x.eval(context))
 	}
 
 	override fun isMutable(): Boolean {

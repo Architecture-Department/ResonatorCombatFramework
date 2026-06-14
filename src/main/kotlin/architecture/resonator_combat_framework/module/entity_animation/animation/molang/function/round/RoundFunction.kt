@@ -7,8 +7,8 @@ import architecture.resonator_combat_framework.module.entity_animation.animation
 import architecture.resonator_combat_framework.module.entity_animation.animation.molang.function.MolangFunction
 
 class RoundFunction(private val value: MolangValue) : MolangFunction {
-	override fun get(context: MolangData?): Double {
-		return Math.round(value.get(context)).toDouble()
+	override fun eval(context: MolangData?): Double {
+		return Math.round(value.eval(context)).toDouble()
 	}
 
 	override fun isMutable(): Boolean {

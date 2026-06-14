@@ -1,19 +1,17 @@
-package architecture.resonator_combat_framework.module.entity_animation.animation.controller
+package architecture.resonator_combat_framework.module.entity_animation.animation.mapper
 
 import architecture.goldenboughs_lib.api.AllOpe
 import architecture.resonator_combat_framework.events.registry.AnimationControllers
 import architecture.resonator_combat_framework.module.entity_animation.animation.AnimationEventsToFire
-import architecture.resonator_combat_framework.module.entity_animation.animation.BakingBrAnimationParticle
-import architecture.resonator_combat_framework.module.entity_animation.animation.BakingBrAnimationSound
+import architecture.resonator_combat_framework.module.entity_animation.animation.controller.BedrockAnimationController
+import architecture.resonator_combat_framework.module.entity_animation.animation.controller.IEntityAnimationController
 import architecture.resonator_combat_framework.module.entity_animation.animation.data.ProxyBoneFlags
-import architecture.resonator_combat_framework.module.entity_animation.animation.mapper.IEntityAnimationMapper
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.BakingBrModel
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.BrModel
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.ProxyBone
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.ProxyModel
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.Entity
-import org.joml.Vector3d
 import org.joml.Vector3f
 
 /** 动画控制器管理器 */
@@ -259,22 +257,6 @@ class AnimationControllerManager<T : Entity>(val mapper: IEntityAnimationMapper<
 		return blocking
 	}
 
-	/** 从合并后的代理模型中解析定位器在世界空间中的坐标 */
-	private fun resolveLocatorPos(sound: BakingBrAnimationSound): Vector3d {
-		return resolveLocatorPos(sound.effects.firstOrNull()?.locator ?: return Vector3d())
-	}
-
-	/** 从合并后的代理模型中解析定位器在世界空间中的坐标（粒子版） */
-	private fun resolveLocatorPos(particle: BakingBrAnimationParticle): Vector3d {
-		return resolveLocatorPos(particle.effects.firstOrNull()?.locator ?: return Vector3d())
-	}
-
-	private fun resolveLocatorPos(locatorName: String): Vector3d {
-		val bone = mergedProxy.getLocator(locatorName)
-		bone ?: return Vector3d()
-		return bone.let { Vector3d(it.pos.x.toDouble(), it.pos.y.toDouble(), it.pos.z.toDouble()) }
-	}
-
 	/** 合并所有控制器的额外骨骼到 [bones] */
 	fun rebuildBones() {
 		brModel.set(bakingBrModel)
@@ -313,10 +295,10 @@ class AnimationControllerManager<T : Entity>(val mapper: IEntityAnimationMapper<
 		if (mapper.isClient) {
 			for (events in pendingEvents) {
 				events.sounds.forEach {
-					mapper.playSoundEffect(it, resolveLocatorPos(it), data)
+					mapper.playSoundEffect(it, brModel, mergedProxy, data)
 				}
 				events.particles.forEach {
-					mapper.playParticleEffect(it, resolveLocatorPos(it), data)
+					mapper.playParticleEffect(it, brModel, mergedProxy, data)
 				}
 			}
 		}

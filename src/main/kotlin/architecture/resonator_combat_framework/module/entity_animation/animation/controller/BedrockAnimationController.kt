@@ -3,6 +3,7 @@ package architecture.resonator_combat_framework.module.entity_animation.animatio
 import architecture.resonator_combat_framework.core.RcfConstants
 import architecture.resonator_combat_framework.module.entity_animation.animation.*
 import architecture.resonator_combat_framework.module.entity_animation.animation.data.*
+import architecture.resonator_combat_framework.module.entity_animation.animation.mapper.AnimationControllerManager
 import architecture.resonator_combat_framework.module.entity_animation.animation.mapper.IEntityAnimationMapper
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.BakingBrModel
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.ProxyBone
@@ -391,7 +392,7 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 			// 通过 MolangData 设置动画查询值并求值
 			val data = currentData
 			data.updateAnimQueries(animTime, scaledDelta)
-			animTime = expr.get(data).toFloat()
+			animTime = expr.eval(data).toFloat()
 		} else {
 			animTime += scaledDelta
 		}

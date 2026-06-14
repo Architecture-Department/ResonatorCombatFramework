@@ -1,6 +1,7 @@
 package architecture.resonator_combat_framework.module.entity_animation.animation.controller
 
 import architecture.resonator_combat_framework.config.RcfConfig
+import architecture.resonator_combat_framework.module.entity_animation.animation.mapper.AnimationControllerManager
 import architecture.resonator_combat_framework.module.entity_animation.animation.mapper.IEntityAnimationMapper
 import architecture.resonator_combat_framework.module.entity_animation.animation.mapper.LivingEntityAnimationMapper
 import net.minecraft.resources.ResourceLocation

@@ -6,8 +6,8 @@ import architecture.resonator_combat_framework.module.entity_animation.animation
 // MoLang AST 节点: 括号分组 (expr)
 
 class Group(private val value: MolangValue) : MolangValue {
-	override fun get(context: MolangData?): Double {
-		return value.get(context)
+	override fun eval(context: MolangData?): Double {
+		return value.eval(context)
 	}
 
 	override fun isMutable(): Boolean {

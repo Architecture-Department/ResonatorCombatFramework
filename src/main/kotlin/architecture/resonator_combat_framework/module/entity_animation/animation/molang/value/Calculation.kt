@@ -14,12 +14,12 @@ class Calculation(
 	private val isMutable: Boolean = argA.isMutable() || argB.isMutable()
 	private var cachedValue = Double.MIN_VALUE
 
-	override fun get(context: MolangData?): Double {
+	override fun eval(context: MolangData?): Double {
 		if (isMutable) {
-			return operator.compute(argA.get(context), argB.get(context))
+			return operator.compute(argA.eval(context), argB.eval(context))
 		}
 		if (cachedValue == Double.MIN_VALUE) {
-			cachedValue = operator.compute(argA.get(context), argB.get(context))
+			cachedValue = operator.compute(argA.eval(context), argB.eval(context))
 		}
 		return cachedValue
 	}

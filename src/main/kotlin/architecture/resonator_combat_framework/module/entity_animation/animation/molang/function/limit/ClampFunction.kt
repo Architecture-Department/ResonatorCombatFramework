@@ -10,8 +10,8 @@ import kotlin.math.min
 
 class ClampFunction(private val value: MolangValue, private val min: MolangValue, private val max: MolangValue) :
 	MolangFunction {
-	override fun get(context: MolangData?): Double {
-		return max(min.get(context), min(max.get(context), value.get(context)))
+	override fun eval(context: MolangData?): Double {
+		return max(min.eval(context), min(max.eval(context), value.eval(context)))
 	}
 
 	override fun isMutable(): Boolean {

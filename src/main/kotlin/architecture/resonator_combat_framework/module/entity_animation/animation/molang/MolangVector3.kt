@@ -10,9 +10,9 @@ data class MolangVector3(
 ) {
 	fun evaluate(out: Vector3f = Vector3f(), context: MolangData? = null): Vector3f {
 		return out.set(
-			x?.get(context)?.toFloat() ?: 0f,
-			y?.get(context)?.toFloat() ?: 0f,
-			z?.get(context)?.toFloat() ?: 0f
+			x?.eval(context)?.toFloat() ?: 0f,
+			y?.eval(context)?.toFloat() ?: 0f,
+			z?.eval(context)?.toFloat() ?: 0f
 		)
 	}
 
