@@ -11,6 +11,7 @@ import architecture.resonator_combat_framework.module.entity_animation.animation
 import com.google.gson.JsonArray
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
+import net.minecraft.client.multiplayer.ClientLevel
 import net.minecraft.commands.CommandSourceStack
 import net.minecraft.core.particles.ParticleOptions
 import net.minecraft.core.registries.BuiltInRegistries
@@ -19,6 +20,7 @@ import net.minecraft.server.level.ServerLevel
 import net.minecraft.sounds.SoundSource
 import net.minecraft.util.StringUtil
 import net.minecraft.world.entity.Entity
+import net.minecraft.world.entity.player.Player
 import org.joml.Vector2f
 import org.joml.Vector3f
 import kotlin.math.floor
@@ -270,7 +272,8 @@ data class BakingBrAnimationSound
 		effects.forEach { it.apply(entity, brModel, animationData, context) }
 	}
 
-	data class Effect(
+	data class Effect
+	@JvmOverloads constructor(
 		val soundId: ResourceLocation,
 		val locatorName: String? = null,
 		val bindToActor: Boolean = true,
@@ -291,9 +294,15 @@ data class BakingBrAnimationSound
 			val pos = brModel.computeLocatorGlobalMatrix(locatorName, animationData)
 				.transformPosition(Vector3f(entityPos.x, entityPos.y, entityPos.z)).toVector3d()
 
-			entity.level().playSound(
-				null, pos.x, pos.y, pos.z, soundEvent, SoundSource.PLAYERS, volume, pitch
-			)
+			val category = if (entity is Player) SoundSource.PLAYERS else SoundSource.WEATHER
+			val level = entity.level()
+			if (level is ClientLevel) {
+				level.playLocalSound(pos.x, pos.y, pos.z, soundEvent, category, volume, pitch, false)
+			} else {
+				level.playSound(
+					null, pos.x, pos.y, pos.z, soundEvent, category, volume, pitch
+				)
+			}
 		}
 	}
 

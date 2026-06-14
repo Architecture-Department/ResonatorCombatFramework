@@ -289,17 +289,11 @@ class AnimationControllerManager<T : Entity>(val mapper: IEntityAnimationMapper<
 		// 时间线事件：双端执行
 		for (events in pendingEvents) {
 			events.timelines.forEach { it.apply(entity, data) }
-		}
-
-		// 音效/粒子事件：仅客户端执行，由映射器解析实际骨骼位置
-		if (mapper.isClient) {
-			for (events in pendingEvents) {
-				events.sounds.forEach {
-					mapper.playSoundEffect(it, brModel, mergedProxy, data)
-				}
-				events.particles.forEach {
-					mapper.playParticleEffect(it, brModel, mergedProxy, data)
-				}
+			events.sounds.forEach {
+				mapper.playSoundEffect(it, brModel, mergedProxy, data)
+			}
+			events.particles.forEach {
+				mapper.playParticleEffect(it, brModel, mergedProxy, data)
 			}
 		}
 

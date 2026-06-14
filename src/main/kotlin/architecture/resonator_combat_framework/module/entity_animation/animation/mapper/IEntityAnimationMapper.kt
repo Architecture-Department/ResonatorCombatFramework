@@ -83,7 +83,6 @@ interface IEntityAnimationMapper<T : Entity, M : EntityModel<T>> {
 		animationData: ProxyModel,
 		context: MolangData?
 	) {
-		if (!isClient) return
 		sound.apply(holder, brModel, animationData, context)
 	}
 
@@ -94,7 +93,6 @@ interface IEntityAnimationMapper<T : Entity, M : EntityModel<T>> {
 		animationData: ProxyModel,
 		context: MolangData?
 	) {
-		if (!isClient) return
 		particle.apply(holder, brModel, animationData, context)
 	}
 }
