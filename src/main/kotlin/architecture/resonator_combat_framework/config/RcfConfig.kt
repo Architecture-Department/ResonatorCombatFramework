@@ -1,7 +1,7 @@
 package architecture.resonator_combat_framework.config
 
 import architecture.goldenboughs_lib.api.BasicConfigMapper
-import architecture.goldenboughs_lib.core.LibConstants
+import architecture.goldenboughs_lib.util.LibUtil
 import architecture.resonator_combat_framework.core.RcfConstants
 import net.neoforged.bus.api.SubscribeEvent
 import net.neoforged.fml.ModContainer
@@ -27,17 +27,17 @@ object RcfConfig : BasicConfigMapper() {
 
 	@JvmStatic
 	fun register(modContainer: ModContainer) {
-		RcfConstants.LOGGER.info("Initialize the ${LibConstants.NAME} config files")
+		RcfConstants.LOGGER.info("Initialize the ${LibUtil.NAME} config files")
 		modContainer.registerConfig(ModConfig.Type.CLIENT, CLIENT_SPEC)
 	}
 
 	@SubscribeEvent
 	fun onLoad(configEvent: ModConfigEvent.Loading) {
-		RcfConstants.LOGGER.info("Loaded ${LibConstants.NAME} config file ${configEvent.config.fileName}")
+		RcfConstants.LOGGER.info("Loaded ${LibUtil.NAME} config file ${configEvent.config.fileName}")
 	}
 
 	@SubscribeEvent
 	fun onFileChange(configEvent: ModConfigEvent.Reloading) {
-		RcfConstants.LOGGER.info("${LibConstants.NAME} config just got changed on the file system!")
+		RcfConstants.LOGGER.info("${LibUtil.NAME} config just got changed on the file system!")
 	}
 }
