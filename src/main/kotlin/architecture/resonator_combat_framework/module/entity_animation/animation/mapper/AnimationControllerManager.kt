@@ -153,6 +153,19 @@ class AnimationControllerManager<T : Entity>(val mapper: IEntityAnimationMapper<
 		val currBone = mergedProxy.getBone(name) ?: return null
 		val prevBone = prevMergedProxy.getBone(name)
 		val mb = ProxyBone(name)
+		// STEP 关键帧的骨骼直接取当前值，不做插值
+		if (currBone.noInterp) {
+			if (currBone.hasPos()) {
+				mb.setPosEmpty(false); mb.pos.set(currBone.pos)
+			}
+			if (currBone.hasRot()) {
+				mb.setRotEmpty(false); mb.rotation.set(currBone.rotation)
+			}
+			if (currBone.hasScale()) {
+				mb.setScaleEmpty(false); mb.scale.set(currBone.scale)
+			}
+			return mb
+		}
 		if (prevBone != null) {
 			if (currBone.hasPos()) {
 				mb.setPosEmpty(false)
@@ -177,16 +190,13 @@ class AnimationControllerManager<T : Entity>(val mapper: IEntityAnimationMapper<
 			}
 		} else {
 			if (currBone.hasPos()) {
-				mb.setPosEmpty(false)
-				mb.pos.set(currBone.pos)
+				mb.setPosEmpty(false); mb.pos.set(currBone.pos)
 			}
 			if (currBone.hasRot()) {
-				mb.setRotEmpty(false)
-				mb.rotation.set(currBone.rotation)
+				mb.setRotEmpty(false); mb.rotation.set(currBone.rotation)
 			}
 			if (currBone.hasScale()) {
-				mb.setScaleEmpty(false)
-				mb.scale.set(currBone.scale)
+				mb.setScaleEmpty(false); mb.scale.set(currBone.scale)
 			}
 		}
 		return mb

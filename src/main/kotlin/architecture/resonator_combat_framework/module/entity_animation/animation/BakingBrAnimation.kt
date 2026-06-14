@@ -97,17 +97,18 @@ data class BakingBrAnimation
 	): Set<String> {
 		val affected = mutableSetOf<String>()
 		for ((boneName, boneAnim) in bones) {
-			val pos = interpolateFrames(boneAnim.pos, time, context)
-			val rot = interpolateFrames(boneAnim.rot, time, context)
-			val scale = interpolateFrames(boneAnim.scale, time, context)
+			val posRes = interpolateFrames(boneAnim.pos, time, context)
+			val rotRes = interpolateFrames(boneAnim.rot, time, context)
+			val scaleRes = interpolateFrames(boneAnim.scale, time, context)
 
 			val bone = proxyModel.getBone(boneName) ?: ProxyBone(boneName).also { proxyModel.addBone(it) }
-			bone.setPosEmpty(pos == null)
-			if (pos != null) bone.pos.set(pos) else bone.pos.set(0f, 0f, 0f)
-			bone.setRotEmpty(rot == null)
-			if (rot != null) bone.rotation.set(rot) else bone.rotation.set(0f, 0f, 0f)
-			bone.setScaleEmpty(scale == null)
-			if (scale != null) bone.scale.set(scale) else bone.scale.set(1f, 1f, 1f)
+			bone.setPosEmpty(posRes.value == null)
+			if (posRes.value != null) bone.pos.set(posRes.value) else bone.pos.set(0f, 0f, 0f)
+			bone.setRotEmpty(rotRes.value == null)
+			if (rotRes.value != null) bone.rotation.set(rotRes.value) else bone.rotation.set(0f, 0f, 0f)
+			bone.setScaleEmpty(scaleRes.value == null)
+			if (scaleRes.value != null) bone.scale.set(scaleRes.value) else bone.scale.set(1f, 1f, 1f)
+			bone.noInterp = posRes.noInterp || rotRes.noInterp || scaleRes.noInterp
 			affected.add(boneName)
 		}
 		return affected
@@ -116,20 +117,25 @@ data class BakingBrAnimation
 	/**
 	 * 插值关键帧序列，返回 time 时刻的值
 	 */
+	data class InterpResult(val value: Vector3f?, val noInterp: Boolean)
+
 	internal fun interpolateFrames(
 		frames: List<BakingBrBoneKeyFrame>, time: Float, context: MolangData? = null
-	): Vector3f? {
-		if (frames.isEmpty()) return null
+	): InterpResult {
+		if (frames.isEmpty()) return InterpResult(null, false)
 		val afterIdx = frames.indexOfFirst { it.time > time }
-		if (afterIdx < 0) return Vector3f(frames.last().evaluateValue(context = context))
-		if (afterIdx == 0) return Vector3f(frames.first().evaluateValue(context = context))
+		if (afterIdx < 0) return InterpResult(Vector3f(frames.last().evaluateValue(context = context)), false)
+		if (afterIdx == 0) return InterpResult(Vector3f(frames.first().evaluateValue(context = context)), false)
 
 		val before = frames[afterIdx - 1]
 		val after = frames[afterIdx]
 		val weight = (time - before.time) / (after.time - before.time)
 
 		return when {
-			before.lerp == BakingBrBoneKeyFrame.LerpMode.STEP -> Vector3f(before.evaluateValue(context = context))
+			before.lerp == BakingBrBoneKeyFrame.LerpMode.STEP -> InterpResult(
+				Vector3f(before.evaluateValue(context = context)),
+				true
+			)
 
 			before.lerp == BakingBrBoneKeyFrame.LerpMode.CATMULLROM || after.lerp == BakingBrBoneKeyFrame.LerpMode.CATMULLROM -> {
 				val beforePlus = if (afterIdx > 1) frames[afterIdx - 2] else null
@@ -167,13 +173,13 @@ data class BakingBrAnimation
 					{ it.evaluatePost(context = context).z },
 					{ it.evaluatePre(context = context).z },
 					{ it.evaluatePre(context = context).z })
-				Vector3f(cx, cy, cz)
+				InterpResult(Vector3f(cx, cy, cz), false)
 			}
 
 			else -> {
 				val from = before.evaluatePost(context = context)
 				val to = after.evaluatePre(context = context)
-				Vector3f(from).lerp(to, weight)
+				InterpResult(Vector3f(from).lerp(to, weight), false)
 			}
 		}
 	}

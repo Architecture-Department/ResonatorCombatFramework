@@ -24,7 +24,9 @@ constructor(
 	val rotation: Vector3f = Vector3f(),
 	val scale: Vector3f = Vector3f(1f, 1f, 1f),
 	/** 位标记：0x1=pos空, 0x2=rot空, 0x4=scale空。setXxxEmpty 系列函数操作此字段 */
-	private var emptyMask: Int = 0
+	private var emptyMask: Int = 0,
+	/** 标记此骨骼来自 STEP 关键帧，渲染插值时应跳过 */
+	var noInterp: Boolean = false
 ) {
 	companion object {
 		private const val EMPTY_POS = 0x1
