@@ -77,7 +77,7 @@ data class BakingBrAnimation
 				// 解析 Molang anim_time_update
 				val exprStr = animDef.get("anim_time_update")?.asString ?: "query.anim_time + query.delta_time"
 				try {
-					val mathValue = MathParser.compileMolang(exprStr)
+					val mathValue = MoLangParser.compileMolang(exprStr)
 					val expr = exprCache.getOrPut(exprStr) { mathValue }
 					result[animId] = BakingBrAnimation(animId, loop, length, bones, sounds, particles, timelines, expr)
 				} catch (e: Exception) {
@@ -244,6 +244,7 @@ data class BakingBrAnimationParticle
 	}
 
 	companion object {
+		@JvmStatic
 		fun parses(particlesJson: JsonObject): List<BakingBrAnimationParticle> {
 			val list = mutableListOf<BakingBrAnimationParticle>()
 			particlesJson.asMap().forEach { (key, value) ->
@@ -258,13 +259,14 @@ data class BakingBrAnimationParticle
 			return list
 		}
 
+		@JvmStatic
 		private fun parseEffect(element: JsonElement?): Effect? {
 			element ?: return null
 			val obj = element.asJsonObject
 			val particleId = LibUtil.rlOf(obj.get("effect").asString)
 			val boneName = obj.get("locator")?.asString
 			val bindToActor = obj.get("bind_to_actor")?.asBoolean ?: true
-			val preEffectScript = obj.get("pre_effect_script")?.let { MathParser.compileMolang(it.asString) }
+			val preEffectScript = obj.get("pre_effect_script")?.let { MoLangParser.compileMolang(it.asString) }
 			return Effect(particleId, boneName, bindToActor, preEffectScript)
 		}
 	}
@@ -313,6 +315,7 @@ data class BakingBrAnimationSound
 	}
 
 	companion object {
+		@JvmStatic
 		fun parses(soundsJson: JsonObject): List<BakingBrAnimationSound> {
 			val list = mutableListOf<BakingBrAnimationSound>()
 			soundsJson.asMap().forEach { (key, value) ->
@@ -327,12 +330,17 @@ data class BakingBrAnimationSound
 			return list
 		}
 
+		@JvmStatic
 		private fun parseEffect(element: JsonElement?): Effect? {
 			element ?: return null
 			val obj = element.asJsonObject
-			val soundId = LibUtil.rlOf(obj.get("effect").asString)
+			val strings = obj.get("effect").asString.split(";", limit = 2)
+
+			val preEffectScript: MolangValue? = if (strings.size > 1) MoLangParser.compileMolang(strings[1].trim()) else null
+			val soundId = LibUtil.rlOf(strings[0].trim())
 			val locators = obj.get("locator")?.asString
-			return Effect(soundId, locators)
+
+			return Effect(soundId, locators, preEffectScript = preEffectScript)
 		}
 	}
 }
@@ -401,7 +409,7 @@ data class BakingBrAnimationTimeline
 					when {
 						trimmed.startsWith("/") -> commands.add(trimmed)
 						trimmed.startsWith("@") -> entityEvents.add(trimmed)
-						else -> molangs.add(MathParser.compileMolang(trimmed))
+						else -> molangs.add(MoLangParser.compileMolang(trimmed))
 					}
 				}
 				list.add(BakingBrAnimationTimeline(key.toFloat(), molangs, commands, entityEvents))
@@ -541,7 +549,7 @@ data class BakingBrBoneKeyFrame
 					// 单一 MoLang 字符串：三个轴用同一个表达式
 					valEl.isJsonPrimitive && valEl.asJsonPrimitive.isString -> {
 						val expr = try {
-							MathParser.compileMolang(valEl.asString)
+							MoLangParser.compileMolang(valEl.asString)
 						} catch (_: Exception) {
 							null
 						}
@@ -566,7 +574,7 @@ data class BakingBrBoneKeyFrame
 		private fun parseAxisExpr(el: JsonElement): MolangValue {
 			return if (el.isJsonPrimitive && el.asJsonPrimitive.isString) {
 				try {
-					MathParser.compileMolang(el.asString)
+					MoLangParser.compileMolang(el.asString)
 				} catch (_: Exception) {
 					Constant(0.0)
 				}

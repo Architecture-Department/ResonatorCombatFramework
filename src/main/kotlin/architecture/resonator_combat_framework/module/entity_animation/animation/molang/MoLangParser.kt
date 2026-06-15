@@ -19,7 +19,7 @@ import java.util.regex.Pattern
 import kotlin.math.min
 
 // MoLang 表达式解析器。字符串→分词→递归下降构建 AST。支持四则运算、比较、逻辑、三元、函数调用、变量/查询引用、赋值
-object MathParser {
+object MoLangParser {
 	private val EXPRESSION_FORMAT: Pattern = Pattern.compile("^[\\w\\s_+\\-/*%^&|<>=!?:.,(){};]+$")
 	private val WHITESPACE: Pattern = Pattern.compile("\\s")
 	private val NUMERIC_PATTERN: Pattern = Pattern.compile("^-?\\d+(\\.\\d+)?$")
