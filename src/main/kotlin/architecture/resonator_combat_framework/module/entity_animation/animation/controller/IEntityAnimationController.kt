@@ -2,7 +2,9 @@ package architecture.resonator_combat_framework.module.entity_animation.animatio
 
 import architecture.goldenboughs_lib.api.AllOpe
 import architecture.resonator_combat_framework.module.entity_animation.animation.data.AnimationPlayData
+import architecture.resonator_combat_framework.module.entity_animation.animation.data.ProxyBoneConfigData
 import architecture.resonator_combat_framework.module.entity_animation.animation.mapper.AnimationControllerManager
+import architecture.resonator_combat_framework.module.entity_animation.animation.model.ProxyModel
 import architecture.resonator_combat_framework.module.entity_animation.animation.molang.MolangData
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.Entity
@@ -10,6 +12,25 @@ import net.minecraft.world.entity.Entity
 @AllOpe
 /** 动画控制器接口 */
 interface IEntityAnimationController<T : Entity> {
+	/** 控制器状态机 */
+	enum class State {
+		/** 空闲状态 */
+		IDLE,
+
+		/** 过渡状态 */
+		TRANSITIONING,
+
+		/** 播放状态 */
+		PLAYING,
+
+		/** 暂停状态 */
+		PAUSED,
+
+		/** 淡出状态 */
+		FADING_OUT
+		// TODO还需要一个淡入
+	}
+
 	val manager: AnimationControllerManager<T>
 
 	/** 控制器唯一标识 */
@@ -17,6 +38,18 @@ interface IEntityAnimationController<T : Entity> {
 
 	val currentData: MolangData
 		get() = manager.mapper.molangData
+
+	var state: State
+
+	var transitionSource: ProxyModel?
+
+	var currentConfig: AnimationPlayData
+
+	var resolvedBoneConfig: ProxyBoneConfigData?
+
+	var activeBoneConfig: ProxyBoneConfigData
+
+	var boneConfigs: ProxyBoneConfigData?
 
 	/** 当前混合因子 0~1 */
 	var blendFactor: Float

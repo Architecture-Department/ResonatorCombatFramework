@@ -2,13 +2,9 @@ package architecture.resonator_combat_framework.module.entity_animation.animatio
 
 import architecture.goldenboughs_lib.api.AllOpe
 import architecture.resonator_combat_framework.events.registry.AnimationControllers
-import architecture.resonator_combat_framework.module.entity_animation.animation.BakingBrAnimationParticle
-import architecture.resonator_combat_framework.module.entity_animation.animation.BakingBrAnimationSound
 import architecture.resonator_combat_framework.module.entity_animation.animation.controller.IEntityAnimationController
 import architecture.resonator_combat_framework.module.entity_animation.animation.data.AnimationPlayData
 import architecture.resonator_combat_framework.module.entity_animation.animation.data.ProxyBoneConfigData
-import architecture.resonator_combat_framework.module.entity_animation.animation.model.BrModel
-import architecture.resonator_combat_framework.module.entity_animation.animation.model.ProxyModel
 import architecture.resonator_combat_framework.module.entity_animation.animation.molang.MolangData
 import com.mojang.blaze3d.vertex.PoseStack
 import net.minecraft.client.model.EntityModel
@@ -74,25 +70,4 @@ interface IEntityAnimationMapper<T : Entity, M : EntityModel<T>> {
 
 	/** 触发指定动画 */
 	fun trigger(playData: AnimationPlayData)
-	// ---- 客户端事件触发（音效/粒子） ----
-
-	/** 播放音效（坐标基方法，仅客户端）。bonePos 为已从动画模型解析的骨骼坐标 */
-	fun playSoundEffect(
-		sound: BakingBrAnimationSound,
-		brModel: BrModel,
-		animationData: ProxyModel,
-		context: MolangData?
-	) {
-		sound.apply(holder, brModel, animationData, context)
-	}
-
-	/** 播放粒子（坐标基方法，仅客户端）。bonePos 为已从动画模型解析的骨骼坐标 */
-	fun playParticleEffect(
-		particle: BakingBrAnimationParticle,
-		brModel: BrModel,
-		animationData: ProxyModel,
-		context: MolangData?
-	) {
-		particle.apply(holder, brModel, animationData, context)
-	}
 }

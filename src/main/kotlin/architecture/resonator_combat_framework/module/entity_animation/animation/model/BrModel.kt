@@ -1,7 +1,6 @@
 package architecture.resonator_combat_framework.module.entity_animation.animation.model
 
 import org.joml.Matrix4f
-import org.joml.Matrix4fc
 import org.joml.Vector3f
 
 data class BrModel
@@ -44,7 +43,7 @@ constructor(
 	/**
 	 * 计算定位器的全局变换矩阵
 	 */
-	fun computeLocatorGlobalMatrix(name: String?, animationData: ProxyModel): Matrix4fc {
+	fun computeLocatorGlobalMatrix(name: String?, animationData: ProxyModel): Matrix4f {
 		val matrix = Matrix4f()
 		name ?: return matrix
 		val locator = locators[name] ?: return matrix
@@ -79,7 +78,7 @@ constructor(
 	/**
 	 * 计算骨骼的全局变换矩阵
 	 */
-	fun computeBoneGlobalMatrix(name: String?, proxyModel: ProxyModel): Matrix4fc {
+	fun computeBoneGlobalMatrix(name: String?, proxyModel: ProxyModel): Matrix4f {
 		val matrix = Matrix4f()
 		name ?: return matrix
 		val bone = bones[name] ?: return matrix

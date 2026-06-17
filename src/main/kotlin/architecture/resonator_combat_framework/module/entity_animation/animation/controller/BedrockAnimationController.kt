@@ -2,6 +2,7 @@ package architecture.resonator_combat_framework.module.entity_animation.animatio
 
 import architecture.resonator_combat_framework.core.RcfConstants
 import architecture.resonator_combat_framework.module.entity_animation.animation.*
+import architecture.resonator_combat_framework.module.entity_animation.animation.controller.IEntityAnimationController.State
 import architecture.resonator_combat_framework.module.entity_animation.animation.data.*
 import architecture.resonator_combat_framework.module.entity_animation.animation.mapper.AnimationControllerManager
 import architecture.resonator_combat_framework.module.entity_animation.animation.mapper.IEntityAnimationMapper
@@ -27,29 +28,26 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 
 	protected val configLoader: ProxyBoneConfigDataRegistry = ProxyBoneConfigDataRegistry.getInstance(isClient)
 
-	/** 控制器状态机 */
-	protected enum class State { IDLE, TRANSITIONING, PLAYING, PAUSED, FADING_OUT }
-
 	/** 当前游戏刻的骨骼状态 */
 	val proxyModel = ProxyModel("base")
 
 	/** 控制器状态 */
-	protected var state = State.IDLE
+	override var state = State.IDLE
 
 	/** 过渡开始时的骨骼快照，用于 crossfade */
-	protected var transitionSource: ProxyModel? = null
+	override var transitionSource: ProxyModel? = null
 
 	/** 当前完整播放配置 */
-	protected var currentConfig: AnimationPlayData = AnimationPlayData.EMPTY
+	override var currentConfig: AnimationPlayData = AnimationPlayData.EMPTY
 
 	/** trigger 时临时覆盖，设完后立即清空 */
-	internal var resolvedBoneConfig: ProxyBoneConfigData? = null
+	override var resolvedBoneConfig: ProxyBoneConfigData? = null
 
 	/** 当前活跃骨骼配置（crossfade 时保留引用），trigger 时设，forceClear 时清除 */
-	private var activeBoneConfig: ProxyBoneConfigData = ProxyBoneConfigData.EMPTY
+	override var activeBoneConfig: ProxyBoneConfigData = ProxyBoneConfigData.EMPTY
 
 	/** 额外骨骼配置（通常 null）。优先级高于 activeBoneConfig，只覆盖已存在的骨骼 */
-	var boneConfigs: ProxyBoneConfigData? = null
+	override var boneConfigs: ProxyBoneConfigData? = null
 
 	/** 混合因子 0~1 */
 	override var blendFactor = 0f
@@ -374,7 +372,7 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 			// 过渡模式：不推进 animTime，只基于当前时间重新计算骨骼
 			affectedBones = anim.computeAndWrite(animTime, proxyModel, data)
 			val events = collectEventsAt(anim)
-			manager.queueEvents(events)
+			manager.queueEvents(this, events)
 			return
 		}
 		val scaledDelta: Float
@@ -399,7 +397,7 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 		affectedBones = anim.computeAndWrite(animTime, proxyModel, data)
 		// 收集待触发的事件，交给管理器统一执行
 		val events = collectEventsAt(anim)
-		manager.queueEvents(events)
+		manager.queueEvents(this, events)
 	}
 
 	// ---- 内部 ----

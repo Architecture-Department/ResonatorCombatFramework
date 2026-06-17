@@ -3,11 +3,14 @@ package architecture.resonator_combat_framework.module.entity_animation.animatio
 import architecture.goldenboughs_lib.util.LibUtil
 import architecture.goldenboughs_lib.util.toVector3d
 import architecture.resonator_combat_framework.core.RcfConstants
+import architecture.resonator_combat_framework.module.entity_animation.animation.controller.IEntityAnimationController
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.BrModel
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.ProxyBone
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.ProxyModel
 import architecture.resonator_combat_framework.module.entity_animation.animation.molang.*
 import architecture.resonator_combat_framework.module.entity_animation.animation.molang.value.Constant
+import architecture.resonator_combat_framework.module.entity_animation.event.AnimationParticleEvent
+import architecture.resonator_combat_framework.module.entity_animation.event.Value
 import com.google.gson.JsonArray
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
@@ -21,7 +24,9 @@ import net.minecraft.sounds.SoundSource
 import net.minecraft.util.StringUtil
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.player.Player
+import net.neoforged.neoforge.common.NeoForge
 import org.joml.Vector2f
+import org.joml.Vector3d
 import org.joml.Vector3f
 import kotlin.math.floor
 
@@ -209,8 +214,14 @@ data class BakingBrAnimationParticle
 @JvmOverloads constructor(
 	val time: Float, val effects: List<Effect> = emptyList()
 ) {
-	fun apply(entity: Entity, brModel: BrModel, animationData: ProxyModel, context: MolangData? = null) {
-		effects.forEach { it.apply(entity, brModel, animationData, context) }
+	fun runs(
+		controller: IEntityAnimationController<*>,
+		entity: Entity,
+		brModel: BrModel,
+		animationData: ProxyModel,
+		context: MolangData? = null
+	) {
+		effects.forEach { it.run(controller, entity, brModel, animationData, context) }
 	}
 
 	data class Effect(
@@ -219,26 +230,66 @@ data class BakingBrAnimationParticle
 		val bindToActor: Boolean = true,
 		val preEffectScript: MolangValue? = null
 	) {
-		fun apply(entity: Entity, brModel: BrModel, animationData: ProxyModel, context: MolangData? = null) {
-			var xSpeed = 0.0
-			var ySpeed = 0.0
-			var zSpeed = 0.0
+		fun run(
+			controller: IEntityAnimationController<*>,
+			entity: Entity,
+			brModel: BrModel,
+			animationData: ProxyModel,
+			context: MolangData? = null
+		) {
 			if (preEffectScript != null) {
 				context?.withScope { scope ->
 					preEffectScript.eval(scope)
-					xSpeed = scope.getLocal("temp.xSpeed") ?: 0.0
-					ySpeed = scope.getLocal("temp.ySpeed") ?: 0.0
-					zSpeed = scope.getLocal("temp.zSpeed") ?: 0.0
 				}
 			}
-			val particle = BuiltInRegistries.PARTICLE_TYPE.get(particleId) as? ParticleOptions ?: return
-
+			var particle: ParticleOptions? = BuiltInRegistries.PARTICLE_TYPE.get(particleId) as? ParticleOptions ?: return
 			val entityPos = entity.position().toVector3f()
-			val pos = brModel.computeLocatorGlobalMatrix(locatorName, animationData)
-				.transformPosition(Vector3f(entityPos.x, entityPos.y, entityPos.z)).toVector3d()
+			var pos: Vector3d = brModel.computeLocatorGlobalMatrix(locatorName, animationData)
+				.scale(1.0f / 16.0f)
+				.transformPosition(Vector3f(entityPos.x, entityPos.y, entityPos.z))
+				.toVector3d()
 
-			entity.level().addParticle(
-				particle, pos.x, pos.y, pos.z, xSpeed, ySpeed, zSpeed
+			val event = NeoForge.EVENT_BUS.post(
+				AnimationParticleEvent.Pre(
+					controller,
+					particleId,
+					Value.of(particle),
+					Value.of(pos),
+				)
+			)
+
+			if (event.isCanceled) return
+
+			particle = event.particle.newValue
+			pos = event.pos.newValue
+
+			if (particle != null) {
+				val level = entity.level()
+				if (level is ServerLevel) {
+					level.sendParticles(
+						particle,
+						pos.x, pos.y, pos.z,
+						1,
+						0.0, 0.0, 0.0,
+						0.0
+					)
+				} else {
+					level.addParticle(
+						particle,
+						pos.x, pos.y, pos.z,
+						0.0, 0.0, 0.0
+					)
+				}
+			}
+
+			NeoForge.EVENT_BUS.post(
+				AnimationParticleEvent.Post(
+					controller,
+					particleId,
+					particle,
+					pos,
+					xSpeed, ySpeed, zSpeed
+				)
 			)
 		}
 	}
@@ -276,8 +327,14 @@ data class BakingBrAnimationSound
 @JvmOverloads constructor(
 	val time: Float, val effects: List<Effect> = emptyList()
 ) {
-	fun apply(entity: Entity, brModel: BrModel, animationData: ProxyModel, context: MolangData? = null) {
-		effects.forEach { it.apply(entity, brModel, animationData, context) }
+	fun runs(
+		controller: IEntityAnimationController<*>,
+		entity: Entity,
+		brModel: BrModel,
+		animationData: ProxyModel,
+		context: MolangData? = null
+	) {
+		effects.forEach { it.run(controller, entity, brModel, animationData, context) }
 	}
 
 	data class Effect
@@ -287,7 +344,13 @@ data class BakingBrAnimationSound
 		val bindToActor: Boolean = true,
 		val preEffectScript: MolangValue? = null
 	) {
-		fun apply(entity: Entity, brModel: BrModel, animationData: ProxyModel, context: MolangData? = null) {
+		fun run(
+			controller: IEntityAnimationController<*>,
+			entity: Entity,
+			brModel: BrModel,
+			animationData: ProxyModel,
+			context: MolangData? = null
+		) {
 			var volume = 1.0f
 			var pitch = 1.0f
 			if (preEffectScript != null) {
@@ -300,6 +363,7 @@ data class BakingBrAnimationSound
 			val soundEvent = BuiltInRegistries.SOUND_EVENT.get(soundId) ?: return
 			val entityPos = entity.position().toVector3f()
 			val pos = brModel.computeLocatorGlobalMatrix(locatorName, animationData)
+				.scale(1.0f / 16.0f)
 				.transformPosition(Vector3f(entityPos.x, entityPos.y, entityPos.z)).toVector3d()
 
 			val category = if (entity is Player) SoundSource.PLAYERS else SoundSource.WEATHER
@@ -352,7 +416,7 @@ data class BakingBrAnimationTimeline
 	val commands: List<String> = emptyList(),
 	val entityEvents: List<String> = emptyList()
 ) {
-	fun apply(entity: Entity, context: MolangData? = null) {
+	fun run(entity: Entity, context: MolangData? = null) {
 		molangs.forEach { it.eval(context) }
 
 		entityEvents.forEach { event -> processEntityEvent(entity, event) }

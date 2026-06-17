@@ -33,7 +33,7 @@ class AnimationControllerManager<T : Entity>(val mapper: IEntityAnimationMapper<
 	val mergedFlags = mutableMapOf<String, ProxyBoneFlags>()
 
 	/** 待触发的事件队列（控制器收集 -> tick后统一执行） */
-	private val pendingEvents = mutableListOf<AnimationEventsToFire>()
+	private val pendingEvents = mutableListOf<Pair<IEntityAnimationController<*>, AnimationEventsToFire>>()
 
 	/** 几何骨骼定义（外部设置后自动同步到 bones） */
 	var bakingBrModel: BakingBrModel = BakingBrModel.EMPTY
@@ -286,8 +286,8 @@ class AnimationControllerManager<T : Entity>(val mapper: IEntityAnimationMapper<
 	}
 
 	/** 添加待触发的事件到队列（由控制器在 tickBackend 中收集） */
-	fun queueEvents(events: AnimationEventsToFire) {
-		pendingEvents.add(events)
+	fun queueEvents(animationController: IEntityAnimationController<*>, events: AnimationEventsToFire) {
+		pendingEvents.add(animationController to events)
 	}
 
 	/** 执行所有待触发的动画事件并清空队列 */
@@ -297,13 +297,13 @@ class AnimationControllerManager<T : Entity>(val mapper: IEntityAnimationMapper<
 		val data = mapper.molangData
 
 		// 时间线事件：双端执行
-		for (events in pendingEvents) {
-			events.timelines.forEach { it.apply(entity, data) }
+		for ((controller, events) in pendingEvents) {
+			events.timelines.forEach { it.run(entity, data) }
 			events.sounds.forEach {
-				mapper.playSoundEffect(it, brModel, mergedProxy, data)
+				it.runs(controller, entity, brModel, mergedProxy, data)
 			}
 			events.particles.forEach {
-				mapper.playParticleEffect(it, brModel, mergedProxy, data)
+				it.runs(controller, entity, brModel, mergedProxy, data)
 			}
 		}
 
