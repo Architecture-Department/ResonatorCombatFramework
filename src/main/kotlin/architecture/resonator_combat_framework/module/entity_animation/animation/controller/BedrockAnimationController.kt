@@ -79,8 +79,8 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 		}
 
 	override val effectiveWeight: Float get() = if (transitionSource != null) 1f else blendFactor
-	override val isFadingOut: Boolean get() = state == State.FADING_OUT
-	override val isFadingIn: Boolean get() = state == State.TRANSITIONING
+	override val isFadingOut: Boolean get() = state == State.TRANSITIONING
+	override val isFadingIn: Boolean get() = state == State.ANIMATION_TRANSITIONING
 
 	// ===== 骨骼标志 =====
 
@@ -107,6 +107,10 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 			RcfUtil.LOGGER.warn("[AnimDebug] Animation not found: " + config.animId)
 			return
 		}
+		// 如果需要镜像，将已加载的动画转换为镜像版本
+		if (config.mirror && currentAnim != null) {
+			currentAnim = currentAnim!!.mirrored()
+		}
 		speedMultiplier = config.resolveSpeedMultiplier()
 		val finalConfig = resolvedBoneConfig ?: config.boneConfig ?: configLoader.getConfig(config.animId)
 		resolvedBoneConfig = null
@@ -118,7 +122,7 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 		firedEvents.clear()
 		if (config.startTime > 0) setAnimStartTime(config.startTime / 20f)
 		currentTransitionTicks = config.resolveFadeInTicks(finalConfig.getFadeInTicks())
-		state = State.TRANSITIONING
+		state = State.ANIMATION_TRANSITIONING
 		blendFactor = 0f
 		blendTarget = 1f
 		freezeAllAtFrameZero()
@@ -133,9 +137,9 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 	// ===== 停止 =====
 
 	override fun stop(fadeOutTicks: Int) {
-		if (state == State.IDLE || state == State.FADING_OUT) return
+		if (state == State.IDLE || state == State.TRANSITIONING) return
 		manager.clearEmittersFor(id)
-		state = State.FADING_OUT
+		state = State.TRANSITIONING
 		blendTarget = 0f
 		transitionSource = null // 清除 crossfade 源，使 effectiveWeight = blendFactor
 		currentTransitionTicks = if (fadeOutTicks >= 0) fadeOutTicks
@@ -146,7 +150,7 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 	// ===== 暂停 / 恢复 =====
 
 	override fun pause() {
-		if (state == State.PLAYING || state == State.TRANSITIONING) {
+		if (state == State.PLAYING || state == State.ANIMATION_TRANSITIONING) {
 			state = State.PAUSED
 			transitionSource = null
 		}
@@ -159,7 +163,7 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 		if (info != null && info.animTime * speedMultiplier >= info.animLength
 			&& info.loopType == LoopType.HOLD_ON_LAST
 		) return
-		state = if (isInFadeIn()) State.TRANSITIONING else State.PLAYING
+		state = if (isInFadeIn()) State.ANIMATION_TRANSITIONING else State.PLAYING
 	}
 
 	/** tick 处理钩子，子类可重写（如 ActionAnimationController 检测物品切换） */
@@ -252,7 +256,7 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 	/** 进入淡出状态 */
 	private fun startFadeOut() {
 		pause()
-		state = State.FADING_OUT
+		state = State.TRANSITIONING
 		blendTarget = 0f
 		currentTransitionTicks = currentConfig.resolveFadeOutTicks(activeBoneConfig.getFadeOutTicks())
 	}
@@ -287,7 +291,7 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 				advanceTickCount++
 				tickBackend(advanceTickCount / 20f, manager.mapper.holder, manager.mapper.molangData)
 			} else {
-				// TRANSITIONING / FADING_OUT：冻结时间，用当前 animTime 重算骨骼
+				// TRANSITIONING / TRANSITIONING：冻结时间，用当前 animTime 重算骨骼
 				tickBackend(0f, manager.mapper.holder, manager.mapper.molangData, freezeTime = true)
 			}
 			handleStateTransition()
@@ -302,17 +306,17 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 		NeoForge.EVENT_BUS.post(AnimationControllerEvent.TickHandlerPost(id, this, manager.mapper))
 	}
 
-	/** 处理状态转移：TRANSITIONING→PLAYING / FADING_OUT→IDLE */
+	/** 处理状态转移：TRANSITIONING→PLAYING / TRANSITIONING→IDLE */
 	private fun handleStateTransition() {
-		if (state == State.TRANSITIONING && transitionSource != null) {
+		if (state == State.ANIMATION_TRANSITIONING && transitionSource != null) {
 			crossfadeStep()
 		}
-		if (state == State.TRANSITIONING && blendFactor >= 1f) {
+		if (state == State.ANIMATION_TRANSITIONING && blendFactor >= 1f) {
 			state = State.PLAYING
 			transitionSource = null
 			lastRawGameTime = advanceTickCount / 20f
 		}
-		if (state == State.FADING_OUT && blendFactor <= 0f) {
+		if (state == State.TRANSITIONING && blendFactor <= 0f) {
 			forceClear()
 		}
 	}

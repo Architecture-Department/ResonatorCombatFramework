@@ -16,11 +16,11 @@ import net.minecraft.world.entity.Entity
 interface IEntityAnimationMapper<T : Entity, M : EntityModel<T>> {
 	val holder: T
 	val isClient: Boolean
-	val animationControllerManager: AnimationControllerManager<*>
+	val animationControllerManager: AnimationControllerManager<T>
 
 	/** 实体级 MoLang 数据 */
 	val molangData: MolangData get() = MolangData.of(holder)
-	val mainController: IEntityAnimationController<T> get() = animationControllerManager.getMainController() as IEntityAnimationController<T>
+	val mainController: IEntityAnimationController<T> get() = animationControllerManager.getMainController()
 
 	fun tickAnimations()
 

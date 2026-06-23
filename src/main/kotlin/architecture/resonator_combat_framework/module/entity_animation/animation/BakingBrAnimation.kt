@@ -9,6 +9,7 @@ import architecture.resonator_combat_framework.module.entity_animation.animation
 import architecture.resonator_combat_framework.module.entity_animation.animation.molang.value.Constant
 import architecture.resonator_combat_framework.module.entity_animation.event.AnimationParticleEvent
 import architecture.resonator_combat_framework.module.entity_animation.event.Value
+import architecture.resonator_combat_framework.module.entity_animation.util.AnimationMirrorUtil
 import architecture.resonator_combat_framework.util.RcfUtil
 import com.google.gson.JsonArray
 import com.google.gson.JsonElement
@@ -207,6 +208,29 @@ data class BakingBrAnimation
 			points[idx2].y.toDouble(),
 			points[idx3].y.toDouble()
 		).toFloat()
+	}
+
+	/**
+	 * 返回镜像后的动画副本：左右骨骼名称互换，位置 X 取反，旋转 Y/Z 取反。
+	 */
+	fun mirrored(): BakingBrAnimation {
+		val newBones = mutableMapOf<String, BakingBrBoneAnimation>()
+		for ((name, boneAnim) in bones) {
+			newBones[AnimationMirrorUtil.mirrorBoneName(name)] = boneAnim.mirrored()
+		}
+		return copy(
+			bones = newBones,
+			sounds = sounds.map { sound ->
+				sound.copy(effects = sound.effects.map { effect ->
+					effect.copy(locatorName = effect.locatorName?.let { AnimationMirrorUtil.mirrorBoneName(it) })
+				})
+			},
+			particles = particles.map { particle ->
+				particle.copy(effects = particle.effects.map { effect ->
+					effect.copy(locatorName = effect.locatorName?.let { AnimationMirrorUtil.mirrorBoneName(it) })
+				})
+			}
+		)
 	}
 }
 
@@ -496,6 +520,15 @@ data class BakingBrBoneAnimation
 	val rot: List<BakingBrBoneKeyFrame> = emptyList(),
 	val scale: List<BakingBrBoneKeyFrame> = emptyList()
 ) {
+	/**
+	 * 返回镜像后的骨骼动画副本：位置 X 取反，旋转 Y/Z 取反。
+	 */
+	fun mirrored(): BakingBrBoneAnimation = BakingBrBoneAnimation(
+		pos = pos.map { it.mirroredPos() },
+		rot = rot.map { it.mirroredRot() },
+		scale = scale
+	)
+
 	companion object {
 		/** 从所有骨骼关键帧中取最大时间作为动画长度，至少 1 秒 */
 		@JvmStatic
@@ -571,6 +604,20 @@ data class BakingBrBoneKeyFrame
 
 	fun hasPreData(): Boolean = pre.allNull().not()
 	fun hasPostData(): Boolean = post.allNull().not()
+
+	/** 镜像位置关键帧：X 取反 */
+	fun mirroredPos(): BakingBrBoneKeyFrame = copy(
+		value = value.mirroredPos(),
+		pre = pre.mirroredPos(),
+		post = post.mirroredPos()
+	)
+
+	/** 镜像旋转关键帧：Y/Z 取反 */
+	fun mirroredRot(): BakingBrBoneKeyFrame = copy(
+		value = value.mirroredRot(),
+		pre = pre.mirroredRot(),
+		post = post.mirroredRot()
+	)
 
 	enum class LerpMode { LINEAR, CATMULLROM, STEP }
 

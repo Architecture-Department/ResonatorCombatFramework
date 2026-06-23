@@ -309,7 +309,8 @@ class AnimationControllerManager<T : Entity>(val mapper: IEntityAnimationMapper<
 		val result = mutableListOf<IEntityAnimationController<T>>()
 		val renderedBones = mutableSetOf<String>()
 		for (ctrl in active) {
-			if (ctrl.affectedBones.isNotEmpty() && ctrl.affectedBones.all { it in renderedBones } && !ctrl.isOverriding) {
+			val skip = ctrl.affectedBones.isNotEmpty() && ctrl.affectedBones.all { it in renderedBones } && !ctrl.isOverriding
+			if (skip) {
 				continue
 			}
 			result.add(ctrl)

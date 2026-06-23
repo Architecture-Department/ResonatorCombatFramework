@@ -19,6 +19,7 @@ import net.minecraft.world.entity.player.Player
  * @param boneConfig 骨骼配置，null 则使用默认加载的配置
  * @param fadeInTicks 淡入时间(tick)，-1 使用默认值
  * @param fadeOutTicks 淡出时间(tick)，-1 使用默认值
+ * @param mirror 是否镜像动画（左右翻转），默认 false
  */
 data class AnimationPlayData(
 	val animId: String,
@@ -31,7 +32,8 @@ data class AnimationPlayData(
 	val originalAnimLengthSec: Float = 0f,
 	val boneConfig: ProxyBoneConfigData? = null,
 	val fadeInTicks: Int = -1,
-	val fadeOutTicks: Int = -1
+	val fadeOutTicks: Int = -1,
+	val mirror: Boolean = false
 ) {
 	/** 解析实际速度倍数：durationTicks > 0 时自动计算 */
 	fun resolveSpeedMultiplier(): Float {
@@ -77,6 +79,8 @@ data class AnimationPlayData(
 		private var boneConfig: ProxyBoneConfigData? = null
 		private var fadeInTicks: Int = -1
 		private var fadeOutTicks: Int = -1
+		private var mirror: Boolean = false
+		fun mirror(enabled: Boolean) = apply { this.mirror = enabled }
 
 		fun controller(name: ResourceLocation) = apply { controllerName = name }
 		fun type(type: AnimType) = apply { animType = type }
@@ -103,7 +107,8 @@ data class AnimationPlayData(
 			originalAnimLengthSec = originalAnimLengthSec,
 			boneConfig = boneConfig,
 			fadeInTicks = fadeInTicks,
-			fadeOutTicks = fadeOutTicks
+			fadeOutTicks = fadeOutTicks,
+			mirror = mirror
 		)
 	}
 }
@@ -122,4 +127,3 @@ enum class AnimType {
 	/** 强制循环播放 */
 	LOOP
 }
-

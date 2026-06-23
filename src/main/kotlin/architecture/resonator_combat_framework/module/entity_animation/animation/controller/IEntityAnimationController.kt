@@ -17,18 +17,17 @@ interface IEntityAnimationController<T : Entity> {
 		/** 空闲状态 */
 		IDLE,
 
-		/** 过渡状态 */
+		/** 过渡状态（淡入/淡出） */
 		TRANSITIONING,
+
+		/** 动画间过渡状态（跨动画混合） */
+		ANIMATION_TRANSITIONING,
 
 		/** 播放状态 */
 		PLAYING,
 
 		/** 暂停状态 */
 		PAUSED,
-
-		/** 淡出状态 */
-		FADING_OUT
-		// TODO还需要一个淡入
 	}
 
 	val manager: AnimationControllerManager<T>
@@ -78,10 +77,10 @@ interface IEntityAnimationController<T : Entity> {
 	/** 有效权重（含过渡状态） */
 	val effectiveWeight: Float
 
-	/** 是否正在淡出 */
+	/** 是否正在过渡（淡入或淡出） */
 	val isFadingOut: Boolean
 
-	/** 是否正在淡入（TRANSITIONING 状态） */
+	/** 是否正在动画间过渡 */
 	val isFadingIn: Boolean
 
 	/** 当前动画播放时间（秒） */
