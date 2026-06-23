@@ -134,6 +134,7 @@ class AnimationControllerManager<T : Entity>(val mapper: IEntityAnimationMapper<
 			copy.pos.set(bone.pos)
 			copy.rotation.set(bone.rotation)
 			copy.scale.set(bone.scale)
+			copy.noInterp = bone.noInterp
 			prevMergedProxy.addBone(copy)
 		}
 
@@ -159,6 +160,9 @@ class AnimationControllerManager<T : Entity>(val mapper: IEntityAnimationMapper<
 					mergedProxy.addBone(nb)
 					nb
 				}
+
+				// 复制 noInterp 标记（STEP 关键帧骨骼在渲染时不插值）
+				if (bone.noInterp) mb.noInterp = true
 
 				if (name in coveredBones && ctrl.isOverriding) {
 					mb.pos.set(0f)
@@ -245,7 +249,28 @@ class AnimationControllerManager<T : Entity>(val mapper: IEntityAnimationMapper<
 	fun getInterpolatedBone(name: String, partialTick: Float): ProxyBone? = interpolateBone(name, partialTick)
 
 	/** 获取合并后的插值代理骨骼（逐帧在 prevMergedProxy 和 mergedProxy 之间线性插值） */
+	/** 复制 ProxyModel 的所有骨骼到新模型（深拷贝） */
+	private fun copyProxyModel(source: ProxyModel): ProxyModel {
+		val result = ProxyModel("interp")
+		for ((name, bone) in source.bones) {
+			val copy = ProxyBone(name)
+			copy.pos.set(bone.pos)
+			copy.rotation.set(bone.rotation)
+			copy.scale.set(bone.scale)
+			if (bone.hasPos()) copy.setPosEmpty(false)
+			if (bone.hasRot()) copy.setRotEmpty(false)
+			if (bone.hasScale()) copy.setScaleEmpty(false)
+			copy.noInterp = bone.noInterp
+			result.addBone(copy)
+		}
+		return result
+	}
+
+	/** 获取合并后的插值代理骨骼（逐帧在 prevMergedProxy 和 mergedProxy 之间线性插值） */
 	fun getInterpolatedProxy(partialTick: Float): ProxyModel {
+		// partialTick=0 或 1 时直接返回对应源，避免不必要的插值计算
+		if (partialTick == 0f) return copyProxyModel(prevMergedProxy)
+		if (partialTick == 1f) return copyProxyModel(mergedProxy)
 		val result = ProxyModel("interp")
 		for ((name, _) in mergedProxy.bones) {
 			interpolateBone(name, partialTick)?.let { result.addBone(it) }

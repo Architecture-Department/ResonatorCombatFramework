@@ -6,7 +6,7 @@ import com.mojang.math.Axis
 import org.joml.Vector3f
 import org.joml.Vector3fc
 
-// TODO对应不同体型的玩家取不同的位置
+// TODO 对应不同体型的玩家取不同的位置
 data class BrModel
 @JvmOverloads
 constructor(
@@ -16,6 +16,7 @@ constructor(
 
 	/**
 	 * 用 PoseStack 计算定位器的变换矩阵（模型空间）。
+	 * 先计算所属骨骼的变换，再应用定位器相对于骨骼的偏移。
 	 */
 	fun computeLocatorGlobalMatrix(
 		name: String?,
@@ -38,13 +39,13 @@ constructor(
 		poseStack.mulPose(Axis.ZP.rotation(locator.rotation.z().toRadians()))
 		poseStack.mulPose(Axis.YP.rotation(locator.rotation.y().toRadians()))
 		poseStack.mulPose(Axis.XP.rotation(locator.rotation.x().toRadians()))
-//		poseStack.translate(-locator.offset.x() , -locator.offset.y() , -locator.offset.z() )
 
 		return poseStack
 	}
 
 	/**
 	 * 用 PoseStack 计算骨骼的层次变换矩阵（模型空间）。
+	 * 从根到目标骨骼构建完整变换链。
 	 */
 	fun computeBoneGlobalMatrix(
 		name: String?,
@@ -57,13 +58,12 @@ constructor(
 
 		val scale = if (isWorld) 16 else 1
 		buildChainOnPoseStack(poseStack, name, animationData, scale)
-
 		return poseStack
 	}
 
 	/**
-	 * 在 PoseStack 上构建从根到指定骨骼的完整变换链。
-	 * 使用相对父骨骼偏移定位，旋转通过 Axis 应用。
+	 * 从根到指定骨骼构建完整变换链，应用每层的 pivot 偏移 + 代理变换 + 旋转 + 缩放。
+	 * 使用相对父骨骼的 pivot 偏移来确定位置。
 	 */
 	private fun buildChainOnPoseStack(
 		poseStack: PoseStack,
@@ -71,6 +71,7 @@ constructor(
 		animationData: ProxyModel,
 		scale: Int
 	) {
+		// 收集从 startName 到根的所有骨骼（自身→父级），然后反转得到根→自身的顺序
 		val result = mutableListOf<Pair<BrBone, ProxyBone?>>()
 		var currentName: String? = startName
 		while (true) {
@@ -83,74 +84,83 @@ constructor(
 
 		val prevPivot = Vector3f()
 		for ((bone, proxyBone) in chain) {
+			// pivot 相对父骨骼偏移（模型空间坐标 → 相对坐标）
 			poseStack.translate(
 				(bone.pivot.x() - prevPivot.x()) / scale,
 				(bone.pivot.y() - prevPivot.y()) / scale,
 				-(bone.pivot.z() - prevPivot.z()) / scale
 			)
+			// ZYX 旋转变换（先 Z → Y → X）
+			poseStack.mulPose(Axis.ZP.rotation(bone.rotation.z().toRadians()))
+			poseStack.mulPose(Axis.YP.rotation(bone.rotation.y().toRadians()))
+			poseStack.mulPose(Axis.XP.rotation(bone.rotation.x().toRadians()))
+
+			// 代理动画位移
 			if (proxyBone != null) poseStack.translate(
 				proxyBone.pos.x / scale,
 				proxyBone.pos.y / scale,
 				-proxyBone.pos.z / scale
 			)
-			poseStack.mulPose(Axis.ZP.rotation(bone.rotation.z().toRadians()))
-			if (proxyBone != null) poseStack.mulPose(Axis.ZP.rotation(-proxyBone.rotation.z.toRadians()))
-			poseStack.mulPose(Axis.YP.rotation(bone.rotation.y().toRadians()))
-			if (proxyBone != null) poseStack.mulPose(Axis.YP.rotation(-proxyBone.rotation.y.toRadians()))
-			poseStack.mulPose(Axis.XP.rotation(bone.rotation.x().toRadians()))
-			if (proxyBone != null) poseStack.mulPose(Axis.XP.rotation(proxyBone.rotation.x.toRadians()))
-			if (proxyBone != null) poseStack.scale(proxyBone.scale.x, proxyBone.scale.y, proxyBone.scale.z)
+			// ZYX 旋转变换（先 Z → Y → X）代理动画旋转
+			if (proxyBone != null) {
+				poseStack.mulPose(Axis.ZP.rotation(-proxyBone.rotation.z.toRadians()))
+				poseStack.mulPose(Axis.YP.rotation(-proxyBone.rotation.y.toRadians()))
+				poseStack.mulPose(Axis.XP.rotation(proxyBone.rotation.x.toRadians()))
+				// 代理动画缩放
+				poseStack.scale(proxyBone.scale.x, proxyBone.scale.y, proxyBone.scale.z)
+			}
 
 			prevPivot.set(bone.pivot)
 		}
 	}
 
+	/** 清空所有骨骼和定位器 */
 	fun clear() {
 		bones.clear()
 		locators.clear()
 	}
 
+	/** 合并模型：骨骼合并不覆盖已有，定位器不覆盖已有 */
 	fun add(model: BakingBrModel?) {
-		if (model == null) return
-		for (bone in model.bones.values) {
-			val brBone = bones[bone.name]
-			if (brBone != null) {
-				brBone.add(model)
-			} else {
-				bones[bone.name] = BrBone.of(bone)
-			}
-		}
-
-		for (locator in model.locators.values) {
-			if (locators[locator.name] == null) locators[locator.name] = BrLocator.of(locator)
-		}
+		mergeBones(model, overwriteLocators = false)
 	}
 
+	/** 合并模型：骨骼合并不覆盖已有，定位器覆盖已有 */
 	fun overwriteAdd(model: BakingBrModel?) {
-		if (model == null) return
-		for (bone in model.bones.values) {
-			val brBone = bones[bone.name]
-			if (brBone != null) {
-				brBone.add(model)
-			} else {
-				bones[bone.name] = BrBone.of(bone)
-			}
-		}
-
-		for (locator in model.locators.values) {
-			locators[locator.name] = BrLocator.of(locator)
-		}
+		mergeBones(model, overwriteLocators = true)
 	}
 
+	/** 完全替换为指定模型 */
 	fun set(model: BakingBrModel?) {
 		clear()
 		if (model == null) return
 		for (bone in model.bones.values) {
 			bones[bone.name] = BrBone.of(bone)
 		}
-
 		for (locator in model.locators.values) {
 			locators[locator.name] = BrLocator.of(locator)
+		}
+	}
+
+	/**
+	 * 合并 BakingBrModel 的骨骼和定位器到当前模型。
+	 * 骨骼合并不覆盖已有（仅向已有骨骼添加 cubes/locators），
+	 * 定位器按 [overwriteLocators] 决定是否覆盖。
+	 */
+	private fun mergeBones(model: BakingBrModel?, overwriteLocators: Boolean) {
+		if (model == null) return
+		for (bone in model.bones.values) {
+			val brBone = bones[bone.name]
+			if (brBone != null) {
+				brBone.add(model)
+			} else {
+				bones[bone.name] = BrBone.of(bone)
+			}
+		}
+		for (locator in model.locators.values) {
+			if (overwriteLocators || locators[locator.name] == null) {
+				locators[locator.name] = BrLocator.of(locator)
+			}
 		}
 	}
 
@@ -165,6 +175,7 @@ constructor(
 	}
 }
 
+/** 骨骼数据 */
 data class BrBone
 @JvmOverloads
 constructor(
@@ -175,6 +186,7 @@ constructor(
 	val cubes: MutableList<BrCube> = mutableListOf(),
 	val locators: MutableMap<String, BrLocator> = mutableMapOf()
 ) {
+	/** 从 BakingBrModel 合并 cubes 和 locators 到已有骨骼 */
 	fun add(model: BakingBrModel) {
 		model.bones[name]?.let {
 			cubes.addAll(it.cubes.map(BrCube::of))
@@ -182,6 +194,7 @@ constructor(
 		}
 	}
 
+	/** 从 BakingBrModel 替换 cubes 和 locators */
 	fun set(model: BakingBrModel) {
 		model.bones[name]?.let {
 			cubes.clear()
@@ -206,6 +219,7 @@ constructor(
 	}
 }
 
+/** 立方体数据 */
 data class BrCube
 @JvmOverloads
 constructor(
@@ -227,6 +241,7 @@ constructor(
 	}
 }
 
+/** 定位器数据 */
 data class BrLocator
 @JvmOverloads
 constructor(
