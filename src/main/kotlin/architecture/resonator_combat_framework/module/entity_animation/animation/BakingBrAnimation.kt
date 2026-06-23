@@ -1,6 +1,7 @@
 package architecture.resonator_combat_framework.module.entity_animation.animation
 
 import architecture.goldenboughs_lib.util.*
+import architecture.resonator_combat_framework.animation.LoopType
 import architecture.resonator_combat_framework.module.entity_animation.animation.controller.IEntityAnimationController
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.BrModel
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.ProxyBone
@@ -46,8 +47,6 @@ data class BakingBrAnimation
 	/** MoLang 时间推进表达式，默认 query.anim_time + query.delta_time */
 	val animTimeUpdate: MolangValue? = null
 ) {
-	enum class LoopType { ONCE, LOOP, HOLD_ON_LAST }
-
 	companion object {
 		/** 解析 JSON 根对象的 "animations" 段，每个条目注册为一个 BedrockAnimation */
 		@JvmStatic
@@ -98,9 +97,7 @@ data class BakingBrAnimation
 	}
 
 	/** 计算动画在 time 时刻的骨骼变换并写入 proxyModel.localPos/localRot/localScale（局部变换） */
-	fun computeAndWrite(
-		time: Float, proxyModel: ProxyModel, context: MolangData? = null
-	): Set<String> {
+	fun computeAndWrite(time: Float, proxyModel: ProxyModel, context: MolangData? = null): Set<String> {
 		val affected = mutableSetOf<String>()
 		for ((boneName, boneAnim) in bones) {
 			val posRes = interpolateFrames(boneAnim.pos, time, context)

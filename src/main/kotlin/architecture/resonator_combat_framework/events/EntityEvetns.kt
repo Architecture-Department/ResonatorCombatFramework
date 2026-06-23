@@ -11,8 +11,11 @@ object EntityEvetns {
 	@SubscribeEvent
 	fun onTickPre(event: EntityTickEvent.Pre) {
 		val entity = event.entity
-		entity.getExistingDataOrNull(RcfAttachmentTypes.MOLANG_DATA)?.apply {
-			// TODO 补充
+//		entity.getExistingDataOrNull(RcfAttachmentTypes.MOLANG_DATA)?.apply {
+//			// TODO 补充
+//		}
+		entity.getExistingDataOrNull(RcfAttachmentTypes.STATE_HOLDER)?.apply {
+			tick()
 		}
 	}
 }

@@ -1,6 +1,7 @@
 package architecture.resonator_combat_framework.module.entity_animation.animation.controller
 
-import architecture.resonator_combat_framework.module.entity_animation.animation.*
+import architecture.resonator_combat_framework.animation.Animation
+import architecture.resonator_combat_framework.animation.LoopType
 import architecture.resonator_combat_framework.module.entity_animation.animation.controller.IEntityAnimationController.State
 import architecture.resonator_combat_framework.module.entity_animation.animation.data.*
 import architecture.resonator_combat_framework.module.entity_animation.animation.mapper.AnimationControllerManager
@@ -57,8 +58,8 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 	/** 游戏刻推进计数器，用于 tickBackend 计算 delta time */
 	protected var advanceTickCount = 0L
 
-	/** 当前加载的动画数据 */
-	private var currentAnim: BakingBrAnimation? = null
+	/** 当前加载的 Animation 单例 */
+	private var currentAnim: Animation? = null
 
 	/** 已触发的事件索引集合，避免重复触发 */
 	private val firedEvents = mutableSetOf<String>()
@@ -97,39 +98,51 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 	/** 播放信息 */
 	data class PlaybackInfo(val animTime: Float, val animLength: Float, val loopType: LoopType)
 
-	enum class LoopType { ONCE, LOOP, HOLD_ON_LAST }
-
 	// ===== 触发 =====
 
 	override fun trigger(config: AnimationPlayData) {
-		manager.clearEmittersFor(id)
-		if (!loadAnimation(config.animId)) {
+		val anim = animationLoader.getAnimation(config.animId)
+		if (anim == null) {
 			RcfUtil.LOGGER.warn("[AnimDebug] Animation not found: " + config.animId)
 			return
 		}
-		// 如果需要镜像，将已加载的动画转换为镜像版本
-		if (config.mirror && currentAnim != null) {
-			currentAnim = currentAnim!!.mirrored()
-		}
+		triggerWithAnimation(anim, config)
+	}
+
+	/** 使用指定的 [Animation] 实例触发播放 */
+	override fun triggerWithAnimation(anim: Animation, config: AnimationPlayData) {
+		// 1. 设置动画引用
+		currentAnim = anim
+
+		// 2. 清除旧状态
+		manager.clearEmittersFor(id)
+		proxyModel.bones.clear()
+		firedEvents.clear()
+
+		// 3. 解析配置
 		speedMultiplier = config.resolveSpeedMultiplier()
 		val finalConfig = resolvedBoneConfig ?: config.boneConfig ?: configLoader.getConfig(config.animId)
 		resolvedBoneConfig = null
 		activeBoneConfig = finalConfig
-		snapshotTransitionSource()
-		proxyModel.bones.clear()
 		currentConfig = config
 		currentAnimId = config.animId
-		firedEvents.clear()
+
+		// 4. 设置过渡状态
+		snapshotTransitionSource()
 		if (config.startTime > 0) setAnimStartTime(config.startTime / 20f)
 		currentTransitionTicks = config.resolveFadeInTicks(finalConfig.getFadeInTicks())
 		state = State.ANIMATION_TRANSITIONING
 		blendFactor = 0f
 		blendTarget = 1f
+
+		// 5. 写入第0帧
 		freezeAllAtFrameZero()
-		// 立即写入第0帧骨骼，防止 trigger→下一 tick 之间的渲染帧拿到空的 proxyModel
-		affectedBones = currentAnim?.computeAndWrite(animTime, proxyModel, currentData) ?: emptySet()
-		// 有 crossfade 源时立即混合，使 trigger 后的首帧也保持旧动画姿态
+		affectedBones = anim.computeAndWrite(animTime, proxyModel, currentData, config.mirror)
+
+		// 6. 跨动画混合
 		if (transitionSource != null) crossfadeStep()
+
+		// 7. 收尾
 		extraModel = finalConfig.extraModel
 		manager.rebuildBones()
 	}
@@ -247,10 +260,7 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 		}
 	}
 
-	/** 判断 LoopType 是否为播放一次 */
 	private fun isOnceType(loopType: LoopType): Boolean = loopType == LoopType.ONCE
-
-	/** 判断 LoopType 是否为循环 */
 	private fun isLoopType(loopType: LoopType): Boolean = loopType == LoopType.LOOP
 
 	/** 进入淡出状态 */
@@ -283,19 +293,23 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 	final override fun tickAdvance() {
 		// 事件钩子：Pre
 		if (NeoForge.EVENT_BUS.post(AnimationControllerEvent.TickPre(id, this, manager.mapper)).isCanceled) return
+
 		tickHandlerCall()
-		if (state != State.IDLE && state != State.PAUSED) {
-			checkPlaybackBounds()
-			tickBlend()
-			if (state == State.PLAYING) {
-				advanceTickCount++
-				tickBackend(advanceTickCount / 20f, manager.mapper.holder, manager.mapper.molangData)
-			} else {
-				// TRANSITIONING / TRANSITIONING：冻结时间，用当前 animTime 重算骨骼
-				tickBackend(0f, manager.mapper.holder, manager.mapper.molangData, freezeTime = true)
-			}
-			handleStateTransition()
+		if (state == State.IDLE || state == State.PAUSED) {
+			NeoForge.EVENT_BUS.post(AnimationControllerEvent.TickPost(id, this, manager.mapper))
+			return
 		}
+
+		checkPlaybackBounds()
+		tickBlend()
+		if (state == State.PLAYING) {
+			advanceTickCount++
+			tickBackend(advanceTickCount / 20f, manager.mapper.holder, manager.mapper.molangData)
+		} else {
+			// TRANSITIONING / TRANSITIONING：冻结时间，用当前 animTime 重算骨骼
+			tickBackend(0f, manager.mapper.holder, manager.mapper.molangData, freezeTime = true)
+		}
+		handleStateTransition()
 		NeoForge.EVENT_BUS.post(AnimationControllerEvent.TickPost(id, this, manager.mapper))
 	}
 
@@ -331,11 +345,6 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 
 	// ===== 动画后端 =====
 
-	/** 加载 BedrockAnimation */
-	fun loadAnimation(animId: String): Boolean {
-		currentAnim = animationLoader.get(animId)
-		return currentAnim != null
-	}
 
 	/** 重置动画时间到 0 */
 	fun freezeAllAtFrameZero() {
@@ -351,29 +360,21 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 	/** 获取当前播放信息 */
 	fun getPlaybackInfo(): PlaybackInfo? {
 		val anim = currentAnim ?: return null
-		return PlaybackInfo(animTime, anim.length, anim.loop.toLoopType())
+		return PlaybackInfo(animTime, anim.length, anim.loopType)
 	}
 
 	/** 驱动 MoLang anim_time_update 并写骨骼到 proxyModel */
 	fun tickBackend(gameTime: Float, entity: Entity, data: MolangData, freezeTime: Boolean = false) {
 		val anim = currentAnim ?: return
 		if (freezeTime) {
-			// 过渡模式：不推进 animTime，只基于当前时间重新计算骨骼
-			affectedBones = anim.computeAndWrite(animTime, proxyModel, data)
-			manager.queueEvents(this, collectEventsAt(anim))
+			affectedBones = anim.computeAndWrite(animTime, proxyModel, data, currentConfig.mirror)
+			manager.queueEvents(this, anim.collectEvents(animTime, firedEvents, currentConfig.mirror))
 			return
 		}
 		val scaledDelta = calcScaledDelta(gameTime)
-		val expr = anim.animTimeUpdate
-		if (expr != null) {
-			val molangData = currentData
-			molangData.updateAnimQueries(animTime, scaledDelta)
-			animTime = expr.eval(molangData).toFloat()
-		} else {
-			animTime += scaledDelta
-		}
-		affectedBones = anim.computeAndWrite(animTime, proxyModel, data)
-		manager.queueEvents(this, collectEventsAt(anim))
+		animTime = anim.tickAnimTime(animTime, scaledDelta, currentData, currentConfig.mirror)
+		affectedBones = anim.computeAndWrite(animTime, proxyModel, data, currentConfig.mirror)
+		manager.queueEvents(this, anim.collectEvents(animTime, firedEvents, currentConfig.mirror))
 	}
 
 	/** 计算经过 delta 时间，处理首帧 */
@@ -390,37 +391,6 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 
 	// ===== 事件收集 =====
 
-	/** 收集当前动画时间点上待触发的音效/粒子/时间线事件 */
-	fun collectEventsAt(anim: BakingBrAnimation): AnimationEventsToFire {
-		val soundsToFire = mutableListOf<BakingBrAnimationSound>()
-		val particlesToFire = mutableListOf<BakingBrAnimationParticle>()
-		val timelinesToFire = mutableListOf<BakingBrAnimationTimeline>()
-
-		collectTypedEvents(anim.sounds, "sound_", soundsToFire)
-		collectTypedEvents(anim.particles, "particle_", particlesToFire)
-		collectTypedEvents(anim.timelines, "timeline_", timelinesToFire)
-
-		return AnimationEventsToFire(soundsToFire, particlesToFire, timelinesToFire)
-	}
-
-	/** 收集指定类型的事件（去重） */
-	private inline fun <reified T : Any> collectTypedEvents(
-		events: List<T>, prefix: String, out: MutableList<T>
-	) {
-		events.forEachIndexed { i, event ->
-			val key = "$prefix$i"
-			val time = when (event) {
-				is BakingBrAnimationSound -> event.time
-				is BakingBrAnimationParticle -> event.time
-				is BakingBrAnimationTimeline -> event.time
-				else -> return@forEachIndexed
-			}
-			if (key !in firedEvents && animTime >= time) {
-				firedEvents.add(key)
-				out.add(event)
-			}
-		}
-	}
 
 	// ===== 内部 =====
 
@@ -458,10 +428,4 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 
 	private fun isInFadeIn(): Boolean = isFadingIn
 
-	/** 转换 Bedrock 循环类型到控制器枚举 */
-	fun BakingBrAnimation.LoopType.toLoopType() = when (this) {
-		BakingBrAnimation.LoopType.ONCE -> LoopType.ONCE
-		BakingBrAnimation.LoopType.LOOP -> LoopType.LOOP
-		BakingBrAnimation.LoopType.HOLD_ON_LAST -> LoopType.HOLD_ON_LAST
-	}
 }

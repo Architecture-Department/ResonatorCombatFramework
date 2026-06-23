@@ -1,6 +1,7 @@
 package architecture.resonator_combat_framework.module.entity_animation.animation.controller
 
 import architecture.goldenboughs_lib.api.AllOpe
+import architecture.resonator_combat_framework.animation.Animation
 import architecture.resonator_combat_framework.module.entity_animation.animation.data.AnimationPlayData
 import architecture.resonator_combat_framework.module.entity_animation.animation.data.ProxyBoneConfigData
 import architecture.resonator_combat_framework.module.entity_animation.animation.mapper.AnimationControllerManager
@@ -102,6 +103,8 @@ interface IEntityAnimationController<T : Entity> {
 			fadeOutTicks = fadeOutTicks
 		)
 	)
+
+	fun triggerWithAnimation(anim: Animation, config: AnimationPlayData)
 
 	fun equalsCurrentAnimId(id: String): Boolean {
 		return currentAnimId == id

@@ -39,7 +39,7 @@ constructor(
 
 	/** 触发动画：解析控制器 → 设置骨骼配置 → 触发控制器 */
 	override fun trigger(playData: AnimationPlayData) {
-		if (animationLoader.get(playData.animId) == null) {
+		if (animationLoader.getBakingAnimation(playData.animId) == null) {
 			RcfUtil.LOGGER.warn("[AnimDebug] Animation not found: " + playData.animId)
 			return
 		}
