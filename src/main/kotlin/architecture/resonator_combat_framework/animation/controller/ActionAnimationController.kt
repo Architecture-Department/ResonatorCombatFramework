@@ -31,14 +31,14 @@ class ActionAnimationController<T : Entity>(
 
 		val mainHandItem = entity.mainHandItem
 		val offhandItem = entity.offhandItem
-		if (ItemStack.isSameItem(mainHandItem, this.mainHandItem ?: ItemStack.EMPTY)) {
+		if (!ItemStack.isSameItem(mainHandItem, this.mainHandItem ?: ItemStack.EMPTY)) {
 			this.mainHandItem = entity.mainHandItem
 			if (mainHandItem != ItemStack.EMPTY) {
 				trigger(getSwitchingAnimId(entity.mainArm == HumanoidArm.RIGHT))
 			}
 		}
 
-		if (ItemStack.isSameItem(offhandItem, this.offhandItem ?: ItemStack.EMPTY)) {
+		if (!ItemStack.isSameItem(offhandItem, this.offhandItem ?: ItemStack.EMPTY)) {
 			this.offhandItem = entity.offhandItem
 			if (offhandItem != ItemStack.EMPTY) {
 				trigger(getSwitchingAnimId(entity.mainArm != HumanoidArm.RIGHT))
