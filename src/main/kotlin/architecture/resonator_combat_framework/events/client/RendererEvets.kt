@@ -1,7 +1,7 @@
 package architecture.resonator_combat_framework.events.client
 
-import architecture.resonator_combat_framework.core.RcfConstants
 import architecture.resonator_combat_framework.module.entity_animation.render.RcfFirstPersonRender
+import architecture.resonator_combat_framework.util.RcfUtil
 import net.minecraft.client.Minecraft
 import net.neoforged.api.distmarker.Dist
 import net.neoforged.bus.api.SubscribeEvent
@@ -9,7 +9,7 @@ import net.neoforged.fml.common.EventBusSubscriber
 import net.neoforged.neoforge.client.event.RenderArmEvent
 import net.neoforged.neoforge.client.event.RenderHandEvent
 
-@EventBusSubscriber(modid = RcfConstants.ID, value = [Dist.CLIENT])
+@EventBusSubscriber(modid = RcfUtil.ID, value = [Dist.CLIENT])
 object RendererEvets {
 	@SubscribeEvent
 	fun onRenderHand(event: RenderHandEvent) {

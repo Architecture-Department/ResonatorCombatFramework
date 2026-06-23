@@ -1,6 +1,6 @@
 package architecture.resonator_combat_framework.module.entity_animation.render
 
-import architecture.resonator_combat_framework.core.Rcf.IRSTPERSON_LOADED
+import architecture.resonator_combat_framework.util.RcfUtil.IRSTPERSON_LOADED
 import net.minecraft.client.Minecraft
 
 object RcfFirstPersonRender {

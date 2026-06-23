@@ -24,6 +24,8 @@ interface IEntityAnimationMapper<T : Entity, M : EntityModel<T>> {
 
 	fun tickAnimations()
 
+	fun tickAnimations(partialTick: Float)
+
 	fun resolveConfig(animId: String): ProxyBoneConfigData
 
 	/** 客户端 */

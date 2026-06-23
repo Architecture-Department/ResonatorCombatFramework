@@ -23,20 +23,24 @@ object PlayerAnimationHelper {
 	fun Player.triggerPlayerAnima(config: AnimationPlayData, isPayload: Boolean = true) {
 		if (this is AbstractClientPlayer) {
 			getAnimationTransformer().trigger(config)
-		} else if (this is ServerPlayer) {
-			getAnimationTransformer().trigger(config)
-			if (isPayload) {
-				PacketDistributor.sendToPlayersTrackingEntityAndSelf(
-					this, PlayPlayerPayload(
-						playerUuid = uuid, controllerName = null,
-						animId = config.animId, animType = config.animType,
-						speedMultiplier = config.resolveSpeedMultiplier(),
-						startTime = config.startTime, endTime = config.endTime,
-						fadeInTicks = config.fadeInTicks, fadeOutTicks = config.fadeOutTicks
-					)
-				)
-			}
+			return
 		}
+
+		if (this !is ServerPlayer) return
+
+		getAnimationTransformer().trigger(config)
+
+		if (!isPayload) return
+
+		PacketDistributor.sendToPlayersTrackingEntityAndSelf(
+			this, PlayPlayerPayload(
+				playerUuid = uuid, controllerName = null,
+				animId = config.animId, animType = config.animType,
+				speedMultiplier = config.resolveSpeedMultiplier(),
+				startTime = config.startTime, endTime = config.endTime,
+				fadeInTicks = config.fadeInTicks, fadeOutTicks = config.fadeOutTicks
+			)
+		)
 	}
 
 	/** 完整参数模式：速度 + 淡入 + 淡出 */

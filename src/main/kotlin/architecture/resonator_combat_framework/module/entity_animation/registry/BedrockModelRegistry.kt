@@ -1,7 +1,7 @@
 package architecture.resonator_combat_framework.module.entity_animation.registry
 
-import architecture.resonator_combat_framework.core.RcfConstants
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.BakingBrModel
+import architecture.resonator_combat_framework.util.RcfUtil
 import com.google.gson.JsonParser
 import net.minecraft.server.packs.resources.ResourceManager
 import net.minecraft.server.packs.resources.SimplePreparableReloadListener
@@ -32,7 +32,7 @@ class BedrockModelRegistry(
 	private val models = mutableMapOf<String, BakingBrModel>()
 
 	/** 按模型 identifier（如 "geometry.default"）获取模型 */
-	fun get(identifier: String): BakingBrModel? = models[identifier]
+	fun get(identifier: String): BakingBrModel? = models[identifier] ?: models["geometry.${identifier}"]
 
 	fun getAllModelIds(): Set<String> = models.keys
 
@@ -48,7 +48,7 @@ class BedrockModelRegistry(
 					result[model.identifier] = model
 				}
 			} catch (e: Exception) {
-				RcfConstants.LOGGER.error("[MODEL/{}] Failed to load: {} - {}", side, entry.key, e.message)
+				RcfUtil.LOGGER.error("[MODEL/{}] Failed to load: {}", side, entry.key, e)
 			}
 		}
 		return result
@@ -57,7 +57,7 @@ class BedrockModelRegistry(
 	override fun apply(loaded: Map<String, BakingBrModel>, manager: ResourceManager, profiler: ProfilerFiller) {
 		models.clear()
 		models.putAll(loaded)
-		RcfConstants.LOGGER.info(
+		RcfUtil.LOGGER.info(
 			"[MODEL/{}] Applied {} bedrock models: {}",
 			side,
 			loaded.size,

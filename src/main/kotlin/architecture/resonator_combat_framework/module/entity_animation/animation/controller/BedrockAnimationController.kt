@@ -1,6 +1,5 @@
 package architecture.resonator_combat_framework.module.entity_animation.animation.controller
 
-import architecture.resonator_combat_framework.core.RcfConstants
 import architecture.resonator_combat_framework.module.entity_animation.animation.*
 import architecture.resonator_combat_framework.module.entity_animation.animation.controller.IEntityAnimationController.State
 import architecture.resonator_combat_framework.module.entity_animation.animation.data.*
@@ -13,6 +12,7 @@ import architecture.resonator_combat_framework.module.entity_animation.animation
 import architecture.resonator_combat_framework.module.entity_animation.event.AnimationControllerEvent
 import architecture.resonator_combat_framework.module.entity_animation.registry.BedrockAnimationRegistry
 import architecture.resonator_combat_framework.module.entity_animation.registry.ProxyBoneConfigDataRegistry
+import architecture.resonator_combat_framework.util.RcfUtil
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.Entity
 import net.neoforged.neoforge.common.NeoForge
@@ -122,8 +122,9 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 	// ---- 触发 ----
 
 	override fun trigger(config: AnimationPlayData) {
+		manager.clearEmittersFor(id)
 		if (!loadAnimation(config.animId)) {
-			RcfConstants.LOGGER.warn("[AnimDebug] Animation not found: " + config.animId)
+			RcfUtil.LOGGER.warn("[AnimDebug] Animation not found: " + config.animId)
 			return
 		}
 		speedMultiplier = config.resolveSpeedMultiplier()
@@ -155,6 +156,7 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 	// ---- 停止 ----
 
 	override fun stop(fadeOutTicks: Int) {
+		manager.clearEmittersFor(id)
 		if (state == State.IDLE || state == State.FADING_OUT) return
 		state = State.FADING_OUT
 		blendTarget = 0f
@@ -451,6 +453,7 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 	}
 
 	private fun forceClear() {
+		manager.clearEmittersFor(id)
 		state = State.IDLE
 		blendFactor = 0f
 		blendTarget = 0f

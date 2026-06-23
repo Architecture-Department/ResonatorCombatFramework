@@ -1,6 +1,6 @@
 package architecture.resonator_combat_framework.events.registry
 
-import architecture.resonator_combat_framework.core.RcfConstants
+import architecture.resonator_combat_framework.util.RcfUtil
 import net.neoforged.bus.api.SubscribeEvent
 import net.neoforged.fml.common.EventBusSubscriber
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent
@@ -8,7 +8,7 @@ import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent
 /**
  * 注册能力
  */
-@EventBusSubscriber(modid = RcfConstants.ID)
+@EventBusSubscriber(modid = RcfUtil.ID)
 object CapabilityRegistry {
 	@SubscribeEvent
 	fun registry(event: RegisterCapabilitiesEvent?) {

@@ -1,5 +1,6 @@
 package architecture.resonator_combat_framework.core
 
+import architecture.resonator_combat_framework.util.RcfUtil
 import net.minecraft.client.Minecraft
 import net.neoforged.api.distmarker.Dist
 import net.neoforged.bus.api.SubscribeEvent
@@ -11,8 +12,8 @@ import net.neoforged.neoforge.client.gui.IConfigScreenFactory
 import thedarkcolour.kotlinforforge.neoforge.forge.LOADING_CONTEXT
 import thedarkcolour.kotlinforforge.neoforge.forge.MOD_BUS
 
-@Mod(value = RcfConstants.ID, dist = [Dist.CLIENT])
-@EventBusSubscriber(modid = RcfConstants.ID, value = [Dist.CLIENT])
+@Mod(value = RcfUtil.ID, dist = [Dist.CLIENT])
+@EventBusSubscriber(modid = RcfUtil.ID, value = [Dist.CLIENT])
 object RcfClient {
 	init {
 		val modContainer = LOADING_CONTEXT.activeContainer
@@ -25,7 +26,7 @@ object RcfClient {
 
 	@SubscribeEvent
 	fun onClientSetup(event: FMLClientSetupEvent) {
-		RcfConstants.LOGGER.info("HELLO FROM CLIENT SETUP")
-		RcfConstants.LOGGER.info("MINECRAFT NAME >> {}", Minecraft.getInstance().user.name)
+		RcfUtil.LOGGER.info("HELLO FROM CLIENT SETUP")
+		RcfUtil.LOGGER.info("MINECRAFT NAME >> {}", Minecraft.getInstance().user.name)
 	}
 }

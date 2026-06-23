@@ -3,10 +3,10 @@
 	"minecraft:geometry": [
 		{
 			"description": {
-				"identifier": "resonator_combat_framework:player_proxy",
+				"identifier": "geometry.player.proxy",
 				"texture_width": 64,
 				"texture_height": 64,
-				"visible_bounds_width": 3,
+				"visible_bounds_width": 4,
 				"visible_bounds_height": 3.5,
 				"visible_bounds_offset": [
 					0,
@@ -19,7 +19,7 @@
 					"name": "root",
 					"pivot": [
 						0,
-						12,
+						0,
 						0
 					]
 				},
@@ -180,7 +180,21 @@
 								50
 							]
 						}
-					]
+					],
+					"locators": {
+						"right_item": {
+							"offset": [
+								-6,
+								14,
+								-2
+							],
+							"rotation": [
+								0,
+								-52.5,
+								0
+							]
+						}
+					}
 				},
 				{
 					"name": "left_arm",
@@ -252,7 +266,14 @@
 							],
 							"mirror": true
 						}
-					]
+					],
+					"locators": {
+						"left_item": [
+							6,
+							14,
+							-2
+						]
+					}
 				},
 				{
 					"name": "right_leg",

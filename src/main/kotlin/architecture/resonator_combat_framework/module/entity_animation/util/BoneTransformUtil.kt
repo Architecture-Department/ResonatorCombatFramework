@@ -1,21 +1,21 @@
 package architecture.resonator_combat_framework.module.entity_animation.util
 
-import architecture.resonator_combat_framework.module.entity_animation.animation.data.ProxyBoneFlags
-import architecture.resonator_combat_framework.module.entity_animation.animation.data.isEnabled
-import architecture.resonator_combat_framework.module.entity_animation.animation.data.shouldTransition
+import architecture.goldenboughs_lib.util.toRadians
+import architecture.resonator_combat_framework.module.entity_animation.animation.data.*
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.ProxyBone
 import com.mojang.blaze3d.vertex.PoseStack
 import net.minecraft.client.model.geom.ModelPart
 import org.joml.Quaternionf
 import org.joml.Vector3f
-import java.lang.Math.toRadians
 
 object BoneTransformUtil {
 
-	fun computeForPoseStack(
-		bone: ProxyBone, flags: ProxyBoneFlags?, weight: Float, flipY: Boolean = false
+	fun computeFor(
+		bone: ProxyBone, flags: ProxyBoneFlags?,
+		flipPX: Boolean = false, flipPY: Boolean = false, flipPZ: Boolean = false,
+		flipRX: Boolean = false, flipRY: Boolean = false, flipRZ: Boolean = false,
+		except: Boolean = false,
 	): Transform {
-		val useWeight = if (flags.shouldTransition()) weight else 1f
 		val np = bone.hasPos()
 		val nr = bone.hasRot()
 		val ns = bone.hasScale()
@@ -23,114 +23,80 @@ object BoneTransformUtil {
 		val p = Vector3f()
 		val r = Vector3f()
 		val s = Vector3f(1f, 1f, 1f)
-		val signY = if (flipY) -1f else 1f
+		val signPX = if (flipPX) -1f else 1f
+		val signPY = if (flipPY) -1f else 1f
+		val signPZ = if (flipPZ) -1f else 1f
+		val signRX = if (flipRX) -1f else 1f
+		val signRY = if (flipRY) -1f else 1f
+		val signRZ = if (flipRZ) -1f else 1f
+		val except = if (except) 16f else 1f
 
 		if (flags.isEnabled("pos.x") && np) {
 			mask = Transform.addPosXMask(mask)
-			p.x = bone.pos.x / 16f * useWeight
+			p.x = bone.pos.x / except * signPX
 		}
 		if (flags.isEnabled("pos.y") && np) {
 			mask = Transform.addPosYMask(mask)
-			p.y = bone.pos.y * signY / 16f * useWeight
+			p.y = bone.pos.y / except * signPY
 		}
 		if (flags.isEnabled("pos.z") && np) {
 			mask = Transform.addPosZMask(mask)
-			p.z = bone.pos.z / 16f * useWeight
+			p.z = bone.pos.z / except * signPZ
 		}
 		if (flags.isEnabled("rot.x") && nr) {
 			mask = Transform.addRotXMask(mask)
-			r.x = toRadians(bone.rotation.x.toDouble()).toFloat() * useWeight
+			r.x = bone.rotation.x * signRX
 		}
 		if (flags.isEnabled("rot.y") && nr) {
 			mask = Transform.addRotYMask(mask)
-			r.y = toRadians(bone.rotation.y.toDouble()).toFloat() * useWeight
+			r.y = bone.rotation.y * signRY
 		}
 		if (flags.isEnabled("rot.z") && nr) {
 			mask = Transform.addRotZMask(mask)
-			r.z = toRadians(bone.rotation.z.toDouble()).toFloat() * useWeight
+			r.z = bone.rotation.z * signRZ
 		}
 		if (flags.isEnabled("scale.x") && ns) {
 			mask = Transform.addScaleXMask(mask)
-			s.x = 1f + (bone.scale.x - 1f) * useWeight
+			s.x = bone.scale.x - 1f
 		}
 		if (flags.isEnabled("scale.y") && ns) {
 			mask = Transform.addScaleYMask(mask)
-			s.y = 1f + (bone.scale.y - 1f) * useWeight
+			s.y = bone.scale.y - 1f
 		}
 		if (flags.isEnabled("scale.z") && ns) {
 			mask = Transform.addScaleZMask(mask)
-			s.z = 1f + (bone.scale.z - 1f) * useWeight
+			s.z = bone.scale.z - 1f
 		}
 
 		return Transform(mask, p, r, s)
 	}
 
-	fun computeForModelPart(bone: ProxyBone, flags: ProxyBoneFlags?, useWeight: Float): Transform {
-		val np = bone.hasPos()
-		val nr = bone.hasRot()
-		val ns = bone.hasScale()
-		var mask = 0
-		val p = Vector3f()
-		val r = Vector3f()
-		val s = Vector3f(1f, 1f, 1f)
-
-		if (flags.isEnabled("pos.x") && np) {
-			mask = Transform.addPosXMask(mask)
-			p.x = bone.pos.x
-		}
-		if (flags.isEnabled("pos.y") && np) {
-			mask = Transform.addPosYMask(mask)
-			p.y = -bone.pos.y
-		}
-		if (flags.isEnabled("pos.z") && np) {
-			mask = Transform.addPosZMask(mask)
-			p.z = bone.pos.z
-		}
-		if (flags.isEnabled("rot.x") && nr) {
-			mask = Transform.addRotXMask(mask)
-			r.x = toRadians(bone.rotation.x.toDouble()).toFloat()
-		}
-		if (flags.isEnabled("rot.y") && nr) {
-			mask = Transform.addRotYMask(mask)
-			r.y = toRadians(bone.rotation.y.toDouble()).toFloat()
-		}
-		if (flags.isEnabled("rot.z") && nr) {
-			mask = Transform.addRotZMask(mask)
-			r.z = toRadians(bone.rotation.z.toDouble()).toFloat()
-		}
-		if (flags.isEnabled("scale.x") && ns) {
-			mask = Transform.addScaleXMask(mask)
-			s.x = bone.scale.x
-		}
-		if (flags.isEnabled("scale.y") && ns) {
-			mask = Transform.addScaleYMask(mask)
-			s.y = bone.scale.y
-		}
-		if (flags.isEnabled("scale.z") && ns) {
-			mask = Transform.addScaleZMask(mask)
-			s.z = bone.scale.z
-		}
-
-		return Transform(mask, p, r, s)
-	}
-
-	fun applyTo(poseStack: PoseStack, t: Transform) {
-		if (t.hasAnyPos) poseStack.translate(t.pos.x, t.pos.y, t.pos.z)
+	fun applyTo(poseStack: PoseStack, t: Transform, flags: ProxyBoneFlags?, weight: Float) {
+		val useWeight = if (flags.shouldBlend()) weight else 1f
+		if (t.hasAnyPos) poseStack.translate(
+			t.pos.x * useWeight,
+			t.pos.y * useWeight,
+			t.pos.z * useWeight
+		)
 		if (t.hasAnyRot) poseStack.mulPose(
 			Quaternionf().rotationZYX(
-				t.rot.z,
-				t.rot.y,
-				t.rot.x
+				t.rot.z.toRadians() * useWeight,
+				t.rot.y.toRadians() * useWeight,
+				t.rot.x.toRadians() * useWeight
 			)
 		)
 		if (t.hasAnyScale) poseStack.scale(
-			if (t.hasScaleX) t.scale.x else 1f,
-			if (t.hasScaleY) t.scale.y else 1f,
-			if (t.hasScaleZ) t.scale.z else 1f
+			1 + t.scale.x * useWeight,
+			1 + t.scale.y * useWeight,
+			1 + t.scale.z * useWeight
 		)
 	}
 
-	fun applyTo(part: ModelPart, t: Transform, lockPos: Boolean, lockRot: Boolean, lockScale: Boolean, useWeight: Float) {
+	fun applyTo(part: ModelPart, t: Transform, flags: ProxyBoneFlags?, weight: Float) {
+		val useWeight = if (flags.shouldBlend()) weight else 1f
+		val lockPos = flags.lockPos()
+		val lockRot = flags.lockRotation()
+		val lockScale = flags.lockScale()
 		val ip = part.initialPose
 		if (lockPos) {
 			if (t.hasPosX) part.x += (ip.x + t.pos.x - part.x) * useWeight
@@ -142,18 +108,18 @@ object BoneTransformUtil {
 			if (t.hasPosZ) part.z += t.pos.z * useWeight
 		}
 		if (lockRot) {
-			if (t.hasRotX) part.xRot += (ip.xRot + t.rot.x - part.xRot) * useWeight
-			if (t.hasRotY) part.yRot += (ip.yRot + t.rot.y - part.yRot) * useWeight
-			if (t.hasRotZ) part.zRot += (ip.zRot + t.rot.z - part.zRot) * useWeight
+			if (t.hasRotX) part.xRot += (ip.xRot + t.rot.x.toRadians() - part.xRot) * useWeight
+			if (t.hasRotY) part.yRot += (ip.yRot + t.rot.y.toRadians() - part.yRot) * useWeight
+			if (t.hasRotZ) part.zRot += (ip.zRot + t.rot.z.toRadians() - part.zRot) * useWeight
 		} else {
-			if (t.hasRotX) part.xRot += t.rot.x * useWeight
-			if (t.hasRotY) part.yRot += t.rot.y * useWeight
-			if (t.hasRotZ) part.zRot += t.rot.z * useWeight
+			if (t.hasRotX) part.xRot += t.rot.x.toRadians() * useWeight
+			if (t.hasRotY) part.yRot += t.rot.y.toRadians() * useWeight
+			if (t.hasRotZ) part.zRot += t.rot.z.toRadians() * useWeight
 		}
 		if (lockScale) {
-			if (t.hasScaleX) part.xScale += (1f + (t.scale.x - 1f) - part.xScale) * useWeight
-			if (t.hasScaleY) part.yScale += (1f + (t.scale.y - 1f) - part.yScale) * useWeight
-			if (t.hasScaleZ) part.zScale += (1f + (t.scale.z - 1f) - part.zScale) * useWeight
+			if (t.hasScaleX) part.xScale += (1f + t.scale.x - part.xScale) * useWeight
+			if (t.hasScaleY) part.yScale += (1f + t.scale.y - part.yScale) * useWeight
+			if (t.hasScaleZ) part.zScale += (1f + t.scale.z - part.zScale) * useWeight
 		} else {
 			if (t.hasScaleX) part.xScale += t.scale.x * useWeight
 			if (t.hasScaleY) part.yScale += t.scale.y * useWeight

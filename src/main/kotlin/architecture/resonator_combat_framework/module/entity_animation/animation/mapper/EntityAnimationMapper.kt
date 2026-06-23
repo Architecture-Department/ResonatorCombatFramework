@@ -1,6 +1,5 @@
 package architecture.resonator_combat_framework.module.entity_animation.animation.mapper
 
-import architecture.resonator_combat_framework.core.RcfConstants
 import architecture.resonator_combat_framework.events.registry.AnimationControllers
 import architecture.resonator_combat_framework.module.entity_animation.animation.controller.BedrockAnimationController
 import architecture.resonator_combat_framework.module.entity_animation.animation.controller.IEntityAnimationController
@@ -11,6 +10,7 @@ import architecture.resonator_combat_framework.module.entity_animation.animation
 import architecture.resonator_combat_framework.module.entity_animation.registry.BedrockAnimationRegistry
 import architecture.resonator_combat_framework.module.entity_animation.registry.ProxyBoneConfigDataRegistry
 import architecture.resonator_combat_framework.module.entity_animation.util.BoneTransformUtil
+import architecture.resonator_combat_framework.util.RcfUtil
 import com.mojang.blaze3d.vertex.PoseStack
 import net.minecraft.client.model.EntityModel
 import net.minecraft.resources.ResourceLocation
@@ -40,7 +40,7 @@ constructor(
 	/** 触发动画：解析控制器 → 设置骨骼配置 → 触发控制器 */
 	override fun trigger(playData: AnimationPlayData) {
 		if (animationLoader.get(playData.animId) == null) {
-			RcfConstants.LOGGER.warn("[AnimDebug] Animation not found: " + playData.animId)
+			RcfUtil.LOGGER.warn("[AnimDebug] Animation not found: " + playData.animId)
 			return
 		}
 		val controller = animationControllerManager.get(playData.controllerName) ?: mainController
@@ -128,7 +128,9 @@ constructor(
 	// ---- 游戏刻推进 ----
 
 	/** 游戏刻推进 */
-	override fun tickAnimations() = animationControllerManager.tickAnimations()
+	override fun tickAnimations() = tickAnimations(1.0f)
+
+	override fun tickAnimations(partialTick: Float) = animationControllerManager.tickAnimations(partialTick)
 
 	// ---- 配置 ----
 
@@ -155,6 +157,8 @@ constructor(
 			ctrl.tickRender(deltaSec)
 		}
 		animationControllerManager.remerge()
+		// 更新 ParticleStorm 发射器的骨骼追踪
+		animationControllerManager.updateEmitterTransforms(partialTick)
 		val renderable = animationControllerManager.getRenderable()
 		if (renderable.isEmpty()) return
 		val interpolatedProxyModel = animationControllerManager.getInterpolatedProxy(partialTick)
@@ -170,7 +174,8 @@ constructor(
 	) {
 		if (!isClient) return
 		val bone = proxyModel.getBone("root") ?: return
-		val t = BoneTransformUtil.computeForPoseStack(bone, flags["root"], 1f, flipY = true)
-		BoneTransformUtil.applyTo(poseStack, t)
+		val boneFlags = flags["root"]
+		val t = BoneTransformUtil.computeFor(bone, boneFlags, flipPY = true, except = true)
+		BoneTransformUtil.applyTo(poseStack, t, boneFlags, 1f)
 	}
 }

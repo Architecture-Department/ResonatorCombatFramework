@@ -1,8 +1,8 @@
 package architecture.resonator_combat_framework.module.entity_animation.registry
 
-import architecture.resonator_combat_framework.core.RcfConstants
 import architecture.resonator_combat_framework.module.entity_animation.animation.BakingBrAnimation
 import architecture.resonator_combat_framework.module.entity_animation.animation.molang.MolangValue
+import architecture.resonator_combat_framework.util.RcfUtil
 import com.google.gson.JsonParser
 import net.minecraft.server.packs.resources.ResourceManager
 import net.minecraft.server.packs.resources.SimplePreparableReloadListener
@@ -46,22 +46,22 @@ class BedrockAnimationRegistry(
 				val json = JsonParser.parseReader(entry.value.openAsReader()).asJsonObject
 				result.putAll(BakingBrAnimation.parses(json, side, exprCache))
 			} catch (e: Exception) {
-				RcfConstants.LOGGER.error("[ANIMATION/{}] Failed to load: {} - {}", side, entry.key, e.message)
+				RcfUtil.LOGGER.error("[ANIMATION/{}] Failed to load: {}", side, entry.key, e)
 			}
 			val loaded = result.size - before
 			if (loaded > 0) {
 				totalFiles += 1; totalAnims += loaded
-				RcfConstants.LOGGER.info("[ANIMATION/{}] Loaded {} animations from {}", side, loaded, entry.key)
+				RcfUtil.LOGGER.info("[ANIMATION/{}] Loaded {} animations from {}", side, loaded, entry.key)
 			}
 		}
-		RcfConstants.LOGGER.info("[ANIMATION/{}] Prepare complete: {} files, {} animations", side, totalFiles, totalAnims)
+		RcfUtil.LOGGER.info("[ANIMATION/{}] Prepare complete: {} files, {} animations", side, totalFiles, totalAnims)
 		return result
 	}
 
 	override fun apply(loaded: Map<String, BakingBrAnimation>, manager: ResourceManager, profiler: ProfilerFiller) {
 		animations.clear()
 		animations.putAll(loaded)
-		RcfConstants.LOGGER.info(
+		RcfUtil.LOGGER.info(
 			"[ANIMATION/{}] Applied {} bedrock animations: {}",
 			side,
 			loaded.size,

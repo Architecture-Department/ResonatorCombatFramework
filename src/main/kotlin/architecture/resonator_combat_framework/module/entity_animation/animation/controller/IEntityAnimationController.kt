@@ -9,8 +9,8 @@ import architecture.resonator_combat_framework.module.entity_animation.animation
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.Entity
 
-@AllOpe
 /** 动画控制器接口 */
+@AllOpe
 interface IEntityAnimationController<T : Entity> {
 	/** 控制器状态机 */
 	enum class State {

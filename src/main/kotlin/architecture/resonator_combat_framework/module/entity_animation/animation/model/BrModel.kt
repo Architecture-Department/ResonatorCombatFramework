@@ -1,104 +1,108 @@
 package architecture.resonator_combat_framework.module.entity_animation.animation.model
 
-import org.joml.Matrix4f
+import architecture.goldenboughs_lib.util.PoseStack
+import architecture.goldenboughs_lib.util.toRadians
+import com.mojang.math.Axis
 import org.joml.Vector3f
+import org.joml.Vector3fc
 
+// TODO对应不同体型的玩家取不同的位置
 data class BrModel
 @JvmOverloads
 constructor(
 	val bones: MutableMap<String, BrBone> = mutableMapOf(),
 	val locators: MutableMap<String, BrLocator> = mutableMapOf()
 ) {
+
 	/**
-	 * 对父骨骼链应用变换矩阵（直接使用骨骼引用，无需Map查找）
+	 * 用 PoseStack 计算定位器的变换矩阵（模型空间）。
 	 */
-	private fun applyParentChainTransform(chain: List<Pair<BrBone, ProxyBone?>>, matrix: Matrix4f) {
-		for ((bone, proxyBone) in chain) {
-			matrix.translate(bone.pivot)
-			matrix.rotateXYZ(bone.rotation)
-			if (proxyBone != null) {
-				matrix.translate(proxyBone.pos)
-				matrix.rotateXYZ(proxyBone.rotation)
-				matrix.scale(proxyBone.scale)
-			}
-		}
+	fun computeLocatorGlobalMatrix(
+		name: String?,
+		animationData: ProxyModel,
+		poseStack: PoseStack = PoseStack(),
+		isWorld: Boolean = false
+	): PoseStack {
+		name ?: return poseStack
+		val locator = locators[name] ?: return poseStack
+		val bone = bones[locator.boneName] ?: return poseStack
+
+		computeBoneGlobalMatrix(bone.name, animationData, poseStack, isWorld)
+
+		val scale = if (isWorld) 16 else 1
+		poseStack.translate(
+			(locator.offset.x() - bone.pivot.x()) / scale,
+			(locator.offset.y() - bone.pivot.y()) / scale,
+			-(locator.offset.z() - bone.pivot.z()) / scale
+		)
+		poseStack.mulPose(Axis.ZP.rotation(locator.rotation.z().toRadians()))
+		poseStack.mulPose(Axis.YP.rotation(locator.rotation.y().toRadians()))
+		poseStack.mulPose(Axis.XP.rotation(locator.rotation.x().toRadians()))
+//		poseStack.translate(-locator.offset.x() , -locator.offset.y() , -locator.offset.z() )
+
+		return poseStack
 	}
 
 	/**
-	 * 构建从指定骨骼到根节点的父骨骼链（存储骨骼对象引用，避免重复Map查找）
+	 * 用 PoseStack 计算骨骼的层次变换矩阵（模型空间）。
 	 */
-	private fun buildParentChain(startBone: BrBone, animationData: ProxyModel): List<Pair<BrBone, ProxyBone?>> {
-		val chain = mutableListOf<Pair<BrBone, ProxyBone?>>()
-		var currentBone: BrBone? = startBone
+	fun computeBoneGlobalMatrix(
+		name: String?,
+		animationData: ProxyModel,
+		poseStack: PoseStack = PoseStack(),
+		isWorld: Boolean = false
+	): PoseStack {
+		name ?: return poseStack
+		if (!bones.containsKey(name)) return poseStack
+
+		val scale = if (isWorld) 16 else 1
+		buildChainOnPoseStack(poseStack, name, animationData, scale)
+
+		return poseStack
+	}
+
+	/**
+	 * 在 PoseStack 上构建从根到指定骨骼的完整变换链。
+	 * 使用相对父骨骼偏移定位，旋转通过 Axis 应用。
+	 */
+	private fun buildChainOnPoseStack(
+		poseStack: PoseStack,
+		startName: String,
+		animationData: ProxyModel,
+		scale: Int
+	) {
+		val result = mutableListOf<Pair<BrBone, ProxyBone?>>()
+		var currentName: String? = startName
 		while (true) {
-			val parentName = currentBone?.parent ?: break
-			val parentBone = bones[parentName] ?: break
-			val parentProxy = animationData.bones[parentName]
-			chain.add(parentBone to parentProxy)
-			currentBone = parentBone
+			val bone = bones[currentName] ?: break
+			val proxy = animationData.bones[currentName]
+			result.add(bone to proxy)
+			currentName = bone.parent
 		}
-		return chain.reversed()
-	}
+		val chain = result.reversed()
 
-	/**
-	 * 计算定位器的全局变换矩阵
-	 */
-	fun computeLocatorGlobalMatrix(name: String?, animationData: ProxyModel): Matrix4f {
-		val matrix = Matrix4f()
-		name ?: return matrix
-		val locator = locators[name] ?: return matrix
-		val bone = bones[locator.boneName] ?: return matrix
-		val proxyBone = animationData.bones[locator.boneName]
+		val prevPivot = Vector3f()
+		for ((bone, proxyBone) in chain) {
+			poseStack.translate(
+				(bone.pivot.x() - prevPivot.x()) / scale,
+				(bone.pivot.y() - prevPivot.y()) / scale,
+				-(bone.pivot.z() - prevPivot.z()) / scale
+			)
+			if (proxyBone != null) poseStack.translate(
+				proxyBone.pos.x / scale,
+				proxyBone.pos.y / scale,
+				-proxyBone.pos.z / scale
+			)
+			poseStack.mulPose(Axis.ZP.rotation(bone.rotation.z().toRadians()))
+			if (proxyBone != null) poseStack.mulPose(Axis.ZP.rotation(-proxyBone.rotation.z.toRadians()))
+			poseStack.mulPose(Axis.YP.rotation(bone.rotation.y().toRadians()))
+			if (proxyBone != null) poseStack.mulPose(Axis.YP.rotation(-proxyBone.rotation.y.toRadians()))
+			poseStack.mulPose(Axis.XP.rotation(bone.rotation.x().toRadians()))
+			if (proxyBone != null) poseStack.mulPose(Axis.XP.rotation(proxyBone.rotation.x.toRadians()))
+			if (proxyBone != null) poseStack.scale(proxyBone.scale.x, proxyBone.scale.y, proxyBone.scale.z)
 
-		// 构建并应用父骨骼链变换
-		val parentChain = buildParentChain(bone, animationData)
-		applyParentChainTransform(parentChain, matrix)
-
-		// 应用当前骨骼变换
-		matrix.translate(bone.pivot)
-		matrix.rotateXYZ(bone.rotation)
-
-		// 应用代理骨骼变换
-		if (proxyBone != null) {
-			matrix.translate(proxyBone.pos)
-			matrix.rotateXYZ(proxyBone.rotation)
+			prevPivot.set(bone.pivot)
 		}
-
-		// 应用定位器自身位置
-		matrix.translate(locator.position)
-
-		// 如果有代理骨骼，应用缩放（影响定位器位置）
-		if (proxyBone != null) {
-			matrix.scale(proxyBone.scale)
-		}
-
-		return matrix
-	}
-
-	/**
-	 * 计算骨骼的全局变换矩阵
-	 */
-	fun computeBoneGlobalMatrix(name: String?, proxyModel: ProxyModel): Matrix4f {
-		val matrix = Matrix4f()
-		name ?: return matrix
-		val bone = bones[name] ?: return matrix
-		val proxyBone = proxyModel.bones[name]
-
-		// 构建并应用父骨骼链变换
-		val parentChain = buildParentChain(bone, proxyModel)
-		applyParentChainTransform(parentChain, matrix)
-
-		// 应用当前骨骼变换
-		matrix.translate(bone.pivot)
-		matrix.rotateXYZ(bone.rotation)
-
-		// 应用代理骨骼变换
-		if (proxyBone != null) {
-			matrix.translate(proxyBone.pos)
-			matrix.rotateXYZ(proxyBone.rotation)
-			matrix.scale(proxyBone.scale)
-		}
-		return matrix
 	}
 
 	fun clear() {
@@ -164,10 +168,10 @@ constructor(
 data class BrBone
 @JvmOverloads
 constructor(
-	var name: String,
-	var parent: String? = null,
-	val pivot: Vector3f = Vector3f(0f, 0f, 0f),
-	val rotation: Vector3f = Vector3f(0f, 0f, 0f),
+	val name: String,
+	val parent: String? = null,
+	val pivot: Vector3fc = Vector3f(0f, 0f, 0f),
+	val rotation: Vector3fc = Vector3f(0f, 0f, 0f),
 	val cubes: MutableList<BrCube> = mutableListOf(),
 	val locators: MutableMap<String, BrLocator> = mutableMapOf()
 ) {
@@ -205,7 +209,7 @@ constructor(
 data class BrCube
 @JvmOverloads
 constructor(
-	var inflate: Float = 0f,
+	val inflate: Float = 0f,
 	val origin: Vector3f = Vector3f(),
 	val size: Vector3f = Vector3f(),
 	val rotation: Vector3f = Vector3f()
@@ -226,9 +230,10 @@ constructor(
 data class BrLocator
 @JvmOverloads
 constructor(
-	var name: String,
+	val name: String,
 	val boneName: String,
-	val position: Vector3f = Vector3f()
+	val offset: Vector3fc = Vector3f(),
+	val rotation: Vector3fc = Vector3f()
 ) {
 	companion object {
 		@JvmStatic
@@ -236,7 +241,8 @@ constructor(
 			return BrLocator(
 				locator.name,
 				locator.boneName,
-				Vector3f(locator.position)
+				Vector3f(locator.offset),
+				Vector3f(locator.rotation)
 			)
 		}
 	}

@@ -2,7 +2,7 @@ package architecture.resonator_combat_framework.datagen.i18n
 
 import architecture.goldenboughs_lib.datagen.i18n.DatagenI18n
 import architecture.resonator_combat_framework.config.RcfConfig
-import architecture.resonator_combat_framework.core.RcfConstants
+import architecture.resonator_combat_framework.util.RcfUtil
 import net.minecraft.data.PackOutput
 import net.minecraft.sounds.SoundEvent
 import net.minecraft.world.effect.MobEffect
@@ -14,12 +14,12 @@ import org.jetbrains.annotations.ApiStatus
 import java.util.function.Supplier
 
 @ApiStatus.Internal
-class RcfZhCn(output: PackOutput) : DatagenI18n(output, RcfConstants.ID, "zh_cn") {
+class RcfZhCn(output: PackOutput) : DatagenI18n(output, RcfUtil.ID, "zh_cn") {
 	override fun addTranslations() {
-		addPackDescription(RcfConstants.ID, "金枝")
+		addPackDescription(RcfUtil.ID, "金枝")
 
-		add("${RcfConstants.ID}.command.play_anim", "已给%s播放%s动画")
-		add("${RcfConstants.ID}.command.stop_anim", "已停止%s的动画")
+		add("${RcfUtil.ID}.command.play_anim", "已给%s播放%s动画")
+		add("${RcfUtil.ID}.command.stop_anim", "已停止%s的动画")
 
 		add(RcfConfig.CLIENT.itemSwitchingAnimation, "物品切换动画")
 	}

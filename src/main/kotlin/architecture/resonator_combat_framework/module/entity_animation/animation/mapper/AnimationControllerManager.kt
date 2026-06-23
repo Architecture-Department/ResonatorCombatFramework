@@ -3,6 +3,7 @@ package architecture.resonator_combat_framework.module.entity_animation.animatio
 import architecture.goldenboughs_lib.api.AllOpe
 import architecture.resonator_combat_framework.events.registry.AnimationControllers
 import architecture.resonator_combat_framework.module.entity_animation.animation.AnimationEventsToFire
+import architecture.resonator_combat_framework.module.entity_animation.animation.ParticleStormAnimAdapter
 import architecture.resonator_combat_framework.module.entity_animation.animation.controller.BedrockAnimationController
 import architecture.resonator_combat_framework.module.entity_animation.animation.controller.IEntityAnimationController
 import architecture.resonator_combat_framework.module.entity_animation.animation.data.ProxyBoneFlags
@@ -10,9 +11,11 @@ import architecture.resonator_combat_framework.module.entity_animation.animation
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.BrModel
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.ProxyBone
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.ProxyModel
+import architecture.resonator_combat_framework.util.RcfUtil
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.Entity
 import org.joml.Vector3f
+import org.mesdag.particlestorm.particle.MolangParticleEngine
 
 /** 动画控制器管理器 */
 @AllOpe
@@ -43,6 +46,43 @@ class AnimationControllerManager<T : Entity>(val mapper: IEntityAnimationMapper<
 		}
 
 	var brModel: BrModel = BrModel()
+
+	/** 发射器追踪："controllerId:locatorName" → ParticleStorm 发射器 ID */
+	private val emitterTracker = mutableMapOf<String, Int>()
+
+	/** 注册发射器追踪 */
+	fun trackEmitter(controllerId: ResourceLocation, locatorName: String?, emitterId: Int) {
+		val key = "${controllerId}:${locatorName ?: "@entity"}"
+		emitterTracker[key] = emitterId
+	}
+
+	/** 清除指定控制器+定位器的发射器 */
+	fun clearEmitter(controllerId: ResourceLocation, locatorName: String?) {
+		if (!RcfUtil.PARTICLESTORM_LOADED) return
+		val key = "${controllerId}:${locatorName ?: "@entity"}"
+		val id = emitterTracker.remove(key) ?: return
+		MolangParticleEngine.INSTANCE.removeEmitter(id, false)
+	}
+
+	/** 清除指定控制器的所有发射器（动画切换/结束时调用） */
+	fun clearEmittersFor(controllerId: ResourceLocation) {
+		if (!RcfUtil.PARTICLESTORM_LOADED) return
+		val prefix = "${controllerId}:"
+		val toRemove = emitterTracker.filterKeys { it.startsWith(prefix) }.values.toList()
+		emitterTracker.keys.removeAll { it.startsWith(prefix) }
+		toRemove.forEach { MolangParticleEngine.INSTANCE.removeEmitter(it, false) }
+	}
+
+	/** 更新所有已追踪发射器的 parentSpace，实现骨骼跟随。每渲染帧调用 */
+	fun updateEmitterTransforms(partialTick: Float) {
+		if (!RcfUtil.PARTICLESTORM_LOADED) return
+		if (emitterTracker.isEmpty()) return
+		val animData = getInterpolatedProxy(partialTick)
+		for ((key, emitterId) in emitterTracker) {
+			val locatorName = key.substringAfter(":").let { if (it == "@entity") null else it }
+			ParticleStormAnimAdapter.updateEmitterTransform(emitterId, brModel, animData, locatorName)
+		}
+	}
 
 	/** 追加控制器到末尾 */
 	fun add(name: ResourceLocation, controller: IEntityAnimationController<T>) {
@@ -86,7 +126,7 @@ class AnimationControllerManager<T : Entity>(val mapper: IEntityAnimationMapper<
 	}
 
 	/** 推进所有控制器的动画时间并重新合并 */
-	fun tickAnimations() {
+	fun tickAnimations(partialTick: Float) {
 		// 保存当前帧快照供渲染插值（prev -> current）
 		prevMergedProxy.bones.clear()
 		for ((name, bone) in mergedProxy.bones) {
@@ -101,7 +141,7 @@ class AnimationControllerManager<T : Entity>(val mapper: IEntityAnimationMapper<
 			ctrl.tickAdvance()
 		}
 		remerge()
-		firePendingEvents()
+		firePendingEvents(partialTick)
 	}
 
 	fun remerge() {
@@ -291,19 +331,31 @@ class AnimationControllerManager<T : Entity>(val mapper: IEntityAnimationMapper<
 	}
 
 	/** 执行所有待触发的动画事件并清空队列 */
-	fun firePendingEvents() {
+	fun firePendingEvents(partialTick: Float) {
 		if (pendingEvents.isEmpty()) return
 		val entity = mapper.holder
 		val data = mapper.molangData
 
 		// 时间线事件：双端执行
 		for ((controller, events) in pendingEvents) {
-			events.timelines.forEach { it.run(entity, data) }
-			events.sounds.forEach {
-				it.runs(controller, entity, brModel, mergedProxy, data)
+			try {
+				events.timelines.forEach { it.run(entity, data) }
+			} catch (e: Exception) {
+				RcfUtil.LOGGER.error("[CONTROLLER] {} timeline effects failed: {}", controller.id, e.message)
 			}
-			events.particles.forEach {
-				it.runs(controller, entity, brModel, mergedProxy, data)
+			try {
+				events.sounds.forEach {
+					it.runs(controller, entity, brModel, mergedProxy, data, partialTick)
+				}
+			} catch (e: Exception) {
+				RcfUtil.LOGGER.error("[CONTROLLER] {} sound effects failed: {}", controller.id, e.message)
+			}
+			try {
+				events.particles.forEach {
+					it.runs(controller, entity, brModel, mergedProxy, data, partialTick)
+				}
+			} catch (e: Exception) {
+				RcfUtil.LOGGER.error("[CONTROLLER] {} particle effects failed: {}", controller.id, e.message)
 			}
 		}
 

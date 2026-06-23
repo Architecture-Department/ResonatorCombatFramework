@@ -2,11 +2,11 @@ package architecture.resonator_combat_framework.module.entity_animation.network
 
 import architecture.goldenboughs_lib.api.payload.ToServerAndClientPayload
 import architecture.goldenboughs_lib.util.LibUtil.OPTIONAL_RESOURCE_LOCATION_STREAM_CODEC
-import architecture.resonator_combat_framework.core.RcfConstants
 import architecture.resonator_combat_framework.events.registry.AnimationControllers
 import architecture.resonator_combat_framework.module.entity_animation.animation.data.AnimType
 import architecture.resonator_combat_framework.module.entity_animation.animation.data.AnimationPlayData
 import architecture.resonator_combat_framework.module.entity_animation.mixed.IAnimationProxyProvider.Companion.getAnimationTransformer
+import architecture.resonator_combat_framework.util.RcfUtil
 import io.netty.buffer.ByteBuf
 import net.minecraft.client.player.AbstractClientPlayer
 import net.minecraft.core.UUIDUtil
@@ -89,7 +89,7 @@ constructor(
 			)
 
 		@JvmField
-		val TYPE = CustomPacketPayload.Type<PlayPlayerPayload>(RcfConstants.modRl("play_player"))
+		val TYPE = CustomPacketPayload.Type<PlayPlayerPayload>(RcfUtil.modRl("play_player"))
 
 		@JvmField
 		val STREAM_CODEC: StreamCodec<ByteBuf, PlayPlayerPayload> = StreamCodec.of(

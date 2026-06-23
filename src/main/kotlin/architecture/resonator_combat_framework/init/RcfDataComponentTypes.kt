@@ -1,6 +1,6 @@
 package architecture.resonator_combat_framework.init
 
-import architecture.resonator_combat_framework.core.RcfConstants.modRegister
+import architecture.resonator_combat_framework.util.RcfUtil.modRegister
 import com.mojang.serialization.Codec
 import net.minecraft.core.component.DataComponentType
 import net.minecraft.core.registries.BuiltInRegistries

@@ -3,10 +3,9 @@ package architecture.resonator_combat_framework.module.entity_animation.animatio
 // 人形实体动画映射器
 
 import architecture.resonator_combat_framework.module.entity_animation.animation.data.ProxyBoneFlags
-import architecture.resonator_combat_framework.module.entity_animation.animation.data.lockPos
-import architecture.resonator_combat_framework.module.entity_animation.animation.data.lockRotation
-import architecture.resonator_combat_framework.module.entity_animation.animation.data.lockScale
+import architecture.resonator_combat_framework.module.entity_animation.animation.model.BakingBrModel
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.ProxyModel
+import architecture.resonator_combat_framework.module.entity_animation.registry.BedrockModelRegistry
 import architecture.resonator_combat_framework.module.entity_animation.util.BoneTransformUtil
 import com.mojang.blaze3d.vertex.PoseStack
 import com.mojang.math.Axis
@@ -18,6 +17,11 @@ import net.minecraft.world.entity.LivingEntity
 abstract class HumanoidEntityAnimationMapper<T : LivingEntity, M : HumanoidModel<T>>(
 	livingEntity: T
 ) : LivingEntityAnimationMapper<T, M>(livingEntity) {
+
+	init {
+		animationControllerManager.bakingBrModel =
+			BedrockModelRegistry.getInstance(isClient).get("player.proxy") ?: BakingBrModel.EMPTY
+	}
 
 	override fun applyProxyToModel(
 		proxyModel: ProxyModel, model: M, flags: Map<String, ProxyBoneFlags>
@@ -37,11 +41,8 @@ abstract class HumanoidEntityAnimationMapper<T : LivingEntity, M : HumanoidModel
 	) {
 		val bone = proxy.getBone(name) ?: return
 		val boneFlags = flags[name]
-		val t = BoneTransformUtil.computeForModelPart(bone, boneFlags, 1f)
-		val lockPos = boneFlags.lockPos()
-		val lockRot = boneFlags.lockRotation()
-		val lockScale = boneFlags.lockScale()
-		for (part in parts) BoneTransformUtil.applyTo(part, t, lockPos, lockRot, lockScale, 1f)
+		val t = BoneTransformUtil.computeFor(bone, boneFlags, flipPY = true, except = false)
+		for (part in parts) BoneTransformUtil.applyTo(part, t, boneFlags, 1f)
 	}
 
 	/** 将物品定位器骨骼（left_item/right_item）变换应用到 PoseStack */
@@ -53,9 +54,10 @@ abstract class HumanoidEntityAnimationMapper<T : LivingEntity, M : HumanoidModel
 	) {
 		val name = if (isLeft) "left_item" else "right_item"
 		val bone = proxyModel.getBone(name) ?: return
-		val t = BoneTransformUtil.computeForPoseStack(bone, flags[name], 1f)
+		val boneFlags = flags[name]
+		val t = BoneTransformUtil.computeFor(bone, boneFlags, except = true, flipPX = true, flipRY = true, flipRX = true)
 		poseStack.mulPose(Axis.XP.rotationDegrees(90.0f))
-		BoneTransformUtil.applyTo(poseStack, t)
+		BoneTransformUtil.applyTo(poseStack, t, boneFlags, 1f)
 		poseStack.mulPose(Axis.XP.rotationDegrees(-90.0f))
 	}
 

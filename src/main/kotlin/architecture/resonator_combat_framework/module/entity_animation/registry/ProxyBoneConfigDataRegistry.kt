@@ -1,7 +1,7 @@
 package architecture.resonator_combat_framework.module.entity_animation.registry
 
-import architecture.resonator_combat_framework.core.RcfConstants
 import architecture.resonator_combat_framework.module.entity_animation.animation.data.ProxyBoneConfigData
+import architecture.resonator_combat_framework.util.RcfUtil
 import com.google.gson.JsonParser
 import net.minecraft.server.packs.resources.ResourceManager
 import net.minecraft.server.packs.resources.SimplePreparableReloadListener
@@ -39,7 +39,7 @@ class ProxyBoneConfigDataRegistry(
 				val json = JsonParser.parseReader(entry.value.openAsReader()).asJsonObject
 				result[animId] = ProxyBoneConfigData.parse(json, isClient)
 			} catch (e: Exception) {
-				RcfConstants.LOGGER.error("[CONFIG/{}] Failed to load: {} - {}", side, entry.key, e.message)
+				RcfUtil.LOGGER.error("[CONFIG/{}] Failed to load: {}", side, entry.key, e)
 			}
 		}
 		return result
@@ -48,7 +48,7 @@ class ProxyBoneConfigDataRegistry(
 	override fun apply(loaded: Map<String, ProxyBoneConfigData>, manager: ResourceManager, profiler: ProfilerFiller) {
 		configs.clear()
 		configs.putAll(loaded)
-		RcfConstants.LOGGER.info(
+		RcfUtil.LOGGER.info(
 			"[CONFIG/{}] Applied {} bone configs: {}",
 			side,
 			loaded.size,

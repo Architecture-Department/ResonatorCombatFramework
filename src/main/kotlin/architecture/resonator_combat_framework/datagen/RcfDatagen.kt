@@ -1,8 +1,8 @@
 package architecture.resonator_combat_framework.datagen
 
 import architecture.goldenboughs_lib.util.datagen.buildClient
-import architecture.resonator_combat_framework.core.RcfConstants
 import architecture.resonator_combat_framework.datagen.i18n.RcfZhCn
+import architecture.resonator_combat_framework.util.RcfUtil
 import net.neoforged.bus.api.SubscribeEvent
 import net.neoforged.fml.common.EventBusSubscriber
 import net.neoforged.neoforge.data.event.GatherDataEvent
@@ -10,7 +10,7 @@ import net.neoforged.neoforge.data.event.GatherDataEvent
 /**
  * 数据生成主类
  */
-@EventBusSubscriber(modid = RcfConstants.ID)
+@EventBusSubscriber(modid = RcfUtil.ID)
 object RcfDatagen {
 	@SubscribeEvent
 	fun gatherData(event: GatherDataEvent) {

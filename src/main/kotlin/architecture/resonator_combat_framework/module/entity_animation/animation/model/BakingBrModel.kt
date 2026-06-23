@@ -1,5 +1,6 @@
 package architecture.resonator_combat_framework.module.entity_animation.animation.model
 
+import architecture.resonator_combat_framework.util.RcfUtil
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import org.joml.Vector3f
@@ -25,7 +26,12 @@ constructor(
 				val obj = element.asJsonObject
 				val desc = obj.getAsJsonObject("description")
 				val identifier = desc?.get("identifier")?.asString ?: "unknown"
-				val bones = obj.get("bones")?.run { BakingBrBone.parses(this) } ?: emptyMap()
+				val bones = try {
+					obj.get("bones")?.run { BakingBrBone.parses(this) } ?: emptyMap()
+				} catch (e: Exception) {
+					RcfUtil.LOGGER.warn("[MODEL] Failed to parse bones for identifier '{}': {}", identifier, e.message)
+					emptyMap()
+				}
 
 				// 解析几何级别定位器
 				val locators = mutableMapOf<String, BakingBrLocator>()
@@ -59,6 +65,7 @@ constructor(
 		fun parses(json: JsonElement): Map<String, BakingBrBone> {
 			val list = mutableMapOf<String, BakingBrBone>()
 			json.asJsonArray.forEach { jsonElement ->
+				try {
 				val obj = jsonElement.asJsonObject
 				val name = obj.get("name").asString
 				val parent = obj.get("parent")?.asString
@@ -75,6 +82,9 @@ constructor(
 					cubes,
 					locators
 				)
+				} catch (e: Exception) {
+					RcfUtil.LOGGER.warn("[MODEL] Failed to parse bone: {} - element: {}", e.message, jsonElement)
+				}
 			}
 			return list.toMap()
 		}
@@ -118,7 +128,8 @@ data class BakingBrLocator
 constructor(
 	val name: String,
 	val boneName: String,
-	val position: Vector3fc = Vector3f()
+	val offset: Vector3fc = Vector3f(),
+	val rotation: Vector3fc = Vector3f()
 ) {
 
 	companion object {
@@ -127,8 +138,23 @@ constructor(
 			val locators = mutableMapOf<String, BakingBrLocator>()
 			obj?.getAsJsonObject("locators")?.let { locObj ->
 				for ((locName, value) in locObj.entrySet()) {
-					val position = value.asJsonArray?.map { it.asFloat } ?: listOf(0f, 0f, 0f)
-					locators[locName] = BakingBrLocator(locName, boneName, position.run { Vector3f(this[0], this[1], this[2]) })
+					val offset: Vector3f
+					var rotation = Vector3f()
+					if (value.isJsonArray) {
+						offset = value.asJsonArray?.map { it.asFloat }
+							?.run { Vector3f(this[0], this[1], this[2]) }
+							?: listOf(0f, 0f, 0f).run { Vector3f(this[0], this[1], this[2]) }
+					} else {
+						val asJsonObject = value.asJsonObject
+						offset = asJsonObject.getAsJsonArray("offset")?.map { it.asFloat }
+							?.run { Vector3f(this[0], this[1], this[2]) }
+							?: listOf(0f, 0f, 0f).run { Vector3f(this[0], this[1], this[2]) }
+						rotation = asJsonObject.getAsJsonArray("position")?.map { it.asFloat }
+							?.run { Vector3f(this[0], this[1], this[2]) }
+							?: listOf(0f, 0f, 0f).run { Vector3f(this[0], this[1], this[2]) }
+					}
+
+					locators[locName] = BakingBrLocator(locName, boneName, offset, rotation)
 				}
 			}
 			return locators

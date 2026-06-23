@@ -1,27 +1,27 @@
 package architecture.resonator_combat_framework.events.registry
 
-import architecture.resonator_combat_framework.core.RcfConstants
-import architecture.resonator_combat_framework.module.entity_animation.animation.controller.ActionAnimationController
+import architecture.resonator_combat_framework.animation.controller.ActionAnimationController
 import architecture.resonator_combat_framework.module.entity_animation.event.AnimationControllerRegisterEvent
+import architecture.resonator_combat_framework.util.RcfUtil
 import net.minecraft.resources.ResourceLocation
 import net.neoforged.bus.api.SubscribeEvent
 import net.neoforged.fml.common.EventBusSubscriber
 
 object AnimationControllers {
 	@JvmField
-	val BACKGROUND_ACTION: ResourceLocation = RcfConstants.modRl("background_action")
+	val BACKGROUND_ACTION: ResourceLocation = RcfUtil.modRl("background_action")
 
 	@JvmField
-	val ACTION: ResourceLocation = RcfConstants.modRl("action")
+	val ACTION: ResourceLocation = RcfUtil.modRl("action")
 
 	@JvmField
-	val MAIN: ResourceLocation = RcfConstants.modRl("main")
+	val MAIN: ResourceLocation = RcfUtil.modRl("main")
 
 	@JvmField
-	val COMMAND: ResourceLocation = RcfConstants.modRl("command")
+	val COMMAND: ResourceLocation = RcfUtil.modRl("command")
 }
 
-@EventBusSubscriber(modid = RcfConstants.ID)
+@EventBusSubscriber(modid = RcfUtil.ID)
 object AnimationControllerRegistry {
 	@SubscribeEvent
 	fun registry(event: AnimationControllerRegisterEvent<*>) {
