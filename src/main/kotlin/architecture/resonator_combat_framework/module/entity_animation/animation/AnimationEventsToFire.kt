@@ -13,4 +13,9 @@ data class AnimationEventsToFire(
 ) {
 	/** 是否有任意事件待触发 */
 	val isEmpty: Boolean get() = sounds.isEmpty() && particles.isEmpty() && timelines.isEmpty()
+
+	companion object {
+		@JvmStatic
+		val EMPTY = AnimationEventsToFire()
+	}
 }

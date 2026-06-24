@@ -42,6 +42,10 @@ class EntityStateHolder<T : LivingEntity>(
 		@JvmField
 		val EATING_STATE = RcfUtil.modRl("eating")
 
+		/** 能否切换物品（由 ActionAnimation 控制） */
+		@JvmField
+		val CAN_SWITCH_ITEM = RcfUtil.modRl("can_switch_item")
+
 		/** 被骑乘中（它人骑在身上） */
 		@JvmField
 		val VEHICLE_STATE = RcfUtil.modRl("vehicle")

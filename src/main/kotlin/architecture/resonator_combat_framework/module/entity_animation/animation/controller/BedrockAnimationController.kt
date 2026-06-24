@@ -27,7 +27,6 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 	protected val isClient: Boolean,
 	override val isOverriding: Boolean = true
 ) : IEntityAnimationController<T> {
-
 	/** 动画数据加载器 */
 	protected val animationLoader = BedrockAnimationRegistry.getInstance(isClient)
 
@@ -38,18 +37,11 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 	val proxyModel = ProxyModel("base")
 
 	override var state = State.IDLE
-
-	/** 过渡开始时的骨骼快照，用于 crossfade 混合 */
 	override var transitionSource: ProxyModel? = null
-
 	override var currentConfig: AnimationPlayData = AnimationPlayData.EMPTY
-
 	override var resolvedBoneConfig: ProxyBoneConfigData? = null
-
 	override var activeBoneConfig: ProxyBoneConfigData = ProxyBoneConfigData.EMPTY
-
 	override var boneConfigs: ProxyBoneConfigData? = null
-
 	override var blendFactor = 0f
 	override var blendTarget = 0f
 	override var currentTransitionTicks = ProxyBoneConfigData.DEFAULT_TRANSITION_TICKS
@@ -68,6 +60,10 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 
 	/** 当前动画的额外（骨骼）模型定义 */
 	var extraModel: BakingBrModel? = null
+
+	/** 当前 ActionAnimation 的状态修改器 */
+	override val activeStateModifiers: Map<ResourceLocation, Boolean>
+		get() = (currentAnim as? ActionAnimation)?.stateModifiers ?: emptyMap()
 
 	/** 当前动画播放位置（秒） */
 	private var animTime = 0f
@@ -405,6 +401,21 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 		manager.queueEvents(this, anim.collectEvents(animTime, firedEvents, currentConfig.mirror))
 	}
 
+	fun StaticAnimation.tickAnimTime(
+		currentTime: Float,
+		deltaTime: Float,
+		context: MolangData? = null,
+		mirrored: Boolean = false
+	): Float {
+		val src = getBakingAnimation(mirrored)
+		val expr = src.animTimeUpdate
+		if (expr != null && context != null) {
+			context.updateAnimQueries(currentTime, deltaTime)
+			return expr.eval(context).toFloat()
+		}
+		return currentTime + deltaTime
+	}
+
 	/** 计算经过 delta 时间，处理首帧 */
 	private fun calcScaledDelta(gameTime: Float): Float {
 		if (lastRawGameTime < 0f) {
@@ -462,5 +473,4 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 	}
 
 	private fun isInFadeIn(): Boolean = isFadingIn
-
 }

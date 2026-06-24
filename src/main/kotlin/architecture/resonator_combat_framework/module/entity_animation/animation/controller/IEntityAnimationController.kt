@@ -80,6 +80,9 @@ interface IEntityAnimationController<T : Entity> {
 	/** 受影响的骨骼集合 */
 	var affectedBones: Set<String>
 
+	/** 当前活跃的 ActionAnimation 状态修改器 */
+	val activeStateModifiers: Map<ResourceLocation, Boolean>
+
 	// ===== 状态查询 =====
 
 	/** 控制器是否活跃（非 IDLE） */
@@ -108,11 +111,13 @@ interface IEntityAnimationController<T : Entity> {
 		speedMultiplier: Float = 1f,
 		fadeInTicks: Int = -1,
 		fadeOutTicks: Int = -1
-	) = trigger(animId, AnimationPlayData(
-		speedMultiplier = speedMultiplier,
-		fadeInTicks = fadeInTicks,
-		fadeOutTicks = fadeOutTicks
-	))
+	) = trigger(
+		animId, AnimationPlayData(
+			speedMultiplier = speedMultiplier,
+			fadeInTicks = fadeInTicks,
+			fadeOutTicks = fadeOutTicks
+		)
+	)
 
 	/** 使用已解析的 [StaticAnimation] 实例直接触发 */
 	fun triggerWithAnimation(anim: StaticAnimation, animId: String, config: AnimationPlayData)

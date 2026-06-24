@@ -75,6 +75,10 @@ interface IEntityAnimationMapper<T : Entity, M : EntityModel<T>> {
 	fun resumeAll()
 
 	/** 触发指定动画 */
+
+	/** 检查指定控制器是否有某种状态被 ActionAnimation 锁定 */
+	fun isStateLocked(state: ResourceLocation, controllerName: ResourceLocation = AnimationControllers.MAIN): Boolean
+		= (getController(controllerName)?.activeStateModifiers?.get(state) == false)
 	fun trigger(controllerName: ResourceLocation, animId: String, playData: AnimationPlayData)
 
 	fun trigger(animId: String, playData: AnimationPlayData) {

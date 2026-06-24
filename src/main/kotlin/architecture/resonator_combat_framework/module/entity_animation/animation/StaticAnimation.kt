@@ -20,6 +20,12 @@ class StaticAnimation(
 	val length: Float get() = bakingAnimation.length
 	val loopType: LoopType get() = bakingAnimation.loop
 
+	/** 自定义属性映射 */
+	private val properties = mutableMapOf<AnimationPropertyKey<*>, Any>()
+
+	/** 定时事件列表 */
+	private val timedEvents = mutableListOf<TimedEvent>()
+
 	constructor(id: ResourceLocation) :
 		this(id, id.namespace + "." + id.path)
 
@@ -47,21 +53,6 @@ class StaticAnimation(
 		mirrored: Boolean = false
 	): Set<String> {
 		return getBakingAnimation(mirrored).computeAndWrite(time, proxyModel, context)
-	}
-
-	fun tickAnimTime(
-		currentTime: Float,
-		deltaTime: Float,
-		context: MolangData? = null,
-		mirrored: Boolean = false
-	): Float {
-		val src = getBakingAnimation(mirrored)
-		val expr = src.animTimeUpdate
-		if (expr != null && context != null) {
-			context.updateAnimQueries(currentTime, deltaTime)
-			return expr.eval(context).toFloat()
-		}
-		return currentTime + deltaTime
 	}
 
 	fun collectEvents(
@@ -103,4 +94,27 @@ class StaticAnimation(
 			}
 		}
 	}
+
+	// ===== 链式属性配置 =====
+
+	/** 设置自定义属性并返回自身（链式调用）。 */
+	fun <T> addProperty(key: AnimationPropertyKey<T>, value: T): StaticAnimation {
+		properties[key] = value as Any
+		return this
+	}
+
+	/** 获取自定义属性值，未设置时返回 [AnimationPropertyKey.default]。 */
+	@Suppress("UNCHECKED_CAST")
+	fun <T> getProperty(key: AnimationPropertyKey<T>): T {
+		return (properties[key] as? T) ?: key.default
+	}
+
+	/** 添加定时事件并返回自身（链式调用）。 */
+	fun addEvent(event: TimedEvent): StaticAnimation {
+		timedEvents.add(event)
+		return this
+	}
+
+	/** 获取所有已注册的定时事件。 */
+	fun getTimedEvents(): List<TimedEvent> = timedEvents
 }

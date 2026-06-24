@@ -3,6 +3,7 @@ package architecture.resonator_combat_framework.animation
 import architecture.resonator_combat_framework.util.RcfUtil
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.LivingEntity
+import kotlin.math.max
 import kotlin.math.sqrt
 
 /**
@@ -25,7 +26,7 @@ class MovementAnimation(
 	 * 预期最大水平速度（方块/刻）。
 	 * 实体当前速度达到此值时 animSpeedRatio = 1.0。
 	 */
-	val expectedMaxSpeed: Float = 0.25f,
+	var expectedMaxSpeed: Float = 0.25f,
 ) : ActionAnimation(id, animationId, stateModifiers) {
 
 	constructor(
@@ -41,8 +42,8 @@ class MovementAnimation(
 	) : this(RcfUtil.modRl(animationId), animationId, stateModifiers, expectedMaxSpeed)
 
 	/**
-	 * 当前动画速度倍率（0 ~ 2.0）。
-	 * = 实体实际水平速度 / expectedMaxSpeed，再钳制到 [0, 2] 范围。
+	 * 当前动画速度倍率
+	 * = 实体实际水平速度 / expectedMaxSpeed，再钳制到 [0, ) 范围。
 	 * 控制器可读取此值来调整动画播放速度。
 	 */
 	@Volatile
@@ -55,7 +56,7 @@ class MovementAnimation(
 			entity.deltaMovement.x * entity.deltaMovement.x +
 				entity.deltaMovement.z * entity.deltaMovement.z
 		).toFloat()
-		animSpeedRatio = (hSpeed / expectedMaxSpeed).coerceIn(0f, 2f)
+		animSpeedRatio = max(hSpeed / expectedMaxSpeed, 0f)
 	}
 
 	override fun onEnd(entity: LivingEntity) {
