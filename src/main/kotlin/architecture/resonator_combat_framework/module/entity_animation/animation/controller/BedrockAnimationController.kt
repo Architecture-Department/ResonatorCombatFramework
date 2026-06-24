@@ -1,7 +1,8 @@
 package architecture.resonator_combat_framework.module.entity_animation.animation.controller
 
-import architecture.resonator_combat_framework.animation.Animation
-import architecture.resonator_combat_framework.animation.LoopType
+import architecture.resonator_combat_framework.animation.ActionAnimation
+import architecture.resonator_combat_framework.module.entity_animation.animation.LoopType
+import architecture.resonator_combat_framework.module.entity_animation.animation.StaticAnimation
 import architecture.resonator_combat_framework.module.entity_animation.animation.controller.IEntityAnimationController.State
 import architecture.resonator_combat_framework.module.entity_animation.animation.data.*
 import architecture.resonator_combat_framework.module.entity_animation.animation.mapper.AnimationControllerManager
@@ -16,6 +17,7 @@ import architecture.resonator_combat_framework.module.entity_animation.registry.
 import architecture.resonator_combat_framework.util.RcfUtil
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.Entity
+import net.minecraft.world.entity.LivingEntity
 import net.neoforged.neoforge.common.NeoForge
 
 /** 动画控制器——状态机 + crossfade 过渡 + 权重混合 + Bedrock 后端插值 */
@@ -59,7 +61,7 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 	protected var advanceTickCount = 0L
 
 	/** 当前加载的 Animation 单例 */
-	private var currentAnim: Animation? = null
+	private var currentAnim: StaticAnimation? = null
 
 	/** 已触发的事件索引集合，避免重复触发 */
 	private val firedEvents = mutableSetOf<String>()
@@ -100,17 +102,28 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 
 	// ===== 触发 =====
 
-	override fun trigger(config: AnimationPlayData) {
-		val anim = animationLoader.getAnimation(config.animId)
+	override fun trigger(animId: String, config: AnimationPlayData) {
+		val anim = animationLoader.getStaticAnimation(animId)
 		if (anim == null) {
-			RcfUtil.LOGGER.warn("[AnimDebug] Animation not found: " + config.animId)
+			RcfUtil.LOGGER.warn("[AnimDebug] Animation not found: $animId")
 			return
 		}
-		triggerWithAnimation(anim, config)
+		// 如果外部没有通过 resolvedBoneConfig 注入配置，则在此处加载
+		if (resolvedBoneConfig == null) {
+			resolvedBoneConfig = config.boneConfig ?: configLoader.getConfig(animId)
+		}
+		triggerWithAnimation(anim, animId, config)
 	}
 
-	/** 使用指定的 [Animation] 实例触发播放 */
-	override fun triggerWithAnimation(anim: Animation, config: AnimationPlayData) {
+	/** 使用指定的 [StaticAnimation] 实例触发播放 */
+	override fun triggerWithAnimation(anim: StaticAnimation, animId: String, config: AnimationPlayData) {
+		// 0. 通知旧动画结束
+		val oldActionAnim = currentAnim as? ActionAnimation
+		if (oldActionAnim != null) {
+			val livingEntity = manager.mapper.holder as? LivingEntity
+			if (livingEntity != null) oldActionAnim.onEnd(livingEntity)
+		}
+
 		// 1. 设置动画引用
 		currentAnim = anim
 
@@ -121,11 +134,11 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 
 		// 3. 解析配置
 		speedMultiplier = config.resolveSpeedMultiplier()
-		val finalConfig = resolvedBoneConfig ?: config.boneConfig ?: configLoader.getConfig(config.animId)
+		val finalConfig = resolvedBoneConfig ?: config.boneConfig ?: configLoader.getConfig(animId)
 		resolvedBoneConfig = null
 		activeBoneConfig = finalConfig
 		currentConfig = config
-		currentAnimId = config.animId
+		currentAnimId = animId
 
 		// 4. 设置过渡状态
 		snapshotTransitionSource()
@@ -143,6 +156,14 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 		if (transitionSource != null) crossfadeStep()
 
 		// 7. 收尾
+		// ActionAnimation 钩子
+		val newActionAnim = anim as? ActionAnimation
+		if (newActionAnim != null) {
+			val livingEntity = manager.mapper.holder as? LivingEntity
+			if (livingEntity != null) newActionAnim.onBegin(livingEntity)
+			newActionAnim.modifyPose(proxyModel, animTime)
+		}
+
 		extraModel = finalConfig.extraModel
 		manager.rebuildBones()
 	}
@@ -374,6 +395,13 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 		val scaledDelta = calcScaledDelta(gameTime)
 		animTime = anim.tickAnimTime(animTime, scaledDelta, currentData, currentConfig.mirror)
 		affectedBones = anim.computeAndWrite(animTime, proxyModel, data, currentConfig.mirror)
+
+		// ActionAnimation 每 tick 钩子
+		if (anim is ActionAnimation) {
+			if (entity is LivingEntity) anim.onTick(entity, animTime, scaledDelta)
+			anim.modifyPose(proxyModel, animTime)
+		}
+
 		manager.queueEvents(this, anim.collectEvents(animTime, firedEvents, currentConfig.mirror))
 	}
 
@@ -411,6 +439,13 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 
 	/** 强制清除并回到 IDLE 状态 */
 	private fun forceClear() {
+		// ActionAnimation 结束钩子
+		val actionAnim = currentAnim as? ActionAnimation
+		if (actionAnim != null) {
+			val livingEntity = manager.mapper.holder as? LivingEntity
+			if (livingEntity != null) actionAnim.onEnd(livingEntity)
+		}
+
 		manager.clearEmittersFor(id)
 		state = State.IDLE
 		blendFactor = 0f; blendTarget = 0f

@@ -1,23 +1,43 @@
-package architecture.resonator_combat_framework.animation
+package architecture.resonator_combat_framework.module.entity_animation.animation
 
 import architecture.goldenboughs_lib.api.AllOpe
-import architecture.resonator_combat_framework.module.entity_animation.animation.*
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.ProxyModel
 import architecture.resonator_combat_framework.module.entity_animation.animation.molang.MolangData
+import architecture.resonator_combat_framework.module.entity_animation.registry.BedrockAnimationRegistry
+import architecture.resonator_combat_framework.util.RcfUtil
+import net.minecraft.resources.ResourceLocation
 
 enum class LoopType { ONCE, LOOP, HOLD_ON_LAST }
 
 @AllOpe
-class Animation(val base: BakingBrAnimation) {
+class StaticAnimation(
+	val id: ResourceLocation,
+	val animationId: String,
+) {
+	private lateinit var bakingAnimation: BakingBrAnimation
+	private lateinit var mirroredBakingAnimation: BakingBrAnimation
 
-	/** 镜像数据缓存（懒创建） */
-	private var mirroredBase: BakingBrAnimation? = null
+	val length: Float get() = bakingAnimation.length
+	val loopType: LoopType get() = bakingAnimation.loop
+
+	constructor(id: ResourceLocation) :
+		this(id, id.namespace + "." + id.path)
+
+	constructor(animationId: String) :
+		this(RcfUtil.modRl(animationId), animationId)
+
+	fun init(isClient: Boolean) {
+		bakingAnimation =
+			BedrockAnimationRegistry.getInstance(isClient).getBakingAnimation(animationId) ?: BakingBrAnimation.EMPTY
+	}
 
 	/** 获取当前生效的 BakingBrAnimation */
-	private fun resolveBase(mirrored: Boolean): BakingBrAnimation {
-		if (!mirrored) return base
-		if (mirroredBase == null) mirroredBase = base.mirrored()
-		return mirroredBase!!
+	fun getBakingAnimation(mirrored: Boolean = false): BakingBrAnimation {
+		if (!mirrored) {
+			return bakingAnimation
+		}
+		if (!::mirroredBakingAnimation.isInitialized) mirroredBakingAnimation = bakingAnimation.mirrored()
+		return mirroredBakingAnimation
 	}
 
 	fun computeAndWrite(
@@ -26,12 +46,8 @@ class Animation(val base: BakingBrAnimation) {
 		context: MolangData? = null,
 		mirrored: Boolean = false
 	): Set<String> {
-		return resolveBase(mirrored).computeAndWrite(time, proxyModel, context)
+		return getBakingAnimation(mirrored).computeAndWrite(time, proxyModel, context)
 	}
-
-	val length: Float get() = base.length
-
-	val loopType: LoopType get() = base.loop
 
 	fun tickAnimTime(
 		currentTime: Float,
@@ -39,7 +55,7 @@ class Animation(val base: BakingBrAnimation) {
 		context: MolangData? = null,
 		mirrored: Boolean = false
 	): Float {
-		val src = resolveBase(mirrored)
+		val src = getBakingAnimation(mirrored)
 		val expr = src.animTimeUpdate
 		if (expr != null && context != null) {
 			context.updateAnimQueries(currentTime, deltaTime)
@@ -48,8 +64,12 @@ class Animation(val base: BakingBrAnimation) {
 		return currentTime + deltaTime
 	}
 
-	fun collectEvents(time: Float, alreadyFired: MutableSet<String>, mirrored: Boolean = false): AnimationEventsToFire {
-		val src = resolveBase(mirrored)
+	fun collectEvents(
+		time: Float,
+		alreadyFired: MutableSet<String>,
+		mirrored: Boolean = false
+	): AnimationEventsToFire {
+		val src = getBakingAnimation(mirrored)
 		val sounds = mutableListOf<BakingBrAnimationSound>()
 		val particles = mutableListOf<BakingBrAnimationParticle>()
 		val timelines = mutableListOf<BakingBrAnimationTimeline>()

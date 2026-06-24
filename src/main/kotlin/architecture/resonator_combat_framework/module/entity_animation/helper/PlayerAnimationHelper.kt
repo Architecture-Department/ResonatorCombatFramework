@@ -2,6 +2,7 @@ package architecture.resonator_combat_framework.module.entity_animation.helper
 
 import architecture.resonator_combat_framework.events.registry.AnimationControllers
 import architecture.resonator_combat_framework.module.entity_animation.animation.data.AnimationPlayData
+import architecture.resonator_combat_framework.module.entity_animation.helper.PlayerAnimationHelper.triggerPlayerAnima
 import architecture.resonator_combat_framework.module.entity_animation.mixed.IAnimationProxyProvider.Companion.getAnimationTransformer
 import architecture.resonator_combat_framework.module.entity_animation.network.PausePlayerPayload
 import architecture.resonator_combat_framework.module.entity_animation.network.PlayPlayerPayload
@@ -20,22 +21,27 @@ object PlayerAnimationHelper {
 	/** 完整数据类模式 */
 	@JvmStatic
 	@JvmOverloads
-	fun Player.triggerPlayerAnima(config: AnimationPlayData, isPayload: Boolean = true) {
+	fun Player.triggerPlayerAnima(
+		animId: String,
+		config: AnimationPlayData,
+		controllerName: ResourceLocation = AnimationControllers.MAIN,
+		isPayload: Boolean = true
+	) {
 		if (this is AbstractClientPlayer) {
-			getAnimationTransformer().trigger(config)
+			getAnimationTransformer().trigger(controllerName, animId, config)
 			return
 		}
 
 		if (this !is ServerPlayer) return
 
-		getAnimationTransformer().trigger(config)
+		getAnimationTransformer().trigger(controllerName, animId, config)
 
 		if (!isPayload) return
 
 		PacketDistributor.sendToPlayersTrackingEntityAndSelf(
 			this, PlayPlayerPayload(
-				playerUuid = uuid, controllerName = null,
-				animId = config.animId, animType = config.animType,
+				playerUuid = uuid, controllerName = controllerName,
+				animId = animId, animType = config.animType,
 				speedMultiplier = config.resolveSpeedMultiplier(),
 				startTime = config.startTime, endTime = config.endTime,
 				fadeInTicks = config.fadeInTicks, fadeOutTicks = config.fadeOutTicks
@@ -54,11 +60,12 @@ object PlayerAnimationHelper {
 		isPayload: Boolean = true
 	) {
 		triggerPlayerAnima(
-			AnimationPlayData.builder(animId)
-				.speed(speedMultiplier)
-				.fadeIn(fadeInTicks)
-				.fadeOut(fadeOutTicks)
-				.build(), isPayload
+			animId,
+			AnimationPlayData(
+				speedMultiplier = speedMultiplier,
+				fadeInTicks = fadeInTicks,
+				fadeOutTicks = fadeOutTicks
+			), isPayload = isPayload
 		)
 	}
 
@@ -72,10 +79,11 @@ object PlayerAnimationHelper {
 		isPayload: Boolean = true
 	) {
 		triggerPlayerAnima(
-			AnimationPlayData.builder(animId)
-				.fadeIn(transitionTicks)
-				.speed(speedMultiplier)
-				.build(), isPayload
+			animId,
+			AnimationPlayData(
+				fadeInTicks = transitionTicks,
+				speedMultiplier = speedMultiplier
+			), isPayload = isPayload
 		)
 	}
 

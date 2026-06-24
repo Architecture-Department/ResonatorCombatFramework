@@ -47,24 +47,20 @@ constructor(
 		val level = context.player().level()
 		val target = (level.getPlayerByUUID(playerUuid) as? AbstractClientPlayer) ?: return
 		val config = AnimationPlayData(
-			animId = animId,
-			controllerName = controllerName.orElse(AnimationControllers.MAIN)!!,
 			speedMultiplier = speedMultiplier,
 			fadeInTicks = fadeInTicks,
 			fadeOutTicks = fadeOutTicks
 		)
-		target.getAnimationTransformer().trigger(config)
+		target.getAnimationTransformer().trigger(controllerName.orElse(AnimationControllers.MAIN)!!, animId, config)
 	}
 
 	override fun toServer(context: IPayloadContext, player: ServerPlayer) {
 		val config = AnimationPlayData(
-			animId = animId,
-			controllerName = controllerName.orElse(AnimationControllers.MAIN)!!,
 			speedMultiplier = speedMultiplier,
 			fadeInTicks = fadeInTicks,
 			fadeOutTicks = fadeOutTicks
 		)
-		player.getAnimationTransformer().trigger(config)
+		player.getAnimationTransformer().trigger(controllerName.orElse(AnimationControllers.MAIN)!!, animId, config)
 		PacketDistributor.sendToPlayersTrackingEntityAndSelf(player, this)
 	}
 

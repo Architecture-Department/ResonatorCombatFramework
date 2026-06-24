@@ -35,13 +35,13 @@ interface IEntityAnimationMapper<T : Entity, M : EntityModel<T>> {
 	fun isActive(): Boolean
 
 	/** 获取指定控制器 */
-	fun getController(controllerName: ResourceLocation = AnimationControllers.MAIN): IEntityAnimationController<T>?
+	fun getController(controllerName: ResourceLocation): IEntityAnimationController<T>?
 
 	/** 获取所有控制器 */
 	fun controllers(): List<IEntityAnimationController<*>>
 
 	/** 是否有指定控制器 */
-	fun hasController(controllerName: ResourceLocation = AnimationControllers.MAIN): Boolean
+	fun hasController(controllerName: ResourceLocation): Boolean
 
 	/** 获取所有激活的控制器 */
 	fun getActiveControllersSorted(): List<IEntityAnimationController<T>>
@@ -53,7 +53,11 @@ interface IEntityAnimationMapper<T : Entity, M : EntityModel<T>> {
 	fun findBlockingControllers(controller: IEntityAnimationController<T>): List<IEntityAnimationController<T>>
 
 	/** 停止指定控制器 */
-	fun stop(controllerName: ResourceLocation = AnimationControllers.MAIN, fadeOutTicks: Int = -1)
+	fun stop(controllerName: ResourceLocation, fadeOutTicks: Int = -1)
+
+	fun stop(fadeOutTicks: Int = -1){
+		stop(AnimationControllers.MAIN, fadeOutTicks)
+	}
 
 	/** 停止所有控制器 */
 	fun stopAll(fadeOutTicks: Int = -1)
@@ -71,5 +75,9 @@ interface IEntityAnimationMapper<T : Entity, M : EntityModel<T>> {
 	fun resumeAll()
 
 	/** 触发指定动画 */
-	fun trigger(playData: AnimationPlayData)
+	fun trigger(controllerName: ResourceLocation, animId: String, playData: AnimationPlayData)
+
+	fun trigger(animId: String, playData: AnimationPlayData) {
+		trigger(AnimationControllers.MAIN, animId, playData)
+	}
 }

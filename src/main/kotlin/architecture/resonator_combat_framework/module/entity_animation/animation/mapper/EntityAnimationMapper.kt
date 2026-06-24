@@ -1,7 +1,6 @@
 package architecture.resonator_combat_framework.module.entity_animation.animation.mapper
 
 import architecture.resonator_combat_framework.events.registry.AnimationControllers
-import architecture.resonator_combat_framework.module.entity_animation.animation.controller.BedrockAnimationController
 import architecture.resonator_combat_framework.module.entity_animation.animation.controller.IEntityAnimationController
 import architecture.resonator_combat_framework.module.entity_animation.animation.data.AnimationPlayData
 import architecture.resonator_combat_framework.module.entity_animation.animation.data.ProxyBoneConfigData
@@ -10,7 +9,6 @@ import architecture.resonator_combat_framework.module.entity_animation.animation
 import architecture.resonator_combat_framework.module.entity_animation.registry.BedrockAnimationRegistry
 import architecture.resonator_combat_framework.module.entity_animation.registry.ProxyBoneConfigDataRegistry
 import architecture.resonator_combat_framework.module.entity_animation.util.BoneTransformUtil
-import architecture.resonator_combat_framework.util.RcfUtil
 import com.mojang.blaze3d.vertex.PoseStack
 import net.minecraft.client.model.EntityModel
 import net.minecraft.resources.ResourceLocation
@@ -38,17 +36,8 @@ constructor(
 	// ---- 触发 ----
 
 	/** 触发动画：解析控制器 → 设置骨骼配置 → 触发控制器 */
-	override fun trigger(playData: AnimationPlayData) {
-		if (animationLoader.getBakingAnimation(playData.animId) == null) {
-			RcfUtil.LOGGER.warn("[AnimDebug] Animation not found: " + playData.animId)
-			return
-		}
-		val controller = animationControllerManager.get(playData.controllerName) ?: mainController
-		val loaded = configLoader.getConfig(playData.animId)
-		val used = playData.boneConfig ?: loaded
-		val bac = controller as BedrockAnimationController
-		bac.resolvedBoneConfig = used
-		controller.trigger(playData)
+	override fun trigger(controllerName: ResourceLocation, animId: String, playData: AnimationPlayData) {
+		(animationControllerManager.get(controllerName) ?: mainController).trigger(animId, playData)
 	}
 
 	// ---- 停止 ----

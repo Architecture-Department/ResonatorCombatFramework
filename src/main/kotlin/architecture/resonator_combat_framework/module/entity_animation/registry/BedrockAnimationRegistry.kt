@@ -1,7 +1,7 @@
 package architecture.resonator_combat_framework.module.entity_animation.registry
 
-import architecture.resonator_combat_framework.animation.Animation
 import architecture.resonator_combat_framework.module.entity_animation.animation.BakingBrAnimation
+import architecture.resonator_combat_framework.module.entity_animation.animation.StaticAnimation
 import architecture.resonator_combat_framework.module.entity_animation.animation.molang.MolangValue
 import architecture.resonator_combat_framework.util.RcfUtil
 import com.google.gson.JsonParser
@@ -31,13 +31,13 @@ class BedrockAnimationRegistry(
 
 	private val bakingAnimations = mutableMapOf<String, BakingBrAnimation>()
 	private val exprCache = mutableMapOf<String, MolangValue>()
-	private val animation = mutableMapOf<String, Animation>()
+	private val staticAnimation = mutableMapOf<String, StaticAnimation>()
 
 	fun getBakingAnimation(animId: String): BakingBrAnimation? = bakingAnimations[animId]
-
-	fun getAnimation(animId: String): Animation? = animation[animId]
-
+	fun getStaticAnimation(animId: String): StaticAnimation? = staticAnimation[animId]
 	fun getAllAnimIds(): Set<String> = bakingAnimations.keys
+	fun getAllAnim(): Map<String, BakingBrAnimation> = bakingAnimations
+	fun getAllStaticAnim(): Map<String, StaticAnimation> = staticAnimation
 
 	override fun prepare(manager: ResourceManager, profiler: ProfilerFiller): Map<String, BakingBrAnimation> {
 		val result = mutableMapOf<String, BakingBrAnimation>()
@@ -64,9 +64,9 @@ class BedrockAnimationRegistry(
 	override fun apply(loaded: Map<String, BakingBrAnimation>, manager: ResourceManager, profiler: ProfilerFiller) {
 		bakingAnimations.clear()
 		bakingAnimations.putAll(loaded)
-		animation.clear()
+		staticAnimation.clear()
 		for (animId in bakingAnimations.keys) {
-			animation[animId] = Animation(bakingAnimations[animId]!!)
+			staticAnimation[animId] = StaticAnimation(RcfUtil.modRl(animId), animId)
 		}
 		RcfUtil.LOGGER.info(
 			"[ANIMATION/{}] Applied {} bedrock animations: {}",

@@ -27,99 +27,100 @@ import net.minecraft.world.entity.player.Player
  * ```
  */
 object TestAnimCommand {
-	fun register(dispatcher: CommandDispatcher<CommandSourceStack>) {
-		dispatcher.register(
-			Commands.literal("test_anim")
-				.requires { it.hasPermission(2) }
-				.then(
-					Commands.argument("target", EntityArgument.player())
-						.then(
-							Commands.literal("play")
-								.then(
-									Commands.argument("anim_id", StringArgumentType.word())
-										.suggests(AnimationIdArgumentProvider)
-										.executes { handlePlay(it) }
-										.then(
-											Commands.argument("speed", FloatArgumentType.floatArg(Float.MIN_VALUE))
-												.executes { handlePlay(it) }
-												.then(
-													Commands.argument("fade_in", IntegerArgumentType.integer(-1))
-														.executes { handlePlay(it) }
-														.then(
-															Commands.argument("fade_out", IntegerArgumentType.integer(-1))
-																.executes { handlePlay(it) }
-														)
-												)
-										)
-								)
-						)
-						.then(
-							Commands.literal("stop")
-								.executes { action(it) { stopAnima(AnimationControllers.COMMAND) } }
-								.then(
-									Commands.argument("fade_out", IntegerArgumentType.integer(-1))
-										.executes {
-											val target = getPlayer(it)
-											target.stopAnima(AnimationControllers.COMMAND)
-											it.source.sendSuccess({
-												Component.literal("Stopped animation on ${target.name.string}")
-											}, true)
-											1
-										}
-								)
-						)
-						.then(
-							Commands.literal("pause")
-								.executes { action(it) { pauseAnima(AnimationControllers.COMMAND) } }
-						)
-						.then(
-							Commands.literal("resume")
-								.executes { action(it) { resumeAnima(AnimationControllers.COMMAND) } }
-						)
-				)
-		)
-	}
+    fun register(dispatcher: CommandDispatcher<CommandSourceStack>) {
+        dispatcher.register(
+            Commands.literal("test_anim")
+                .requires { it.hasPermission(2) }
+                .then(
+                    Commands.argument("target", EntityArgument.player())
+                        .then(
+                            Commands.literal("play")
+                                .then(
+                                    Commands.argument("anim_id", StringArgumentType.word())
+                                        .suggests(AnimationIdArgumentProvider)
+                                        .executes { handlePlay(it) }
+                                        .then(
+                                            Commands.argument("speed", FloatArgumentType.floatArg(Float.MIN_VALUE))
+                                                .executes { handlePlay(it) }
+                                                .then(
+                                                    Commands.argument("fade_in", IntegerArgumentType.integer(-1))
+                                                        .executes { handlePlay(it) }
+                                                        .then(
+                                                            Commands.argument(
+                                                                "fade_out",
+                                                                IntegerArgumentType.integer(-1)
+                                                            )
+                                                                .executes { handlePlay(it) }
+                                                        )
+                                                )
+                                        )
+                                )
+                        )
+                        .then(
+                            Commands.literal("stop")
+                                .executes { action(it) { stopAnima(AnimationControllers.COMMAND) } }
+                                .then(
+                                    Commands.argument("fade_out", IntegerArgumentType.integer(-1))
+                                        .executes {
+                                            val target = getPlayer(it)
+                                            target.stopAnima(AnimationControllers.COMMAND)
+                                            it.source.sendSuccess({
+                                                Component.literal("Stopped animation on ${target.name.string}")
+                                            }, true)
+                                            1
+                                        }
+                                )
+                        )
+                        .then(
+                            Commands.literal("pause")
+                                .executes { action(it) { pauseAnima(AnimationControllers.COMMAND) } }
+                        )
+                        .then(
+                            Commands.literal("resume")
+                                .executes { action(it) { resumeAnima(AnimationControllers.COMMAND) } }
+                        )
+                )
+        )
+    }
 
-	private fun handlePlay(ctx: CommandContext<CommandSourceStack>): Int {
-		val arguments = ctx.getArguments() ?: return 0
+    private fun handlePlay(ctx: CommandContext<CommandSourceStack>): Int {
+        val arguments = ctx.getArguments() ?: return 0
 
-		val target = getPlayer(ctx)
-		val animId = StringArgumentType.getString(ctx, "anim_id")
-		val speed = if (arguments.contains("speed")) FloatArgumentType.getFloat(ctx, "speed") else 1f
-		val fadeIn = if (arguments.contains("fade_in")) IntegerArgumentType.getInteger(
-			ctx,
-			"fade_in"
-		) else -1
+        val target = getPlayer(ctx)
+        val animId = StringArgumentType.getString(ctx, "anim_id")
+        val speed = if (arguments.contains("speed")) FloatArgumentType.getFloat(ctx, "speed") else 1f
+        val fadeIn = if (arguments.contains("fade_in")) IntegerArgumentType.getInteger(
+            ctx,
+            "fade_in"
+        ) else -1
 
-		val fadeOut = if (arguments.contains("fade_out")) IntegerArgumentType.getInteger(
-			ctx,
-			"fade_out"
-		) else -1
+        val fadeOut = if (arguments.contains("fade_out")) IntegerArgumentType.getInteger(
+            ctx,
+            "fade_out"
+        ) else -1
 
-		val config = AnimationPlayData.builder(animId)
-			.controller(AnimationControllers.COMMAND)
-			.speed(speed)
-			.also {
-				if (fadeIn >= 0) it.fadeIn(fadeIn)
-				if (fadeOut >= 0) it.fadeOut(fadeOut)
-			}.build()
+        val config = AnimationPlayData(
+            speedMultiplier = speed,
+            fadeInTicks = fadeIn,
+            fadeOutTicks = fadeOut
+        )
 
 
-		target.triggerPlayerAnima(config)
-		ctx.source.sendSuccess({ Component.literal("Playing $animId on ${target.name.string}") }, true)
-		return 1
-	}
+        target.triggerPlayerAnima(animId, config)
+        ctx.source.sendSuccess({ Component.literal("Playing $animId on ${target.name.string}") }, true)
+        return 1
+    }
 
-	private fun getPlayer(ctx: CommandContext<CommandSourceStack>): Player {
-		return try {
-			EntityArgument.getPlayer(ctx, "target")
-		} catch (e: Exception) {
-			throw RuntimeException(e)
-		}
-	}
+    private fun getPlayer(ctx: CommandContext<CommandSourceStack>): Player {
+        return try {
+            EntityArgument.getPlayer(ctx, "target")
+        } catch (e: Exception) {
+            throw RuntimeException(e)
+        }
+    }
 
-	private fun action(ctx: CommandContext<CommandSourceStack>, fn: Player.() -> Unit): Int {
-		fn(getPlayer(ctx))
-		return 1
-	}
+    private fun action(ctx: CommandContext<CommandSourceStack>, fn: Player.() -> Unit): Int {
+        fn(getPlayer(ctx))
+        return 1
+    }
 }

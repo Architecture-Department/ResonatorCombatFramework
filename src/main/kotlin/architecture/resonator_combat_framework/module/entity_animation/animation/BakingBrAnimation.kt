@@ -1,7 +1,6 @@
 package architecture.resonator_combat_framework.module.entity_animation.animation
 
 import architecture.goldenboughs_lib.util.*
-import architecture.resonator_combat_framework.animation.LoopType
 import architecture.resonator_combat_framework.module.entity_animation.animation.controller.IEntityAnimationController
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.BrModel
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.ProxyBone
@@ -31,7 +30,6 @@ import org.joml.Vector2f
 import org.joml.Vector3f
 import kotlin.math.floor
 
-
 data class BakingBrAnimation
 @JvmOverloads constructor(
 	val animId: String,
@@ -48,6 +46,9 @@ data class BakingBrAnimation
 	val animTimeUpdate: MolangValue? = null
 ) {
 	companion object {
+		@JvmField
+		val EMPTY = BakingBrAnimation("empty", length = 0f)
+
 		/** 解析 JSON 根对象的 "animations" 段，每个条目注册为一个 BedrockAnimation */
 		@JvmStatic
 		fun parses(
