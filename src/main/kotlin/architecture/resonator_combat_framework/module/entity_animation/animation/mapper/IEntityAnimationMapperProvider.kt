@@ -13,7 +13,7 @@ import net.minecraft.world.entity.Entity
 
 /** 动画映射器接口，整合触发/控制/查询 */
 @AllOpe
-interface IEntityAnimationMapper<T : Entity, M : EntityModel<T>> {
+interface IEntityAnimationMapperProvider<T : Entity, M : EntityModel<T>> {
 	val holder: T
 	val isClient: Boolean
 	val animationControllerManager: AnimationControllerManager<T>
@@ -22,9 +22,7 @@ interface IEntityAnimationMapper<T : Entity, M : EntityModel<T>> {
 	val molangData: MolangData get() = MolangData.of(holder)
 	val mainController: IEntityAnimationController<T> get() = animationControllerManager.getMainController()
 
-	fun tickAnimations()
-
-	fun tickAnimations(partialTick: Float)
+	fun tickAnimationManager()
 
 	fun resolveConfig(animId: String): ProxyBoneConfigData
 

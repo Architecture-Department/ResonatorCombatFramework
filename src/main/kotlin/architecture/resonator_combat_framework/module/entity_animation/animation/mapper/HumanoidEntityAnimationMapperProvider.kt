@@ -14,9 +14,13 @@ import net.minecraft.client.model.geom.ModelPart
 import net.minecraft.world.entity.LivingEntity
 
 /** 人形实体动画映射器 — ProxyModel→HumanoidModel 转换, 处理 6 个人形骨骼 + 物品定位器 */
-abstract class HumanoidEntityAnimationMapper<T : LivingEntity, M : HumanoidModel<T>>(
-	livingEntity: T
-) : LivingEntityAnimationMapper<T, M>(livingEntity) {
+abstract class HumanoidEntityAnimationMapperProvider<T : LivingEntity, M : HumanoidModel<T>>
+@JvmOverloads
+constructor(
+	livingEntity: T,
+	isClient: Boolean = livingEntity.level().isClientSide,
+	animationControllerManager: AnimationControllerManager<T> = AnimationControllerManager(livingEntity)
+) : LivingEntityAnimationMapperProvider<T, M>(livingEntity, isClient, animationControllerManager) {
 
 	init {
 		animationControllerManager.bakingBrModel =

@@ -15,12 +15,13 @@ import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.Entity
 
 /** 实体动画映射器基类——管理控制器生命周期、触发/停止/暂停/恢复 */
-abstract class EntityAnimationMapper<T : Entity, M : EntityModel<T>>
+abstract class EntityAnimationMapperProvider<T : Entity, M : EntityModel<T>>
 @JvmOverloads
 constructor(
 	override val holder: T,
-	override val isClient: Boolean = holder.level().isClientSide
-) : IEntityAnimationMapper<T, M> {
+	override val isClient: Boolean = holder.level().isClientSide,
+	override val animationControllerManager: AnimationControllerManager<T> = AnimationControllerManager(holder)
+) : IEntityAnimationMapperProvider<T, M> {
 	/** 上一渲染帧的 tickSec，用于计算 deltaSec */
 	protected var lastRenderTick = 0f
 
@@ -31,7 +32,6 @@ constructor(
 
 	val animationLoader: BedrockAnimationRegistry = BedrockAnimationRegistry.getInstance(isClient)
 
-	override val animationControllerManager = AnimationControllerManager(this)
 
 	// ---- 触发 ----
 
@@ -117,9 +117,7 @@ constructor(
 	// ---- 游戏刻推进 ----
 
 	/** 游戏刻推进 */
-	override fun tickAnimations() = tickAnimations(1.0f)
-
-	override fun tickAnimations(partialTick: Float) = animationControllerManager.tickAnimations(partialTick)
+	override fun tickAnimationManager() = animationControllerManager.tick()
 
 	// ---- 配置 ----
 
@@ -127,12 +125,6 @@ constructor(
 	override fun resolveConfig(animId: String): ProxyBoneConfigData = configLoader.getConfig(animId)
 
 	// ---- 骨骼应用 ----
-
-	/** 将代理骨骼数据映射到体 model */
-	abstract fun applyProxyToModel(
-		proxyModel: ProxyModel, model: M,
-		flags: Map<String, ProxyBoneFlags>
-	)
 
 	/** 由 Mixin 每帧调用：更新过渡状态 → 重新合并 → 渲染到模型 */
 	override fun tickAndRender(model: M, partialTick: Float, poseStack: PoseStack) {
@@ -145,7 +137,6 @@ constructor(
 		for (ctrl in animationControllerManager.getAll()) {
 			ctrl.tickRender(deltaSec)
 		}
-		animationControllerManager.remerge()
 		// 更新 ParticleStorm 发射器的骨骼追踪
 		animationControllerManager.updateEmitterTransforms(partialTick)
 		val renderable = animationControllerManager.getRenderable()
@@ -155,6 +146,12 @@ constructor(
 
 		applyProxyToModel(interpolatedProxyModel, model, animationControllerManager.mergedFlags)
 	}
+
+	/** 将代理骨骼数据映射到体 model */
+	abstract fun applyProxyToModel(
+		proxyModel: ProxyModel, model: M,
+		flags: Map<String, ProxyBoneFlags>
+	)
 
 	/** 将 root 骨骼变换应用到 PoseStack */
 	fun applyRootTransform(
