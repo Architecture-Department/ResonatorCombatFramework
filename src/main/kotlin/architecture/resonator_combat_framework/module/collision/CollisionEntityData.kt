@@ -2,73 +2,83 @@ package architecture.resonator_combat_framework.module.collision
 
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.Entity
+import java.util.*
 
 /**
  * 实体碰撞数据（Attachment）。
  *
- * 通过 NeoForge Attachment 系统挂载到 [net.minecraft.world.entity.Entity] 上。
- * 外部系统可直接获取修改：
- * ```
- * val data = entity.getData(RcfAttachmentTypes.COLLISION_ENTITY)
- * data.addCollider(entry)
- * ```
+ * 碰撞体按 [CollisionEntry.groupId] 分组存储（LinkedHashMap），
+ * 命中记录按 groupId → 实体 UUID 集合存储。
  *
- * @property activeColliders 当前活跃的碰撞条目列表。
- * 每 tick 由 [CollisionSystem] 读取处理后，会清除过期条目。
- * @property hitRecords 命中记录。Long 编码：高 32 位 = colliderId.hashCode，低 32 位 = victimId。
- * 用于跨 tick 防重复命中。
+ * 碰撞体不自动过期，由外部（[AttackAnimation.tickAdvance] 每 tick 刷新、
+ * [AttackAnimation.onEnd] 动画结束时清理）管理生命周期。
  */
 class CollisionEntityData(val holder: Entity) {
-	/** 当前活跃的碰撞条目 */
-	val activeColliders = mutableListOf<CollisionEntry>()
+	private val colliderMap = LinkedHashMap<ResourceLocation, MutableList<CollisionEntry>>()
+	private val hitRecords = mutableMapOf<ResourceLocation, MutableSet<UUID>>()
 
-	/** 命中记录：packed long = (colliderIdHash << 32) | victimId */
-	private val hitRecords = mutableSetOf<Long>()
+	private var flatView: List<CollisionEntry> = emptyList()
+	private var dirty = false
+
+	/** 所有碰撞体的展平视图（惰性重建） */
+	val activeColliders: List<CollisionEntry>
+		get() {
+			if (dirty) {
+				flatView = colliderMap.values.flatten()
+				dirty = false
+			}
+			return flatView
+		}
 
 	/** 添加一个碰撞条目 */
 	fun addCollider(entry: CollisionEntry) {
-		activeColliders.add(entry)
+		colliderMap.getOrPut(entry.groupId) { mutableListOf() }.add(entry)
+		dirty = true
 	}
 
 	/** 清空所有碰撞条目 */
 	fun clearColliders() {
-		activeColliders.clear()
+		colliderMap.clear()
+		dirty = true
 	}
 
-	/** 移除指定 ID 的所有碰撞条目 */
+	/** 移除指定 ID 的碰撞条目（保留命中记录） */
 	fun removeColliders(id: ResourceLocation) {
-		activeColliders.removeAll { it.id == id }
+		colliderMap.remove(id)
+		dirty = true
 	}
 
-	/** 是否已被指定 collider 命中过指定实体 */
-	fun isAlreadyHit(colliderId: ResourceLocation, victimId: Int): Boolean {
-		return encode(colliderId, victimId) in hitRecords
+	/** 移除指定分组及其命中记录（动画结束时调用） */
+	fun removeGroup(groupId: ResourceLocation) {
+		colliderMap.remove(groupId)
+		hitRecords.remove(groupId)
+		dirty = true
 	}
 
-	/** 标记指定 collider 已命中指定实体 */
-	fun markHit(colliderId: ResourceLocation, victimId: Int) {
-		hitRecords.add(encode(colliderId, victimId))
+	/** 清空所有碰撞体和命中记录 */
+	fun clearAll() {
+		colliderMap.clear()
+		hitRecords.clear()
+		dirty = true
 	}
 
-	/** 清空指定 collider 的所有命中记录 */
-	fun clearHitRecords(colliderId: ResourceLocation) {
-		val hash = colliderId.hashCode().toLong()
-		hitRecords.removeAll { (it shr 32) == hash }
+	/** 是否已被指定分组命中过指定实体 */
+	fun isAlreadyHit(groupId: ResourceLocation, victimUUID: UUID): Boolean {
+		return hitRecords[groupId]?.contains(victimUUID) == true
+	}
+
+	/** 标记指定分组已命中指定实体 */
+	fun markHit(groupId: ResourceLocation, victimUUID: UUID) {
+		hitRecords.getOrPut(groupId) { mutableSetOf() }.add(victimUUID)
+	}
+
+	/** 清空指定分组的所有命中记录 */
+	fun clearHitRecords(groupId: ResourceLocation) {
+		hitRecords.remove(groupId)
 	}
 
 	/** 清空所有命中记录 */
 	fun clearAllHitRecords() {
 		hitRecords.clear()
-	}
-
-	/** 清除过期碰撞条目 */
-	fun pruneExpired(currentTick: Long) {
-		activeColliders.removeAll { it.expiryTick < currentTick }
-	}
-
-	companion object {
-		private fun encode(id: ResourceLocation, victimId: Int): Long {
-			return (id.hashCode().toLong() shl 32) or (victimId.toLong() and 0xFFFFFFFFL)
-		}
 	}
 }

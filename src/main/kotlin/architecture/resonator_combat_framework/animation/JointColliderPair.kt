@@ -1,4 +1,6 @@
-package architecture.resonator_combat_framework.module.collision
+package architecture.resonator_combat_framework.animation
+
+import architecture.resonator_combat_framework.module.collision.collision.OBB
 
 /**
  * 骨骼-碰撞体绑定对。
@@ -8,5 +10,5 @@ package architecture.resonator_combat_framework.module.collision
  */
 data class JointColliderPair(
 	val boneName: String,
-	val collider: AnimCollider,
+	val collider: OBB,
 )

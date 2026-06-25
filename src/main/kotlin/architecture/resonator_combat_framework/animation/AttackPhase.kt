@@ -1,7 +1,5 @@
 package architecture.resonator_combat_framework.animation
 
-import architecture.resonator_combat_framework.module.collision.JointColliderPair
-
 /**
  * 攻击阶段 —— 定义攻击动画中造成伤害的时间窗口及相关属性。
  *
