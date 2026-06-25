@@ -1,1 +1,0 @@
-package architecture.resonator_combat_framework.module.collision;

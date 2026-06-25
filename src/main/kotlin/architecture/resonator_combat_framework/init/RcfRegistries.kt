@@ -21,6 +21,16 @@ object RcfRegistries {
 	}
 
 	@JvmStatic
+	fun getStaticAnimation(isClient: Boolean, id: ResourceLocation): StaticAnimation? {
+		return if (isClient) CLIENT_STATIC_ANIMATIONS[id] else SERVER_STATIC_ANIMATIONS[id]
+	}
+
+	@JvmStatic
+	fun getStaticAnimation(isClient: Boolean, id: String): StaticAnimation? {
+		return getStaticAnimation(isClient, RcfUtil.modRl(id))
+	}
+
+	@JvmStatic
 	internal fun register(event: NewRegistryEvent) {
 		REGISTRIES.forEach {
 			event.register(it)

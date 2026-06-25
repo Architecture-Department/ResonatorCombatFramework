@@ -24,8 +24,7 @@ object PlayerEvents {
 		val player = event.entity
 		val level = player.level()
 		val animationTransformer = player.getAnimationTransformer()
-		animationTransformer.tickAnimations()
-
+		animationTransformer.tickAnimationManager()
 		val animationControllerManager = animationTransformer.animationControllerManager
 		val animationData = animationControllerManager.getInterpolatedProxy(1f)
 		val brModel = animationControllerManager.brModel

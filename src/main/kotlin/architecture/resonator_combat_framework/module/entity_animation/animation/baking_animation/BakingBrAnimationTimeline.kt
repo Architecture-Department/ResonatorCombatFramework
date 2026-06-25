@@ -12,10 +12,10 @@ import net.minecraft.world.entity.Entity
 
 data class BakingBrAnimationTimeline
 @JvmOverloads constructor(
-    val time: Float,
-    val molangs: List<MolangValue> = emptyList(),
-    val commands: List<String> = emptyList(),
-    val entityEvents: List<String> = emptyList()
+	val time: Float,
+	val molangs: List<MolangValue> = emptyList(),
+	val commands: List<String> = emptyList(),
+	val entityEvents: List<String> = emptyList()
 ) {
 	fun run(entity: Entity, context: MolangData? = null) {
 		molangs.forEach { it.eval(context) }
@@ -28,16 +28,16 @@ data class BakingBrAnimationTimeline
 		if (commands.isEmpty()) return
 
 		@Suppress("TYPE_MISMATCH_BASED_ON_JAVA_ANNOTATIONS") val source = CommandSourceStack(
-            entity,
-            entity.position(),
-            entity.rotationVector,
-            level,
-            2,
-            entity.name.string,
-            entity.displayName,
-            server,
-            entity
-        )
+			entity,
+			entity.position(),
+			entity.rotationVector,
+			level,
+			2,
+			entity.name.string,
+			entity.displayName,
+			server,
+			entity
+		)
 		commands.forEach { cmd ->
 			if (StringUtil.isNullOrEmpty(cmd)) return@forEach
 			try {

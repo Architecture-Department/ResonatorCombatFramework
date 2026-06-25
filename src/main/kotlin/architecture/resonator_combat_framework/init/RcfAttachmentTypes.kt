@@ -1,5 +1,6 @@
 package architecture.resonator_combat_framework.init
 
+import architecture.resonator_combat_framework.module.collision.CollisionEntityData
 import architecture.resonator_combat_framework.module.entity_animation.animation.molang.MolangData
 import architecture.resonator_combat_framework.module.entity_animation.animation.molang.MolangData.Companion.initEntityQueries
 import architecture.resonator_combat_framework.module.entity_state_machine.holder.EntityStateHolder
@@ -47,6 +48,15 @@ object RcfAttachmentTypes {
 					is LivingEntity -> return@serializable EntityStateHolder(holder)
 					else -> throw IllegalArgumentException("StateHolder can only be attached to LivingEntity. Unsupported: ${holder?.javaClass}")
 				}
-			}.copyOnDeath().build()
+			}.build()
+		}
+
+	@JvmField
+	val ENTITY_COLLISION: DeferredHolder<AttachmentType<*>, AttachmentType<CollisionEntityData>> =
+		REGISTRY.register("entity_collision") { ->
+			AttachmentType.builder { holder ->
+				if (holder !is Entity) throw IllegalArgumentException("CollisionEntity can only be attached to LivingEntity. Unsupported: ${holder?.javaClass}")
+				return@builder CollisionEntityData(holder)
+			}.build()
 		}
 }

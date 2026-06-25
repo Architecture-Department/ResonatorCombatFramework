@@ -1,7 +1,7 @@
 package architecture.resonator_combat_framework.module.entity_animation.mixin.client;
 
-import architecture.resonator_combat_framework.module.entity_animation.animation.mapper.HumanoidEntityAnimationMapper;
-import architecture.resonator_combat_framework.module.entity_animation.animation.mapper.IEntityAnimationMapper;
+import architecture.resonator_combat_framework.module.entity_animation.animation.mapper.HumanoidEntityAnimationMapperProvider;
+import architecture.resonator_combat_framework.module.entity_animation.animation.mapper.IEntityAnimationMapperProvider;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -30,8 +30,8 @@ public class ItemInHandLayerMixin {
 		CallbackInfo ci
 	) {
 		if (!(livingEntity instanceof AbstractClientPlayer player)) return;
-		IEntityAnimationMapper<?, ?> iAnimationMapper = player.resonator_combat_framework$getAnimationTransformer();
-		if (!iAnimationMapper.isActive() || !(iAnimationMapper instanceof HumanoidEntityAnimationMapper<?, ?> humanoidEntityAnimationMapper)) {
+		IEntityAnimationMapperProvider<?, ?> iAnimationMapper = player.resonator_combat_framework$getAnimationTransformer();
+		if (!iAnimationMapper.isActive() || !(iAnimationMapper instanceof HumanoidEntityAnimationMapperProvider<?, ?> humanoidEntityAnimationMapper)) {
 			return;
 		}
 		humanoidEntityAnimationMapper.applyItemTransform(arm == HumanoidArm.LEFT, poseStack);

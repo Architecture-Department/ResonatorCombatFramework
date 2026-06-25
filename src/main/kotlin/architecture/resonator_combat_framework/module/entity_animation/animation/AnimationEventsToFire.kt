@@ -1,9 +1,15 @@
 package architecture.resonator_combat_framework.module.entity_animation.animation
 
+import architecture.resonator_combat_framework.module.entity_animation.animation.baking_animation.BakingBrAnimationParticle
+import architecture.resonator_combat_framework.module.entity_animation.animation.baking_animation.BakingBrAnimationSound
+import architecture.resonator_combat_framework.module.entity_animation.animation.baking_animation.BakingBrAnimationTimeline
+
 /**
  * 动画事件容器，由控制器筛选后交给管理器统一执行。
  */
-data class AnimationEventsToFire(
+data class AnimationEventsToFire
+@JvmOverloads
+constructor(
 	/** 待触发的音效事件列表 */
 	val sounds: List<BakingBrAnimationSound> = emptyList(),
 	/** 待触发的粒子事件列表 */

@@ -1,13 +1,19 @@
 package architecture.resonator_combat_framework.module.entity_animation.animation
 
 import architecture.goldenboughs_lib.api.AllOpe
+import architecture.resonator_combat_framework.module.entity_animation.animation.baking_animation.BakingBrAnimation
+import architecture.resonator_combat_framework.module.entity_animation.animation.baking_animation.BakingBrAnimationParticle
+import architecture.resonator_combat_framework.module.entity_animation.animation.baking_animation.BakingBrAnimationSound
+import architecture.resonator_combat_framework.module.entity_animation.animation.baking_animation.BakingBrAnimationTimeline
+import architecture.resonator_combat_framework.module.entity_animation.animation.data.ProxyBoneConfigData
+import architecture.resonator_combat_framework.module.entity_animation.animation.model.BrModel
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.ProxyModel
 import architecture.resonator_combat_framework.module.entity_animation.animation.molang.MolangData
 import architecture.resonator_combat_framework.module.entity_animation.registry.BedrockAnimationRegistry
+import architecture.resonator_combat_framework.module.entity_animation.registry.ProxyBoneConfigDataRegistry
 import architecture.resonator_combat_framework.util.RcfUtil
 import net.minecraft.resources.ResourceLocation
-
-enum class LoopType { ONCE, LOOP, HOLD_ON_LAST }
+import net.minecraft.world.entity.Entity
 
 @AllOpe
 class StaticAnimation(
@@ -26,6 +32,24 @@ class StaticAnimation(
 	/** 定时事件列表 */
 	private val timedEvents = mutableListOf<TimedEvent>()
 
+	/** 骨骼配置（init 时从 Registry 加载） */
+	private var _boneConfig: ProxyBoneConfigData? = null
+
+	/** 获取骨骼配置，未加载时返回 EMPTY */
+	val boneConfig: ProxyBoneConfigData
+		get() = _boneConfig ?: ProxyBoneConfigData.EMPTY
+
+	private var _mirroredBoneConfig: ProxyBoneConfigData? = null
+
+	/** 获取镜像后的骨骼配置（惰性加载） */
+	val mirroredBoneConfig: ProxyBoneConfigData
+		get() {
+			val base = _boneConfig ?: return ProxyBoneConfigData.EMPTY
+			if (_mirroredBoneConfig != null) return _mirroredBoneConfig!!
+			_mirroredBoneConfig = base.mirrored()
+			return _mirroredBoneConfig!!
+		}
+
 	constructor(id: ResourceLocation) :
 		this(id, id.namespace + "." + id.path)
 
@@ -35,6 +59,8 @@ class StaticAnimation(
 	fun init(isClient: Boolean) {
 		bakingAnimation =
 			BedrockAnimationRegistry.getInstance(isClient).getBakingAnimation(animationId) ?: BakingBrAnimation.EMPTY
+		_boneConfig =
+			ProxyBoneConfigDataRegistry.getInstance(isClient).getConfig(animationId)
 	}
 
 	/** 获取当前生效的 BakingBrAnimation */
@@ -70,6 +96,21 @@ class StaticAnimation(
 		collectTyped(src.timelines, "timeline_", alreadyFired, time, timelines)
 
 		return AnimationEventsToFire(sounds, particles, timelines)
+	}
+
+	final fun tickAnimTime(
+		currentTime: Float,
+		deltaTime: Float,
+		context: MolangData? = null,
+		mirrored: Boolean = false
+	): Float {
+		val src = getBakingAnimation(mirrored)
+		val expr = src.animTimeUpdate
+		if (expr != null && context != null) {
+			context.updateAnimQueries(currentTime, deltaTime)
+			return expr.eval(context).toFloat()
+		}
+		return currentTime + deltaTime
 	}
 
 	private inline fun <reified T : Any> collectTyped(
@@ -117,4 +158,38 @@ class StaticAnimation(
 
 	/** 获取所有已注册的定时事件。 */
 	fun getTimedEvents(): List<TimedEvent> = timedEvents
+
+	// ===== 生命周期钩子 =====
+
+	/** 动画开始时调用。 */
+	fun onBegin(entity: Entity) {}
+
+	/**
+	 * 每 tick 回调（合并前）。
+	 *
+	 * 在 [tickAnimTime] 推进时间后、[AnimationControllerManager.remerge] 之前调用。
+	 * [proxyModel] 为当前控制器的原始骨骼（尚未与其他控制器合并）。
+	 * 如需访问合并后的完整骨骼数据，请使用 [tickAdvance]。
+	 */
+	fun tick(entity: Entity, animTime: Float, deltaTime: Float, proxyModel: ProxyModel, brModel: BrModel) {}
+
+	/** 动画结束时调用。 */
+	fun onEnd(entity: Entity) {}
+
+	/**
+	 * 合并后钩子。
+	 *
+	 * 在 [AnimationControllerManager.remerge] 之后调用。
+	 * 此时 [manager.mergedProxy] 包含所有控制器的最终合并骨骼，
+	 * [proxyModel] 为当前控制器的原始骨骼，
+	 * 是执行碰撞检测等依赖完整骨骼数据操作的时机。
+	 */
+	fun tickAdvance(
+		entity: Entity,
+		animTime: Float,
+		proxyModel: ProxyModel,
+		brModel: BrModel,
+		mergedProxy: ProxyModel,
+	) {
+	}
 }

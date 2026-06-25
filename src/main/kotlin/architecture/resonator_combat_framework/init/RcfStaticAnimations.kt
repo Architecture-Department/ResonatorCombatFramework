@@ -8,31 +8,35 @@ object RcfStaticAnimations {
 	lateinit var REGISTRY: StaticAnimation
 
 	@JvmStatic
-	fun init(isClient: Boolean) {
-		REGISTRY = register(RcfUtil.modRl("idle"), ::StaticAnimation)
+	internal fun register() {
+		REGISTRY = register("idle", ::StaticAnimation)
+	}
+
+	internal fun <T : StaticAnimation> register(
+		animationId: String,
+		function: (id: ResourceLocation) -> T,
+		isClient: Boolean? = null
+	): T {
+		return register(RcfUtil.modRl(animationId), function, isClient)
 	}
 
 	@JvmStatic
-	inline fun <T : StaticAnimation> register(
+	fun <T : StaticAnimation> register(
 		id: ResourceLocation,
-		staticAnimation: (id: ResourceLocation) -> T,
+		function: (id: ResourceLocation) -> T,
 		isClient: Boolean? = null
 	): T {
-		val staticAnimation1 = staticAnimation(id)
+		val staticAnimation1 = function(id)
 		when (isClient) {
 			true -> {
 				RcfRegistries.getStaticAnimations(true)[id] = staticAnimation1
-				staticAnimation1.init(true)
 			}
 			false -> {
 				RcfRegistries.getStaticAnimations(false)[id] = staticAnimation1
-				staticAnimation1.init(false)
 			}
 			else -> {
 				RcfRegistries.getStaticAnimations(true)[id] = staticAnimation1
-				staticAnimation1.init(true)
 				RcfRegistries.getStaticAnimations(false)[id] = staticAnimation1
-				staticAnimation1.init(false)
 			}
 		}
 		return staticAnimation1

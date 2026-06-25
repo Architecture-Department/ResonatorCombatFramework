@@ -23,7 +23,7 @@ interface MolangValue {
 	}
 
 	fun eval(controllerManager: AnimationControllerManager<*>): Double {
-		return eval(controllerManager.mapper.holder)
+		return eval(controllerManager.mapperProvider.holder)
 	}
 
 	fun isMutable(): Boolean = true

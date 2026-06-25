@@ -1,12 +1,12 @@
 package architecture.resonator_combat_framework.module.entity_animation.animation.baking_animation
 
+import architecture.resonator_combat_framework.module.entity_animation.animation.LoopType
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.ProxyBone
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.ProxyModel
 import architecture.resonator_combat_framework.module.entity_animation.animation.molang.EasingTypes
 import architecture.resonator_combat_framework.module.entity_animation.animation.molang.MoLangParser
 import architecture.resonator_combat_framework.module.entity_animation.animation.molang.MolangData
 import architecture.resonator_combat_framework.module.entity_animation.animation.molang.MolangValue
-import architecture.resonator_combat_framework.module.entity_animation.animation.LoopType
 import architecture.resonator_combat_framework.module.entity_animation.util.AnimationMirrorUtil
 import architecture.resonator_combat_framework.util.RcfUtil
 import com.google.gson.JsonObject

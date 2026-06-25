@@ -6,19 +6,18 @@ import net.minecraft.client.model.EntityModel
 import net.minecraft.world.entity.LivingEntity
 
 /** 收集所有活跃可渲染控制器的骨骼标志，用于外部按控制器解析标志 */
-abstract class LivingEntityAnimationMapperProvider<T : LivingEntity, M : EntityModel<T>>
-@JvmOverloads
-constructor(
+abstract class LivingEntityAnimationMapperProvider<T : LivingEntity, M : EntityModel<T>>(
 	livingEntity: T,
-	isClient: Boolean = livingEntity.level().isClientSide,
-	animationControllerManager: AnimationControllerManager<T> = AnimationControllerManager(livingEntity)
+	isClient: Boolean,
+	animationControllerManager: AnimationControllerManager<T>
 ) : EntityAnimationMapperProvider<T, M>(livingEntity, isClient, animationControllerManager) {
+	constructor(holder: T) : this(holder, holder.level().isClientSide, AnimationControllerManager(holder))
 
 	/** 收集所有活跃可渲染控制器的骨骼标志 */
 	fun resolveBoneFlags(animTime: Float): Map<String, ProxyBoneFlags> {
 		val flags = mutableMapOf<String, ProxyBoneFlags>()
 		for (ctrl in animationControllerManager.getRenderable()) {
-			flags.putAll((ctrl as BedrockAnimationController).resolveBoneFlags(animTime))
+			flags.putAll((ctrl as BedrockAnimationController).activeBoneConfig.resolveBoneFlags(animTime))
 		}
 		return flags
 	}

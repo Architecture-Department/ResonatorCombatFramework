@@ -15,13 +15,14 @@ import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.Entity
 
 /** 实体动画映射器基类——管理控制器生命周期、触发/停止/暂停/恢复 */
-abstract class EntityAnimationMapperProvider<T : Entity, M : EntityModel<T>>
-@JvmOverloads
-constructor(
+abstract class EntityAnimationMapperProvider<T : Entity, M : EntityModel<T>>(
 	override val holder: T,
 	override val isClient: Boolean = holder.level().isClientSide,
 	override val animationControllerManager: AnimationControllerManager<T> = AnimationControllerManager(holder)
 ) : IEntityAnimationMapperProvider<T, M> {
+
+	constructor(holder: T) : this(holder, holder.level().isClientSide)
+
 	/** 上一渲染帧的 tickSec，用于计算 deltaSec */
 	protected var lastRenderTick = 0f
 

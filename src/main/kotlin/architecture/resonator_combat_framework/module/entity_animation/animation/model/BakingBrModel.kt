@@ -66,22 +66,22 @@ constructor(
 			val list = mutableMapOf<String, BakingBrBone>()
 			json.asJsonArray.forEach { jsonElement ->
 				try {
-				val obj = jsonElement.asJsonObject
-				val name = obj.get("name").asString
-				val parent = obj.get("parent")?.asString
-				val pivot = obj.getAsJsonArray("pivot")?.map { it.asFloat } ?: listOf(0f, 0f, 0f)
-				val rotation = obj.getAsJsonArray("rotation")?.map { it.asFloat } ?: listOf(0f, 0f, 0f)
-				val cubes = obj.get("cubes")?.run { BakingBrCube.parses(this) } ?: emptyList()
+					val obj = jsonElement.asJsonObject
+					val name = obj.get("name").asString
+					val parent = obj.get("parent")?.asString
+					val pivot = obj.getAsJsonArray("pivot")?.map { it.asFloat } ?: listOf(0f, 0f, 0f)
+					val rotation = obj.getAsJsonArray("rotation")?.map { it.asFloat } ?: listOf(0f, 0f, 0f)
+					val cubes = obj.get("cubes")?.run { BakingBrCube.parses(this) } ?: emptyList()
 
-				val locators = BakingBrLocator.parses(name, obj)
-				list[name] = BakingBrBone(
-					name,
-					parent,
-					Vector3f(pivot[0], pivot[1], pivot[2]),
-					Vector3f(rotation[0], rotation[1], rotation[2]),
-					cubes,
-					locators
-				)
+					val locators = BakingBrLocator.parses(name, obj)
+					list[name] = BakingBrBone(
+						name,
+						parent,
+						Vector3f(pivot[0], pivot[1], pivot[2]),
+						Vector3f(rotation[0], rotation[1], rotation[2]),
+						cubes,
+						locators
+					)
 				} catch (e: Exception) {
 					RcfUtil.LOGGER.warn("[MODEL] Failed to parse bone: {} - element: {}", e.message, jsonElement)
 				}

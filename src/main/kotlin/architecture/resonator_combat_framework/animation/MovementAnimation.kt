@@ -1,24 +1,16 @@
 package architecture.resonator_combat_framework.animation
 
+import architecture.resonator_combat_framework.module.entity_animation.animation.model.BrModel
+import architecture.resonator_combat_framework.module.entity_animation.animation.model.ProxyModel
 import architecture.resonator_combat_framework.util.RcfUtil
 import net.minecraft.resources.ResourceLocation
-import net.minecraft.world.entity.LivingEntity
+import net.minecraft.world.entity.Entity
 import kotlin.math.max
 import kotlin.math.sqrt
 
-/**
- * 移动动画 —— 读取实体速度以控制动画播放速度的 [ActionAnimation]。
- *
- * 适用于行走、奔跑、潜行、游泳等移动类动画。
- *
- * 相比 [ActionAnimation]，增加了：
- * 1. [expectedMaxSpeed]：预期最大水平速度，用于归一化动画速度倍率
- * 2. [animSpeedRatio]：当前动画速度倍率（只读），基于实体实际水平速度计算
- *
- * 注意：MovementAnimation 不修改实体的任何属性（速度、位置、方向等），
- * 仅读取实体速度来计算动画播放倍率。实际的移动逻辑由原版或其他系统处理。
- */
-class MovementAnimation(
+class MovementAnimation
+@JvmOverloads
+constructor(
 	id: ResourceLocation,
 	animationId: String,
 	stateModifiers: Map<ResourceLocation, Boolean> = emptyMap(),
@@ -50,8 +42,14 @@ class MovementAnimation(
 	var animSpeedRatio: Float = 0f
 		protected set
 
-	override fun onTick(entity: LivingEntity, animTime: Float, deltaTime: Float) {
-		super.onTick(entity, animTime, deltaTime)
+	override fun tick(
+		entity: Entity,
+		animTime: Float,
+		deltaTime: Float,
+		proxyModel: ProxyModel,
+		brModel: BrModel
+	) {
+		super.tick(entity, animTime, deltaTime, proxyModel, brModel)
 		val hSpeed = sqrt(
 			entity.deltaMovement.x * entity.deltaMovement.x +
 				entity.deltaMovement.z * entity.deltaMovement.z
@@ -59,7 +57,7 @@ class MovementAnimation(
 		animSpeedRatio = max(hSpeed / expectedMaxSpeed, 0f)
 	}
 
-	override fun onEnd(entity: LivingEntity) {
+	override fun onEnd(entity: Entity) {
 		super.onEnd(entity)
 		animSpeedRatio = 0f
 	}

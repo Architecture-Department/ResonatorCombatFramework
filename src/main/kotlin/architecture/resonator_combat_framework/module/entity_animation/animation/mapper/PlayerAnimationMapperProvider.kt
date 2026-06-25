@@ -8,13 +8,12 @@ import net.minecraft.world.entity.player.Player
 import net.neoforged.neoforge.common.NeoForge
 
 /** 玩家动画映射器——零外部依赖 + 渲染入口 */
-class PlayerAnimationMapperProvider
-@JvmOverloads
-constructor(
+class PlayerAnimationMapperProvider(
 	val player: Player,
 	isClient: Boolean = player.level().isClientSide,
-	animationControllerManager: AnimationControllerManager<Player> = AnimationControllerManager(player)
+	animationControllerManager: AnimationControllerManager<Player>
 ) : HumanoidEntityAnimationMapperProvider<Player, PlayerModel<Player>>(player, isClient, animationControllerManager) {
+	constructor(holder: Player) : this(holder, holder.level().isClientSide, AnimationControllerManager(holder))
 
 	init {
 		NeoForge.EVENT_BUS.post(AnimationControllerRegisterEvent<Player>()).getSortedEntries()

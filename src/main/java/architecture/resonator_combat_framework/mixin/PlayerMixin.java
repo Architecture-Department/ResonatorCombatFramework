@@ -1,8 +1,8 @@
 package architecture.resonator_combat_framework.mixin;
 
 import architecture.resonator_combat_framework.mixed.IPlayerRcf;
-import architecture.resonator_combat_framework.module.entity_animation.animation.mapper.IEntityAnimationMapper;
-import architecture.resonator_combat_framework.module.entity_animation.animation.mapper.PlayerAnimationMapper;
+import architecture.resonator_combat_framework.module.entity_animation.animation.mapper.IEntityAnimationMapperProvider;
+import architecture.resonator_combat_framework.module.entity_animation.animation.mapper.PlayerAnimationMapperProvider;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.client.model.PlayerModel;
 import net.minecraft.core.BlockPos;
@@ -20,7 +20,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(Player.class)
 public abstract class PlayerMixin extends LivingEntity implements IPlayerRcf {
 	@Unique
-	private PlayerAnimationMapper resonator_combat_framework$transformer;
+	private PlayerAnimationMapperProvider resonator_combat_framework$transformer;
 
 	protected PlayerMixin(EntityType<? extends LivingEntity> entityType, Level level) {
 		super(entityType, level);
@@ -28,11 +28,11 @@ public abstract class PlayerMixin extends LivingEntity implements IPlayerRcf {
 
 	@Inject(method = "<init>", at = @At("RETURN"))
 	public void resonator_combat_framework$init(Level level, BlockPos pos, float yRot, GameProfile gameProfile, CallbackInfo ci) {
-		resonator_combat_framework$transformer = new PlayerAnimationMapper((Player) (Object) this);
+		resonator_combat_framework$transformer = new PlayerAnimationMapperProvider((Player) (Object) this);
 	}
 
 	@Override
-	public @NotNull IEntityAnimationMapper<Player, PlayerModel<Player>> resonator_combat_framework$getAnimationTransformer() {
+	public @NotNull IEntityAnimationMapperProvider<Player, PlayerModel<Player>> resonator_combat_framework$getAnimationTransformer() {
 		return resonator_combat_framework$transformer;
 	}
 }

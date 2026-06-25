@@ -1,6 +1,7 @@
 package architecture.resonator_combat_framework.module.entity_animation.animation.mapper
 
 import architecture.goldenboughs_lib.api.AllOpe
+import architecture.goldenboughs_lib.util.PoseStack
 import architecture.resonator_combat_framework.events.registry.AnimationControllers
 import architecture.resonator_combat_framework.module.entity_animation.animation.AnimationEventsToFire
 import architecture.resonator_combat_framework.module.entity_animation.animation.ParticleStormAnimAdapter
@@ -11,15 +12,30 @@ import architecture.resonator_combat_framework.module.entity_animation.animation
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.BrModel
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.ProxyBone
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.ProxyModel
+import architecture.resonator_combat_framework.module.entity_animation.mixed.IAnimationProxyProvider
+import architecture.resonator_combat_framework.module.entity_animation.mixed.IAnimationProxyProvider.Companion.getAnimationTransformer
 import architecture.resonator_combat_framework.util.RcfUtil
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.Entity
+import org.joml.Matrix4f
+import org.joml.Matrix4fc
 import org.joml.Vector3f
 import org.mesdag.particlestorm.particle.MolangParticleEngine
 
 /** 动画控制器管理器 */
 @AllOpe
-class AnimationControllerManager<T : Entity>(val mapper: IEntityAnimationMapper<T, *>) {
+class AnimationControllerManager<T : Entity>
+@JvmOverloads
+constructor(
+	val holder: T,
+	mapperProvider: IEntityAnimationMapperProvider<T, *>? = null
+) {
+	private val _mapperProvider: IEntityAnimationMapperProvider<T, *>? = mapperProvider
+
+	val mapperProvider: IEntityAnimationMapperProvider<T, *>
+		get() = _mapperProvider
+			?: (holder as IAnimationProxyProvider).getAnimationTransformer() as IEntityAnimationMapperProvider<T, *>
+
 	/** 名称 → 控制器映射（O(1) 查找） */
 	private val nameMap = mutableMapOf<ResourceLocation, IEntityAnimationController<T>>()
 
@@ -46,6 +62,9 @@ class AnimationControllerManager<T : Entity>(val mapper: IEntityAnimationMapper<
 		}
 
 	var brModel: BrModel = BrModel()
+
+	/** 本 tick 的骨骼全局矩阵缓存（惰性填充，tick 切换时清空） */
+	private val boneMatrixCache = mutableMapOf<String, Matrix4fc>()
 
 	/** 发射器追踪："controllerId:locatorName" → ParticleStorm 发射器 ID */
 	private val emitterTracker = mutableMapOf<String, Int>()
@@ -126,7 +145,9 @@ class AnimationControllerManager<T : Entity>(val mapper: IEntityAnimationMapper<
 	}
 
 	/** 推进所有控制器的动画时间并重新合并 */
-	fun tickAnimations(partialTick: Float) {
+	fun tick() {
+		// 清空骨骼矩阵缓存（本 tick 所有数据重算）
+		boneMatrixCache.clear()
 		// 保存当前帧快照供渲染插值（prev -> current）
 		prevMergedProxy.bones.clear()
 		for ((name, bone) in mergedProxy.bones) {
@@ -139,10 +160,13 @@ class AnimationControllerManager<T : Entity>(val mapper: IEntityAnimationMapper<
 		}
 
 		for (ctrl in ordered) {
-			ctrl.tickAdvance()
+			ctrl.tick()
 		}
 		remerge()
-		firePendingEvents(partialTick)
+		for (ctrl in ordered) {
+			ctrl.tickAdvance()
+		}
+		firePendingEvents()
 	}
 
 	fun remerge() {
@@ -153,7 +177,7 @@ class AnimationControllerManager<T : Entity>(val mapper: IEntityAnimationMapper<
 			val bac = ctrl as BedrockAnimationController
 			val weight = ctrl.effectiveWeight
 
-			mergedFlags.putAll(bac.resolveBoneFlags(bac.currentAnimTime))
+			mergedFlags.putAll(bac.activeBoneConfig.resolveBoneFlags(bac.currentAnimTime))
 			for ((name, bone) in bac.proxyModel.bones) {
 				val mb = mergedProxy.getBone(name) ?: run {
 					val nb = ProxyBone(name)
@@ -189,15 +213,30 @@ class AnimationControllerManager<T : Entity>(val mapper: IEntityAnimationMapper<
 				}
 			}
 			coveredBones.addAll(bac.affectedBones)
-
 		}
 	}
 
+
+	/**
+	 * 获取骨骼的全局变换矩阵（惰性计算 + 缓存）。
+	 * 同一 tick 内对同一骨骼的重复查询直接返回缓存。
+	 */
+	@JvmOverloads
+	fun getTickBoneMatrix(boneName: String, proxyModel: ProxyModel = mergedProxy): Matrix4fc {
+		return boneMatrixCache.getOrPut(boneName) {
+			Matrix4f(brModel.computeBoneGlobalMatrix(boneName, proxyModel, PoseStack(), true).last().pose)
+		}
+	}
+
+	/** 获取合并后的插值代理骨骼（逐帧在 prevMergedProxy 和 mergedProxy 之间线性插值） */
+	fun getInterpolatedBone(name: String, partialTick: Float): ProxyBone? = interpolateBone(name, partialTick)
+
+	/** 重新合并所有控制器的代理模型 */
 	private fun interpolateBone(name: String, partialTick: Float): ProxyBone? {
 		val currBone = mergedProxy.getBone(name) ?: return null
 		val prevBone = prevMergedProxy.getBone(name)
 		val mb = ProxyBone(name)
-		// STEP 关键帧的骨骼直接取当前值，不做插值
+
 		if (currBone.noInterp) {
 			if (currBone.hasPos()) {
 				mb.setPosEmpty(false); mb.pos.set(currBone.pos)
@@ -210,6 +249,7 @@ class AnimationControllerManager<T : Entity>(val mapper: IEntityAnimationMapper<
 			}
 			return mb
 		}
+
 		if (prevBone != null) {
 			if (currBone.hasPos()) {
 				mb.setPosEmpty(false)
@@ -246,9 +286,6 @@ class AnimationControllerManager<T : Entity>(val mapper: IEntityAnimationMapper<
 		return mb
 	}
 
-	fun getInterpolatedBone(name: String, partialTick: Float): ProxyBone? = interpolateBone(name, partialTick)
-
-	/** 获取合并后的插值代理骨骼（逐帧在 prevMergedProxy 和 mergedProxy 之间线性插值） */
 	/** 复制 ProxyModel 的所有骨骼到新模型（深拷贝） */
 	private fun copyProxyModel(source: ProxyModel): ProxyModel {
 		val result = ProxyModel("interp")
@@ -310,9 +347,7 @@ class AnimationControllerManager<T : Entity>(val mapper: IEntityAnimationMapper<
 		val renderedBones = mutableSetOf<String>()
 		for (ctrl in active) {
 			val skip = ctrl.affectedBones.isNotEmpty() && ctrl.affectedBones.all { it in renderedBones } && !ctrl.isOverriding
-			if (skip) {
-				continue
-			}
+			if (skip) continue
 			result.add(ctrl)
 			renderedBones.addAll(ctrl.affectedBones)
 		}
@@ -344,7 +379,7 @@ class AnimationControllerManager<T : Entity>(val mapper: IEntityAnimationMapper<
 	}
 
 	/** 两控制器的 affectedBones 是否有交集 */
-	private fun hasBoneConflict(a: IEntityAnimationController<T>, b: IEntityAnimationController<T>): Boolean {
+	fun hasBoneConflict(a: IEntityAnimationController<T>, b: IEntityAnimationController<T>): Boolean {
 		val aBones = a.affectedBones
 		val bBones = b.affectedBones
 		if (aBones.isEmpty() || bBones.isEmpty()) return false
@@ -357,12 +392,11 @@ class AnimationControllerManager<T : Entity>(val mapper: IEntityAnimationMapper<
 	}
 
 	/** 执行所有待触发的动画事件并清空队列 */
-	fun firePendingEvents(partialTick: Float) {
+	fun firePendingEvents() {
 		if (pendingEvents.isEmpty()) return
-		val entity = mapper.holder
-		val data = mapper.molangData
+		val entity = mapperProvider.holder
+		val data = mapperProvider.molangData
 
-		// 时间线事件：双端执行
 		for ((controller, events) in pendingEvents) {
 			try {
 				events.timelines.forEach { it.run(entity, data) }
@@ -370,21 +404,16 @@ class AnimationControllerManager<T : Entity>(val mapper: IEntityAnimationMapper<
 				RcfUtil.LOGGER.error("[CONTROLLER] {} timeline effects failed: {}", controller.id, e.message)
 			}
 			try {
-				events.sounds.forEach {
-					it.runs(controller, entity, brModel, mergedProxy, data, partialTick)
-				}
+				events.sounds.forEach { it.runs(controller, entity, brModel, mergedProxy, data) }
 			} catch (e: Exception) {
 				RcfUtil.LOGGER.error("[CONTROLLER] {} sound effects failed: {}", controller.id, e.message)
 			}
 			try {
-				events.particles.forEach {
-					it.runs(controller, entity, brModel, mergedProxy, data, partialTick)
-				}
+				events.particles.forEach { it.runs(controller, entity, brModel, mergedProxy, data) }
 			} catch (e: Exception) {
 				RcfUtil.LOGGER.error("[CONTROLLER] {} particle effects failed: {}", controller.id, e.message)
 			}
 		}
-
 		pendingEvents.clear()
 	}
 }

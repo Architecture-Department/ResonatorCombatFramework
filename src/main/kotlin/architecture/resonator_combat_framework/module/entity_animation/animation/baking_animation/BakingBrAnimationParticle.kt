@@ -1,10 +1,6 @@
 package architecture.resonator_combat_framework.module.entity_animation.animation.baking_animation
 
-import architecture.goldenboughs_lib.util.LibUtil
-import architecture.goldenboughs_lib.util.PoseStack
-import architecture.goldenboughs_lib.util.toPos
-import architecture.goldenboughs_lib.util.toRadians
-import architecture.goldenboughs_lib.util.toRot
+import architecture.goldenboughs_lib.util.*
 import architecture.resonator_combat_framework.module.entity_animation.animation.ParticleStormAnimAdapter
 import architecture.resonator_combat_framework.module.entity_animation.animation.controller.IEntityAnimationController
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.BrModel
@@ -30,30 +26,30 @@ data class BakingBrAnimationParticle
 	val time: Float, val effects: List<Effect> = emptyList()
 ) {
 	fun runs(
-        controller: IEntityAnimationController<*>,
-        entity: Entity,
-        brModel: BrModel,
-        animationData: ProxyModel,
-        context: MolangData? = null,
-        partialTick: Float= 1f
+		controller: IEntityAnimationController<*>,
+		entity: Entity,
+		brModel: BrModel,
+		animationData: ProxyModel,
+		context: MolangData? = null,
+		partialTick: Float = 1f
 	) {
 		effects.forEach { it.run(controller, entity, brModel, animationData, context, partialTick) }
 	}
 
 	data class Effect(
-        val particleId: ResourceLocation,
-        val locatorName: String? = null,
-        val bindToActor: Boolean = true,
-        val preEffectScript: MolangValue? = null,
-        val preEffectScriptStr: String? = null
+		val particleId: ResourceLocation,
+		val locatorName: String? = null,
+		val bindToActor: Boolean = true,
+		val preEffectScript: MolangValue? = null,
+		val preEffectScriptStr: String? = null
 	) {
 		fun run(
-            controller: IEntityAnimationController<*>,
-            entity: Entity,
-            brModel: BrModel,
-            animationData: ProxyModel,
-            context: MolangData? = null,
-            partialTick: Float= 1f
+			controller: IEntityAnimationController<*>,
+			entity: Entity,
+			brModel: BrModel,
+			animationData: ProxyModel,
+			context: MolangData? = null,
+			partialTick: Float = 1f
 		) {
 			locatorName ?: return
 

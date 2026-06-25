@@ -1,7 +1,6 @@
 package architecture.resonator_combat_framework.module.entity_animation.animation.baking_animation
 
 import com.google.gson.JsonObject
-import kotlin.collections.iterator
 
 data class BakingBrBoneAnimation
 @JvmOverloads constructor(

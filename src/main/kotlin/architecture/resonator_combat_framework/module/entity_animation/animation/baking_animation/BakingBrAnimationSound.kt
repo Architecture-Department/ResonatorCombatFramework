@@ -22,30 +22,30 @@ data class BakingBrAnimationSound
 	val time: Float, val effects: List<Effect> = emptyList()
 ) {
 	fun runs(
-        controller: IEntityAnimationController<*>,
-        entity: Entity,
-        brModel: BrModel,
-        animationData: ProxyModel,
-        context: MolangData? = null,
-        partialTick: Float = 1f
+		controller: IEntityAnimationController<*>,
+		entity: Entity,
+		brModel: BrModel,
+		animationData: ProxyModel,
+		context: MolangData? = null,
+		partialTick: Float = 1f
 	) {
 		effects.forEach { it.run(controller, entity, brModel, animationData, context, partialTick) }
 	}
 
 	data class Effect
 	@JvmOverloads constructor(
-        val soundId: ResourceLocation,
-        val locatorName: String? = null,
-        val bindToActor: Boolean = true,
-        val preEffectScript: MolangValue? = null
+		val soundId: ResourceLocation,
+		val locatorName: String? = null,
+		val bindToActor: Boolean = true,
+		val preEffectScript: MolangValue? = null
 	) {
 		fun run(
-            controller: IEntityAnimationController<*>,
-            entity: Entity,
-            brModel: BrModel,
-            animationData: ProxyModel,
-            context: MolangData? = null,
-            partialTick: Float= 1f
+			controller: IEntityAnimationController<*>,
+			entity: Entity,
+			brModel: BrModel,
+			animationData: ProxyModel,
+			context: MolangData? = null,
+			partialTick: Float = 1f
 		) {
 			var volume = 1.0f
 			var pitch = 1.0f

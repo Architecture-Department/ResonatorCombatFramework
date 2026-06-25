@@ -1,6 +1,9 @@
 package architecture.resonator_combat_framework.module.entity_animation.animation.baking_animation
 
-import architecture.resonator_combat_framework.module.entity_animation.animation.molang.*
+import architecture.resonator_combat_framework.module.entity_animation.animation.molang.MoLangParser
+import architecture.resonator_combat_framework.module.entity_animation.animation.molang.MolangData
+import architecture.resonator_combat_framework.module.entity_animation.animation.molang.MolangValue
+import architecture.resonator_combat_framework.module.entity_animation.animation.molang.MolangVector3
 import architecture.resonator_combat_framework.module.entity_animation.animation.molang.value.Constant
 import architecture.resonator_combat_framework.util.RcfUtil
 import com.google.gson.JsonArray
@@ -9,15 +12,15 @@ import org.joml.Vector3f
 
 data class BakingBrBoneKeyFrame
 @JvmOverloads constructor(
-    /** 关键帧时间（秒） */
+	/** 关键帧时间（秒） */
 	val time: Float,
-    /** 插值模式 */
+	/** 插值模式 */
 	val lerp: LerpMode = LerpMode.LINEAR,
-    /** 关键帧值（简单数组 [x,y,z] 时使用） */
+	/** 关键帧值（简单数组 [x,y,z] 时使用） */
 	val value: MolangVector3 = MolangVector3(),
-    /** 入切线（对象格式 {"pre":[...]} 时使用） */
+	/** 入切线（对象格式 {"pre":[...]} 时使用） */
 	val pre: MolangVector3 = MolangVector3(),
-    /** 出切线（对象格式 {"post":[...]} 时使用） */
+	/** 出切线（对象格式 {"post":[...]} 时使用） */
 	val post: MolangVector3 = MolangVector3()
 ) {
 	/** 取关键帧值：value → post → pre → (0,0,0) */
@@ -126,8 +129,8 @@ data class BakingBrBoneKeyFrame
 		private fun parseMolangVector(arr: JsonArray): MolangVector3 {
 			if (arr.size() < 3) return MolangVector3()
 			return MolangVector3(
-                x = parseAxisExpr(arr[0]), y = parseAxisExpr(arr[1]), z = parseAxisExpr(arr[2])
-            )
+				x = parseAxisExpr(arr[0]), y = parseAxisExpr(arr[1]), z = parseAxisExpr(arr[2])
+			)
 		}
 
 		/** 解析单轴值：数字→Constant，字符串→MoLang */
@@ -137,10 +140,10 @@ data class BakingBrBoneKeyFrame
 					MoLangParser.compileMolang(el.asString)
 				} catch (e: Exception) {
 					RcfUtil.LOGGER.warn("[KEYFRAME] Failed to parse axis expr: {}", e.message)
-                    Constant(0.0)
+					Constant(0.0)
 				}
 			} else {
-                Constant(el.asFloat.toDouble())
+				Constant(el.asFloat.toDouble())
 			}
 		}
 	}

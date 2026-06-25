@@ -3,8 +3,8 @@ package architecture.resonator_combat_framework.animation.controller
 import architecture.resonator_combat_framework.config.RcfConfig
 import architecture.resonator_combat_framework.module.entity_animation.animation.controller.BedrockAnimationController
 import architecture.resonator_combat_framework.module.entity_animation.animation.mapper.AnimationControllerManager
-import architecture.resonator_combat_framework.module.entity_animation.animation.mapper.IEntityAnimationMapper
-import architecture.resonator_combat_framework.module.entity_animation.animation.mapper.LivingEntityAnimationMapper
+import architecture.resonator_combat_framework.module.entity_animation.animation.mapper.IEntityAnimationMapperProvider
+import architecture.resonator_combat_framework.module.entity_animation.animation.mapper.LivingEntityAnimationMapperProvider
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.HumanoidArm
@@ -20,9 +20,9 @@ class ActionAnimationController<T : Entity>(
 	var offhandItem: ItemStack? = null
 
 	/** 每 tick 检测物品变化，触发切换动画 */
-	override fun tickHandler(manager: IEntityAnimationMapper<T, *>) {
+	override fun tickHandler(manager: IEntityAnimationMapperProvider<T, *>) {
 		super.tickHandler(manager)
-		if (manager !is LivingEntityAnimationMapper<*, *>) return
+		if (manager !is LivingEntityAnimationMapperProvider<*, *>) return
 		val entity = manager.holder
 
 		if (!entity.level().isClientSide) return

@@ -3,6 +3,7 @@ package architecture.resonator_combat_framework.module.entity_animation.animatio
 import architecture.goldenboughs_lib.api.AllOpe
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.BakingBrModel
 import architecture.resonator_combat_framework.module.entity_animation.registry.BedrockModelRegistry
+import architecture.resonator_combat_framework.module.entity_animation.util.AnimationMirrorUtil
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 
@@ -131,5 +132,29 @@ private constructor(
 			names.addAll(entry.bones.keys)
 		}
 		return names
+	}
+
+	/** 返回镜像后的配置（交换左右骨骼名） */
+	fun mirrored(): ProxyBoneConfigData {
+		val mirroredBones = bones.mapKeys { AnimationMirrorUtil.mirrorBoneName(it.key) }
+		val mirroredTimeline = timeline.map { entry ->
+			entry.copy(bones = entry.bones.mapKeys { AnimationMirrorUtil.mirrorBoneName(it.key) })
+		}
+		return copy(bones = mirroredBones, timeline = mirroredTimeline)
+	}
+
+	/** 与另一个配置合并（[other] 覆盖 [this]） */
+	fun merge(other: ProxyBoneConfigData): ProxyBoneConfigData {
+		val mergedBones = bones.toMutableMap()
+		mergedBones.putAll(other.bones)
+		val mergedTimeline = timeline + other.timeline
+		return create(
+			bones = mergedBones,
+			timeline = mergedTimeline,
+			transitionTicks = other.transitionTicks.takeIf { it != DEFAULT_TRANSITION_TICKS } ?: transitionTicks,
+			fadeInTicks = other.fadeInTicks.takeIf { it >= 0 } ?: this.fadeInTicks,
+			fadeOutTicks = other.fadeOutTicks.takeIf { it >= 0 } ?: this.fadeOutTicks,
+			extraModel = other.extraModel ?: this.extraModel,
+		)
 	}
 }
