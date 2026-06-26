@@ -95,7 +95,7 @@ class StaticAnimation(
 				is BakingBrAnimationTimeline -> event.time
 				else -> return@forEachIndexed
 			}
-			// Fire when crossing the event time boundary in either direction
+			// 穿越事件时间边界时触发（支持正放和倒放）
 			if ((prevTime < eventTime && time >= eventTime) || (prevTime > eventTime && time <= eventTime)) {
 				if (key !in alreadyFired) {
 					alreadyFired.add(key)

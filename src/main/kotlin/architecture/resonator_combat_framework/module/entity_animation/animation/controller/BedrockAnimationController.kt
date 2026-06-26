@@ -98,7 +98,7 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 		state = State.ANIMATION_TRANSITIONING
 		blendFactor = 0f; blendTarget = 1f
 
-		// Set initial animTime based on playback direction
+		// 根据播放方向设置初始动画时间
 		animTime = if (speedMultiplier >= 0) 0f else calcEndSecond()
 		if (config.startTime > 0) animTime = config.startTime / 20f
 		lastRawGameTime = -1f
@@ -191,7 +191,7 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 		if (state != State.PLAYING) return
 		val anim = currentAnim ?: return
 		if (speedMultiplier < 0) {
-			// Reverse playback: animation ends when time <= 0
+			// 倒放：时间 <= 0 时动画结束
 			if (animTime > 0f) return
 		} else {
 			val endSec = calcEndSecond()
