@@ -52,7 +52,7 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 	final override var blendFactor = 0f; private set
 	final override var blendTarget = 0f; private set
 	final override var currentTransitionTicks = ProxyBoneConfigData.DEFAULT_TRANSITION_TICKS; private set
-	final override var speedMultiplier = 1f; private set
+	final override var speedMultiplier = 1f
 	final override var affectedBones = emptySet<String>(); private set
 
 	protected var advanceTickCount = 0L
@@ -94,12 +94,14 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 		currentConfig = config
 
 		snapshotTransitionSource()
-		if (config.startTime > 0) setAnimStartTime(config.startTime / 20f)
 		currentTransitionTicks = config.resolveFadeInTicks(activeBoneConfig.getFadeInTicks())
 		state = State.ANIMATION_TRANSITIONING
 		blendFactor = 0f; blendTarget = 1f
 
-		freezeAllAtFrameZero()
+		// Set initial animTime based on playback direction
+		animTime = if (speedMultiplier >= 0) 0f else calcEndSecond()
+		if (config.startTime > 0) animTime = config.startTime / 20f
+		lastRawGameTime = -1f
 		affectedBones = anim.computeAndWrite(animTime, proxyModel, molangData, config.mirror)
 		if (transitionSource != null) crossfadeStep()
 
@@ -133,7 +135,13 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 	override fun resume() {
 		if (state != State.PAUSED) return
 		val anim = currentAnim
-		if (anim != null && animTime * speedMultiplier >= anim.length && anim.loopType == LoopType.HOLD_ON_LAST) return
+		if (anim != null) {
+			if (speedMultiplier >= 0) {
+				if (animTime * speedMultiplier >= anim.length && anim.loopType == LoopType.HOLD_ON_LAST) return
+			} else {
+				if (animTime <= 0f && anim.loopType == LoopType.HOLD_ON_LAST) return
+			}
+		}
 		state = if (isInFadeIn()) State.ANIMATION_TRANSITIONING else State.PLAYING
 	}
 
@@ -182,8 +190,13 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 	private fun checkPlaybackBounds() {
 		if (state != State.PLAYING) return
 		val anim = currentAnim ?: return
-		val endSec = calcEndSecond()
-		if (animTime < endSec || endSec <= 0f) return
+		if (speedMultiplier < 0) {
+			// Reverse playback: animation ends when time <= 0
+			if (animTime > 0f) return
+		} else {
+			val endSec = calcEndSecond()
+			if (animTime < endSec || endSec <= 0f) return
+		}
 		when (currentConfig.animType) {
 			AnimType.PLAY_ONCE, AnimType.DEFAULT -> when {
 				anim.loopType == LoopType.ONCE -> startFadeOut()
@@ -212,7 +225,10 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 		}
 	}
 
-	fun resetAnimAndRestart() { animTime = 0f; firedEvents.clear() }
+	fun resetAnimAndRestart() {
+		if (speedMultiplier >= 0) animTime = 0f else animTime = calcEndSecond()
+		firedEvents.clear()
+	}
 
 	// ===== 游戏刻推进 =====
 
@@ -264,18 +280,20 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 		val data = molangData
 		if (freezeTime) {
 			affectedBones = anim.computeAndWrite(animTime, proxyModel, data, currentConfig.mirror)
-			manager.queueEvents(this, anim.collectEvents(animTime, firedEvents, currentConfig.mirror))
+			manager.queueEvents(this, anim.collectEvents(animTime, animTime, firedEvents, currentConfig.mirror))
 			return
 		}
 		val scaledDelta = calcScaledDelta(gameTime)
-		animTime = anim.tickAnimTime(animTime, scaledDelta, data, currentConfig.mirror)
+		val prevAnimTime = animTime
+		animTime = anim.tickAnimTime(animTime, scaledDelta)
+		data?.updateAnimQueries(animTime, scaledDelta)
 		affectedBones = anim.computeAndWrite(animTime, proxyModel, data, currentConfig.mirror)
 		anim.tick(manager.holder, animTime, scaledDelta, proxyModel, manager.brModel)
-		manager.queueEvents(this, anim.collectEvents(animTime, firedEvents, currentConfig.mirror))
+		manager.queueEvents(this, anim.collectEvents(animTime, prevAnimTime, firedEvents, currentConfig.mirror))
 	}
 
 	private fun calcScaledDelta(gameTime: Float): Float {
-		if (lastRawGameTime < 0f) { lastRawGameTime = gameTime; animTime = 0f; return 0f }
+		if (lastRawGameTime < 0f) { lastRawGameTime = gameTime; return 0f }
 		val delta = gameTime - lastRawGameTime; lastRawGameTime = gameTime; return delta * speedMultiplier
 	}
 

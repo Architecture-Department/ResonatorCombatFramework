@@ -5,7 +5,6 @@ import architecture.resonator_combat_framework.init.RcfRegistries
 import architecture.resonator_combat_framework.init.RcfStaticAnimations
 import architecture.resonator_combat_framework.module.entity_animation.animation.StaticAnimation
 import architecture.resonator_combat_framework.module.entity_animation.animation.baking_animation.BakingBrAnimation
-import architecture.resonator_combat_framework.module.entity_animation.animation.molang.MolangValue
 import architecture.resonator_combat_framework.util.RcfUtil
 import com.google.gson.JsonParser
 import net.minecraft.server.packs.resources.ResourceManager
@@ -33,7 +32,6 @@ class BedrockAnimationRegistry(
 	}
 
 	private val bakingAnimations = mutableMapOf<String, BakingBrAnimation>()
-	private val exprCache = mutableMapOf<String, MolangValue>()
 
 	fun getBakingAnimation(animId: String): BakingBrAnimation? = bakingAnimations[animId]
 
@@ -49,7 +47,7 @@ class BedrockAnimationRegistry(
 			val before = result.size
 			try {
 				val json = JsonParser.parseReader(entry.value.openAsReader()).asJsonObject
-				result.putAll(BakingBrAnimation.parses(json, side, exprCache))
+				result.putAll(BakingBrAnimation.parses(json, side))
 			} catch (e: Exception) {
 				RcfUtil.LOGGER.error("[ANIMATION/{}] Failed to load: {}", side, entry.key, e)
 			}

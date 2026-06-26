@@ -4,9 +4,7 @@ import architecture.resonator_combat_framework.module.entity_animation.animation
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.ProxyBone
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.ProxyModel
 import architecture.resonator_combat_framework.module.entity_animation.animation.molang.EasingTypes
-import architecture.resonator_combat_framework.module.entity_animation.animation.molang.MoLangParser
 import architecture.resonator_combat_framework.module.entity_animation.animation.molang.MolangData
-import architecture.resonator_combat_framework.module.entity_animation.animation.molang.MolangValue
 import architecture.resonator_combat_framework.module.entity_animation.util.AnimationMirrorUtil
 import architecture.resonator_combat_framework.util.RcfUtil
 import com.google.gson.JsonObject
@@ -26,8 +24,6 @@ data class BakingBrAnimation
 	val sounds: List<BakingBrAnimationSound> = emptyList(),
 	val particles: List<BakingBrAnimationParticle> = emptyList(),
 	val timelines: List<BakingBrAnimationTimeline> = emptyList(),
-	/** MoLang 时间推进表达式，默认 query.anim_time + query.delta_time */
-	val animTimeUpdate: MolangValue? = null
 ) {
 	companion object {
 		@JvmField
@@ -36,7 +32,7 @@ data class BakingBrAnimation
 		/** 解析 JSON 根对象的 "animations" 段，每个条目注册为一个 BedrockAnimation */
 		@JvmStatic
 		fun parses(
-			root: JsonObject, side: String = "?", exprCache: MutableMap<String, MolangValue> = mutableMapOf()
+			root: JsonObject, side: String = "?"
 		): MutableMap<String, BakingBrAnimation> {
 			val result = mutableMapOf<String, BakingBrAnimation>()
 			val animations = root.getAsJsonObject("animations") ?: return result
@@ -64,18 +60,7 @@ data class BakingBrAnimation
 				val timelines = if (timelinesJson != null) BakingBrAnimationTimeline.parses(timelinesJson) else emptyList()
 
 				val length = animDef.get("animation_length")?.asFloat ?: BakingBrBoneAnimation.calcAnimLength(bones)
-				// 解析 Molang anim_time_update
-				val exprStr = animDef.get("anim_time_update")?.asString ?: "query.anim_time + query.delta_time"
-				try {
-					val mathValue = MoLangParser.compileMolang(exprStr)
-					val expr = exprCache.getOrPut(exprStr) { mathValue }
-					result[animId] = BakingBrAnimation(animId, loop, length, bones, sounds, particles, timelines, expr)
-				} catch (e: Exception) {
-					RcfUtil.LOGGER.warn(
-						"[ANIMATION/{}] Failed to parse anim_time_update: '{}' for {} exception: {}", side, exprStr, animId, e
-					)
-					result[animId] = BakingBrAnimation(animId, loop, length, bones, sounds, particles, timelines)
-				}
+				result[animId] = BakingBrAnimation(animId, loop, length, bones, sounds, particles, timelines)
 			}
 			return result
 		}

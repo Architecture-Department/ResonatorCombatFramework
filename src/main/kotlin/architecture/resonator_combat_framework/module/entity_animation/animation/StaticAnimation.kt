@@ -67,40 +67,40 @@ class StaticAnimation(
 		return getBakingAnimation(mirrored).computeAndWrite(time, proxyModel, context)
 	}
 
-	fun collectEvents(time: Float, alreadyFired: MutableSet<String>, mirrored: Boolean = false): AnimationEventsToFire {
+	fun collectEvents(time: Float, prevTime: Float, alreadyFired: MutableSet<String>, mirrored: Boolean = false): AnimationEventsToFire {
 		val src = getBakingAnimation(mirrored)
 		val sounds = mutableListOf<BakingBrAnimationSound>()
 		val particles = mutableListOf<BakingBrAnimationParticle>()
 		val timelines = mutableListOf<BakingBrAnimationTimeline>()
-		collectTyped(src.sounds, "sound_", alreadyFired, time, sounds)
-		collectTyped(src.particles, "particle_", alreadyFired, time, particles)
-		collectTyped(src.timelines, "timeline_", alreadyFired, time, timelines)
+		collectTyped(src.sounds, "sound_", alreadyFired, time, prevTime, sounds)
+		collectTyped(src.particles, "particle_", alreadyFired, time, prevTime, particles)
+		collectTyped(src.timelines, "timeline_", alreadyFired, time, prevTime, timelines)
 		return AnimationEventsToFire(sounds, particles, timelines)
 	}
 
-	final fun tickAnimTime(currentTime: Float, deltaTime: Float, context: MolangData? = null, mirrored: Boolean = false): Float {
-		val src = getBakingAnimation(mirrored)
-		val expr = src.animTimeUpdate
-		if (expr != null && context != null) {
-			context.updateAnimQueries(currentTime, deltaTime)
-			return expr.eval(context).toFloat()
-		}
+	/**
+	 * 推进动画时间，返回更新后的动画时间（秒）。
+	 * 以固定步进累加。
+	 */
+	fun tickAnimTime(currentTime: Float, deltaTime: Float): Float {
 		return currentTime + deltaTime
 	}
 
-	private inline fun <reified T : Any> collectTyped(events: List<T>, prefix: String, alreadyFired: MutableSet<String>, time: Float, out: MutableList<T>) {
+	private inline fun <reified T : Any> collectTyped(events: List<T>, prefix: String, alreadyFired: MutableSet<String>, time: Float, prevTime: Float, out: MutableList<T>) {
 		events.forEachIndexed { i, event ->
 			val key = "$prefix$i"
-			if (key in alreadyFired) return@forEachIndexed
 			val eventTime = when (event) {
 				is BakingBrAnimationSound -> event.time
 				is BakingBrAnimationParticle -> event.time
 				is BakingBrAnimationTimeline -> event.time
 				else -> return@forEachIndexed
 			}
-			if (time >= eventTime) {
-				alreadyFired.add(key)
-				out.add(event)
+			// Fire when crossing the event time boundary in either direction
+			if ((prevTime < eventTime && time >= eventTime) || (prevTime > eventTime && time <= eventTime)) {
+				if (key !in alreadyFired) {
+					alreadyFired.add(key)
+					out.add(event)
+				}
 			}
 		}
 	}

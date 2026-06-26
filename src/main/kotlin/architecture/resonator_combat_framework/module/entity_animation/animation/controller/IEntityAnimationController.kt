@@ -66,10 +66,11 @@ interface IEntityAnimationController<T : Entity> {
 	val currentTransitionTicks: Int
 
 	/** 播放速度倍率（外部只读） */
-	val speedMultiplier: Float
 
 	/** 是否覆盖模式（true=覆盖低优先级，false=叠加） */
 	val isOverriding: Boolean
+	/** 播放速度倍率 */
+	var speedMultiplier: Float
 
 	/** 受影响的骨骼集合 */
 	val affectedBones: Set<String>
