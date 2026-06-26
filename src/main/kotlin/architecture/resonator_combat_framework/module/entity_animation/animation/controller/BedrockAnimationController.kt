@@ -13,7 +13,6 @@ import architecture.resonator_combat_framework.module.entity_animation.animation
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.BakingBrModel
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.ProxyBone
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.ProxyModel
-import architecture.resonator_combat_framework.module.entity_animation.animation.molang.MolangData
 import architecture.resonator_combat_framework.module.entity_animation.event.AnimationColliderEvent
 import architecture.resonator_combat_framework.module.entity_animation.event.AnimationCompleteEvent
 import architecture.resonator_combat_framework.module.entity_animation.event.AnimationControllerEvent
@@ -102,7 +101,7 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 		animTime = if (speedMultiplier >= 0) 0f else calcEndSecond()
 		if (config.startTime > 0) animTime = config.startTime / 20f
 		lastRawGameTime = -1f
-		affectedBones = anim.computeAndWrite(animTime, proxyModel, molangData, config.mirror)
+		affectedBones = anim.computeAndWrite(animTime, proxyModel, currentData, config.mirror)
 		if (transitionSource != null) crossfadeStep()
 
 		anim.onBegin(manager.holder)
@@ -247,10 +246,10 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 	}
 
 	override fun tickAdvance() {
-		currentAnim ?: return
-		NeoForge.EVENT_BUS.post(AnimationColliderEvent.Pre(id, this, manager.holder, currentAnimTime, proxyModel, manager.brModel, manager.mergedProxy))
-		currentAnim.tickAdvance(manager.holder, currentAnimTime, proxyModel, manager.brModel, manager.mergedProxy, this)
-		NeoForge.EVENT_BUS.post(AnimationColliderEvent.Post(id, this, manager.holder, currentAnimTime, proxyModel, manager.brModel, manager.mergedProxy))
+		val anim = currentAnim ?: return
+		NeoForge.EVENT_BUS.post(AnimationColliderEvent.Pre(this, manager.holder, currentAnimTime, proxyModel, manager.brModel, manager.mergedProxy))
+		anim.tickAdvance(manager.holder, currentAnimTime, proxyModel, manager.brModel, manager.mergedProxy, this)
+		NeoForge.EVENT_BUS.post(AnimationColliderEvent.Post(this, manager.holder, currentAnimTime, proxyModel, manager.brModel, manager.mergedProxy))
 	}
 
 	private fun tickHandlerCall() {
@@ -277,7 +276,7 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 
 	fun tickBackend(gameTime: Float, freezeTime: Boolean = false) {
 		val anim = currentAnim ?: return
-		val data = molangData
+		val data = currentData
 		if (freezeTime) {
 			affectedBones = anim.computeAndWrite(animTime, proxyModel, data, currentConfig.mirror)
 			manager.queueEvents(this, anim.collectEvents(animTime, animTime, firedEvents, currentConfig.mirror))
@@ -286,7 +285,7 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 		val scaledDelta = calcScaledDelta(gameTime)
 		val prevAnimTime = animTime
 		animTime = anim.tickAnimTime(animTime, scaledDelta)
-		data?.updateAnimQueries(animTime, scaledDelta)
+		data.updateAnimQueries(animTime, scaledDelta)
 		affectedBones = anim.computeAndWrite(animTime, proxyModel, data, currentConfig.mirror)
 		anim.tick(manager.holder, animTime, scaledDelta, proxyModel, manager.brModel)
 		manager.queueEvents(this, anim.collectEvents(animTime, prevAnimTime, firedEvents, currentConfig.mirror))
