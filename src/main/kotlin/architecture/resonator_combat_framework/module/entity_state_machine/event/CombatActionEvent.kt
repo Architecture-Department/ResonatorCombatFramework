@@ -64,7 +64,7 @@ abstract class CombatActionEvent(
 		val target: Action,
 		val oldValue: Boolean,
 		var newValue: Boolean,
-	) : CombatActionEvent(holder, entity, action), ICancellableEvent {}
+	) : CombatActionEvent(holder, entity, action), ICancellableEvent
 
 	abstract class Tick(
 		holder: EntityStateHolder<*>,

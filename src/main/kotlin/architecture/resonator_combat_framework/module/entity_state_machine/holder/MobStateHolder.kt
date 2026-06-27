@@ -6,5 +6,4 @@ import net.minecraft.world.entity.Mob
 class MobStateHolder<T : Mob>(
 	entity: T,
 	actionController: ActionController = ActionController(entity)
-) : EntityStateHolder<T>(entity, actionController) {
-}
+) : EntityStateHolder<T>(entity, actionController)

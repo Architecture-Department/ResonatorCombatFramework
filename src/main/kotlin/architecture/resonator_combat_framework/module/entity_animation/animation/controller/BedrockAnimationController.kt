@@ -230,7 +230,7 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 	}
 
 	private fun calcEndSecond(): Float {
-		val config = currentConfig;
+		val config = currentConfig
 		val anim = currentAnim ?: return 0f
 		return when {
 			config.endTime < 0 -> anim.length + config.endTime / 20f
