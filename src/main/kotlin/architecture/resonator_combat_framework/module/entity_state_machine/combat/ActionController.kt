@@ -2,7 +2,6 @@
 
 import architecture.goldenboughs_lib.api.AllOpe
 import architecture.resonator_combat_framework.core.RcfEventHooks
-import architecture.resonator_combat_framework.init.RcfAttachmentTypes
 import architecture.resonator_combat_framework.module.entity_state_machine.event.CombatActionEvent
 import architecture.resonator_combat_framework.module.entity_state_machine.holder.EntityStateHolder
 import architecture.resonator_combat_framework.util.TimeUtil
@@ -11,17 +10,12 @@ import kotlin.math.max
 
 @AllOpe
 class ActionController(val entity: LivingEntity) {
-	private lateinit var _holder: EntityStateHolder<*>
-	val holder: EntityStateHolder<*>
-		get() {
-			if (!::_holder.isInitialized) {
-				_holder = entity.getData(RcfAttachmentTypes.STATE_HOLDER)
-			}
-			return _holder
-		}
+	/** 状态持有者引用（由 EntityStateHolder 在构造后立即设置） */
+	final lateinit var holder: EntityStateHolder<*>
+		internal set
 
 	/** 当前动作集 */
-	final var actionData: ActionData? = null
+	final var actionSequence: ActionSequence? = null
 		set(value) {
 			stageIndex = 0
 			if (value == null) {
@@ -96,11 +90,11 @@ class ActionController(val entity: LivingEntity) {
 	/** 切换下一段动作 */
 	fun onNextAction() {
 		var nextIndex = stageIndex + 1
-		if ((actionData?.stages?.size ?: 0) <= nextIndex) {
+		if ((actionSequence?.stages?.size ?: 0) <= nextIndex) {
 			nextIndex = 0
 		}
 		onChangedAction(
-			action?.nextAction(time, stageIndex, nextIndex, actionData, entity),
+			action?.nextAction(time, stageIndex, nextIndex, actionSequence, entity),
 			CombatActionEvent.Changed.Type.NEXT
 		)
 	}
@@ -117,7 +111,7 @@ class ActionController(val entity: LivingEntity) {
 		}
 
 		if (!RcfEventHooks.CombatActionTickPre(holder, entity, action)) {
-			action.tick(time, actionData, entity)
+			action.tick(time, actionSequence, entity)
 			RcfEventHooks.CombatActionTickPost(holder, entity, action)
 		}
 		actionState = action.getState(time, entity)

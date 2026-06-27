@@ -21,7 +21,7 @@ abstract class Action(
 ) {
 	val timeLength: Float = timing.windupSec + timing.activeSec + timing.recoverySec
 
-	fun tick(time: Float, actionData: ActionData?, entity: LivingEntity) {
+	fun tick(time: Float, actionSequence: ActionSequence?, entity: LivingEntity) {
 	}
 
 	fun getState(time: Float, entity: LivingEntity): ActionState {
@@ -42,13 +42,13 @@ abstract class Action(
 		return RcfEventHooks.CombatActionInterruptible(holder, entity, this, target, interruptWeight < target.weight)
 	}
 
-	fun nextAction(time: Float, sourceIndex: Int, nextIndex: Int, actionData: ActionData?, entity: LivingEntity): Action? {
-		actionData ?: return null
-		return actionData.getStage(nextIndex)
+	fun nextAction(time: Float, sourceIndex: Int, nextIndex: Int, actionSequence: ActionSequence?, entity: LivingEntity): Action? {
+		actionSequence ?: return null
+		return actionSequence.getStage(nextIndex)
 	}
 
-	fun nextAction(time: Float, sourceIndex: Int, actionData: ActionData?, entity: LivingEntity): Action? {
-		return nextAction(time, sourceIndex, sourceIndex + 1, actionData, entity)
+	fun nextAction(time: Float, sourceIndex: Int, actionSequence: ActionSequence?, entity: LivingEntity): Action? {
+		return nextAction(time, sourceIndex, sourceIndex + 1, actionSequence, entity)
 	}
 }
 

@@ -1,4 +1,4 @@
-package architecture.resonator_combat_framework.events
+﻿package architecture.resonator_combat_framework.events
 
 import architecture.goldenboughs_lib.util.PoseStack
 import architecture.goldenboughs_lib.util.toPos
@@ -24,7 +24,6 @@ object PlayerEvents {
 		val player = event.entity
 		val level = player.level()
 		val animationTransformer = player.getAnimationTransformer()
-		animationTransformer.tickAnimationManager()
 		val animationControllerManager = animationTransformer.animationControllerManager
 		val animationData = animationControllerManager.getInterpolatedProxy(1f)
 		val brModel = animationControllerManager.brModel

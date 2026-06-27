@@ -1,4 +1,4 @@
-package architecture.resonator_combat_framework.module.entity_state_machine.holder
+﻿package architecture.resonator_combat_framework.module.entity_state_machine.holder
 
 import architecture.goldenboughs_lib.api.AllOpe
 import architecture.resonator_combat_framework.module.entity_state_machine.combat.ActionController
@@ -15,6 +15,10 @@ class EntityStateHolder<T : LivingEntity>(
 	val entity: T,
 	val actionController: ActionController = ActionController(entity)
 ) {
+	init {
+		actionController.holder = this
+	}
+
 	companion object {
 		/** 移动中（速度超过阈值且脚步动画中） */
 		@JvmField
