@@ -1,7 +1,6 @@
 package architecture.resonator_combat_framework.module.entity_animation.registry
 
 import architecture.resonator_combat_framework.event.AnimationRegistry
-import architecture.resonator_combat_framework.init.RcfRegistries
 import architecture.resonator_combat_framework.init.RcfStaticAnimations
 import architecture.resonator_combat_framework.module.entity_animation.animation.StaticAnimation
 import architecture.resonator_combat_framework.module.entity_animation.animation.baking_animation.BakingBrAnimation
@@ -72,12 +71,12 @@ class BedrockAnimationRegistry(
 			loaded.keys.sorted().joinToString(", ")
 		)
 
-		RcfRegistries.getStaticAnimations(isClient).clear()
+		RcfStaticAnimations.getStaticAnimations(isClient).clear()
 		getInstance(isClient).getAllAnim().forEach { (id, animation) ->
 			RcfStaticAnimations.register(id, { _ -> StaticAnimation(id) }, isClient)
 		}
 		(if (isClient) AnimationRegistry.CLIENTS else AnimationRegistry.SERVERS).forEach { it() }
-		RcfRegistries.getStaticAnimations(isClient).forEach { (_, animation) ->
+		RcfStaticAnimations.getStaticAnimations(isClient).forEach { (_, animation) ->
 			animation.init(isClient)
 		}
 	}

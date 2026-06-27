@@ -1,15 +1,14 @@
-package architecture.resonator_combat_framework.module.collision
+﻿package architecture.resonator_combat_framework.module.collision
 
+import architecture.resonator_combat_framework.core.RcfEventHooks
 import architecture.resonator_combat_framework.init.RcfAttachmentTypes
 import architecture.resonator_combat_framework.module.collision.collision.OBB
-import architecture.resonator_combat_framework.module.collision.event.CollisionEntityEvent
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.LivingEntity
 import net.minecraft.world.level.ClipContext
 import net.minecraft.world.phys.AABB
 import net.minecraft.world.phys.HitResult
 import net.minecraft.world.phys.Vec3
-import net.neoforged.neoforge.common.NeoForge
 import org.joml.Vector3f
 
 object CollisionSystem {
@@ -60,7 +59,7 @@ object CollisionSystem {
 
 		for (target in reusableEntityBuffer) {
 			for (entry in data.activeColliders) {
-				val check = NeoForge.EVENT_BUS.post(CollisionEntityEvent.Check(attacker, entry, target, data))
+				val check = RcfEventHooks.CollisionEntityCheck(attacker, entry, target, data)
 				if (check.isCanceled) continue
 				if (data.isAlreadyHit(entry.groupId, target.uuid)) continue
 				if (!checkCollision(entry, attacker, target)) continue
@@ -69,7 +68,7 @@ object CollisionSystem {
 				if (check.isRecord) {
 					data.markHit(entry.groupId, target.uuid)
 				}
-				NeoForge.EVENT_BUS.post(CollisionEntityEvent.Hit(attacker, entry, target, data))
+				RcfEventHooks.CollisionEntityHit(attacker, entry, target, data)
 			}
 		}
 	}

@@ -1,6 +1,7 @@
-package architecture.resonator_combat_framework.module.entity_animation.animation.controller
+﻿package architecture.resonator_combat_framework.module.entity_animation.animation.controller
 
-import architecture.resonator_combat_framework.init.RcfRegistries
+import architecture.resonator_combat_framework.core.RcfEventHooks
+import architecture.resonator_combat_framework.init.RcfStaticAnimations
 import architecture.resonator_combat_framework.module.entity_animation.animation.LoopType
 import architecture.resonator_combat_framework.module.entity_animation.animation.StaticAnimation
 import architecture.resonator_combat_framework.module.entity_animation.animation.controller.IEntityAnimationController.State
@@ -13,15 +14,11 @@ import architecture.resonator_combat_framework.module.entity_animation.animation
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.BakingBrModel
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.ProxyBone
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.ProxyModel
-import architecture.resonator_combat_framework.module.entity_animation.event.AnimationColliderEvent
-import architecture.resonator_combat_framework.module.entity_animation.event.AnimationCompleteEvent
-import architecture.resonator_combat_framework.module.entity_animation.event.AnimationControllerEvent
-import architecture.resonator_combat_framework.module.entity_animation.event.AnimationTriggerEvent
 import architecture.resonator_combat_framework.module.entity_animation.registry.BedrockAnimationRegistry
 import architecture.resonator_combat_framework.util.RcfUtil
+import architecture.resonator_combat_framework.util.TimeUtil
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.Entity
-import net.neoforged.neoforge.common.NeoForge
 
 class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 	override val manager: AnimationControllerManager<T>,
@@ -40,13 +37,13 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 	final override val activeBoneConfig: ProxyBoneConfigData
 		get() {
 			val anim = currentAnim ?: return localBoneConfig
-			return if (currentConfig.mirror) {
-				if (localBoneConfig != ProxyBoneConfigData.EMPTY) anim.boneConfig.merge(localBoneConfig).mirrored()
+			val merge = anim.boneConfig.merge(localBoneConfig)
+			if (currentConfig.mirror) {
+				return if (localBoneConfig != ProxyBoneConfigData.EMPTY) merge.mirrored()
 				else anim.mirroredBoneConfig
-			} else {
-				if (localBoneConfig != ProxyBoneConfigData.EMPTY) anim.boneConfig.merge(localBoneConfig)
-				else anim.boneConfig
 			}
+			return if (localBoneConfig != ProxyBoneConfigData.EMPTY) merge
+			else anim.boneConfig
 		}
 	final override var blendFactor = 0f; private set
 	final override var blendTarget = 0f; private set
@@ -71,7 +68,7 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 	// ===== 触发 =====
 
 	override fun trigger(animId: String, config: AnimationPlayData) {
-		val anim = RcfRegistries.getStaticAnimation(isClient, animId)
+		val anim = RcfStaticAnimations.getStaticAnimation(isClient, animId)
 		if (anim == null) {
 			RcfUtil.LOGGER.warn("[AnimDebug] Animation not found: $animId")
 			return
@@ -80,7 +77,7 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 	}
 
 	override fun triggerWithAnimation(anim: StaticAnimation, config: AnimationPlayData) {
-		NeoForge.EVENT_BUS.post(AnimationTriggerEvent.Pre(this, anim, config))
+		RcfEventHooks.AnimationTriggerPre(this, anim, config)
 
 		val oldActionAnim = currentAnim
 		oldActionAnim?.onEnd(manager.holder)
@@ -109,7 +106,7 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 		extraModel = activeBoneConfig.extraModel
 		manager.rebuildBones()
 
-		NeoForge.EVENT_BUS.post(AnimationTriggerEvent.Post(this, anim, config))
+		RcfEventHooks.AnimationTriggerPost(this, anim, config)
 	}
 
 	// ===== 停止 =====
@@ -134,12 +131,15 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 	override fun resume() {
 		if (state != State.PAUSED) return
 		val anim = currentAnim
-		if (anim != null) {
-			if (speedMultiplier >= 0) {
-				if (animTime * speedMultiplier >= anim.length && anim.loopType == LoopType.HOLD_ON_LAST) return
-			} else {
-				if (animTime <= 0f && anim.loopType == LoopType.HOLD_ON_LAST) return
-			}
+		if (anim == null) {
+			state = if (isInFadeIn()) State.ANIMATION_TRANSITIONING else State.PLAYING
+			return
+		}
+
+		if (speedMultiplier >= 0) {
+			if (animTime * speedMultiplier >= anim.length && anim.loopType == LoopType.HOLD_ON_LAST) return
+		} else {
+			if (animTime <= 0f && anim.loopType == LoopType.HOLD_ON_LAST) return
 		}
 		state = if (isInFadeIn()) State.ANIMATION_TRANSITIONING else State.PLAYING
 	}
@@ -167,14 +167,22 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 		for ((name, bone) in proxyModel.bones) {
 			if (name !in affectedBones) bone.pos.set(0f); bone.rotation.set(0f); bone.scale.set(1f)
 		}
-		for ((name, _) in proxyModel.bones) { if (src.getBone(name) == null) src.addBone(ProxyBone(name)) }
-		for ((name, _) in src.bones) { if (proxyModel.getBone(name) == null) proxyModel.addBone(ProxyBone(name)) }
+
+		for ((name, _) in proxyModel.bones) {
+			if (src.getBone(name) == null) src.addBone(ProxyBone(name))
+		}
+
+		for ((name, _) in src.bones) {
+			if (proxyModel.getBone(name) == null) proxyModel.addBone(ProxyBone(name))
+		}
+
 		for ((name, fromBone) in src.bones) {
 			val toBone = proxyModel.getBone(name) ?: continue
 			if (!boneFlags[name].shouldBlend()) {
 				fromBone.pos.set(toBone.pos); fromBone.rotation.set(toBone.rotation); fromBone.scale.set(toBone.scale)
 				continue
 			}
+
 			fromBone.pos.lerp(toBone.pos, blendFactor, toBone.pos)
 			fromBone.rotation.lerp(toBone.rotation, blendFactor, toBone.rotation)
 			fromBone.scale.lerp(toBone.scale, blendFactor, toBone.scale)
@@ -189,6 +197,7 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 	private fun checkPlaybackBounds() {
 		if (state != State.PLAYING) return
 		val anim = currentAnim ?: return
+
 		if (speedMultiplier < 0) {
 			// 倒放：时间 <= 0 时动画结束
 			if (animTime > 0f) return
@@ -196,13 +205,18 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 			val endSec = calcEndSecond()
 			if (animTime < endSec || endSec <= 0f) return
 		}
+
 		when (currentConfig.animType) {
 			AnimType.PLAY_ONCE, AnimType.DEFAULT -> when {
 				anim.loopType == LoopType.ONCE -> startFadeOut()
 				anim.loopType == LoopType.LOOP -> resetAnimAndRestart()
 				else -> pause()
 			}
-			AnimType.LOOP -> { resetAnimAndRestart(); if (currentConfig.startTime > 0) setAnimStartTime(currentConfig.startTime / 20f) }
+
+			AnimType.LOOP -> {
+				resetAnimAndRestart(); if (currentConfig.startTime > 0) setAnimStartTime(currentConfig.startTime / 20f)
+			}
+
 			AnimType.STOP_AT_LAST -> pause()
 		}
 	}
@@ -212,11 +226,12 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 		state = State.TRANSITIONING
 		blendTarget = 0f
 		currentTransitionTicks = currentConfig.resolveFadeOutTicks(activeBoneConfig.getFadeOutTicks())
-		NeoForge.EVENT_BUS.post(AnimationCompleteEvent(this))
+		RcfEventHooks.AnimationComplete(this)
 	}
 
 	private fun calcEndSecond(): Float {
-		val config = currentConfig; val anim = currentAnim ?: return 0f
+		val config = currentConfig;
+		val anim = currentAnim ?: return 0f
 		return when {
 			config.endTime < 0 -> anim.length + config.endTime / 20f
 			config.endTime > 0 -> config.endTime / 20f
@@ -225,54 +240,62 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 	}
 
 	fun resetAnimAndRestart() {
-		if (speedMultiplier >= 0) animTime = 0f else animTime = calcEndSecond()
+		animTime = if (speedMultiplier >= 0) 0f else calcEndSecond()
 		firedEvents.clear()
 	}
 
 	// ===== 游戏刻推进 =====
 
 	final override fun tick() {
-		if (NeoForge.EVENT_BUS.post(AnimationControllerEvent.TickPre(id, this, manager.mapperProvider)).isCanceled) return
+		if (RcfEventHooks.AnimationControllerTickPre(id, this, manager.mapperProvider)) return
 		tickHandlerCall()
 		if (state == State.IDLE || state == State.PAUSED) {
-			NeoForge.EVENT_BUS.post(AnimationControllerEvent.TickPost(id, this, manager.mapperProvider)); return
+			RcfEventHooks.AnimationControllerTickPost(id, this, manager.mapperProvider)
+			return
 		}
 		checkPlaybackBounds()
 		tickBlend()
-		if (state == State.PLAYING) { advanceTickCount++; tickBackend(advanceTickCount / 20f) }
-		else tickBackend(0f, freezeTime = true)
+		if (state == State.PLAYING) {
+			advanceTickCount++; tickBackend(advanceTickCount / 20f)
+		} else tickBackend(0f, freezeTime = true)
 		handleStateTransition()
-		NeoForge.EVENT_BUS.post(AnimationControllerEvent.TickPost(id, this, manager.mapperProvider))
+		RcfEventHooks.AnimationControllerTickPost(id, this, manager.mapperProvider)
 	}
 
 	override fun tickAdvance() {
 		val anim = currentAnim ?: return
-		NeoForge.EVENT_BUS.post(AnimationColliderEvent.Pre(this, manager.holder, currentAnimTime, proxyModel, manager.brModel, manager.mergedProxy))
 		anim.tickAdvance(manager.holder, currentAnimTime, proxyModel, manager.brModel, manager.mergedProxy, this)
-		NeoForge.EVENT_BUS.post(AnimationColliderEvent.Post(this, manager.holder, currentAnimTime, proxyModel, manager.brModel, manager.mergedProxy))
 	}
 
 	private fun tickHandlerCall() {
-		if (NeoForge.EVENT_BUS.post(AnimationControllerEvent.TickHandlerPre(id, this, manager.mapperProvider)).isCanceled) return
+		if (RcfEventHooks.AnimationControllerTickHandlerPre(id, this, manager.mapperProvider)) return
 		tickHandler(manager.mapperProvider)
-		NeoForge.EVENT_BUS.post(AnimationControllerEvent.TickHandlerPost(id, this, manager.mapperProvider))
+		RcfEventHooks.AnimationControllerTickHandlerPost(id, this, manager.mapperProvider)
 	}
 
 	private fun handleStateTransition() {
 		if (state == State.ANIMATION_TRANSITIONING && transitionSource != null) crossfadeStep()
-		if (state == State.ANIMATION_TRANSITIONING && blendFactor >= 1f) { state = State.PLAYING; transitionSource = null; lastRawGameTime = advanceTickCount / 20f }
+		if (state == State.ANIMATION_TRANSITIONING && blendFactor >= 1f) {
+			state = State.PLAYING; transitionSource = null; lastRawGameTime = advanceTickCount / 20f
+		}
 		if (state == State.TRANSITIONING && blendFactor <= 0f) forceClear()
 	}
 
 	override fun tickRender(deltaSec: Float) {
 		if (state != State.PLAYING) return
-		if (affectedBones.isNotEmpty()) proxyModel.bones.keys.filter { it !in affectedBones }.forEach { proxyModel.bones.remove(it) }
+		if (affectedBones.isNotEmpty()) proxyModel.bones.keys.filter { it !in affectedBones }
+			.forEach { proxyModel.bones.remove(it) }
 	}
 
 	// ===== 动画后端 =====
 
-	fun freezeAllAtFrameZero() { animTime = 0f; lastRawGameTime = -1f }
-	fun setAnimStartTime(timeSec: Float) { animTime = timeSec }
+	fun freezeAllAtFrameZero() {
+		animTime = 0f; lastRawGameTime = -1f
+	}
+
+	fun setAnimStartTime(timeSec: Float) {
+		animTime = timeSec
+	}
 
 	fun tickBackend(gameTime: Float, freezeTime: Boolean = false) {
 		val anim = currentAnim ?: return
@@ -292,15 +315,22 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 	}
 
 	private fun calcScaledDelta(gameTime: Float): Float {
-		if (lastRawGameTime < 0f) { lastRawGameTime = gameTime; return 0f }
-		val delta = gameTime - lastRawGameTime; lastRawGameTime = gameTime; return delta * speedMultiplier
+		if (lastRawGameTime < 0f) {
+			lastRawGameTime = gameTime; return 0f
+		}
+		val delta = gameTime - lastRawGameTime; lastRawGameTime = gameTime; return TimeUtil.calcScaledDelta(
+			delta,
+			speedMultiplier
+		)
 	}
 
 	// ===== 内部 =====
 
 	private fun tickBlend() {
 		if (blendFactor == blendTarget) return
-		if (currentTransitionTicks <= 0) { blendFactor = blendTarget; return }
+		if (currentTransitionTicks <= 0) {
+			blendFactor = blendTarget; return
+		}
 		val step = 1f / currentTransitionTicks
 		blendFactor = if (blendFactor < blendTarget) (blendFactor + step).coerceAtMost(blendTarget)
 		else (blendFactor - step).coerceAtLeast(blendTarget)

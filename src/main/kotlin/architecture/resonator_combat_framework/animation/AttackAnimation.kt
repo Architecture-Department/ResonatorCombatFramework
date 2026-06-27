@@ -1,17 +1,16 @@
-package architecture.resonator_combat_framework.animation
+﻿package architecture.resonator_combat_framework.animation
 
 import architecture.goldenboughs_lib.util.PoseStack
+import architecture.resonator_combat_framework.core.RcfEventHooks
 import architecture.resonator_combat_framework.module.collision.CollisionEntry
 import architecture.resonator_combat_framework.module.collision.CollisionSystem
 import architecture.resonator_combat_framework.module.entity_animation.animation.controller.IEntityAnimationController
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.BrModel
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.ProxyModel
-import architecture.resonator_combat_framework.module.entity_animation.event.AnimationPhaseEvent
 import architecture.resonator_combat_framework.util.RcfUtil
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.LivingEntity
-import net.neoforged.neoforge.common.NeoForge
 import org.joml.Matrix4f
 
 class AttackAnimation
@@ -69,7 +68,7 @@ constructor(
 		proxyModel: ProxyModel,
 		brModel: BrModel,
 		mergedProxy: ProxyModel,
-		controller: IEntityAnimationController<*>? = null,
+		controller: IEntityAnimationController<*>,
 	) {
 	}
 
@@ -90,40 +89,61 @@ constructor(
 		proxyModel: ProxyModel,
 		brModel: BrModel,
 		mergedProxy: ProxyModel,
-		controller: IEntityAnimationController<*>?
+		controller: IEntityAnimationController<*>
 	) {
-		if (entity.level().isClientSide) return
+		starts(entity, animTime, proxyModel, brModel, mergedProxy, controller)
+	}
+
+	fun starts(
+		entity: Entity,
+		animTime: Float,
+		proxyModel: ProxyModel,
+		brModel: BrModel,
+		mergedProxy: ProxyModel,
+		controller: IEntityAnimationController<*>
+	) {
+		val phases = getActivePhases(animTime)
+		if (phases.isEmpty()) {
+			prevActivePhaseStarts = emptySet(); return
+		}
+
+		val currentStarts = phases.map { it.startTime }.toSet()
+		val started = phases.filter { it.startTime !in prevActivePhaseStarts }
+		val ended = prevActivePhaseStarts - currentStarts
+		started.forEach { RcfEventHooks.AnimationPhaseStart(controller, it) }
+		phases.filter { it.startTime in ended }.forEach { RcfEventHooks.AnimationPhaseEnd(controller, it) }
+		prevActivePhaseStarts = currentStarts
+
+		collider(entity, animTime, proxyModel, brModel, mergedProxy, controller, phases)
+	}
+
+	fun collider(
+		entity: Entity,
+		animTime: Float,
+		proxyModel: ProxyModel,
+		brModel: BrModel,
+		mergedProxy: ProxyModel,
+		controller: IEntityAnimationController<*>,
+		phases: List<AttackPhase>
+	) {
+		RcfEventHooks.AnimationColliderPre(controller, entity, animTime, proxyModel, brModel, mergedProxy)
+
 		onColliderUpdate(entity, animTime, proxyModel, brModel, mergedProxy, controller)
 
 		val data = CollisionSystem.getData(entity)
 		data.removeColliders(id)
 
-		val phases = getActivePhases(animTime)
-		if (phases.isEmpty()) { prevActivePhaseStarts = emptySet(); return }
-
-		val pos = entity.position()
+		val entityPos = entity.position()
 		val bodyRot = -entity.getPreciseBodyRotation(1.0f) * (Math.PI.toFloat() / 180f)
-
-		// 阶段切换检测
-		val currentStarts = phases.map { it.startTime }.toSet()
-		val started = phases.filter { it.startTime !in prevActivePhaseStarts }
-		val ended = prevActivePhaseStarts - currentStarts
-		if (controller != null) {
-			started.forEach { NeoForge.EVENT_BUS.post(AnimationPhaseEvent.Start(controller, it)) }
-			phases.filter { it.startTime in ended }.forEach { NeoForge.EVENT_BUS.post(AnimationPhaseEvent.End(controller, it)) }
-		}
-		prevActivePhaseStarts = currentStarts
 
 		for (phase in phases) {
 			for (pair in phase.colliders) {
 				if (mergedProxy.getBone(pair.boneName) == null) continue
 
-				val boneMatrix = Matrix4f(
-					brModel.computeBoneGlobalMatrix(pair.boneName, mergedProxy, PoseStack(), true).last().pose
-				)
-				val worldMatrix = Matrix4f().translate(pos.x.toFloat(), pos.y.toFloat(), pos.z.toFloat())
+				val worldMatrix = Matrix4f()
+					.translate(entityPos.x.toFloat(), entityPos.y.toFloat(), entityPos.z.toFloat())
 					.rotateY(bodyRot)
-					.mul(boneMatrix)
+					.mul(brModel.computeBoneGlobalMatrix(pair.boneName, mergedProxy, PoseStack(), true).last().pose)
 
 				data.addCollider(
 					CollisionEntry(
@@ -134,5 +154,7 @@ constructor(
 				)
 			}
 		}
+
+		RcfEventHooks.AnimationColliderPost(controller, entity, animTime, proxyModel, brModel, mergedProxy)
 	}
 }

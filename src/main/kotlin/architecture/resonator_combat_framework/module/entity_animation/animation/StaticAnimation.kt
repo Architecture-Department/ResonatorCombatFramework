@@ -53,7 +53,8 @@ class StaticAnimation(
 		this(RcfUtil.modRl(animationId), animationId)
 
 	fun init(isClient: Boolean) {
-		bakingAnimation = BedrockAnimationRegistry.getInstance(isClient).getBakingAnimation(animationId) ?: BakingBrAnimation.EMPTY
+		bakingAnimation =
+			BedrockAnimationRegistry.getInstance(isClient).getBakingAnimation(animationId) ?: BakingBrAnimation.EMPTY
 		_boneConfig = ProxyBoneConfigDataRegistry.getInstance(isClient).getConfig(animationId)
 	}
 
@@ -63,11 +64,21 @@ class StaticAnimation(
 		return mirroredBakingAnimation
 	}
 
-	fun computeAndWrite(time: Float, proxyModel: ProxyModel, context: MolangData? = null, mirrored: Boolean = false): Set<String> {
+	fun computeAndWrite(
+		time: Float,
+		proxyModel: ProxyModel,
+		context: MolangData? = null,
+		mirrored: Boolean = false
+	): Set<String> {
 		return getBakingAnimation(mirrored).computeAndWrite(time, proxyModel, context)
 	}
 
-	fun collectEvents(time: Float, prevTime: Float, alreadyFired: MutableSet<String>, mirrored: Boolean = false): AnimationEventsToFire {
+	fun collectEvents(
+		time: Float,
+		prevTime: Float,
+		alreadyFired: MutableSet<String>,
+		mirrored: Boolean = false
+	): AnimationEventsToFire {
 		val src = getBakingAnimation(mirrored)
 		val sounds = mutableListOf<BakingBrAnimationSound>()
 		val particles = mutableListOf<BakingBrAnimationParticle>()
@@ -86,7 +97,14 @@ class StaticAnimation(
 		return currentTime + deltaTime
 	}
 
-	private inline fun <reified T : Any> collectTyped(events: List<T>, prefix: String, alreadyFired: MutableSet<String>, time: Float, prevTime: Float, out: MutableList<T>) {
+	private inline fun <reified T : Any> collectTyped(
+		events: List<T>,
+		prefix: String,
+		alreadyFired: MutableSet<String>,
+		time: Float,
+		prevTime: Float,
+		out: MutableList<T>
+	) {
 		events.forEachIndexed { i, event ->
 			val key = "$prefix$i"
 			val eventTime = when (event) {
@@ -96,7 +114,7 @@ class StaticAnimation(
 				else -> return@forEachIndexed
 			}
 			// 穿越事件时间边界时触发（支持正放和倒放）
-			if ((prevTime < eventTime && time >= eventTime) || (prevTime > eventTime && time <= eventTime)) {
+			if ((prevTime < eventTime && time >= eventTime) || (eventTime in time..<prevTime)) {
 				if (key !in alreadyFired) {
 					alreadyFired.add(key)
 					out.add(event)
@@ -132,5 +150,13 @@ class StaticAnimation(
 	fun onEnd(entity: Entity) {}
 
 	/** 合并后钩子。在 [remerge] 后调用。[mergedProxy] 为最终合并骨骼。 */
-	fun tickAdvance(entity: Entity, animTime: Float, proxyModel: ProxyModel, brModel: BrModel, mergedProxy: ProxyModel, controller: IEntityAnimationController<*>? = null) {}
+	fun tickAdvance(
+		entity: Entity,
+		animTime: Float,
+		proxyModel: ProxyModel,
+		brModel: BrModel,
+		mergedProxy: ProxyModel,
+		controller: IEntityAnimationController<*>
+	) {
+	}
 }

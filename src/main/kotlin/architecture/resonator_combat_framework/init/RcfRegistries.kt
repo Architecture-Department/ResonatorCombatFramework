@@ -1,34 +1,14 @@
 package architecture.resonator_combat_framework.init
 
-import architecture.resonator_combat_framework.module.entity_animation.animation.StaticAnimation
 import architecture.resonator_combat_framework.util.RcfUtil
 import net.minecraft.core.MappedRegistry
 import net.minecraft.core.Registry
 import net.minecraft.resources.ResourceKey
-import net.minecraft.resources.ResourceLocation
 import net.neoforged.neoforge.registries.NewRegistryEvent
 import net.neoforged.neoforge.registries.RegistryBuilder
 
 object RcfRegistries {
 	private val REGISTRIES = mutableListOf<Registry<*>>()
-
-	private val CLIENT_STATIC_ANIMATIONS = mutableMapOf<ResourceLocation, StaticAnimation>()
-	private val SERVER_STATIC_ANIMATIONS = mutableMapOf<ResourceLocation, StaticAnimation>()
-
-	@JvmStatic
-	fun getStaticAnimations(isClient: Boolean): MutableMap<ResourceLocation, StaticAnimation> {
-		return if (isClient) CLIENT_STATIC_ANIMATIONS else SERVER_STATIC_ANIMATIONS
-	}
-
-	@JvmStatic
-	fun getStaticAnimation(isClient: Boolean, id: ResourceLocation): StaticAnimation? {
-		return if (isClient) CLIENT_STATIC_ANIMATIONS[id] else SERVER_STATIC_ANIMATIONS[id]
-	}
-
-	@JvmStatic
-	fun getStaticAnimation(isClient: Boolean, id: String): StaticAnimation? {
-		return getStaticAnimation(isClient, RcfUtil.modRl(id))
-	}
 
 	@JvmStatic
 	internal fun register(event: NewRegistryEvent) {

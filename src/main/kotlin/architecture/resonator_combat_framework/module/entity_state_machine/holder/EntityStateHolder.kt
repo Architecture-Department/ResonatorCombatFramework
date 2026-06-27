@@ -1,22 +1,20 @@
 package architecture.resonator_combat_framework.module.entity_state_machine.holder
 
 import architecture.goldenboughs_lib.api.AllOpe
-import architecture.goldenboughs_lib.util.LibUtil.rlOf
+import architecture.resonator_combat_framework.module.entity_state_machine.combat.ActionController
 import architecture.resonator_combat_framework.util.RcfUtil
-import net.minecraft.core.HolderLookup
 import net.minecraft.core.component.DataComponents
-import net.minecraft.nbt.CompoundTag
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.LivingEntity
 import net.minecraft.world.entity.Pose
 import net.minecraft.world.phys.Vec3
-import net.neoforged.neoforge.common.util.INBTSerializable
 import kotlin.math.abs
 
 @AllOpe
 class EntityStateHolder<T : LivingEntity>(
-	protected val entity: T
-) : INBTSerializable<CompoundTag> {
+	val entity: T,
+	val actionController: ActionController = ActionController(entity)
+) {
 	companion object {
 		/** 移动中（速度超过阈值且脚步动画中） */
 		@JvmField
@@ -141,27 +139,12 @@ class EntityStateHolder<T : LivingEntity>(
 
 	private val states = mutableMapOf<ResourceLocation, Boolean>()
 
-	fun containState(id: ResourceLocation): Boolean {
-		return states.containsKey(id)
-	}
-
-	fun getState(id: ResourceLocation): Boolean {
-		return states[id] ?: false
-	}
-
-	fun setState(id: ResourceLocation, value: Boolean) {
-		states[id] = value
-	}
-
-	fun getStates(): Map<ResourceLocation, Boolean> {
-		return states
-	}
-
-	fun clearStates() {
-		states.clear()
-	}
-
 	fun tick() {
+		tickStates()
+		actionController.tick()
+	}
+
+	fun tickStates() {
 		val limbSwingAmount = entity.walkAnimation.speed(1f)
 		val velocity: Vec3 = entity.deltaMovement
 		val avgVelocity = ((abs(velocity.x) + abs(velocity.z)) / 2f).toFloat()
@@ -197,22 +180,16 @@ class EntityStateHolder<T : LivingEntity>(
 		setState(POSE_INHALING, entity.pose == Pose.INHALING)
 	}
 
-	fun getMotionAnimThreshold(): Float {
-		return 0.015f
+	fun containState(id: ResourceLocation): Boolean = states.containsKey(id)
+	fun getState(id: ResourceLocation): Boolean = states[id] ?: false
+	fun setState(id: ResourceLocation, value: Boolean) {
+		states[id] = value
 	}
 
-	override fun serializeNBT(provider: HolderLookup.Provider): CompoundTag {
-		val compoundTag = CompoundTag()
-		states.forEach { (id, value) ->
-			compoundTag.putBoolean(id.toString(), value)
-		}
-		return compoundTag
-	}
-
-	override fun deserializeNBT(provider: HolderLookup.Provider, nbt: CompoundTag) {
+	fun getStates(): Map<ResourceLocation, Boolean> = states
+	fun clearStates() {
 		states.clear()
-		nbt.allKeys.forEach { key ->
-			states[rlOf(key)] = nbt.getBoolean(key)
-		}
 	}
+
+	fun getMotionAnimThreshold(): Float = 0.015f
 }

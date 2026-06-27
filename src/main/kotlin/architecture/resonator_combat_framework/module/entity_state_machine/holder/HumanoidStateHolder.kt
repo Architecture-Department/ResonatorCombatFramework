@@ -1,5 +1,9 @@
 package architecture.resonator_combat_framework.module.entity_state_machine.holder
 
+import architecture.resonator_combat_framework.module.entity_state_machine.combat.ActionController
 import net.minecraft.world.entity.Mob
 
-abstract class HumanoidStateHolder<T : Mob>(entity: T) : MobStateHolder<T>(entity)
+abstract class HumanoidStateHolder<T : Mob>(
+	entity: T,
+	actionController: ActionController = ActionController(entity)
+) : MobStateHolder<T>(entity, actionController)

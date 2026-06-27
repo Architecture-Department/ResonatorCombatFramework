@@ -69,6 +69,7 @@ interface IEntityAnimationController<T : Entity> {
 
 	/** 是否覆盖模式（true=覆盖低优先级，false=叠加） */
 	val isOverriding: Boolean
+
 	/** 播放速度倍率 */
 	var speedMultiplier: Float
 

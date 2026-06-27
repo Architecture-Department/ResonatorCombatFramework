@@ -1,5 +1,6 @@
-package architecture.resonator_combat_framework.init
+﻿package architecture.resonator_combat_framework.init
 
+import architecture.resonator_combat_framework.event.CreateEntityStateHolder
 import architecture.resonator_combat_framework.module.collision.CollisionEntityData
 import architecture.resonator_combat_framework.module.entity_animation.animation.molang.MolangData
 import architecture.resonator_combat_framework.module.entity_animation.animation.molang.MolangData.Companion.initEntityQueries
@@ -40,13 +41,20 @@ object RcfAttachmentTypes {
 	@JvmField
 	val STATE_HOLDER: DeferredHolder<AttachmentType<*>, AttachmentType<EntityStateHolder<*>>> =
 		REGISTRY.register("entity_state_holder") { ->
-			AttachmentType.serializable { holder ->
+			AttachmentType.builder { holder ->
+				if (holder !is LivingEntity) {
+					throw IllegalArgumentException("StateHolder can only be attached to LivingEntity. Unsupported: ${holder?.javaClass}")
+				}
+
+				val function = CreateEntityStateHolder.getAll()[holder.type]
+				if (function != null) {
+					return@builder function(holder)
+				}
+
 				when (holder) {
-					// TODO 应用事件来自定义注册
-					is Player -> return@serializable PlayerStateHolder(holder)
-					is Mob -> return@serializable MobStateHolder(holder)
-					is LivingEntity -> return@serializable EntityStateHolder(holder)
-					else -> throw IllegalArgumentException("StateHolder can only be attached to LivingEntity. Unsupported: ${holder?.javaClass}")
+					is Player -> return@builder PlayerStateHolder(holder)
+					is Mob -> return@builder MobStateHolder(holder)
+					is LivingEntity -> return@builder EntityStateHolder(holder)
 				}
 			}.build()
 		}

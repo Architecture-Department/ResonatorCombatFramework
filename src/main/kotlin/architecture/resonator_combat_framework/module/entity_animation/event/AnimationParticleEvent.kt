@@ -1,5 +1,6 @@
 package architecture.resonator_combat_framework.module.entity_animation.event
 
+import architecture.goldenboughs_lib.util.Value
 import architecture.resonator_combat_framework.module.entity_animation.animation.controller.IEntityAnimationController
 import net.minecraft.core.particles.ParticleType
 import net.minecraft.resources.ResourceLocation
@@ -29,16 +30,4 @@ abstract class AnimationParticleEvent(
 		val rotate: Vector3d,
 		val pos: Vector3d
 	) : AnimationParticleEvent(particleId, locatorName, animationController)
-}
-
-data class Value<T>(
-	val oldValue: T,
-	var newValue: T
-) {
-	companion object {
-		@JvmStatic
-		fun <T> of(value: T): Value<T> {
-			return Value(value, value)
-		}
-	}
 }

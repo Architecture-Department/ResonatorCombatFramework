@@ -1,6 +1,7 @@
-package architecture.resonator_combat_framework.module.entity_animation.animation.baking_animation
+﻿package architecture.resonator_combat_framework.module.entity_animation.animation.baking_animation
 
 import architecture.goldenboughs_lib.util.*
+import architecture.resonator_combat_framework.core.RcfEventHooks
 import architecture.resonator_combat_framework.module.entity_animation.animation.ParticleStormAnimAdapter
 import architecture.resonator_combat_framework.module.entity_animation.animation.controller.IEntityAnimationController
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.BrModel
@@ -9,8 +10,6 @@ import architecture.resonator_combat_framework.module.entity_animation.animation
 import architecture.resonator_combat_framework.module.entity_animation.animation.molang.MolangData
 import architecture.resonator_combat_framework.module.entity_animation.animation.molang.MolangValue
 import architecture.resonator_combat_framework.module.entity_animation.animation.molang.withScope
-import architecture.resonator_combat_framework.module.entity_animation.event.AnimationParticleEvent
-import architecture.resonator_combat_framework.module.entity_animation.event.Value
 import architecture.resonator_combat_framework.util.RcfUtil
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
@@ -18,7 +17,6 @@ import com.mojang.math.Axis
 import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.Entity
-import net.neoforged.neoforge.common.NeoForge
 import org.joml.Matrix4f
 
 data class BakingBrAnimationParticle
@@ -82,15 +80,13 @@ data class BakingBrAnimationParticle
 			brModel.computeLocatorGlobalMatrix(locatorName, animationData, poseStack, isWorld = true)
 			var pos = matrix.toPos()
 			var rotate = matrix.toRot()
-			val event = NeoForge.EVENT_BUS.post(
-				AnimationParticleEvent.Pre(
-					controller,
-					locatorName,
-					particleId,
-					Value.of(particleType),
-					Value.of(rotate),
-					Value.of(pos),
-				)
+			val event = RcfEventHooks.AnimationParticlePre(
+				controller,
+				locatorName,
+				particleId,
+				Value.of(particleType),
+				Value.of(rotate),
+				Value.of(pos),
 			)
 
 			if (event.isCanceled) return
@@ -99,16 +95,15 @@ data class BakingBrAnimationParticle
 			pos = event.pos.newValue
 			rotate = event.rotate.newValue
 
-			NeoForge.EVENT_BUS.post(
-				AnimationParticleEvent.Post(
-					controller,
-					locatorName,
-					particleId,
-					particleType,
-					rotate,
-					pos
-				)
+			RcfEventHooks.AnimationParticlePost(
+				controller,
+				locatorName,
+				particleId,
+				particleType,
+				rotate,
+				pos
 			)
+
 		}
 	}
 

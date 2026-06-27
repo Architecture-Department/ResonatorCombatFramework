@@ -5,6 +5,9 @@ import architecture.resonator_combat_framework.util.RcfUtil
 import net.minecraft.resources.ResourceLocation
 
 object RcfStaticAnimations {
+	private val CLIENT_STATIC_ANIMATIONS = mutableMapOf<ResourceLocation, StaticAnimation>()
+	private val SERVER_STATIC_ANIMATIONS = mutableMapOf<ResourceLocation, StaticAnimation>()
+
 	lateinit var REGISTRY: StaticAnimation
 
 	@JvmStatic
@@ -29,16 +32,33 @@ object RcfStaticAnimations {
 		val staticAnimation1 = function(id)
 		when (isClient) {
 			true -> {
-				RcfRegistries.getStaticAnimations(true)[id] = staticAnimation1
+				getStaticAnimations(true)[id] = staticAnimation1
 			}
+
 			false -> {
-				RcfRegistries.getStaticAnimations(false)[id] = staticAnimation1
+				getStaticAnimations(false)[id] = staticAnimation1
 			}
+
 			else -> {
-				RcfRegistries.getStaticAnimations(true)[id] = staticAnimation1
-				RcfRegistries.getStaticAnimations(false)[id] = staticAnimation1
+				getStaticAnimations(true)[id] = staticAnimation1
+				getStaticAnimations(false)[id] = staticAnimation1
 			}
 		}
 		return staticAnimation1
+	}
+
+	@JvmStatic
+	fun getStaticAnimations(isClient: Boolean): MutableMap<ResourceLocation, StaticAnimation> {
+		return if (isClient) CLIENT_STATIC_ANIMATIONS else SERVER_STATIC_ANIMATIONS
+	}
+
+	@JvmStatic
+	fun getStaticAnimation(isClient: Boolean, id: ResourceLocation): StaticAnimation? {
+		return if (isClient) CLIENT_STATIC_ANIMATIONS[id] else SERVER_STATIC_ANIMATIONS[id]
+	}
+
+	@JvmStatic
+	fun getStaticAnimation(isClient: Boolean, id: String): StaticAnimation? {
+		return getStaticAnimation(isClient, RcfUtil.modRl(id))
 	}
 }

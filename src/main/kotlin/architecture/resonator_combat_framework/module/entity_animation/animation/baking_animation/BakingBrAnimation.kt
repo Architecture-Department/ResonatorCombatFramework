@@ -6,7 +6,6 @@ import architecture.resonator_combat_framework.module.entity_animation.animation
 import architecture.resonator_combat_framework.module.entity_animation.animation.molang.EasingTypes
 import architecture.resonator_combat_framework.module.entity_animation.animation.molang.MolangData
 import architecture.resonator_combat_framework.module.entity_animation.util.AnimationMirrorUtil
-import architecture.resonator_combat_framework.util.RcfUtil
 import com.google.gson.JsonObject
 import org.joml.Vector2f
 import org.joml.Vector3f

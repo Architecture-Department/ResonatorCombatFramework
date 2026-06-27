@@ -1,11 +1,10 @@
-package architecture.resonator_combat_framework.module.entity_animation.animation.mapper
+﻿package architecture.resonator_combat_framework.module.entity_animation.animation.mapper
 
+import architecture.resonator_combat_framework.core.RcfEventHooks
 import architecture.resonator_combat_framework.module.entity_animation.animation.data.ProxyBoneFlags
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.ProxyModel
-import architecture.resonator_combat_framework.module.entity_animation.event.AnimationControllerRegisterEvent
 import net.minecraft.client.model.PlayerModel
 import net.minecraft.world.entity.player.Player
-import net.neoforged.neoforge.common.NeoForge
 
 /** 玩家动画映射器——零外部依赖 + 渲染入口 */
 class PlayerAnimationMapperProvider(
@@ -16,7 +15,7 @@ class PlayerAnimationMapperProvider(
 	constructor(holder: Player) : this(holder, holder.level().isClientSide, AnimationControllerManager(holder))
 
 	init {
-		NeoForge.EVENT_BUS.post(AnimationControllerRegisterEvent<Player>()).getSortedEntries()
+		RcfEventHooks.AnimationControllerRegister<Player>().getSortedEntries()
 			.forEach { (controllerName, controllerFactory, priority) ->
 				animationControllerManager.add(
 					controllerName,

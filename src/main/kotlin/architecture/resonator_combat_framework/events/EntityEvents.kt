@@ -8,13 +8,11 @@ import net.neoforged.fml.common.EventBusSubscriber
 import net.neoforged.neoforge.event.tick.EntityTickEvent
 
 @EventBusSubscriber(modid = RcfUtil.ID)
-object EntityEvetns {
+object EntityEvents {
 	@SubscribeEvent
 	fun onTickPre(event: EntityTickEvent.Pre) {
 		val entity = event.entity
-//		entity.getExistingDataOrNull(RcfAttachmentTypes.MOLANG_DATA)?.apply {
-//			// TODO 补充
-//		}
+		entity.getExistingDataOrNull(RcfAttachmentTypes.MOLANG_DATA)?.apply {}
 		entity.getExistingDataOrNull(RcfAttachmentTypes.STATE_HOLDER)?.apply {
 			tick()
 		}
