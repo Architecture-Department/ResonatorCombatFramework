@@ -1,12 +1,13 @@
 package architecture.resonator_combat_framework.init
 
+import architecture.goldenboughs_lib.util.LazySupplier
 import architecture.resonator_combat_framework.module.entity_animation.animation.StaticAnimation
 import architecture.resonator_combat_framework.util.RcfUtil
 import net.minecraft.resources.ResourceLocation
 
 object RcfStaticAnimations {
-	private val CLIENT_STATIC_ANIMATIONS = mutableMapOf<ResourceLocation, StaticAnimation>()
-	private val SERVER_STATIC_ANIMATIONS = mutableMapOf<ResourceLocation, StaticAnimation>()
+	private val CLIENT_STATIC_ANIMATIONS = mutableMapOf<ResourceLocation, LazySupplier<StaticAnimation>>()
+	private val SERVER_STATIC_ANIMATIONS = mutableMapOf<ResourceLocation, LazySupplier<StaticAnimation>>()
 
 	lateinit var REGISTRY: StaticAnimation
 
@@ -32,29 +33,29 @@ object RcfStaticAnimations {
 		val staticAnimation1 = function(id)
 		when (isClient) {
 			true -> {
-				getStaticAnimations(true)[id] = staticAnimation1
+				getStaticAnimations(true)[id] = LazySupplier { staticAnimation1 }
 			}
 
 			false -> {
-				getStaticAnimations(false)[id] = staticAnimation1
+				getStaticAnimations(false)[id] = LazySupplier { staticAnimation1 }
 			}
 
 			else -> {
-				getStaticAnimations(true)[id] = staticAnimation1
-				getStaticAnimations(false)[id] = staticAnimation1
+				getStaticAnimations(true)[id] = LazySupplier { staticAnimation1 }
+				getStaticAnimations(false)[id] = LazySupplier { staticAnimation1 }
 			}
 		}
 		return staticAnimation1
 	}
 
 	@JvmStatic
-	fun getStaticAnimations(isClient: Boolean): MutableMap<ResourceLocation, StaticAnimation> {
+	fun getStaticAnimations(isClient: Boolean): MutableMap<ResourceLocation, LazySupplier<StaticAnimation>> {
 		return if (isClient) CLIENT_STATIC_ANIMATIONS else SERVER_STATIC_ANIMATIONS
 	}
 
 	@JvmStatic
 	fun getStaticAnimation(isClient: Boolean, id: ResourceLocation): StaticAnimation? {
-		return if (isClient) CLIENT_STATIC_ANIMATIONS[id] else SERVER_STATIC_ANIMATIONS[id]
+		return if (isClient) CLIENT_STATIC_ANIMATIONS[id]?.get() else SERVER_STATIC_ANIMATIONS[id]?.get()
 	}
 
 	@JvmStatic
