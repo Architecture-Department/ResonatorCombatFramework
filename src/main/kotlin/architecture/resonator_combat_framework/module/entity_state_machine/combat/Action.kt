@@ -1,4 +1,4 @@
-﻿package architecture.resonator_combat_framework.module.entity_state_machine.combat
+package architecture.resonator_combat_framework.module.entity_state_machine.combat
 
 import architecture.goldenboughs_lib.api.AllOpe
 import architecture.resonator_combat_framework.core.RcfEventHooks
@@ -7,7 +7,7 @@ import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.LivingEntity
 
 /**
- * 单段攻击配置 —— 定义连击序列中的一段攻击。
+ * 动作
  *
  * @param timing 前摇/执行/后摇时长
  * @param interruptData 打断配置
@@ -21,8 +21,31 @@ abstract class Action(
 ) {
 	val timeLength: Float = timing.windupSec + timing.activeSec + timing.recoverySec
 
-	fun tick(time: Float, actionSequence: ActionSequence?, entity: LivingEntity) {
+	// ===== 生命周期钩子 =====
+
+	/** 动作开始时调用 */
+	fun onStart(entity: LivingEntity, actionSequence: ActionSequence?) {}
+
+	/** 每 tick 调用 */
+	fun onTick(entity: LivingEntity, actionSequence: ActionSequence?, time: Float) {}
+
+	/** 进入前摇阶段时调用 */
+	fun onWindup(entity: LivingEntity, actionSequence: ActionSequence?, time: Float) {}
+
+	/** 进入执行阶段（攻击判定窗口）时调用 */
+	fun onActive(entity: LivingEntity, actionSequence: ActionSequence?, time: Float) {}
+
+	/** 进入后摇阶段时调用 */
+	fun onRecovery(entity: LivingEntity, actionSequence: ActionSequence?, time: Float) {}
+
+	/** 动作结束时调用 */
+	fun onEnd(entity: LivingEntity, actionSequence: ActionSequence?) {}
+
+	fun onSpeedModify(entity: LivingEntity, actionSequence: ActionSequence?, oldValue: Float, newValue: Float) {
+
 	}
+
+	// ===== 阶段查询 =====
 
 	fun getState(time: Float, entity: LivingEntity): ActionState {
 		return when {
@@ -57,4 +80,3 @@ abstract class Action(
 		return nextAction(time, sourceIndex, sourceIndex + 1, actionSequence, entity)
 	}
 }
-

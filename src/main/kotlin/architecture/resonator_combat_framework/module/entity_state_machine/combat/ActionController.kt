@@ -43,10 +43,15 @@ class ActionController(val entity: LivingEntity) {
 	/** 本段已播放时间（秒） */
 	final var time: Float = 0f; private set
 
+	/** 上一 tick 的动作阶段，用于检测阶段切换 */
+	private var prevActionState: ActionState = ActionState.EMPTY
+
 	/** 战斗速度倍率 */
 	final var combatSpeedMultiplier: Float = 1f
 		set(value) {
-			field = max(value, 0f)
+			val newValue = max(value, 0f)
+			action?.onSpeedModify(entity, actionSequence, field, newValue)
+			field = newValue
 		}
 
 	/** 切换动作 */
@@ -82,6 +87,7 @@ class ActionController(val entity: LivingEntity) {
 		combatSpeedMultiplier = 1f
 		actionState = ActionState.EMPTY
 		if (action != null) {
+			action!!.onEnd(entity, actionSequence)
 			RcfEventHooks.CombatActionEnd(holder, entity, action!!)
 			onChangedAction(null, CombatActionEvent.Changed.Type.END)
 		}
@@ -108,13 +114,23 @@ class ActionController(val entity: LivingEntity) {
 
 		if (time <= 0f) {
 			RcfEventHooks.CombatActionStart(holder, entity, action)
+			action.onStart(entity, actionSequence)
 		}
-
 		if (!RcfEventHooks.CombatActionTickPre(holder, entity, action)) {
-			action.tick(time, actionSequence, entity)
+			action.onTick(entity, actionSequence, time)
 			RcfEventHooks.CombatActionTickPost(holder, entity, action)
 		}
 		actionState = action.getState(time, entity)
+		// 阶段切换回调
+		if (actionState != prevActionState) {
+			when (actionState) {
+				ActionState.WINDUP -> action.onWindup(entity, actionSequence, time)
+				ActionState.ATTACK -> action.onActive(entity, actionSequence, time)
+				ActionState.RECOVERY -> action.onRecovery(entity, actionSequence, time)
+				else -> {}
+			}
+			prevActionState = actionState
+		}
 
 		time += scaledDelta
 

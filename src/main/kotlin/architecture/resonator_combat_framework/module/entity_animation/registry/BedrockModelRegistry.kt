@@ -26,12 +26,12 @@ class BedrockModelRegistry(
 		}
 
 		@JvmStatic
-		fun get(identifier: String): BakingBrModel? {
+		fun find(identifier: String): BakingBrModel? {
 			return CLIENT.get(identifier) ?: SERVER.get(identifier)
 		}
 
 		@JvmStatic
-		fun getAll(): Map<String, BakingBrModel> = CLIENT.getAll() + SERVER.getAll()
+		fun findAll(): Map<String, BakingBrModel> = CLIENT.getAll() + SERVER.getAll()
 	}
 
 	private val models = mutableMapOf<String, BakingBrModel>()

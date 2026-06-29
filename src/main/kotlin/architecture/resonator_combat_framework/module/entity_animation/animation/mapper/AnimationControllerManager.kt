@@ -3,6 +3,8 @@ package architecture.resonator_combat_framework.module.entity_animation.animatio
 import architecture.goldenboughs_lib.api.AllOpe
 import architecture.goldenboughs_lib.util.PoseStack
 import architecture.resonator_combat_framework.events.registry.AnimationControllers
+import architecture.resonator_combat_framework.module.entity_animation.IProxyAnimationProvider
+import architecture.resonator_combat_framework.module.entity_animation.IProxyAnimationProvider.Companion.getAnimationTransformer
 import architecture.resonator_combat_framework.module.entity_animation.animation.AnimationEventsToFire
 import architecture.resonator_combat_framework.module.entity_animation.animation.ParticleStormAnimAdapter
 import architecture.resonator_combat_framework.module.entity_animation.animation.controller.BedrockAnimationController
@@ -12,8 +14,6 @@ import architecture.resonator_combat_framework.module.entity_animation.animation
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.BrModel
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.ProxyBone
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.ProxyModel
-import architecture.resonator_combat_framework.module.entity_animation.mixed.IAnimationProxyProvider
-import architecture.resonator_combat_framework.module.entity_animation.mixed.IAnimationProxyProvider.Companion.getAnimationTransformer
 import architecture.resonator_combat_framework.util.RcfUtil
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.Entity
@@ -34,7 +34,7 @@ constructor(
 
 	val mapperProvider: IEntityAnimationMapperProvider<T, *>
 		get() = _mapperProvider
-			?: (holder as IAnimationProxyProvider).getAnimationTransformer() as IEntityAnimationMapperProvider<T, *>
+			?: (holder as IProxyAnimationProvider).getAnimationTransformer() as IEntityAnimationMapperProvider<T, *>
 
 	/** 名称 → 控制器映射（O(1) 查找） */
 	private val nameMap = mutableMapOf<ResourceLocation, IEntityAnimationController<T>>()

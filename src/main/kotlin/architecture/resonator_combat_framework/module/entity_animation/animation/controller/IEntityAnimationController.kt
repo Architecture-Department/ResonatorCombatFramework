@@ -106,7 +106,7 @@ interface IEntityAnimationController<T : Entity> {
 	// ===== 触发/停止 =====
 
 	/** 触发动画播放 */
-	fun trigger(animId: String, config: AnimationPlayData)
+	fun trigger(animId: String, config: AnimationPlayData = AnimationPlayData.EMPTY)
 
 	/** 简易触发 */
 	fun trigger(
@@ -123,7 +123,7 @@ interface IEntityAnimationController<T : Entity> {
 	)
 
 	/** 使用已解析的 [StaticAnimation] 实例直接触发 */
-	fun triggerWithAnimation(anim: StaticAnimation, config: AnimationPlayData)
+	fun trigger(anim: StaticAnimation, config: AnimationPlayData = AnimationPlayData.EMPTY)
 
 	/** 判断当前播放的动画是否是指定 ID */
 	fun equalsCurrentAnimId(id: String): Boolean {

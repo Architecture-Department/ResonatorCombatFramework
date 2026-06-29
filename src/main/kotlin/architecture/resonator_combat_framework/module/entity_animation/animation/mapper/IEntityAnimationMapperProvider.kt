@@ -33,7 +33,7 @@ interface IEntityAnimationMapperProvider<T : Entity, M : EntityModel<T>> {
 	fun isActive(): Boolean
 
 	/** 获取指定控制器 */
-	fun getController(controllerName: ResourceLocation): IEntityAnimationController<T>?
+	fun getController(controllerName: ResourceLocation?): IEntityAnimationController<T>?
 
 	/** 获取所有控制器 */
 	fun controllers(): List<IEntityAnimationController<*>>
@@ -73,7 +73,7 @@ interface IEntityAnimationMapperProvider<T : Entity, M : EntityModel<T>> {
 	fun resumeAll()
 
 	/** 触发指定动画 */
-	fun trigger(controllerName: ResourceLocation, animId: String, playData: AnimationPlayData)
+	fun trigger(controllerName: ResourceLocation?, animId: String, playData: AnimationPlayData)
 
 	fun trigger(animId: String, playData: AnimationPlayData) {
 		trigger(AnimationControllers.MAIN, animId, playData)

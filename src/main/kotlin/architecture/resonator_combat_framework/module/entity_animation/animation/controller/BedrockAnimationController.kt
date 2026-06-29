@@ -93,24 +93,24 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 	// ===== 触发 =====
 
 	override fun trigger(animId: String, config: AnimationPlayData) {
-		val anim = StaticAnimationRegistry.get(animId)
+		val anim = StaticAnimationRegistry.find(animId)
 		if (anim == null || anim.get() == null) {
 			RcfUtil.LOGGER.warn("[AnimDebug] Animation not found: $animId")
 			return
 		}
-		triggerWithAnimation(anim.get()!!, config)
+		trigger(anim.get()!!, config)
 	}
 
-	override fun triggerWithAnimation(anim: StaticAnimation, config: AnimationPlayData) {
+	override fun trigger(anim: StaticAnimation, config: AnimationPlayData) {
 		RcfEventHooks.AnimationTriggerPre(this, anim, config)
 
 		val oldActionAnim = currentAnim
 		oldActionAnim?.onEnd(manager.holder)
 
 		currentAnim = anim
-		val baseAnim = BedrockAnimationRegistry.get(anim.animationId) ?: BakingBrAnimation.EMPTY
+		val baseAnim = BedrockAnimationRegistry.find(anim.animationId) ?: BakingBrAnimation.EMPTY
 		currentBakingAnim = if (config.mirror) baseAnim.mirror() else baseAnim
-		val baseConfig = BedrockAnimationDataRegistry.get(anim.animationId) ?: ProxyBoneConfigData.EMPTY
+		val baseConfig = BedrockAnimationDataRegistry.find(anim.animationId) ?: ProxyBoneConfigData.EMPTY
 		currentBoneConfig = if (config.mirror) baseConfig.mirror() else baseConfig
 		manager.clearEmittersFor(id)
 		proxyModel.bones.clear()

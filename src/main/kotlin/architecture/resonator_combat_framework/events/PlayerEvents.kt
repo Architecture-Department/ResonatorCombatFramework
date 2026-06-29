@@ -3,9 +3,9 @@
 import architecture.goldenboughs_lib.util.PoseStack
 import architecture.goldenboughs_lib.util.toPos
 import architecture.goldenboughs_lib.util.toRadians
+import architecture.resonator_combat_framework.module.entity_animation.IProxyAnimationProvider.Companion.getAnimationTransformer
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.BrModel
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.ProxyModel
-import architecture.resonator_combat_framework.module.entity_animation.mixed.IAnimationProxyProvider.Companion.getAnimationTransformer
 import architecture.resonator_combat_framework.util.RcfUtil
 import com.mojang.math.Axis
 import net.minecraft.core.particles.ParticleTypes

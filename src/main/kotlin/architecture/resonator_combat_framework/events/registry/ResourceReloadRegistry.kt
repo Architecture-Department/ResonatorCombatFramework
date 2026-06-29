@@ -1,8 +1,5 @@
 package architecture.resonator_combat_framework.events.registry
 
-import architecture.resonator_combat_framework.init.animation.RcfActionSequences
-import architecture.resonator_combat_framework.init.animation.RcfActions
-import architecture.resonator_combat_framework.init.animation.RcfStaticAnimations
 import architecture.resonator_combat_framework.module.entity_animation.animation.StaticAnimation
 import architecture.resonator_combat_framework.module.entity_animation.event.StaticAnimationRegistryEvent
 import architecture.resonator_combat_framework.module.entity_animation.registry.BedrockAnimationDataRegistry
@@ -22,7 +19,7 @@ import net.neoforged.neoforge.event.AddReloadListenerEvent
 
 @EventBusSubscriber(modid = RcfUtil.ID)
 object ResourceReloadRegistry {
-	@SubscribeEvent
+	@SubscribeEvent(priority = EventPriority.HIGHEST)
 	fun registry(event: AddReloadListenerEvent) {
 		event.addListener(GeckoLibCacheServer::reload)
 		event.addListener(BedrockAnimationDataRegistry.getInstance(false))
@@ -37,22 +34,19 @@ object ResourceReloadRegistry {
 		event.addListener(ActionSequenceRegistry.getInstance())
 	}
 
-	@SubscribeEvent
+	@SubscribeEvent(priority = EventPriority.HIGHEST)
 	fun registry(event: StaticAnimationRegistryEvent) {
-		BedrockAnimationRegistry.getAll().forEach {
+		BedrockAnimationRegistry.findAll().forEach {
 			event.register(RcfUtil.modRl(it.key), ::StaticAnimation)
 		}
-		RcfStaticAnimations.register(event)
 	}
 
-	@SubscribeEvent
+	@SubscribeEvent(priority = EventPriority.HIGHEST)
 	fun registry(event: ActionRegistryEvent) {
-		RcfActions.register(event)
 	}
 
-	@SubscribeEvent
+	@SubscribeEvent(priority = EventPriority.HIGHEST)
 	fun registry(event: ActionSequenceRegistryEvent) {
-		RcfActionSequences.register(event)
 	}
 }
 

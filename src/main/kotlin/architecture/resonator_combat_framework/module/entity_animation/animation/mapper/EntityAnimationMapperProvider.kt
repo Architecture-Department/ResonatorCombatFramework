@@ -37,8 +37,11 @@ abstract class EntityAnimationMapperProvider<T : Entity, M : EntityModel<T>>(
 	// ---- 触发 ----
 
 	/** 触发动画：解析控制器 → 设置骨骼配置 → 触发控制器 */
-	override fun trigger(controllerName: ResourceLocation, animId: String, playData: AnimationPlayData) {
-		(animationControllerManager.get(controllerName) ?: mainController).trigger(animId, playData)
+	override fun trigger(controllerName: ResourceLocation?, animId: String, playData: AnimationPlayData) {
+		(animationControllerManager.get(controllerName ?: AnimationControllers.MAIN) ?: mainController).trigger(
+			animId,
+			playData
+		)
 	}
 
 	// ---- 停止 ----
@@ -77,8 +80,8 @@ abstract class EntityAnimationMapperProvider<T : Entity, M : EntityModel<T>>(
 	override fun isActive(): Boolean = animationControllerManager.isAnyActive()
 
 	/** 获取指定控制器（不存在返回主控制器） */
-	override fun getController(controllerName: ResourceLocation): IEntityAnimationController<T>? =
-		animationControllerManager.get(controllerName) ?: mainController
+	override fun getController(controllerName: ResourceLocation?): IEntityAnimationController<T>? =
+		animationControllerManager.get(controllerName ?: AnimationControllers.MAIN) ?: mainController
 
 	/** 获取所有控制器 */
 	override fun controllers(): List<IEntityAnimationController<T>> = animationControllerManager.getAll()

@@ -1,6 +1,6 @@
 package architecture.resonator_combat_framework.module.entity_animation.mixin.client;
 
-import architecture.resonator_combat_framework.module.entity_animation.render.RcfFirstPersonRender;
+import architecture.resonator_combat_framework.module.entity_animation.client.FirstPersonRender;
 import com.llamalad7.mixinextras.sugar.Local;
 import net.minecraft.client.model.PlayerModel;
 import net.minecraft.client.player.AbstractClientPlayer;
@@ -18,7 +18,7 @@ public abstract class PlayerRendererMixin {
 		CallbackInfo ci,
 		@Local PlayerModel<AbstractClientPlayer> playerModel
 	) {
-		if (RcfFirstPersonRender.isFirstPersonPass()) {
+		if (FirstPersonRender.isFirstPersonPass()) {
 			playerModel.setAllVisible(false);
 			playerModel.rightArm.visible = true;
 			playerModel.leftArm.visible = true;

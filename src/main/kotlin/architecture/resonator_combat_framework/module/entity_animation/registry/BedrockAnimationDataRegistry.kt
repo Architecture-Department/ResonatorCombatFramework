@@ -26,12 +26,12 @@ class BedrockAnimationDataRegistry(
 		}
 
 		@JvmStatic
-		fun get(animId: String): ProxyBoneConfigData? {
+		fun find(animId: String): ProxyBoneConfigData? {
 			return CLIENT.get(animId) ?: SERVER.get(animId)
 		}
 
 		@JvmStatic
-		fun getAll(): Map<String, ProxyBoneConfigData> = CLIENT.getAll() + SERVER.getAll()
+		fun findAll(): Map<String, ProxyBoneConfigData> = CLIENT.getAll() + SERVER.getAll()
 	}
 
 	private val configs = mutableMapOf<String, ProxyBoneConfigData>()

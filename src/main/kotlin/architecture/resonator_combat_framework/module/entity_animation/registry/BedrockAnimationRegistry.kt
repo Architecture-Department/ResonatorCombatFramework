@@ -26,12 +26,12 @@ class BedrockAnimationRegistry(
 		}
 
 		@JvmStatic
-		fun get(animId: String): BakingBrAnimation? {
+		fun find(animId: String): BakingBrAnimation? {
 			return CLIENT.get(animId) ?: SERVER.get(animId)
 		}
 
 		@JvmStatic
-		fun getAll(): Map<String, BakingBrAnimation> = CLIENT.getAll() + SERVER.getAll()
+		fun findAll(): Map<String, BakingBrAnimation> = CLIENT.getAll() + SERVER.getAll()
 	}
 
 	private val bakingAnimations = mutableMapOf<String, BakingBrAnimation>()

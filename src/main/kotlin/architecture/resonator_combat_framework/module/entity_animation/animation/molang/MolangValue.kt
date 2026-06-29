@@ -1,20 +1,20 @@
 package architecture.resonator_combat_framework.module.entity_animation.animation.molang
 
+import architecture.resonator_combat_framework.module.entity_animation.IProxyAnimationProvider
+import architecture.resonator_combat_framework.module.entity_animation.IProxyAnimationProvider.Companion.getAnimationTransformer
 import architecture.resonator_combat_framework.module.entity_animation.animation.controller.IEntityAnimationController
 import architecture.resonator_combat_framework.module.entity_animation.animation.mapper.AnimationControllerManager
-import architecture.resonator_combat_framework.module.entity_animation.mixed.IAnimationProxyProvider
-import architecture.resonator_combat_framework.module.entity_animation.mixed.IAnimationProxyProvider.Companion.getAnimationTransformer
 import net.minecraft.world.entity.Entity
 
 interface MolangValue {
 	fun eval(context: MolangData? = null): Double
 
 	fun eval(entity: Entity): Double {
-		if (entity !is IAnimationProxyProvider) return 0.0
-		return eval(entity as IAnimationProxyProvider)
+		if (entity !is IProxyAnimationProvider) return 0.0
+		return eval(entity as IProxyAnimationProvider)
 	}
 
-	fun eval(proxyProvider: IAnimationProxyProvider): Double {
+	fun eval(proxyProvider: IProxyAnimationProvider): Double {
 		return eval(MolangData.of(proxyProvider.getAnimationTransformer().holder))
 	}
 

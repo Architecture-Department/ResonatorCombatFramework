@@ -22,7 +22,7 @@ class ActionSequenceRegistry :
 		}
 
 		@JvmStatic
-		fun get(id: ResourceLocation): LazySupplier<ActionSequence>? {
+		fun find(id: ResourceLocation): LazySupplier<ActionSequence>? {
 			return getInstance().get(id)
 		}
 	}

@@ -1,6 +1,6 @@
 package architecture.resonator_combat_framework.events.client
 
-import architecture.resonator_combat_framework.module.entity_animation.render.RcfFirstPersonRender
+import architecture.resonator_combat_framework.module.entity_animation.client.FirstPersonRender
 import architecture.resonator_combat_framework.util.RcfUtil
 import net.minecraft.client.Minecraft
 import net.neoforged.api.distmarker.Dist
@@ -13,7 +13,7 @@ import net.neoforged.neoforge.client.event.RenderHandEvent
 object RendererEvets {
 	@SubscribeEvent
 	fun onRenderHand(event: RenderHandEvent) {
-		if (RcfFirstPersonRender.isFirstPersonPass()) {
+		if (FirstPersonRender.isFirstPersonPass()) {
 			event.isCanceled = true
 		}
 	}
@@ -21,7 +21,7 @@ object RendererEvets {
 	@SubscribeEvent
 	fun onRenderArm(event: RenderArmEvent) {
 		val minecraft = Minecraft.getInstance()
-		if (RcfFirstPersonRender.isFirstPersonPass() && event.player == minecraft.player) {
+		if (FirstPersonRender.isFirstPersonPass() && event.player == minecraft.player) {
 			event.isCanceled = true
 		}
 	}

@@ -23,13 +23,13 @@ class StaticAnimationRegistry :
 		}
 
 		@JvmStatic
-		fun get(id: ResourceLocation): LazySupplier<StaticAnimation>? {
+		fun find(id: ResourceLocation): LazySupplier<StaticAnimation>? {
 			return getInstance().get(id)
 		}
 
 		@JvmStatic
-		fun get(id: String): LazySupplier<StaticAnimation>? {
-			return get(RcfUtil.modRl(id))
+		fun find(id: String): LazySupplier<StaticAnimation>? {
+			return find(RcfUtil.modRl(id))
 		}
 	}
 
