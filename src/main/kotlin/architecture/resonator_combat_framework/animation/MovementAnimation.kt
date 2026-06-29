@@ -2,7 +2,6 @@ package architecture.resonator_combat_framework.animation
 
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.BrModel
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.ProxyModel
-import architecture.resonator_combat_framework.util.RcfUtil
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.Entity
 import kotlin.math.max
@@ -12,7 +11,7 @@ class MovementAnimation
 @JvmOverloads
 constructor(
 	id: ResourceLocation,
-	animationId: String,
+	animationId: ResourceLocation,
 	stateModifiers: Map<ResourceLocation, Boolean> = emptyMap(),
 	/**
 	 * 预期最大水平速度（方块/刻）。
@@ -25,13 +24,7 @@ constructor(
 		id: ResourceLocation,
 		stateModifiers: Map<ResourceLocation, Boolean> = emptyMap(),
 		expectedMaxSpeed: Float = 0.25f
-	) : this(id, id.namespace + "." + id.path, stateModifiers, expectedMaxSpeed)
-
-	constructor(
-		animationId: String,
-		stateModifiers: Map<ResourceLocation, Boolean> = emptyMap(),
-		expectedMaxSpeed: Float = 0.25f
-	) : this(RcfUtil.modRl(animationId), animationId, stateModifiers, expectedMaxSpeed)
+	) : this(id, id, stateModifiers, expectedMaxSpeed)
 
 	/**
 	 * 当前动画速度倍率

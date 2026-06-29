@@ -4,9 +4,11 @@ import architecture.goldenboughs_lib.api.payload.ToClientPayload
 import architecture.goldenboughs_lib.util.LibUtil.MAP_RESOURCE_LOCATION_COMPOUND_TAG_CODEC
 import architecture.resonator_combat_framework.module.entity_animation.registry.BedrockAnimationDataRegistry
 import architecture.resonator_combat_framework.util.RcfUtil
+import com.mojang.serialization.JsonOps
 import io.netty.buffer.ByteBuf
 import net.minecraft.client.player.AbstractClientPlayer
 import net.minecraft.nbt.CompoundTag
+import net.minecraft.nbt.NbtOps
 import net.minecraft.network.codec.StreamCodec
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload
 import net.minecraft.resources.ResourceLocation
@@ -35,6 +37,10 @@ data class ProxyBoneConfigDataDataSynchsPayload(
 		context: IPayloadContext,
 		player: AbstractClientPlayer
 	) {
-		BedrockAnimationDataRegistry.getInstance(true).clearNbtCache()
+		val instance = BedrockAnimationDataRegistry.getInstance(true)
+		instance.clearNbtCache()
+		instance.apply(nbtMap.mapValues {
+			NbtOps.INSTANCE.convertTo(JsonOps.COMPRESSED, it.value)
+		})
 	}
 }

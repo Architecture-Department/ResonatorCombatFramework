@@ -101,21 +101,22 @@ interface IEntityAnimationController<T : Entity> {
 	/** 当前播放的动画实例（外部只读） */
 	val currentAnim: StaticAnimation?
 
-	val currentAnimId: String? get() = currentAnim?.animationId
+	val currentAnimId: ResourceLocation? get() = currentAnim?.animationId
 
 	// ===== 触发/停止 =====
 
 	/** 触发动画播放 */
-	fun trigger(animId: String, config: AnimationPlayData = AnimationPlayData.EMPTY)
+	fun trigger(animId: ResourceLocation, config: AnimationPlayData = AnimationPlayData.EMPTY)
 
 	/** 简易触发 */
 	fun trigger(
-		animId: String,
+		animId: ResourceLocation,
 		speedMultiplier: Float = 1f,
 		fadeInTicks: Int = -1,
 		fadeOutTicks: Int = -1
 	) = trigger(
-		animId, AnimationPlayData(
+		animId,
+		AnimationPlayData(
 			speedMultiplier = speedMultiplier,
 			fadeInTicks = fadeInTicks,
 			fadeOutTicks = fadeOutTicks
@@ -126,7 +127,7 @@ interface IEntityAnimationController<T : Entity> {
 	fun trigger(anim: StaticAnimation, config: AnimationPlayData = AnimationPlayData.EMPTY)
 
 	/** 判断当前播放的动画是否是指定 ID */
-	fun equalsCurrentAnimId(id: String): Boolean {
+	fun equalsCurrentAnimId(id: ResourceLocation): Boolean {
 		return currentAnimId == id
 	}
 

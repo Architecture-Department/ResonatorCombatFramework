@@ -1,4 +1,4 @@
-﻿package architecture.resonator_combat_framework.animation
+package architecture.resonator_combat_framework.animation
 
 import architecture.goldenboughs_lib.util.PoseStack
 import architecture.resonator_combat_framework.core.RcfEventHooks
@@ -7,7 +7,6 @@ import architecture.resonator_combat_framework.module.collision.CollisionSystem
 import architecture.resonator_combat_framework.module.entity_animation.animation.controller.IEntityAnimationController
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.BrModel
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.ProxyModel
-import architecture.resonator_combat_framework.util.RcfUtil
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.LivingEntity
@@ -17,7 +16,7 @@ class AttackAnimation
 @JvmOverloads
 constructor(
 	id: ResourceLocation,
-	animationId: String,
+	animationId: ResourceLocation,
 	stateModifiers: Map<ResourceLocation, Boolean> = emptyMap(),
 	/** 攻击阶段列表 */
 	val phases: List<AttackPhase> = emptyList(),
@@ -26,22 +25,12 @@ constructor(
 	constructor(
 		id: ResourceLocation,
 		phases: List<AttackPhase> = emptyList()
-	) : this(id, id.namespace + "." + id.path, emptyMap(), phases)
-
-	constructor(
-		animationId: String,
-		phases: List<AttackPhase> = emptyList()
-	) : this(RcfUtil.modRl(animationId), animationId, emptyMap(), phases)
+	) : this(id, id, emptyMap(), phases)
 
 	constructor(
 		id: ResourceLocation,
 		vararg phases: AttackPhase = emptyArray()
 	) : this(id, phases.toList())
-
-	constructor(
-		animationId: String,
-		vararg phases: AttackPhase = emptyArray()
-	) : this(animationId, phases.toList())
 
 	// ===== 阶段查询 =====
 

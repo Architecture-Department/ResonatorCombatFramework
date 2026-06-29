@@ -21,7 +21,7 @@ object PlayerAnimationHelper {
 	@JvmStatic
 	@JvmOverloads
 	fun Player.triggerPlayerAnima(
-		animId: String,
+		animId: ResourceLocation,
 		config: AnimationPlayData,
 		controllerName: ResourceLocation = AnimationControllers.MAIN,
 		isPayload: Boolean = true
@@ -52,7 +52,7 @@ object PlayerAnimationHelper {
 	@JvmStatic
 	@JvmOverloads
 	fun Player.triggerPlayerAnima(
-		animId: String,
+		animId: ResourceLocation,
 		speedMultiplier: Float = 1f,
 		fadeInTicks: Int = -1,
 		fadeOutTicks: Int = -1,
@@ -72,7 +72,7 @@ object PlayerAnimationHelper {
 	@JvmStatic
 	@JvmOverloads
 	fun Player.triggerPlayerAnima(
-		animId: String,
+		animId: ResourceLocation,
 		transitionTicks: Int,
 		speedMultiplier: Float = 1f,
 		isPayload: Boolean = true

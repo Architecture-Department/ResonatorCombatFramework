@@ -1,7 +1,7 @@
 {
 	"format_version": "1.8.0",
 	"animations": {
-		"player.slavic_squat_dance_start": {
+		"slavic_squat_dance_start": {
 			"loop": "hold_on_last_frame",
 			"animation_length": 0.5,
 			"bones": {
@@ -327,7 +327,7 @@
 				}
 			}
 		},
-		"player.slavic_squat_dance_playing": {
+		"slavic_squat_dance_playing": {
 			"loop": true,
 			"animation_length": 1,
 			"bones": {

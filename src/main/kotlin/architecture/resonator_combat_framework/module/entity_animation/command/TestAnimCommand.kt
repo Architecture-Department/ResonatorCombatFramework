@@ -10,11 +10,11 @@ import architecture.resonator_combat_framework.module.entity_animation.helper.Pl
 import com.mojang.brigadier.CommandDispatcher
 import com.mojang.brigadier.arguments.FloatArgumentType
 import com.mojang.brigadier.arguments.IntegerArgumentType
-import com.mojang.brigadier.arguments.StringArgumentType
 import com.mojang.brigadier.context.CommandContext
 import net.minecraft.commands.CommandSourceStack
 import net.minecraft.commands.Commands
 import net.minecraft.commands.arguments.EntityArgument
+import net.minecraft.commands.arguments.ResourceLocationArgument
 import net.minecraft.network.chat.Component
 import net.minecraft.world.entity.player.Player
 
@@ -36,7 +36,7 @@ object TestAnimCommand {
 						.then(
 							Commands.literal("play")
 								.then(
-									Commands.argument("anim_id", StringArgumentType.word())
+									Commands.argument("anim_id", ResourceLocationArgument.id())
 										.suggests(AnimationIdArgumentProvider)
 										.executes { handlePlay(it) }
 										.then(
@@ -87,7 +87,7 @@ object TestAnimCommand {
 		val arguments = ctx.getArguments() ?: return 0
 
 		val target = getPlayer(ctx)
-		val animId = StringArgumentType.getString(ctx, "anim_id")
+		val animId = ResourceLocationArgument.getId(ctx, "anim_id")
 		val speed = if (arguments.contains("speed")) FloatArgumentType.getFloat(ctx, "speed") else 1f
 		val fadeIn = if (arguments.contains("fade_in")) IntegerArgumentType.getInteger(
 			ctx,

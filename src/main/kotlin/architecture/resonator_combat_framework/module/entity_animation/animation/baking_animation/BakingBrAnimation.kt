@@ -13,7 +13,7 @@ import kotlin.math.floor
 
 data class BakingBrAnimation
 @JvmOverloads constructor(
-	val animId: String,
+	val identifier: String,
 	/** 播放模式：ONCE / LOOP / HOLD_ON_LAST */
 	val loop: LoopType = LoopType.ONCE,
 	/** 动画总时长（秒） */
@@ -31,9 +31,7 @@ data class BakingBrAnimation
 
 		/** 解析 JSON 根对象的 "animations" 段，每个条目注册为一个 BedrockAnimation */
 		@JvmStatic
-		fun parses(
-			root: JsonObject, side: String = "?"
-		): MutableMap<String, BakingBrAnimation> {
+		fun parses(root: JsonObject): MutableMap<String, BakingBrAnimation> {
 			val result = mutableMapOf<String, BakingBrAnimation>()
 			val animations = root.getAsJsonObject("animations") ?: return result
 			for ((animKey, animEl) in animations.entrySet()) {

@@ -1,8 +1,11 @@
-﻿package architecture.resonator_combat_framework.module.entity_animation.animation.mapper
+package architecture.resonator_combat_framework.module.entity_animation.animation.mapper
 
 import architecture.resonator_combat_framework.core.RcfEventHooks
 import architecture.resonator_combat_framework.module.entity_animation.animation.data.ProxyBoneFlags
+import architecture.resonator_combat_framework.module.entity_animation.animation.model.BakingBrModel
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.ProxyModel
+import architecture.resonator_combat_framework.module.entity_animation.registry.BedrockModelRegistry
+import architecture.resonator_combat_framework.util.RcfUtil
 import net.minecraft.client.model.PlayerModel
 import net.minecraft.world.entity.player.Player
 
@@ -12,9 +15,16 @@ class PlayerAnimationMapperProvider(
 	isClient: Boolean = player.level().isClientSide,
 	animationControllerManager: AnimationControllerManager<Player>
 ) : HumanoidEntityAnimationMapperProvider<Player, PlayerModel<Player>>(player, isClient, animationControllerManager) {
+	companion object {
+		@JvmField
+		val IDENTIFIER = RcfUtil.modRl("player/proxy")
+	}
+
 	constructor(holder: Player) : this(holder, holder.level().isClientSide, AnimationControllerManager(holder))
 
 	init {
+		animationControllerManager.bakingBrModel =
+			BedrockModelRegistry.getInstance(isClient).get(IDENTIFIER) ?: BakingBrModel.EMPTY
 		RcfEventHooks.AnimationControllerRegister<Player>().getSortedEntries()
 			.forEach { (controllerName, controllerFactory, priority) ->
 				animationControllerManager.add(

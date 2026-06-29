@@ -37,7 +37,7 @@ abstract class EntityAnimationMapperProvider<T : Entity, M : EntityModel<T>>(
 	// ---- 触发 ----
 
 	/** 触发动画：解析控制器 → 设置骨骼配置 → 触发控制器 */
-	override fun trigger(controllerName: ResourceLocation?, animId: String, playData: AnimationPlayData) {
+	override fun trigger(controllerName: ResourceLocation?, animId: ResourceLocation, playData: AnimationPlayData) {
 		(animationControllerManager.get(controllerName ?: AnimationControllers.MAIN) ?: mainController).trigger(
 			animId,
 			playData
@@ -121,12 +121,12 @@ abstract class EntityAnimationMapperProvider<T : Entity, M : EntityModel<T>>(
 	// ---- 游戏刻推进 ----
 
 	/** 游戏刻推进 */
-	override fun tickAnimationManager() = animationControllerManager.tick()
+	override fun tick() = animationControllerManager.tick()
 
 	// ---- 配置 ----
 
 	/** 获取动画的骨骼配置 */
-	override fun resolveConfig(animId: String): ProxyBoneConfigData =
+	override fun resolveConfig(animId: ResourceLocation): ProxyBoneConfigData =
 		configLoader.get(animId) ?: ProxyBoneConfigData.EMPTY
 
 	// ---- 骨骼应用 ----

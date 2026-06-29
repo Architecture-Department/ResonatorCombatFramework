@@ -1,5 +1,6 @@
 package architecture.resonator_combat_framework.module.entity_animation.registry
 
+import architecture.goldenboughs_lib.util.LibUtil.rlOf
 import architecture.resonator_combat_framework.module.entity_animation.animation.data.ProxyBoneConfigData
 import architecture.resonator_combat_framework.util.RcfUtil
 import com.google.gson.Gson
@@ -26,22 +27,22 @@ class BedrockAnimationDataRegistry(
 		}
 
 		@JvmStatic
-		fun find(animId: String): ProxyBoneConfigData? {
+		fun find(animId: ResourceLocation): ProxyBoneConfigData? {
 			return CLIENT.get(animId) ?: SERVER.get(animId)
 		}
 
 		@JvmStatic
-		fun findAll(): Map<String, ProxyBoneConfigData> = CLIENT.getAll() + SERVER.getAll()
+		fun findAll(): Map<ResourceLocation, ProxyBoneConfigData> = CLIENT.getAll() + SERVER.getAll()
 	}
 
-	private val configs = mutableMapOf<String, ProxyBoneConfigData>()
+	private val configs = mutableMapOf<ResourceLocation, ProxyBoneConfigData>()
 	private val nbtCache = mutableMapOf<ResourceLocation, CompoundTag>()
 
-	fun get(animId: String): ProxyBoneConfigData? {
+	fun get(animId: ResourceLocation): ProxyBoneConfigData? {
 		return configs[animId]
 	}
 
-	fun getAll(): Map<String, ProxyBoneConfigData> = configs
+	fun getAll(): Map<ResourceLocation, ProxyBoneConfigData> = configs
 
 	fun getNbtCache(): Map<ResourceLocation, CompoundTag> = nbtCache
 
@@ -52,17 +53,21 @@ class BedrockAnimationDataRegistry(
 	override fun prepare(resourceManager: ResourceManager, profiler: ProfilerFiller): Map<ResourceLocation, JsonElement> {
 		val map = super.prepare(resourceManager, profiler)
 		for ((fileId, json) in map) {
-			nbtCache[fileId] = JsonOps.INSTANCE.convertTo(NbtOps.INSTANCE, json) as CompoundTag
+			nbtCache[fileId] = JsonOps.COMPRESSED.convertTo(NbtOps.INSTANCE, json) as CompoundTag
 		}
 		return map
 	}
 
 	override fun apply(loaded: Map<ResourceLocation, JsonElement>, manager: ResourceManager, profiler: ProfilerFiller) {
+		apply(loaded)
+	}
+
+	fun apply(loaded: Map<ResourceLocation, JsonElement>) {
 		configs.clear()
 		for ((fileId, json) in loaded) {
-			val animId = fileId.path
 			try {
-				configs[animId] = ProxyBoneConfigData.parse(json.asJsonObject, isClient)
+				val parse = ProxyBoneConfigData.parse(json.asJsonObject)
+				configs[rlOf(fileId.namespace, fileId.path)] = parse
 			} catch (e: Exception) {
 				RcfUtil.LOGGER.error("[CONFIG] Failed to parse: {}", fileId, e)
 			}

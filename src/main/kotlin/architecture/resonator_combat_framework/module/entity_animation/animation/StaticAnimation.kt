@@ -9,7 +9,6 @@ import architecture.resonator_combat_framework.module.entity_animation.animation
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.BrModel
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.ProxyModel
 import architecture.resonator_combat_framework.module.entity_animation.animation.molang.MolangData
-import architecture.resonator_combat_framework.util.RcfUtil
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.Entity
 
@@ -22,16 +21,12 @@ import net.minecraft.world.entity.Entity
 @AllOpe
 class StaticAnimation(
 	val id: ResourceLocation,
-	val animationId: String,
+	val animationId: ResourceLocation,
 ) {
 	private val properties = mutableMapOf<AnimationPropertyKey<*>, Any>()
 	private val timedEvents = mutableListOf<TimedEvent>()
 
-	constructor(id: ResourceLocation) :
-		this(id, id.namespace + "." + id.path)
-
-	constructor(animationId: String) :
-		this(RcfUtil.modRl(animationId), animationId)
+	constructor(id: ResourceLocation) : this(id, id)
 
 	// ===== 动画数据处理（数据由调用方传入） =====
 

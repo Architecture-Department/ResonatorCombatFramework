@@ -14,12 +14,11 @@ import net.neoforged.neoforge.network.PacketDistributor
 object GameEvents {
 	@SubscribeEvent
 	fun onDatapackSync(event: OnDatapackSyncEvent) {
-		val players = event.relevantPlayers
-		if (players.toList().isEmpty() || players.findFirst().isEmpty) return
+		if (event.relevantPlayers.toList().isEmpty() || event.relevantPlayers.findFirst().isEmpty) return
 		val payload = BedrockAnimationDataSynchsPayload()
 		val payload1 = BedrockModelDataSynchsPayload()
 		val payload2 = ProxyBoneConfigDataDataSynchsPayload()
-		players.forEach { player ->
+		event.relevantPlayers.forEach { player ->
 			if (player == null || player.connection.getConnection().isMemoryConnection) return@forEach
 			PacketDistributor.sendToPlayer(player, payload, payload1, payload2)
 		}

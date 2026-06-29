@@ -36,8 +36,8 @@ object ResourceReloadRegistry {
 
 	@SubscribeEvent(priority = EventPriority.HIGHEST)
 	fun registry(event: StaticAnimationRegistryEvent) {
-		BedrockAnimationRegistry.findAll().forEach {
-			event.register(RcfUtil.modRl(it.key), ::StaticAnimation)
+		BedrockAnimationRegistry.findAll().forEach { (k, v) ->
+			event.register(k, ::StaticAnimation)
 		}
 	}
 

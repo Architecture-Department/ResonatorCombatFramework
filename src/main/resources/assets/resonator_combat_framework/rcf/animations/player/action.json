@@ -1,7 +1,7 @@
 {
 	"format_version": "1.8.0",
 	"animations": {
-		"player.item_switching_left": {
+		"item_switching_left": {
 			"animation_length": 1,
 			"bones": {
 				"left_arm": {
@@ -150,7 +150,7 @@
 				}
 			}
 		},
-		"player.item_switching_right": {
+		"item_switching_right": {
 			"animation_length": 1,
 			"bones": {
 				"right_arm": {

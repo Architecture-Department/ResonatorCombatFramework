@@ -1,5 +1,6 @@
 package architecture.resonator_combat_framework.module.entity_animation.registry
 
+import architecture.goldenboughs_lib.util.LibUtil.rlOf
 import architecture.resonator_combat_framework.module.entity_animation.animation.baking_animation.BakingBrAnimation
 import architecture.resonator_combat_framework.util.RcfUtil
 import com.google.gson.Gson
@@ -26,22 +27,22 @@ class BedrockAnimationRegistry(
 		}
 
 		@JvmStatic
-		fun find(animId: String): BakingBrAnimation? {
+		fun find(animId: ResourceLocation): BakingBrAnimation? {
 			return CLIENT.get(animId) ?: SERVER.get(animId)
 		}
 
 		@JvmStatic
-		fun findAll(): Map<String, BakingBrAnimation> = CLIENT.getAll() + SERVER.getAll()
+		fun findAll(): Map<ResourceLocation, BakingBrAnimation> = CLIENT.getAll() + SERVER.getAll()
 	}
 
-	private val bakingAnimations = mutableMapOf<String, BakingBrAnimation>()
+	private val bakingAnimations = mutableMapOf<ResourceLocation, BakingBrAnimation>()
 	private val nbtCache = mutableMapOf<ResourceLocation, CompoundTag>()
 
-	fun get(animId: String): BakingBrAnimation? {
+	fun get(animId: ResourceLocation): BakingBrAnimation? {
 		return bakingAnimations[animId]
 	}
 
-	fun getAll(): Map<String, BakingBrAnimation> = bakingAnimations
+	fun getAll(): Map<ResourceLocation, BakingBrAnimation> = bakingAnimations
 
 	fun getNbtCache(): Map<ResourceLocation, CompoundTag> = nbtCache
 
@@ -52,20 +53,34 @@ class BedrockAnimationRegistry(
 	override fun prepare(resourceManager: ResourceManager, profiler: ProfilerFiller): Map<ResourceLocation, JsonElement> {
 		val map = super.prepare(resourceManager, profiler)
 		for ((fileId, json) in map) {
-			nbtCache[fileId] = JsonOps.INSTANCE.convertTo(NbtOps.INSTANCE, json) as CompoundTag
+			nbtCache[fileId] = JsonOps.COMPRESSED.convertTo(NbtOps.INSTANCE, json) as CompoundTag
 		}
 		return map
 	}
 
 	override fun apply(loaded: Map<ResourceLocation, JsonElement>, manager: ResourceManager, profiler: ProfilerFiller) {
+		apply(loaded)
+	}
+
+	fun apply(loaded: Map<ResourceLocation, JsonElement>) {
 		bakingAnimations.clear()
 		for ((fileId, json) in loaded) {
 			try {
-				bakingAnimations.putAll(BakingBrAnimation.parses(json.asJsonObject, if (isClient) "CLIENT" else "SERVER"))
+				val parsed = BakingBrAnimation.parses(json.asJsonObject)
+				parsed.forEach { (key, anim) ->
+					if (!ResourceLocation.isValidPath(key)) {
+						return@forEach
+					}
+					bakingAnimations[rlOf(
+						fileId.namespace,
+						fileId.path.split('/', limit = 2)[0] + "/" + key
+					)] = anim
+				}
 			} catch (e: Exception) {
 				RcfUtil.LOGGER.error("[ANIMATION] Failed to parse: {}", fileId, e)
 			}
 		}
 		RcfUtil.LOGGER.info("[ANIMATION] Applied {} animations", bakingAnimations.size)
+
 	}
 }

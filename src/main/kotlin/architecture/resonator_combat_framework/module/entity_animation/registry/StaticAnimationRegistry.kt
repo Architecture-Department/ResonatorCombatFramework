@@ -4,7 +4,6 @@ import architecture.goldenboughs_lib.api.AllOpe
 import architecture.goldenboughs_lib.util.LazySupplier
 import architecture.resonator_combat_framework.module.entity_animation.animation.StaticAnimation
 import architecture.resonator_combat_framework.module.entity_animation.event.StaticAnimationRegistryEvent
-import architecture.resonator_combat_framework.util.RcfUtil
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.server.packs.resources.ResourceManager
 import net.minecraft.server.packs.resources.SimplePreparableReloadListener
@@ -25,11 +24,6 @@ class StaticAnimationRegistry :
 		@JvmStatic
 		fun find(id: ResourceLocation): LazySupplier<StaticAnimation>? {
 			return getInstance().get(id)
-		}
-
-		@JvmStatic
-		fun find(id: String): LazySupplier<StaticAnimation>? {
-			return find(RcfUtil.modRl(id))
 		}
 	}
 

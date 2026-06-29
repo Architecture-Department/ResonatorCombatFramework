@@ -3,9 +3,7 @@ package architecture.resonator_combat_framework.module.entity_animation.animatio
 // 人形实体动画映射器
 
 import architecture.resonator_combat_framework.module.entity_animation.animation.data.ProxyBoneFlags
-import architecture.resonator_combat_framework.module.entity_animation.animation.model.BakingBrModel
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.ProxyModel
-import architecture.resonator_combat_framework.module.entity_animation.registry.BedrockModelRegistry
 import architecture.resonator_combat_framework.module.entity_animation.util.BoneTransformUtil
 import com.mojang.blaze3d.vertex.PoseStack
 import com.mojang.math.Axis
@@ -20,11 +18,6 @@ abstract class HumanoidEntityAnimationMapperProvider<T : LivingEntity, M : Human
 	animationControllerManager: AnimationControllerManager<T>
 ) : LivingEntityAnimationMapperProvider<T, M>(livingEntity, isClient, animationControllerManager) {
 	constructor(holder: T) : this(holder, holder.level().isClientSide, AnimationControllerManager(holder))
-
-	init {
-		animationControllerManager.bakingBrModel =
-			BedrockModelRegistry.getInstance(isClient).get("player.proxy") ?: BakingBrModel.EMPTY
-	}
 
 	override fun applyProxyToModel(
 		proxyModel: ProxyModel, model: M, flags: Map<String, ProxyBoneFlags>

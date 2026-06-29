@@ -16,6 +16,7 @@ import architecture.resonator_combat_framework.module.entity_animation.animation
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.ProxyModel
 import architecture.resonator_combat_framework.module.entity_animation.registry.BedrockAnimationDataRegistry
 import architecture.resonator_combat_framework.module.entity_animation.registry.BedrockAnimationRegistry
+import architecture.resonator_combat_framework.module.entity_animation.registry.BedrockModelRegistry
 import architecture.resonator_combat_framework.module.entity_animation.registry.StaticAnimationRegistry
 import architecture.resonator_combat_framework.util.RcfUtil
 import architecture.resonator_combat_framework.util.TimeUtil
@@ -92,7 +93,7 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 
 	// ===== 触发 =====
 
-	override fun trigger(animId: String, config: AnimationPlayData) {
+	override fun trigger(animId: ResourceLocation, config: AnimationPlayData) {
 		val anim = StaticAnimationRegistry.find(animId)
 		if (anim == null || anim.get() == null) {
 			RcfUtil.LOGGER.warn("[AnimDebug] Animation not found: $animId")
@@ -133,7 +134,7 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 
 		anim.onBegin(manager.holder)
 		anim.tick(manager.holder, animTime, 0f, proxyModel, manager.brModel)
-		extraModel = activeBoneConfig.extraModel
+		extraModel = activeBoneConfig.extraModelId?.let { BedrockModelRegistry.find(it) }
 		manager.rebuildBones()
 
 		RcfEventHooks.AnimationTriggerPost(this, anim, config)
@@ -386,5 +387,5 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 	}
 
 	private fun isInFadeIn(): Boolean = isFadingIn
-	override fun equalsCurrentAnimId(id: String): Boolean = currentAnim?.animationId == id
+	override fun equalsCurrentAnimId(id: ResourceLocation): Boolean = currentAnim?.animationId == id
 }

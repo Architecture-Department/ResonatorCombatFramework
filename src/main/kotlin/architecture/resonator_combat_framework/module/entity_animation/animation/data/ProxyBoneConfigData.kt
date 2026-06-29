@@ -1,11 +1,11 @@
 package architecture.resonator_combat_framework.module.entity_animation.animation.data
 
 import architecture.goldenboughs_lib.api.AllOpe
-import architecture.resonator_combat_framework.module.entity_animation.animation.model.BakingBrModel
-import architecture.resonator_combat_framework.module.entity_animation.registry.BedrockModelRegistry
+import architecture.goldenboughs_lib.util.LibUtil.rlOf
 import architecture.resonator_combat_framework.module.entity_animation.util.AnimationMirrorUtil
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
+import net.minecraft.resources.ResourceLocation
 
 // 骨骼配置数据。包含过渡时间、骨骼标志、时间线
 @ExposedCopyVisibility
@@ -18,7 +18,7 @@ private constructor(
 	private val fadeInTicks: Int = -1,
 	private val fadeOutTicks: Int = -1,
 	/** 额外模型数据定义（动画期间动态添加的模型数据） */
-	val extraModel: BakingBrModel? = null
+	val extraModelId: ResourceLocation? = null
 ) {
 	companion object {
 
@@ -38,25 +38,25 @@ private constructor(
 			fadeInTicks: Int = -1,
 			fadeOutTicks: Int = -1,
 			/** 额外模型数据定义（动画期间动态添加的模型数据） */
-			extraModel: BakingBrModel? = null
+			extraModelId: ResourceLocation? = null
 		): ProxyBoneConfigData {
 			val merged = mutableMapOf<String, ProxyBoneFlags>().apply {
 				putAll(DEFAULT_FLAGS)
 				putAll(bones)
 			}
-			return ProxyBoneConfigData(merged, timeline, transitionTicks, fadeInTicks, fadeOutTicks, extraModel)
+			return ProxyBoneConfigData(merged, timeline, transitionTicks, fadeInTicks, fadeOutTicks, extraModelId)
 		}
 
 		/** 从 JSON 解析骨骼配置 */
 		@JvmStatic
-		fun parse(json: JsonObject, isClient: Boolean): ProxyBoneConfigData {
+		fun parse(json: JsonObject): ProxyBoneConfigData {
 			val transitionTicks = json.get("transition")?.asInt ?: DEFAULT_TRANSITION_TICKS
 			val fadeInTicks = json.get("fade_in")?.asInt ?: -1
 			val fadeOutTicks = json.get("fade_out")?.asInt ?: -1
 			val bones = parseBonesSection(json.get("bones"))
 
 			val timelineJson = json.getAsJsonObject("timeline")
-			val timeline = if (timelineJson != null) {
+			val timeline = if (timelineJson == null) emptyList() else {
 				val list = mutableListOf<ProxyTimelineEntry>()
 				for ((timeRange, data) in timelineJson.entrySet()) {
 					val parts = timeRange.split("-")
@@ -70,14 +70,10 @@ private constructor(
 					)
 				}
 				list
-			} else emptyList()
+			}
 
 			// 解析额外骨骼定义（动画期间动态添加的 BrBone 几何数据）
-			val extraModel = json.get("extra_model_id")?.run {
-				BedrockModelRegistry.getInstance(isClient).get(asString)
-			} ?: json.get("extra_model")?.run {
-				BakingBrModel.parses(this).firstOrNull()
-			}
+			val extraModel = json.get("extra_model_id")?.asString?.let { rlOf(it) }
 
 			return of(bones, timeline, transitionTicks, fadeInTicks, fadeOutTicks, extraModel)
 		}
@@ -156,7 +152,7 @@ private constructor(
 			transitionTicks = other.transitionTicks.takeIf { it != DEFAULT_TRANSITION_TICKS } ?: transitionTicks,
 			fadeInTicks = other.fadeInTicks.takeIf { it >= 0 } ?: this.fadeInTicks,
 			fadeOutTicks = other.fadeOutTicks.takeIf { it >= 0 } ?: this.fadeOutTicks,
-			extraModel = other.extraModel ?: this.extraModel,
+			extraModelId = other.extraModelId ?: this.extraModelId,
 		)
 	}
 }

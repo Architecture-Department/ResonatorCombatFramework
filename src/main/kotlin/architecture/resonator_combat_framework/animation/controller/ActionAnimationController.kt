@@ -5,6 +5,7 @@ import architecture.resonator_combat_framework.module.entity_animation.animation
 import architecture.resonator_combat_framework.module.entity_animation.animation.mapper.AnimationControllerManager
 import architecture.resonator_combat_framework.module.entity_animation.animation.mapper.IEntityAnimationMapperProvider
 import architecture.resonator_combat_framework.module.entity_animation.animation.mapper.LivingEntityAnimationMapperProvider
+import architecture.resonator_combat_framework.util.RcfUtil
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.HumanoidArm
@@ -47,6 +48,6 @@ class ActionAnimationController<T : Entity>(
 	}
 
 	/** 获取切换动画 ID */
-	private fun getSwitchingAnimId(isRight: Boolean): String =
-		"player." + if (isRight) "item_switching_right" else "item_switching_left"
+	private fun getSwitchingAnimId(isRight: Boolean): ResourceLocation =
+		RcfUtil.modRl("player/" + if (isRight) "item_switching_right" else "item_switching_left")
 }

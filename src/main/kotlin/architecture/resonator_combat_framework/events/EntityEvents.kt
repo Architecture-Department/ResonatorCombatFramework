@@ -14,11 +14,10 @@ object EntityEvents {
 	@SubscribeEvent
 	fun onTickPre(event: EntityTickEvent.Pre) {
 		val entity = event.entity
-		// 动画 tick（仅支持 IAnimationProxyProvider 的实体，当前仅为 Player）
-		if (entity is IProxyAnimationProvider) {
-			entity.getAnimationTransformer().tickAnimationManager()
-		}
 		entity.getExistingDataOrNull(RcfAttachmentTypes.MOLANG_DATA)?.apply {}
+		if (entity is IProxyAnimationProvider) {
+			entity.getAnimationTransformer().tick()
+		}
 		entity.getExistingDataOrNull(RcfAttachmentTypes.STATE_HOLDER)?.apply {
 			tick()
 		}

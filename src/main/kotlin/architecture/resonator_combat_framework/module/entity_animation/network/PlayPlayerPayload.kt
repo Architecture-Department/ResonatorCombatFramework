@@ -25,7 +25,7 @@ data class PlayPlayerPayload
 constructor(
 	val playerUuid: UUID,
 	val controllerName: Optional<ResourceLocation> = Optional.empty(),
-	val animId: String,
+	val animId: ResourceLocation,
 	val animType: AnimType = AnimType.DEFAULT,
 	val speedMultiplier: Float = 1f,
 	val startTime: Int = 0,
@@ -38,7 +38,7 @@ constructor(
 	constructor(
 		playerUuid: UUID,
 		controllerName: ResourceLocation?,
-		animId: String,
+		animId: ResourceLocation,
 		animType: AnimType = AnimType.DEFAULT,
 		speedMultiplier: Float = 1f,
 		startTime: Int = 0,
@@ -94,7 +94,7 @@ constructor(
 			{ buf, p ->
 				UUIDUtil.STREAM_CODEC.encode(buf, p.playerUuid)
 				OPTIONAL_RESOURCE_LOCATION_STREAM_CODEC.encode(buf, p.controllerName)
-				ByteBufCodecs.STRING_UTF8.encode(buf, p.animId)
+				ResourceLocation.STREAM_CODEC.encode(buf, p.animId)
 				ANIM_TYPE_CODEC.encode(buf, p.animType)
 				ByteBufCodecs.FLOAT.encode(buf, p.speedMultiplier)
 				ByteBufCodecs.VAR_INT.encode(buf, p.startTime)
@@ -106,7 +106,7 @@ constructor(
 				PlayPlayerPayload(
 					UUIDUtil.STREAM_CODEC.decode(it),
 					OPTIONAL_RESOURCE_LOCATION_STREAM_CODEC.decode(it),
-					ByteBufCodecs.STRING_UTF8.decode(it),
+					ResourceLocation.STREAM_CODEC.decode(it),
 					ANIM_TYPE_CODEC.decode(it),
 					ByteBufCodecs.FLOAT.decode(it),
 					ByteBufCodecs.VAR_INT.decode(it),

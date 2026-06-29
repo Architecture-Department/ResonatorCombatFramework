@@ -25,7 +25,7 @@ data class TriggerPlayerPayload
 constructor(
 	val playerUuid: UUID,
 	val controllerName: Optional<ResourceLocation>,
-	val animId: String,
+	val animId: ResourceLocation,
 	val speedMultiplier: Float = 1f,
 	val fadeInTicks: Int = -1,
 	val fadeOutTicks: Int = -1
@@ -35,7 +35,7 @@ constructor(
 	constructor(
 		playerUuid: UUID,
 		controllerName: ResourceLocation?,
-		animId: String,
+		animId: ResourceLocation,
 		speedMultiplier: Float = 1f,
 		fadeInTicks: Int = -1,
 		fadeOutTicks: Int = -1
@@ -73,7 +73,7 @@ constructor(
 			{ buf, p ->
 				UUIDUtil.STREAM_CODEC.encode(buf, p.playerUuid)
 				OPTIONAL_RESOURCE_LOCATION_STREAM_CODEC.encode(buf, p.controllerName)
-				ByteBufCodecs.STRING_UTF8.encode(buf, p.animId)
+				ResourceLocation.STREAM_CODEC.encode(buf, p.animId)
 				ByteBufCodecs.FLOAT.encode(buf, p.speedMultiplier)
 				ByteBufCodecs.VAR_INT.encode(buf, p.fadeInTicks)
 				ByteBufCodecs.VAR_INT.encode(buf, p.fadeOutTicks)
@@ -82,7 +82,7 @@ constructor(
 				TriggerPlayerPayload(
 					UUIDUtil.STREAM_CODEC.decode(buf),
 					OPTIONAL_RESOURCE_LOCATION_STREAM_CODEC.decode(buf),
-					ByteBufCodecs.STRING_UTF8.decode(buf),
+					ResourceLocation.STREAM_CODEC.decode(buf),
 					ByteBufCodecs.FLOAT.decode(buf),
 					ByteBufCodecs.VAR_INT.decode(buf),
 					ByteBufCodecs.VAR_INT.decode(buf)

@@ -1,7 +1,7 @@
 {
 	"format_version": "1.8.0",
 	"animations": {
-		"player.test": {
+		"test": {
 			"loop": true,
 			"animation_length": 12,
 			"bones": {
@@ -223,7 +223,7 @@
 				}
 			}
 		},
-		"player.test1": {
+		"test1": {
 			"loop": "hold_on_last_frame",
 			"bones": {
 				"right_arm": {
@@ -242,7 +242,7 @@
 				}
 			}
 		},
-		"player.test2": {
+		"test2": {
 			"animation_length": 9,
 			"bones": {
 				"right_arm": {

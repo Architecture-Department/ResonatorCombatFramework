@@ -1,5 +1,6 @@
 package architecture.resonator_combat_framework.module.entity_animation.registry
 
+import architecture.goldenboughs_lib.util.LibUtil
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.BakingBrModel
 import architecture.resonator_combat_framework.util.RcfUtil
 import com.google.gson.Gson
@@ -26,22 +27,22 @@ class BedrockModelRegistry(
 		}
 
 		@JvmStatic
-		fun find(identifier: String): BakingBrModel? {
+		fun find(identifier: ResourceLocation): BakingBrModel? {
 			return CLIENT.get(identifier) ?: SERVER.get(identifier)
 		}
 
 		@JvmStatic
-		fun findAll(): Map<String, BakingBrModel> = CLIENT.getAll() + SERVER.getAll()
+		fun findAll(): Map<ResourceLocation, BakingBrModel> = CLIENT.getAll() + SERVER.getAll()
 	}
 
-	private val models = mutableMapOf<String, BakingBrModel>()
+	private val models = mutableMapOf<ResourceLocation, BakingBrModel>()
 	private val nbtCache = mutableMapOf<ResourceLocation, CompoundTag>()
 
-	fun get(identifier: String): BakingBrModel? {
-		return models[identifier] ?: models["geometry.${identifier}"]
+	fun get(identifier: ResourceLocation): BakingBrModel? {
+		return models[identifier] ?: models[LibUtil.rlOf(identifier.namespace, "geometry.${identifier.path}")]
 	}
 
-	fun getAll(): Map<String, BakingBrModel> = models
+	fun getAll(): Map<ResourceLocation, BakingBrModel> = models
 
 	fun getNbtCache(): Map<ResourceLocation, CompoundTag> = nbtCache
 
@@ -52,17 +53,24 @@ class BedrockModelRegistry(
 	override fun prepare(resourceManager: ResourceManager, profiler: ProfilerFiller): Map<ResourceLocation, JsonElement> {
 		val map = super.prepare(resourceManager, profiler)
 		for ((fileId, json) in map) {
-			nbtCache[fileId] = JsonOps.INSTANCE.convertTo(NbtOps.INSTANCE, json) as CompoundTag
+			nbtCache[fileId] = JsonOps.COMPRESSED.convertTo(NbtOps.INSTANCE, json) as CompoundTag
 		}
 		return map
 	}
 
 	override fun apply(loaded: Map<ResourceLocation, JsonElement>, manager: ResourceManager, profiler: ProfilerFiller) {
+		apply(loaded)
+	}
+
+	fun apply(loaded: Map<ResourceLocation, JsonElement>) {
 		models.clear()
-		for ((_, json) in loaded) {
+		for ((fileId, json) in loaded) {
 			try {
-				for (model in BakingBrModel.parses(json)) {
-					models[model.identifier] = model
+				BakingBrModel.parses(json).forEach { model ->
+					if (!ResourceLocation.isValidPath(model.identifier)) {
+						return@forEach
+					}
+					models[LibUtil.rlOf(fileId.namespace, fileId.path.split('/', limit = 2)[0] + "/" + model.identifier)] = model
 				}
 			} catch (e: Exception) {
 				RcfUtil.LOGGER.error("[MODEL] Failed to parse: {}", json, e)

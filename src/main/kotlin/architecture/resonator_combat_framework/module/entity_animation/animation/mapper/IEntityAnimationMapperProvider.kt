@@ -22,9 +22,9 @@ interface IEntityAnimationMapperProvider<T : Entity, M : EntityModel<T>> {
 	val molangData: MolangData get() = MolangData.of(holder)
 	val mainController: IEntityAnimationController<T> get() = animationControllerManager.getMainController()
 
-	fun tickAnimationManager()
+	fun tick()
 
-	fun resolveConfig(animId: String): ProxyBoneConfigData
+	fun resolveConfig(animId: ResourceLocation): ProxyBoneConfigData
 
 	/** 客户端 */
 	fun tickAndRender(model: M, partialTick: Float, poseStack: PoseStack)
@@ -73,9 +73,9 @@ interface IEntityAnimationMapperProvider<T : Entity, M : EntityModel<T>> {
 	fun resumeAll()
 
 	/** 触发指定动画 */
-	fun trigger(controllerName: ResourceLocation?, animId: String, playData: AnimationPlayData)
+	fun trigger(controllerName: ResourceLocation?, animId: ResourceLocation, playData: AnimationPlayData)
 
-	fun trigger(animId: String, playData: AnimationPlayData) {
+	fun trigger(animId: ResourceLocation, playData: AnimationPlayData) {
 		trigger(AnimationControllers.MAIN, animId, playData)
 	}
 }
