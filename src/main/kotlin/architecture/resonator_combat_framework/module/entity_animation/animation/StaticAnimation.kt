@@ -6,45 +6,26 @@ import architecture.resonator_combat_framework.module.entity_animation.animation
 import architecture.resonator_combat_framework.module.entity_animation.animation.baking_animation.BakingBrAnimationSound
 import architecture.resonator_combat_framework.module.entity_animation.animation.baking_animation.BakingBrAnimationTimeline
 import architecture.resonator_combat_framework.module.entity_animation.animation.controller.IEntityAnimationController
-import architecture.resonator_combat_framework.module.entity_animation.animation.data.ProxyBoneConfigData
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.BrModel
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.ProxyModel
 import architecture.resonator_combat_framework.module.entity_animation.animation.molang.MolangData
-import architecture.resonator_combat_framework.module.entity_animation.registry.BedrockAnimationRegistry
-import architecture.resonator_combat_framework.module.entity_animation.registry.ProxyBoneConfigDataRegistry
 import architecture.resonator_combat_framework.util.RcfUtil
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.Entity
 
+/**
+ * 动画定义——纯生命周期定义，不持有动画数据。
+ *
+ * 动画数据（[BakingBrAnimation]、[ProxyBoneConfigData]）由 [BedrockAnimationRegistry] 管理，
+ * 调用时从对应端的 Registry 获取后传入方法。
+ */
 @AllOpe
 class StaticAnimation(
 	val id: ResourceLocation,
 	val animationId: String,
 ) {
-	private lateinit var bakingAnimation: BakingBrAnimation
-	private lateinit var mirroredBakingAnimation: BakingBrAnimation
-
-	val length: Float get() = bakingAnimation.length
-	val loopType: LoopType get() = bakingAnimation.loop
-
 	private val properties = mutableMapOf<AnimationPropertyKey<*>, Any>()
 	private val timedEvents = mutableListOf<TimedEvent>()
-
-	private var _boneConfig: ProxyBoneConfigData? = null
-
-	val boneConfig: ProxyBoneConfigData
-		get() = _boneConfig ?: ProxyBoneConfigData.EMPTY
-
-	private var _mirroredBoneConfig: ProxyBoneConfigData? = null
-
-	val mirroredBoneConfig: ProxyBoneConfigData
-		get() {
-			val base = _boneConfig ?: return ProxyBoneConfigData.EMPTY
-			if (_mirroredBoneConfig == null) {
-				_mirroredBoneConfig = base.mirrored()
-			}
-			return _mirroredBoneConfig!!
-		}
 
 	constructor(id: ResourceLocation) :
 		this(id, id.namespace + "." + id.path)
@@ -52,50 +33,36 @@ class StaticAnimation(
 	constructor(animationId: String) :
 		this(RcfUtil.modRl(animationId), animationId)
 
-	fun init(isClient: Boolean) {
-		bakingAnimation =
-			BedrockAnimationRegistry.getInstance(isClient).getBakingAnimation(animationId) ?: BakingBrAnimation.EMPTY
-		_boneConfig = ProxyBoneConfigDataRegistry.getInstance(isClient).getConfig(animationId)
-	}
-
-	fun getBakingAnimation(mirrored: Boolean = false): BakingBrAnimation {
-		if (!mirrored) return bakingAnimation
-		if (!::mirroredBakingAnimation.isInitialized) mirroredBakingAnimation = bakingAnimation.mirrored()
-		return mirroredBakingAnimation
-	}
+	// ===== 动画数据处理（数据由调用方传入） =====
 
 	fun computeAndWrite(
+		anim: BakingBrAnimation,
 		time: Float,
 		proxyModel: ProxyModel,
 		context: MolangData? = null,
-		mirrored: Boolean = false
 	): Set<String> {
-		return getBakingAnimation(mirrored).computeAndWrite(time, proxyModel, context)
+		return anim.computeAndWrite(time, proxyModel, context)
 	}
 
 	fun collectEvents(
+		anim: BakingBrAnimation,
 		time: Float,
 		prevTime: Float,
 		alreadyFired: MutableSet<String>,
-		mirrored: Boolean = false
 	): AnimationEventsToFire {
-		val src = getBakingAnimation(mirrored)
 		val sounds = mutableListOf<BakingBrAnimationSound>()
 		val particles = mutableListOf<BakingBrAnimationParticle>()
 		val timelines = mutableListOf<BakingBrAnimationTimeline>()
-		collectTyped(src.sounds, "sound_", alreadyFired, time, prevTime, sounds)
-		collectTyped(src.particles, "particle_", alreadyFired, time, prevTime, particles)
-		collectTyped(src.timelines, "timeline_", alreadyFired, time, prevTime, timelines)
+		collectTyped(anim.sounds, "sound_", alreadyFired, time, prevTime, sounds)
+		collectTyped(anim.particles, "particle_", alreadyFired, time, prevTime, particles)
+		collectTyped(anim.timelines, "timeline_", alreadyFired, time, prevTime, timelines)
 		return AnimationEventsToFire(sounds, particles, timelines)
 	}
 
 	/**
-	 * 推进动画时间，返回更新后的动画时间（秒）。
-	 * 以固定步进累加。
+	 * 推进动画时间，返回更新后的动画时间（秒）。以固定步进累加。
 	 */
-	fun tickAnimTime(currentTime: Float, deltaTime: Float): Float {
-		return currentTime + deltaTime
-	}
+	fun tickAnimTime(currentTime: Float, deltaTime: Float): Float = currentTime + deltaTime
 
 	private inline fun <reified T : Any> collectTyped(
 		events: List<T>,
@@ -103,7 +70,7 @@ class StaticAnimation(
 		alreadyFired: MutableSet<String>,
 		time: Float,
 		prevTime: Float,
-		out: MutableList<T>
+		out: MutableList<T>,
 	) {
 		events.forEachIndexed { i, event ->
 			val key = "$prefix$i"
@@ -156,7 +123,7 @@ class StaticAnimation(
 		proxyModel: ProxyModel,
 		brModel: BrModel,
 		mergedProxy: ProxyModel,
-		controller: IEntityAnimationController<*>
+		controller: IEntityAnimationController<*>,
 	) {
 	}
 }

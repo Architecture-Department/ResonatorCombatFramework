@@ -1,8 +1,7 @@
 package architecture.resonator_combat_framework.core
 
 import architecture.resonator_combat_framework.config.RcfConfig
-import architecture.resonator_combat_framework.event.AnimationRegistry
-import architecture.resonator_combat_framework.event.CreateEntityStateHolder
+import architecture.resonator_combat_framework.event.CreateEntityStateHolderEvent
 import architecture.resonator_combat_framework.init.RcfAttachmentTypes
 import architecture.resonator_combat_framework.init.RcfDataComponentTypes
 import architecture.resonator_combat_framework.util.RcfUtil
@@ -27,9 +26,8 @@ object Rcf {
 		val modContainer = LOADING_CONTEXT.activeContainer
 		val modBus = MOD_BUS
 		RcfConfig.register(modContainer)
-		FORGE_BUS.post(CreateEntityStateHolder())
+		FORGE_BUS.post(CreateEntityStateHolderEvent())
 		RcfAttachmentTypes.REGISTRY.register(modBus)
 		RcfDataComponentTypes.REGISTRY.register(modBus)
-		FORGE_BUS.post(AnimationRegistry())
 	}
 }

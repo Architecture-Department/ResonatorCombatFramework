@@ -1,6 +1,6 @@
 package architecture.resonator_combat_framework.module.entity_animation.registry
 
-import architecture.resonator_combat_framework.module.entity_animation.animation.model.BakingBrModel
+import architecture.resonator_combat_framework.module.entity_animation.animation.data.ProxyBoneConfigData
 import architecture.resonator_combat_framework.util.RcfUtil
 import com.google.gson.Gson
 import com.google.gson.JsonElement
@@ -12,36 +12,36 @@ import net.minecraft.server.packs.resources.ResourceManager
 import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener
 import net.minecraft.util.profiling.ProfilerFiller
 
-class BedrockModelRegistry(
+class BedrockAnimationDataRegistry(
 	val isClient: Boolean
-) : SimpleJsonResourceReloadListener(Gson(), "rcf/models") {
+) : SimpleJsonResourceReloadListener(Gson(), "rcf/animdatas") {
 
 	companion object {
-		private val CLIENT = BedrockModelRegistry(true)
-		private val SERVER = BedrockModelRegistry(false)
+		private val CLIENT = BedrockAnimationDataRegistry(true)
+		private val SERVER = BedrockAnimationDataRegistry(false)
 
 		@JvmStatic
-		fun getInstance(isClient: Boolean): BedrockModelRegistry {
+		fun getInstance(isClient: Boolean): BedrockAnimationDataRegistry {
 			return if (isClient) CLIENT else SERVER
 		}
 
 		@JvmStatic
-		fun get(identifier: String): BakingBrModel? {
-			return CLIENT.get(identifier) ?: SERVER.get(identifier)
+		fun get(animId: String): ProxyBoneConfigData? {
+			return CLIENT.get(animId) ?: SERVER.get(animId)
 		}
 
 		@JvmStatic
-		fun getAll(): Map<String, BakingBrModel> = CLIENT.getAll() + SERVER.getAll()
+		fun getAll(): Map<String, ProxyBoneConfigData> = CLIENT.getAll() + SERVER.getAll()
 	}
 
-	private val models = mutableMapOf<String, BakingBrModel>()
+	private val configs = mutableMapOf<String, ProxyBoneConfigData>()
 	private val nbtCache = mutableMapOf<ResourceLocation, CompoundTag>()
 
-	fun get(identifier: String): BakingBrModel? {
-		return models[identifier] ?: models["geometry.${identifier}"]
+	fun get(animId: String): ProxyBoneConfigData? {
+		return configs[animId]
 	}
 
-	fun getAll(): Map<String, BakingBrModel> = models
+	fun getAll(): Map<String, ProxyBoneConfigData> = configs
 
 	fun getNbtCache(): Map<ResourceLocation, CompoundTag> = nbtCache
 
@@ -58,16 +58,15 @@ class BedrockModelRegistry(
 	}
 
 	override fun apply(loaded: Map<ResourceLocation, JsonElement>, manager: ResourceManager, profiler: ProfilerFiller) {
-		models.clear()
-		for ((_, json) in loaded) {
+		configs.clear()
+		for ((fileId, json) in loaded) {
+			val animId = fileId.path
 			try {
-				for (model in BakingBrModel.parses(json)) {
-					models[model.identifier] = model
-				}
+				configs[animId] = ProxyBoneConfigData.parse(json.asJsonObject, isClient)
 			} catch (e: Exception) {
-				RcfUtil.LOGGER.error("[MODEL] Failed to parse: {}", json, e)
+				RcfUtil.LOGGER.error("[CONFIG] Failed to parse: {}", fileId, e)
 			}
 		}
-		RcfUtil.LOGGER.info("[MODEL] Applied {} models", models.size)
+		RcfUtil.LOGGER.info("[CONFIG] Applied {} bone configs", configs.size)
 	}
 }

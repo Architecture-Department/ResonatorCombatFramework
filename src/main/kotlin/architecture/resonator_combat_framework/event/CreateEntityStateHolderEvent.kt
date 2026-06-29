@@ -6,7 +6,7 @@ import net.minecraft.world.entity.LivingEntity
 import net.neoforged.bus.api.Event
 import java.util.function.Supplier
 
-class CreateEntityStateHolder : Event() {
+class CreateEntityStateHolderEvent : Event() {
 	companion object {
 		private lateinit var MAP_CACHE: HashMap<EntityType<*>, (LivingEntity) -> EntityStateHolder<*>>
 		private val MAP = hashMapOf<Supplier<EntityType<*>>, (entity: LivingEntity) -> EntityStateHolder<*>>()

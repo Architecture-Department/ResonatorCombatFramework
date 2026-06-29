@@ -1,4 +1,4 @@
-package architecture.resonator_combat_framework.module.entity_animation.event
+package architecture.resonator_combat_framework.event
 
 import architecture.goldenboughs_lib.api.AllOpe
 import architecture.resonator_combat_framework.module.entity_animation.animation.controller.IEntityAnimationController

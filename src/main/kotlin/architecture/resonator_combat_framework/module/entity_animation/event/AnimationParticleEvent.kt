@@ -7,6 +7,9 @@ import net.minecraft.resources.ResourceLocation
 import net.neoforged.bus.api.ICancellableEvent
 import org.joml.Vector3d
 
+/**
+ * 粒子生成事件 —— [AttackAnimation.tickAdvance] 中每 tick 生成粒子时触发。
+ */
 abstract class AnimationParticleEvent(
 	val particleId: ResourceLocation,
 	val locatorName: String,

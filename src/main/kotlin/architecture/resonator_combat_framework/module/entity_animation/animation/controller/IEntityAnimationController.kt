@@ -2,9 +2,11 @@ package architecture.resonator_combat_framework.module.entity_animation.animatio
 
 import architecture.goldenboughs_lib.api.AllOpe
 import architecture.resonator_combat_framework.module.entity_animation.animation.StaticAnimation
+import architecture.resonator_combat_framework.module.entity_animation.animation.baking_animation.BakingBrAnimation
 import architecture.resonator_combat_framework.module.entity_animation.animation.data.AnimationPlayData
 import architecture.resonator_combat_framework.module.entity_animation.animation.data.ProxyBoneConfigData
 import architecture.resonator_combat_framework.module.entity_animation.animation.mapper.AnimationControllerManager
+import architecture.resonator_combat_framework.module.entity_animation.animation.model.BakingBrModel
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.ProxyModel
 import architecture.resonator_combat_framework.module.entity_animation.animation.molang.MolangData
 import net.minecraft.resources.ResourceLocation
@@ -33,6 +35,10 @@ interface IEntityAnimationController<T : Entity> {
 
 	/** 控制器管理器 */
 	val manager: AnimationControllerManager<T>
+
+	val currentBoneConfig: ProxyBoneConfigData
+	val currentBakingAnim: BakingBrAnimation?
+	val extraModel: BakingBrModel?
 
 	/** 控制器唯一标识 */
 	val id: ResourceLocation
@@ -64,8 +70,6 @@ interface IEntityAnimationController<T : Entity> {
 
 	/** 过渡持续 tick 数（外部只读） */
 	val currentTransitionTicks: Int
-
-	/** 播放速度倍率（外部只读） */
 
 	/** 是否覆盖模式（true=覆盖低优先级，false=叠加） */
 	val isOverriding: Boolean

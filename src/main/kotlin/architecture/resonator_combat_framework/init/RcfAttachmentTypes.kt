@@ -1,6 +1,6 @@
 ﻿package architecture.resonator_combat_framework.init
 
-import architecture.resonator_combat_framework.event.CreateEntityStateHolder
+import architecture.resonator_combat_framework.event.CreateEntityStateHolderEvent
 import architecture.resonator_combat_framework.module.collision.CollisionEntityData
 import architecture.resonator_combat_framework.module.entity_animation.animation.molang.MolangData
 import architecture.resonator_combat_framework.module.entity_animation.animation.molang.MolangData.Companion.initEntityQueries
@@ -46,7 +46,7 @@ object RcfAttachmentTypes {
 					throw IllegalArgumentException("StateHolder can only be attached to LivingEntity. Unsupported: ${holder?.javaClass}")
 				}
 
-				val function = CreateEntityStateHolder.getAll()[holder.type]
+				val function = CreateEntityStateHolderEvent.getAll()[holder.type]
 				if (function != null) {
 					return@builder function(holder)
 				}

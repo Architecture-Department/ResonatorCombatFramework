@@ -14,7 +14,7 @@ object AnimationIdArgumentProvider : SuggestionProvider<CommandSourceStack> {
 		ctx: CommandContext<CommandSourceStack>,
 		builder: SuggestionsBuilder
 	): CompletableFuture<Suggestions> {
-		val animIds = BedrockAnimationRegistry.getInstance(true).getAllAnimIds()
+		val animIds = BedrockAnimationRegistry.getInstance(true).getAll().keys
 		return SharedSuggestionProvider.suggest(animIds, builder)
 	}
 }

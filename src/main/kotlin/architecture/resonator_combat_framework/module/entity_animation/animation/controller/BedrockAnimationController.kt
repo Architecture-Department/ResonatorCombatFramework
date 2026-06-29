@@ -1,9 +1,9 @@
-﻿package architecture.resonator_combat_framework.module.entity_animation.animation.controller
+package architecture.resonator_combat_framework.module.entity_animation.animation.controller
 
 import architecture.resonator_combat_framework.core.RcfEventHooks
-import architecture.resonator_combat_framework.init.RcfStaticAnimations
 import architecture.resonator_combat_framework.module.entity_animation.animation.LoopType
 import architecture.resonator_combat_framework.module.entity_animation.animation.StaticAnimation
+import architecture.resonator_combat_framework.module.entity_animation.animation.baking_animation.BakingBrAnimation
 import architecture.resonator_combat_framework.module.entity_animation.animation.controller.IEntityAnimationController.State
 import architecture.resonator_combat_framework.module.entity_animation.animation.data.AnimType
 import architecture.resonator_combat_framework.module.entity_animation.animation.data.AnimationPlayData
@@ -14,7 +14,9 @@ import architecture.resonator_combat_framework.module.entity_animation.animation
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.BakingBrModel
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.ProxyBone
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.ProxyModel
+import architecture.resonator_combat_framework.module.entity_animation.registry.BedrockAnimationDataRegistry
 import architecture.resonator_combat_framework.module.entity_animation.registry.BedrockAnimationRegistry
+import architecture.resonator_combat_framework.module.entity_animation.registry.StaticAnimationRegistry
 import architecture.resonator_combat_framework.util.RcfUtil
 import architecture.resonator_combat_framework.util.TimeUtil
 import net.minecraft.resources.ResourceLocation
@@ -26,54 +28,77 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 	protected val isClient: Boolean,
 	override val isOverriding: Boolean = true
 ) : IEntityAnimationController<T> {
-	protected val animationLoader = BedrockAnimationRegistry.getInstance(isClient)
 
 	val proxyModel = ProxyModel("base")
 
 	final override var state = State.IDLE; private set
 	final override var transitionSource: ProxyModel? = null; private set
 	final override var currentConfig: AnimationPlayData = AnimationPlayData.EMPTY; private set
+
+	/** 当前 tick 的动画数据（来自 [animationLoader]，随 [currentAnim] 切换） */
+	final override var currentBakingAnim: BakingBrAnimation? = null; private set
+
 	override var localBoneConfig: ProxyBoneConfigData = ProxyBoneConfigData.EMPTY
+		set(value) {
+			if (currentConfig.mirror) {
+				value.mirror()
+			}
+			field = value
+			_activeBoneConfig = null
+		}
+
+	/** 当前的骨骼配置 */
+	final override var currentBoneConfig: ProxyBoneConfigData = ProxyBoneConfigData.EMPTY
+		private set(value) {
+			field = value
+			_activeBoneConfig = value
+		}
+
+	/** 当前生效的骨骼配置缓存 */
+	private var _activeBoneConfig: ProxyBoneConfigData? = null
+
 	final override val activeBoneConfig: ProxyBoneConfigData
 		get() {
-			val anim = currentAnim ?: return localBoneConfig
-			val merge = anim.boneConfig.merge(localBoneConfig)
-			if (currentConfig.mirror) {
-				return if (localBoneConfig != ProxyBoneConfigData.EMPTY) merge.mirrored()
-				else anim.mirroredBoneConfig
+			if (_activeBoneConfig == null) {
+				_activeBoneConfig = currentBoneConfig.merge(localBoneConfig)
 			}
-			return if (localBoneConfig != ProxyBoneConfigData.EMPTY) merge
-			else anim.boneConfig
+			return _activeBoneConfig!!
 		}
+
 	final override var blendFactor = 0f; private set
 	final override var blendTarget = 0f; private set
 	final override var currentTransitionTicks = ProxyBoneConfigData.DEFAULT_TRANSITION_TICKS; private set
 	final override var speedMultiplier = 1f
 	final override var affectedBones = emptySet<String>(); private set
 
-	protected var advanceTickCount = 0L
+	protected final var advanceTickCount = 0L; private set
 	final override var currentAnim: StaticAnimation? = null; private set
-	private val firedEvents = mutableSetOf<String>()
-	var extraModel: BakingBrModel? = null
-	private var animTime = 0f
-	private var lastRawGameTime = -1f
+	private final val firedEvents = mutableSetOf<String>()
+	final override var extraModel: BakingBrModel? = null; private set
+	protected final var animTime = 0f; private set
+	protected final var lastRawGameTime = -1f; private set
 
 	override val currentAnimTime: Float get() = currentAnim?.let { animTime } ?: 0f
 	override val effectiveWeight: Float get() = if (transitionSource != null) 1f else blendFactor
 	override val isFadingOut: Boolean get() = state == State.TRANSITIONING
 	override val isFadingIn: Boolean get() = state == State.ANIMATION_TRANSITIONING
 
+	// ===== 动画数据查询 =====
+
+	private fun currentLength(): Float = currentBakingAnim?.length ?: 0f
+	private fun currentLoopType(): LoopType = currentBakingAnim?.loop ?: LoopType.ONCE
+
 	override fun isActive(): Boolean = state != State.IDLE
 
 	// ===== 触发 =====
 
 	override fun trigger(animId: String, config: AnimationPlayData) {
-		val anim = RcfStaticAnimations.getStaticAnimation(isClient, animId)
-		if (anim == null) {
+		val anim = StaticAnimationRegistry.get(animId)
+		if (anim == null || anim.get() == null) {
 			RcfUtil.LOGGER.warn("[AnimDebug] Animation not found: $animId")
 			return
 		}
-		triggerWithAnimation(anim, config)
+		triggerWithAnimation(anim.get()!!, config)
 	}
 
 	override fun triggerWithAnimation(anim: StaticAnimation, config: AnimationPlayData) {
@@ -83,6 +108,10 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 		oldActionAnim?.onEnd(manager.holder)
 
 		currentAnim = anim
+		val baseAnim = BedrockAnimationRegistry.get(anim.animationId) ?: BakingBrAnimation.EMPTY
+		currentBakingAnim = if (config.mirror) baseAnim.mirror() else baseAnim
+		val baseConfig = BedrockAnimationDataRegistry.get(anim.animationId) ?: ProxyBoneConfigData.EMPTY
+		currentBoneConfig = if (config.mirror) baseConfig.mirror() else baseConfig
 		manager.clearEmittersFor(id)
 		proxyModel.bones.clear()
 		firedEvents.clear()
@@ -92,13 +121,14 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 		snapshotTransitionSource()
 		currentTransitionTicks = config.resolveFadeInTicks(activeBoneConfig.getFadeInTicks())
 		state = State.ANIMATION_TRANSITIONING
-		blendFactor = 0f; blendTarget = 1f
+		blendFactor = 0f
+		blendTarget = 1f
 
 		// 根据播放方向设置初始动画时间
 		animTime = if (speedMultiplier >= 0) 0f else calcEndSecond()
 		if (config.startTime > 0) animTime = config.startTime / 20f
 		lastRawGameTime = -1f
-		affectedBones = anim.computeAndWrite(animTime, proxyModel, currentData, config.mirror)
+		affectedBones = anim.computeAndWrite(currentBakingAnim!!, animTime, proxyModel, currentData)
 		if (transitionSource != null) crossfadeStep()
 
 		anim.onBegin(manager.holder)
@@ -130,16 +160,15 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 
 	override fun resume() {
 		if (state != State.PAUSED) return
-		val anim = currentAnim
-		if (anim == null) {
+		if (currentAnim == null) {
 			state = if (isInFadeIn()) State.ANIMATION_TRANSITIONING else State.PLAYING
 			return
 		}
 
 		if (speedMultiplier >= 0) {
-			if (animTime * speedMultiplier >= anim.length && anim.loopType == LoopType.HOLD_ON_LAST) return
+			if (animTime * speedMultiplier >= currentLength() && currentLoopType() == LoopType.HOLD_ON_LAST) return
 		} else {
-			if (animTime <= 0f && anim.loopType == LoopType.HOLD_ON_LAST) return
+			if (animTime <= 0f && currentLoopType() == LoopType.HOLD_ON_LAST) return
 		}
 		state = if (isInFadeIn()) State.ANIMATION_TRANSITIONING else State.PLAYING
 	}
@@ -199,7 +228,6 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 		val anim = currentAnim ?: return
 
 		if (speedMultiplier < 0) {
-			// 倒放：时间 <= 0 时动画结束
 			if (animTime > 0f) return
 		} else {
 			val endSec = calcEndSecond()
@@ -208,8 +236,8 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 
 		when (currentConfig.animType) {
 			AnimType.PLAY_ONCE, AnimType.DEFAULT -> when {
-				anim.loopType == LoopType.ONCE -> startFadeOut()
-				anim.loopType == LoopType.LOOP -> resetAnimAndRestart()
+				currentLoopType() == LoopType.ONCE -> startFadeOut()
+				currentLoopType() == LoopType.LOOP -> resetAnimAndRestart()
 				else -> pause()
 			}
 
@@ -231,11 +259,12 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 
 	private fun calcEndSecond(): Float {
 		val config = currentConfig
-		val anim = currentAnim ?: return 0f
+		val animLength = currentLength()
+		if (animLength <= 0f) return 0f
 		return when {
-			config.endTime < 0 -> anim.length + config.endTime / 20f
+			config.endTime < 0 -> animLength + config.endTime / 20f
 			config.endTime > 0 -> config.endTime / 20f
-			else -> anim.length
+			else -> animLength
 		}
 	}
 
@@ -300,18 +329,19 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 	fun tickBackend(gameTime: Float, freezeTime: Boolean = false) {
 		val anim = currentAnim ?: return
 		val data = currentData
+		val bakingAnim = currentBakingAnim ?: return
 		if (freezeTime) {
-			affectedBones = anim.computeAndWrite(animTime, proxyModel, data, currentConfig.mirror)
-			manager.queueEvents(this, anim.collectEvents(animTime, animTime, firedEvents, currentConfig.mirror))
+			affectedBones = anim.computeAndWrite(bakingAnim, animTime, proxyModel, data)
+			manager.queueEvents(this, anim.collectEvents(bakingAnim, animTime, animTime, firedEvents))
 			return
 		}
 		val scaledDelta = calcScaledDelta(gameTime)
 		val prevAnimTime = animTime
 		animTime = anim.tickAnimTime(animTime, scaledDelta)
 		data.updateAnimQueries(animTime, scaledDelta)
-		affectedBones = anim.computeAndWrite(animTime, proxyModel, data, currentConfig.mirror)
+		affectedBones = anim.computeAndWrite(bakingAnim, animTime, proxyModel, data)
 		anim.tick(manager.holder, animTime, scaledDelta, proxyModel, manager.brModel)
-		manager.queueEvents(this, anim.collectEvents(animTime, prevAnimTime, firedEvents, currentConfig.mirror))
+		manager.queueEvents(this, anim.collectEvents(bakingAnim, animTime, prevAnimTime, firedEvents))
 	}
 
 	private fun calcScaledDelta(gameTime: Float): Float {
@@ -339,11 +369,19 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 	private fun forceClear() {
 		currentAnim?.onEnd(manager.holder)
 		manager.clearEmittersFor(id)
-		state = State.IDLE; blendFactor = 0f; blendTarget = 0f
-		proxyModel.bones.clear(); transitionSource = null
-		currentConfig = AnimationPlayData.EMPTY; affectedBones = emptySet()
+		state = State.IDLE
+		blendFactor = 0f
+		blendTarget = 0f
+		proxyModel.bones.clear()
+		transitionSource = null
+		currentConfig = AnimationPlayData.EMPTY
+		affectedBones = emptySet()
 		currentTransitionTicks = ProxyBoneConfigData.DEFAULT_TRANSITION_TICKS
-		speedMultiplier = 1f; extraModel = null
+		speedMultiplier = 1f
+		extraModel = null
+		currentBakingAnim = null
+		currentBoneConfig = ProxyBoneConfigData.EMPTY
+		_activeBoneConfig = null
 		manager.rebuildBones()
 	}
 

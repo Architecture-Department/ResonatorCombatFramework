@@ -1,5 +1,6 @@
 package architecture.resonator_combat_framework.events.registry
 
+import architecture.goldenboughs_lib.events.registry.PayloadRegistry.playToClient
 import architecture.goldenboughs_lib.events.registry.PayloadRegistry.playToServerAndClient
 import architecture.resonator_combat_framework.module.entity_animation.network.*
 import architecture.resonator_combat_framework.util.RcfUtil
@@ -17,6 +18,9 @@ object PayloadRegistry {
 		registrar.playToServerAndClient(TriggerPlayerPayload.TYPE, TriggerPlayerPayload.STREAM_CODEC)
 		registrar.playToServerAndClient(PausePlayerPayload.TYPE, PausePlayerPayload.STREAM_CODEC)
 		registrar.playToServerAndClient(ResumePlayerPayload.TYPE, ResumePlayerPayload.STREAM_CODEC)
+		registrar.playToClient(BedrockAnimationDataSynchsPayload.TYPE, BedrockAnimationDataSynchsPayload.STREAM_CODEC)
+		registrar.playToClient(BedrockModelDataSynchsPayload.TYPE, BedrockModelDataSynchsPayload.STREAM_CODEC)
+		registrar.playToClient(ProxyBoneConfigDataDataSynchsPayload.TYPE, ProxyBoneConfigDataDataSynchsPayload.STREAM_CODEC)
 //		registrar.playToServerAndClient(SyncEntityStatePayload.TYPE, SyncEntityStatePayload.STREAM_CODEC)
 		RcfUtil.LOGGER.info("Registering payloads finish")
 	}

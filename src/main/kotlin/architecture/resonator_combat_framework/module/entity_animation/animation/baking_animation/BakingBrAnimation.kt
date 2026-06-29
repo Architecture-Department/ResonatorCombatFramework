@@ -25,6 +25,7 @@ data class BakingBrAnimation
 	val timelines: List<BakingBrAnimationTimeline> = emptyList(),
 ) {
 	companion object {
+
 		@JvmField
 		val EMPTY = BakingBrAnimation("empty", length = 0f)
 
@@ -179,7 +180,7 @@ data class BakingBrAnimation
 	/**
 	 * 返回镜像后的动画副本：左右骨骼名称互换，位置 X 取反，旋转 Y/Z 取反。
 	 */
-	fun mirrored(): BakingBrAnimation {
+	fun mirror(): BakingBrAnimation {
 		val newBones = mutableMapOf<String, BakingBrBoneAnimation>()
 		for ((name, boneAnim) in bones) {
 			newBones[AnimationMirrorUtil.mirrorBoneName(name)] = boneAnim.mirrored()

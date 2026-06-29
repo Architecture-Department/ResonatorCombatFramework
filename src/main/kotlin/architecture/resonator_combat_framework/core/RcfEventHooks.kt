@@ -2,6 +2,7 @@ package architecture.resonator_combat_framework.core
 
 import architecture.goldenboughs_lib.util.Value
 import architecture.resonator_combat_framework.animation.AttackPhase
+import architecture.resonator_combat_framework.event.AnimationColliderEvent
 import architecture.resonator_combat_framework.module.collision.CollisionEntityData
 import architecture.resonator_combat_framework.module.collision.CollisionEntry
 import architecture.resonator_combat_framework.module.collision.event.CollisionEntityEvent

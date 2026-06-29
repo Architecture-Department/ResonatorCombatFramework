@@ -8,6 +8,9 @@ import architecture.resonator_combat_framework.module.entity_animation.animation
 import net.minecraft.world.entity.Entity
 import net.neoforged.bus.api.Event
 
+/**
+ * 动画事件基类
+ */
 @AllOpe
 abstract class AnimationEvent(
 	val animationController: IEntityAnimationController<*>,

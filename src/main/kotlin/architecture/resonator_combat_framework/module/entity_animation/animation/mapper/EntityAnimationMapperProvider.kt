@@ -6,8 +6,8 @@ import architecture.resonator_combat_framework.module.entity_animation.animation
 import architecture.resonator_combat_framework.module.entity_animation.animation.data.ProxyBoneConfigData
 import architecture.resonator_combat_framework.module.entity_animation.animation.data.ProxyBoneFlags
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.ProxyModel
+import architecture.resonator_combat_framework.module.entity_animation.registry.BedrockAnimationDataRegistry
 import architecture.resonator_combat_framework.module.entity_animation.registry.BedrockAnimationRegistry
-import architecture.resonator_combat_framework.module.entity_animation.registry.ProxyBoneConfigDataRegistry
 import architecture.resonator_combat_framework.module.entity_animation.util.BoneTransformUtil
 import com.mojang.blaze3d.vertex.PoseStack
 import net.minecraft.client.model.EntityModel
@@ -29,7 +29,7 @@ abstract class EntityAnimationMapperProvider<T : Entity, M : EntityModel<T>>(
 	/** 当前渲染帧的 partialTick，供 applyItemTransform 使用 */
 	protected var currentPartialTick = 0f
 
-	val configLoader: ProxyBoneConfigDataRegistry = ProxyBoneConfigDataRegistry.getInstance(isClient)
+	val configLoader: BedrockAnimationDataRegistry = BedrockAnimationDataRegistry.getInstance(isClient)
 
 	val animationLoader: BedrockAnimationRegistry = BedrockAnimationRegistry.getInstance(isClient)
 
@@ -123,7 +123,8 @@ abstract class EntityAnimationMapperProvider<T : Entity, M : EntityModel<T>>(
 	// ---- 配置 ----
 
 	/** 获取动画的骨骼配置 */
-	override fun resolveConfig(animId: String): ProxyBoneConfigData = configLoader.getConfig(animId)
+	override fun resolveConfig(animId: String): ProxyBoneConfigData =
+		configLoader.get(animId) ?: ProxyBoneConfigData.EMPTY
 
 	// ---- 骨骼应用 ----
 

@@ -14,6 +14,7 @@ constructor(
 	val locators: Map<String, BakingBrLocator> = emptyMap()
 ) {
 	companion object {
+
 		@JvmField
 		val EMPTY = BakingBrModel("empty")
 

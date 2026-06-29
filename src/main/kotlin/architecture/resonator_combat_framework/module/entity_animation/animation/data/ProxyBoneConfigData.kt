@@ -21,15 +21,17 @@ private constructor(
 	val extraModel: BakingBrModel? = null
 ) {
 	companion object {
+
 		@JvmField
 		val DEFAULT_FLAGS = mapOf("head" to ProxyBoneFlags(mapOf("lock" to false)))
 
 		@JvmField
-		val EMPTY = create(emptyMap(), emptyList(), DEFAULT_TRANSITION_TICKS)
+		val EMPTY = of(emptyMap(), emptyList(), DEFAULT_TRANSITION_TICKS)
 
 		const val DEFAULT_TRANSITION_TICKS: Int = 3
 
-		fun create(
+		@JvmStatic
+		fun of(
 			bones: Map<String, ProxyBoneFlags>,
 			timeline: List<ProxyTimelineEntry>,
 			transitionTicks: Int,
@@ -77,7 +79,7 @@ private constructor(
 				BakingBrModel.parses(this).firstOrNull()
 			}
 
-			return create(bones, timeline, transitionTicks, fadeInTicks, fadeOutTicks, extraModel)
+			return of(bones, timeline, transitionTicks, fadeInTicks, fadeOutTicks, extraModel)
 		}
 
 		private fun parseBonesSection(section: JsonElement?): Map<String, ProxyBoneFlags> {
@@ -135,7 +137,7 @@ private constructor(
 	}
 
 	/** 返回镜像后的配置（交换左右骨骼名） */
-	fun mirrored(): ProxyBoneConfigData {
+	fun mirror(): ProxyBoneConfigData {
 		val mirroredBones = bones.mapKeys { AnimationMirrorUtil.mirrorBoneName(it.key) }
 		val mirroredTimeline = timeline.map { entry ->
 			entry.copy(bones = entry.bones.mapKeys { AnimationMirrorUtil.mirrorBoneName(it.key) })
@@ -148,7 +150,7 @@ private constructor(
 		val mergedBones = bones.toMutableMap()
 		mergedBones.putAll(other.bones)
 		val mergedTimeline = timeline + other.timeline
-		return create(
+		return of(
 			bones = mergedBones,
 			timeline = mergedTimeline,
 			transitionTicks = other.transitionTicks.takeIf { it != DEFAULT_TRANSITION_TICKS } ?: transitionTicks,

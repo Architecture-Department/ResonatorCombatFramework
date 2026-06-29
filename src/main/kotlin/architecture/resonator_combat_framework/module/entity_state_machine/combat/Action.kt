@@ -42,7 +42,13 @@ abstract class Action(
 		return RcfEventHooks.CombatActionInterruptible(holder, entity, this, target, interruptWeight < target.weight)
 	}
 
-	fun nextAction(time: Float, sourceIndex: Int, nextIndex: Int, actionSequence: ActionSequence?, entity: LivingEntity): Action? {
+	fun nextAction(
+		time: Float,
+		sourceIndex: Int,
+		nextIndex: Int,
+		actionSequence: ActionSequence?,
+		entity: LivingEntity
+	): Action? {
 		actionSequence ?: return null
 		return actionSequence.getStage(nextIndex)
 	}
