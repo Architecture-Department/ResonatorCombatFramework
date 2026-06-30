@@ -73,11 +73,9 @@ data class BakingBrAnimationParticle
 
 			val pos1 = entity.position().toVector3f()
 			val matrix = Matrix4f()
-			val poseStack = PoseStack()
-			poseStack.translate(pos1.x, pos1.y, pos1.z)
-			poseStack.mulPose(Axis.YP.rotation(-entity.getPreciseBodyRotation(1.0f).toRadians()))
-			poseStack.pushPose()
-			brModel.computeLocatorGlobalMatrix(locatorName, animationData, poseStack, isWorld = true)
+				.translate(pos1.x, pos1.y, pos1.z)
+				.rotate(Axis.YP.rotation(-entity.getPreciseBodyRotation(1.0f).toRadians()))
+				.mul(brModel.computeLocatorGlobalMatrix(locatorName, animationData, isWorld = true))
 			var pos = matrix.toPos()
 			var rotate = matrix.toRot()
 			val event = RcfEventHooks.AnimationParticlePre(

@@ -1,7 +1,9 @@
 package architecture.resonator_combat_framework.events.registry
 
 import architecture.goldenboughs_lib.events.registry.PayloadRegistry.playToClient
+import architecture.goldenboughs_lib.events.registry.PayloadRegistry.playToServer
 import architecture.goldenboughs_lib.events.registry.PayloadRegistry.playToServerAndClient
+import architecture.resonator_combat_framework.common.payload.AttackPayload
 import architecture.resonator_combat_framework.module.entity_animation.network.*
 import architecture.resonator_combat_framework.util.RcfUtil
 import net.neoforged.bus.api.SubscribeEvent
@@ -20,8 +22,12 @@ object PayloadRegistry {
 		registrar.playToServerAndClient(ResumePlayerPayload.TYPE, ResumePlayerPayload.STREAM_CODEC)
 		registrar.playToClient(BedrockAnimationDataSynchsPayload.TYPE, BedrockAnimationDataSynchsPayload.STREAM_CODEC)
 		registrar.playToClient(BedrockModelDataSynchsPayload.TYPE, BedrockModelDataSynchsPayload.STREAM_CODEC)
-		registrar.playToClient(ProxyBoneConfigDataDataSynchsPayload.TYPE, ProxyBoneConfigDataDataSynchsPayload.STREAM_CODEC)
+		registrar.playToClient(
+			ProxyBoneConfigDataDataSynchsPayload.TYPE,
+			ProxyBoneConfigDataDataSynchsPayload.STREAM_CODEC
+		)
 //		registrar.playToServerAndClient(SyncEntityStatePayload.TYPE, SyncEntityStatePayload.STREAM_CODEC)
+		registrar.playToServerAndClient(AttackPayload.TYPE, AttackPayload.STREAM_CODEC)
 		RcfUtil.LOGGER.info("Registering payloads finish")
 	}
 }

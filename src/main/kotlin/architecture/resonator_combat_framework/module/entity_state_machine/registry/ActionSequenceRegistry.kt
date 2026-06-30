@@ -11,22 +11,7 @@ import net.minecraft.util.profiling.ProfilerFiller
 import thedarkcolour.kotlinforforge.neoforge.forge.FORGE_BUS
 
 @AllOpe
-class ActionSequenceRegistry :
-	SimplePreparableReloadListener<Map<ResourceLocation, LazySupplier<ActionSequence>>>() {
-	companion object {
-		private val INSTANCE: ActionSequenceRegistry = ActionSequenceRegistry()
-
-		@JvmStatic
-		fun getInstance(): ActionSequenceRegistry {
-			return INSTANCE
-		}
-
-		@JvmStatic
-		fun find(id: ResourceLocation): LazySupplier<ActionSequence>? {
-			return getInstance().get(id)
-		}
-	}
-
+object ActionSequenceRegistry : SimplePreparableReloadListener<Map<ResourceLocation, LazySupplier<ActionSequence>>>() {
 	private val actionSequences = mutableMapOf<ResourceLocation, LazySupplier<ActionSequence>>()
 
 	fun get(id: ResourceLocation): LazySupplier<ActionSequence>? = actionSequences[id]

@@ -1,6 +1,7 @@
 package architecture.resonator_combat_framework.module.entity_animation.mixin.client;
 
 import architecture.resonator_combat_framework.mixed.IPlayerRcf;
+import architecture.resonator_combat_framework.module.entity_animation.IProxyAnimationProvider;
 import net.minecraft.client.Camera;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.renderer.GameRenderer;
@@ -25,8 +26,8 @@ public abstract class LevelRendererMixin {
 		Matrix4f frustumMatrix, Matrix4f projectionMatrix, CallbackInfo ci
 	) {
 		resonator_combat_framework$defaultCameraState = camera.isDetached();
-		if (!camera.isDetached() && camera.getEntity() instanceof IPlayerRcf rcf
-			&& rcf.resonator_combat_framework$getAnimationTransformer().isActive()) {
+		if (!camera.isDetached() && camera.getEntity() instanceof IProxyAnimationProvider rcf
+			&& rcf.resonator_combat_framework$getMapperProvider().isActive()) {
 			((CameraAccessor) camera).setDetached(true);
 		}
 	}

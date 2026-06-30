@@ -1,6 +1,7 @@
 package architecture.resonator_combat_framework.module.entity_animation.animation
 
 import architecture.goldenboughs_lib.api.AllOpe
+import architecture.resonator_combat_framework.animation.AttackPhase
 import architecture.resonator_combat_framework.module.entity_animation.animation.baking_animation.BakingBrAnimation
 import architecture.resonator_combat_framework.module.entity_animation.animation.baking_animation.BakingBrAnimationParticle
 import architecture.resonator_combat_framework.module.entity_animation.animation.baking_animation.BakingBrAnimationSound
@@ -11,6 +12,7 @@ import architecture.resonator_combat_framework.module.entity_animation.animation
 import architecture.resonator_combat_framework.module.entity_animation.animation.molang.MolangData
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.Entity
+import java.util.*
 
 /**
  * 动画定义——纯生命周期定义，不持有动画数据。
@@ -23,8 +25,8 @@ class StaticAnimation(
 	val id: ResourceLocation,
 	val animationId: ResourceLocation,
 ) {
-	private val properties = mutableMapOf<AnimationPropertyKey<*>, Any>()
-	private val timedEvents = mutableListOf<TimedEvent>()
+	private val properties = mutableMapOf<AnimationProperty<*>, Any>()
+	private val timedEvents = mutableListOf<TimedEvent>() // TODO
 
 	constructor(id: ResourceLocation) : this(id, id)
 
@@ -87,13 +89,20 @@ class StaticAnimation(
 
 	// ===== 链式属性配置 =====
 
-	fun <T> addProperty(key: AnimationPropertyKey<T>, value: T): StaticAnimation {
+	@Suppress("UNCHECKED_CAST")
+	fun <T : Any> addProperty(key: AnimationProperty<T>, value: T): StaticAnimation {
 		properties[key] = value as Any
 		return this
 	}
 
 	@Suppress("UNCHECKED_CAST")
-	fun <T> getProperty(key: AnimationPropertyKey<T>): T = (properties[key] as? T) ?: key.default
+	fun <T : Any> getProperty(key: AnimationProperty<T>): Optional<T> =
+		Optional.ofNullable((properties[key] as? T))
+
+	fun <T : Any> getProperty(key: AnimationProperty<T>, phase: AttackPhase): Optional<T> {
+		val property = phase.getProperty(key)
+		return if (property.isPresent) property else getProperty(key)
+	}
 
 	fun addEvent(event: TimedEvent): StaticAnimation {
 		timedEvents.add(event)
@@ -104,7 +113,11 @@ class StaticAnimation(
 
 	// ===== 生命周期钩子 =====
 
-	fun onBegin(entity: Entity) {}
+	/** trigger 早期钩子。在骨骼数据写入前、过渡/镜像设置前调用。 */
+	fun onBegin(entity: Entity, animTime: Float, f: Float, proxyModel: ProxyModel, brModel: BrModel) {}
+
+	/** 动画启动钩子。在 [trigger] 全部初始化完成后调用（含第一帧、extraModel、骨骼重建之后）。 */
+	fun onStart(entity: Entity, animTime: Float, f: Float, proxyModel: ProxyModel, brModel: BrModel) {}
 
 	/** 每 tick 回调（合并前）。在 [tickAnimTime] 后、[remerge] 前调用。 */
 	fun tick(entity: Entity, animTime: Float, deltaTime: Float, proxyModel: ProxyModel, brModel: BrModel) {}

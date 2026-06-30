@@ -1,7 +1,7 @@
 package architecture.resonator_combat_framework.module.entity_animation.network
 
 import architecture.goldenboughs_lib.api.payload.ToServerAndClientPayload
-import architecture.goldenboughs_lib.util.LibUtil.OPTIONAL_RESOURCE_LOCATION_STREAM_CODEC
+import architecture.goldenboughs_lib.util.LibUtil.RESOURCE_LOCATION_OPTIONAL_STREAM_CODEC
 import architecture.resonator_combat_framework.events.registry.AnimationControllers
 import architecture.resonator_combat_framework.module.entity_animation.IProxyAnimationProvider.Companion.getMapperProvider
 import architecture.resonator_combat_framework.module.entity_animation.animation.data.AnimType
@@ -93,7 +93,7 @@ constructor(
 		val STREAM_CODEC: StreamCodec<ByteBuf, PlayPlayerPayload> = StreamCodec.of(
 			{ buf, p ->
 				UUIDUtil.STREAM_CODEC.encode(buf, p.playerUuid)
-				OPTIONAL_RESOURCE_LOCATION_STREAM_CODEC.encode(buf, p.controllerName)
+				RESOURCE_LOCATION_OPTIONAL_STREAM_CODEC.encode(buf, p.controllerName)
 				ResourceLocation.STREAM_CODEC.encode(buf, p.animId)
 				ANIM_TYPE_CODEC.encode(buf, p.animType)
 				ByteBufCodecs.FLOAT.encode(buf, p.speedMultiplier)
@@ -105,7 +105,7 @@ constructor(
 			{
 				PlayPlayerPayload(
 					UUIDUtil.STREAM_CODEC.decode(it),
-					OPTIONAL_RESOURCE_LOCATION_STREAM_CODEC.decode(it),
+					RESOURCE_LOCATION_OPTIONAL_STREAM_CODEC.decode(it),
 					ResourceLocation.STREAM_CODEC.decode(it),
 					ANIM_TYPE_CODEC.decode(it),
 					ByteBufCodecs.FLOAT.decode(it),

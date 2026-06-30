@@ -1,7 +1,7 @@
 package architecture.resonator_combat_framework.module.entity_animation.network
 
 import architecture.goldenboughs_lib.api.payload.ToServerAndClientPayload
-import architecture.goldenboughs_lib.util.LibUtil.OPTIONAL_RESOURCE_LOCATION_STREAM_CODEC
+import architecture.goldenboughs_lib.util.LibUtil.RESOURCE_LOCATION_OPTIONAL_STREAM_CODEC
 import architecture.resonator_combat_framework.events.registry.AnimationControllers
 import architecture.resonator_combat_framework.module.entity_animation.IProxyAnimationProvider.Companion.getMapperProvider
 import architecture.resonator_combat_framework.util.RcfUtil
@@ -50,7 +50,7 @@ constructor(
 		@JvmField
 		val STREAM_CODEC: StreamCodec<ByteBuf, PausePlayerPayload> = StreamCodec.composite(
 			UUIDUtil.STREAM_CODEC, PausePlayerPayload::playerUuid,
-			OPTIONAL_RESOURCE_LOCATION_STREAM_CODEC, PausePlayerPayload::controllerName,
+			RESOURCE_LOCATION_OPTIONAL_STREAM_CODEC, PausePlayerPayload::controllerName,
 			::PausePlayerPayload
 		)
 	}

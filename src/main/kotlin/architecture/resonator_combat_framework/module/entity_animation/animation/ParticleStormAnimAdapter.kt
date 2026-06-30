@@ -1,6 +1,5 @@
 package architecture.resonator_combat_framework.module.entity_animation.animation
 
-import architecture.goldenboughs_lib.util.PoseStack
 import architecture.goldenboughs_lib.util.toPos
 import architecture.resonator_combat_framework.module.entity_animation.animation.controller.IEntityAnimationController
 import architecture.resonator_combat_framework.module.entity_animation.animation.mapper.AnimationControllerManager
@@ -10,6 +9,7 @@ import com.mojang.math.Axis
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.phys.Vec3
+import org.joml.Matrix4f
 import org.joml.Vector3dc
 import org.mesdag.particlestorm.data.molang.MolangExp
 import org.mesdag.particlestorm.particle.MolangParticleEngine
@@ -62,18 +62,17 @@ object ParticleStormAnimAdapter {
 
 		// 2. 计算定位器世界坐标
 		val vector3f = entity.position().toVector3f()
-		val poseStack = PoseStack()
-		poseStack.translate(vector3f.x, vector3f.y, vector3f.z)
-		poseStack.mulPose(Axis.YP.rotation(-entity.getPreciseBodyRotation(1.0f)))
-		brModel.computeLocatorGlobalMatrix(locatorName, animationData, poseStack, isWorld = true)
-		val pose = poseStack.last().pose
-		val pos = pose.toPos().toVec3()
+		val matrix = Matrix4f()
+			.translate(vector3f.x, vector3f.y, vector3f.z)
+			.rotate(Axis.YP.rotation(-entity.getPreciseBodyRotation(1.0f)))
+			.mul(brModel.computeLocatorGlobalMatrix(locatorName, animationData, isWorld = true))
+		val pos = matrix.toPos().toVec3()
 
 		// 3. 创建发射器
 		val expression = if (preEffectScriptStr != null) MolangExp(preEffectScriptStr) else MolangExp.EMPTY
 		val emitter = ParticleEmitter(entity.level(), pos, particleId, expression)
 		emitter.attachEntity(entity)
-		emitter.parentSpace = pose
+		emitter.parentSpace = matrix
 
 		// 4. 注册到管理器追踪
 		MolangParticleEngine.INSTANCE.addEmitter(emitter, false)
@@ -95,6 +94,6 @@ object ParticleStormAnimAdapter {
 	) {
 		val emitter = MolangParticleEngine.INSTANCE.getEmitter(emitterId) ?: return
 		if (emitter.isRemoved) return
-		emitter.parentSpace = brModel.computeLocatorGlobalMatrix(locatorName, animationData, isWorld = true).last().pose
+		emitter.parentSpace = brModel.computeLocatorGlobalMatrix(locatorName, animationData, isWorld = true)
 	}
 }

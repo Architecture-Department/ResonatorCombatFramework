@@ -48,6 +48,10 @@ class CollisionEntityData(val holder: Entity) {
 		dirty = true
 	}
 
+	/** 获取指定分组的碰撞体列表，用于原地更新 worldMatrix 等属性 */
+	fun getColliders(groupId: ResourceLocation): MutableList<CollisionEntry>? = colliderMap[groupId]
+
+
 	/** 移除指定分组及其命中记录（动画结束时调用） */
 	fun removeGroup(groupId: ResourceLocation) {
 		colliderMap.remove(groupId)

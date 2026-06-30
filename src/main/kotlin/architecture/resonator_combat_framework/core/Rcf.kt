@@ -29,5 +29,9 @@ object Rcf {
 		FORGE_BUS.post(CreateEntityStateHolderEvent())
 		RcfAttachmentTypes.REGISTRY.register(modBus)
 		RcfDataComponentTypes.REGISTRY.register(modBus)
+//		FORGE_BUS.post(StaticAnimationRegistryEvent())
+//		FORGE_BUS.post(ActionRegistryEvent())
+//		FORGE_BUS.post(ActionSequenceRegistryEvent())
+//		FORGE_BUS.post(ItemPropertyRegistryEvent())
 	}
 }

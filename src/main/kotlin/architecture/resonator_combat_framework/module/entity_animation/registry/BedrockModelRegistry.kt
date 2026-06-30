@@ -70,7 +70,7 @@ class BedrockModelRegistry(
 					if (!ResourceLocation.isValidPath(model.identifier)) {
 						return@forEach
 					}
-					models[LibUtil.rlOf(fileId.namespace, fileId.path.split('/', limit = 2)[0] + "/" + model.identifier)] = model
+					models[LibUtil.rlOf(fileId.namespace, fileId.path.substringBeforeLast("/") + "/" + model.identifier)] = model
 				}
 			} catch (e: Exception) {
 				RcfUtil.LOGGER.error("[MODEL] Failed to parse: {}", json, e)

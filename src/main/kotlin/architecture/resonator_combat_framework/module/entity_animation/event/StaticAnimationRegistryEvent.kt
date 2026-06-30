@@ -12,7 +12,8 @@ class StaticAnimationRegistryEvent : Event() {
 	private val map = linkedMapOf<ResourceLocation, LazySupplier<StaticAnimation>>()
 
 	fun <T : StaticAnimation> register(
-		id: ResourceLocation, function: (id: ResourceLocation) -> T
+		id: ResourceLocation,
+		function: (id: ResourceLocation) -> T
 	): LazySupplier<T> {
 		@Suppress("RemoveExplicitTypeArguments") val supplier = LazySupplier<T> { function(id) }
 		@Suppress("UNCHECKED_CAST")

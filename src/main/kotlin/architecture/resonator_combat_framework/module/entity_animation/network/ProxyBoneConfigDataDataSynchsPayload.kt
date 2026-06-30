@@ -1,7 +1,7 @@
 package architecture.resonator_combat_framework.module.entity_animation.network
 
 import architecture.goldenboughs_lib.api.payload.ToClientPayload
-import architecture.goldenboughs_lib.util.LibUtil.MAP_RESOURCE_LOCATION_COMPOUND_TAG_CODEC
+import architecture.goldenboughs_lib.util.LibUtil.RESOURCE_LOCATION_BY_COMPOUND_TAG_MAP_STREAM_CODEC
 import architecture.resonator_combat_framework.module.entity_animation.registry.BedrockAnimationDataRegistry
 import architecture.resonator_combat_framework.util.RcfUtil
 import com.mojang.serialization.JsonOps
@@ -24,7 +24,7 @@ data class ProxyBoneConfigDataDataSynchsPayload(
 
 		@JvmField
 		val STREAM_CODEC: StreamCodec<ByteBuf, ProxyBoneConfigDataDataSynchsPayload> = StreamCodec.composite(
-			MAP_RESOURCE_LOCATION_COMPOUND_TAG_CODEC, ProxyBoneConfigDataDataSynchsPayload::nbtMap,
+			RESOURCE_LOCATION_BY_COMPOUND_TAG_MAP_STREAM_CODEC, ProxyBoneConfigDataDataSynchsPayload::nbtMap,
 			::ProxyBoneConfigDataDataSynchsPayload
 		)
 	}

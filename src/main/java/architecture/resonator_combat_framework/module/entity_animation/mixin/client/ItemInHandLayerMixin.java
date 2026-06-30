@@ -1,5 +1,6 @@
 package architecture.resonator_combat_framework.module.entity_animation.mixin.client;
 
+import architecture.resonator_combat_framework.module.entity_animation.IProxyAnimationProvider;
 import architecture.resonator_combat_framework.module.entity_animation.animation.mapper.HumanoidEntityAnimationMapperProvider;
 import architecture.resonator_combat_framework.module.entity_animation.animation.mapper.IEntityAnimationMapperProvider;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -29,8 +30,8 @@ public class ItemInHandLayerMixin {
 		int packedLight,
 		CallbackInfo ci
 	) {
-		if (!(livingEntity instanceof AbstractClientPlayer player)) return;
-		IEntityAnimationMapperProvider<?, ?> iAnimationMapper = player.resonator_combat_framework$getAnimationTransformer();
+		if (!(livingEntity instanceof IProxyAnimationProvider player)) return;
+		IEntityAnimationMapperProvider<?, ?> iAnimationMapper = player.resonator_combat_framework$getMapperProvider();
 		if (!iAnimationMapper.isActive() || !(iAnimationMapper instanceof HumanoidEntityAnimationMapperProvider<?, ?> humanoidEntityAnimationMapper)) {
 			return;
 		}

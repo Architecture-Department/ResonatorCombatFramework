@@ -94,7 +94,7 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 	// ===== 触发 =====
 
 	override fun trigger(animId: ResourceLocation, config: AnimationPlayData) {
-		val anim = StaticAnimationRegistry.find(animId)
+		val anim = StaticAnimationRegistry.get(animId)
 		if (anim == null || anim.get() == null) {
 			RcfUtil.LOGGER.warn("[AnimDebug] Animation not found: $animId")
 			return
@@ -132,11 +132,12 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 		affectedBones = anim.computeAndWrite(currentBakingAnim!!, animTime, proxyModel, currentData)
 		if (transitionSource != null) crossfadeStep()
 
-		anim.onBegin(manager.holder)
+		anim.onBegin(manager.holder, animTime, 0f, proxyModel, manager.brModel)
 		anim.tick(manager.holder, animTime, 0f, proxyModel, manager.brModel)
 		extraModel = activeBoneConfig.extraModelId?.let { BedrockModelRegistry.find(it) }
 		manager.rebuildBones()
 
+		anim.onStart(manager.holder, animTime, 0f, proxyModel, manager.brModel)
 		RcfEventHooks.AnimationTriggerPost(this, anim, config)
 	}
 

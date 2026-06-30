@@ -15,9 +15,9 @@ import net.minecraft.world.entity.LivingEntity
 @AllOpe
 abstract class Action(
 	val id: ResourceLocation,
-	val timing: StageTiming,
-	val interruptData: InterruptData,
-	val weight: Int,
+	val timing: StageTiming,// TODO 基类不应该带有这个
+	val interruptData: InterruptData,// TODO 基类不应该带有这个
+	val weight: Int = 2500
 ) {
 	val timeLength: Float = timing.windupSec + timing.activeSec + timing.recoverySec
 
@@ -41,9 +41,7 @@ abstract class Action(
 	/** 动作结束时调用 */
 	fun onEnd(entity: LivingEntity, actionSequence: ActionSequence?) {}
 
-	fun onSpeedModify(entity: LivingEntity, actionSequence: ActionSequence?, oldValue: Float, newValue: Float) {
-
-	}
+	fun onSpeedModify(entity: LivingEntity, actionSequence: ActionSequence?, oldValue: Float, newValue: Float) {}
 
 	// ===== 阶段查询 =====
 
@@ -58,7 +56,8 @@ abstract class Action(
 	}
 
 	fun isInterruptible(time: Float, holder: EntityStateHolder<*>, target: Action, entity: LivingEntity): Boolean {
-		val interruptWeight = interruptData.getInterruptWeight(getState(time, entity))
+		val actionState = getState(time, entity)
+		val interruptWeight = interruptData.getInterruptWeight(actionState)
 		if (interruptWeight < 0) {
 			return RcfEventHooks.CombatActionInterruptible(holder, entity, this, target, false)
 		}
@@ -73,7 +72,7 @@ abstract class Action(
 		entity: LivingEntity
 	): Action? {
 		actionSequence ?: return null
-		return actionSequence.getStage(nextIndex)
+		return actionSequence.getAction(nextIndex)
 	}
 
 	fun nextAction(time: Float, sourceIndex: Int, actionSequence: ActionSequence?, entity: LivingEntity): Action? {

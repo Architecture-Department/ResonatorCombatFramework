@@ -1,5 +1,6 @@
 package architecture.resonator_combat_framework.module.entity_animation.client
 
+import architecture.resonator_combat_framework.module.entity_animation.IProxyAnimationProvider.Companion.getMapperProvider
 import architecture.resonator_combat_framework.util.RcfUtil
 import net.minecraft.client.Minecraft
 
@@ -12,6 +13,6 @@ object FirstPersonRender {
 		return !RcfUtil.IRSTPERSON_LOADED &&
 			!minecraft.gameRenderer.mainCamera.isDetached &&
 			player != null &&
-			player.`resonator_combat_framework$getAnimationTransformer`().isActive()
+			player.getMapperProvider().isActive()
 	}
 }

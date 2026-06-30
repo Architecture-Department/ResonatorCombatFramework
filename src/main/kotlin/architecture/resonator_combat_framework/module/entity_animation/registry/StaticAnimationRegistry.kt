@@ -11,22 +11,8 @@ import net.minecraft.util.profiling.ProfilerFiller
 import thedarkcolour.kotlinforforge.neoforge.forge.FORGE_BUS
 
 @AllOpe
-class StaticAnimationRegistry :
+object StaticAnimationRegistry :
 	SimplePreparableReloadListener<Map<ResourceLocation, LazySupplier<StaticAnimation>>>() {
-	companion object {
-		private val INSTANCE: StaticAnimationRegistry = StaticAnimationRegistry()
-
-		@JvmStatic
-		fun getInstance(): StaticAnimationRegistry {
-			return INSTANCE
-		}
-
-		@JvmStatic
-		fun find(id: ResourceLocation): LazySupplier<StaticAnimation>? {
-			return getInstance().get(id)
-		}
-	}
-
 	private val staticAnimations = mutableMapOf<ResourceLocation, LazySupplier<StaticAnimation>>()
 
 	fun get(id: ResourceLocation): LazySupplier<StaticAnimation>? = staticAnimations[id]

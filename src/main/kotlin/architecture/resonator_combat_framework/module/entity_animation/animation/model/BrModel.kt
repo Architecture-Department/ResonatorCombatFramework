@@ -1,8 +1,7 @@
 package architecture.resonator_combat_framework.module.entity_animation.animation.model
 
-import architecture.goldenboughs_lib.util.PoseStack
 import architecture.goldenboughs_lib.util.toRadians
-import com.mojang.math.Axis
+import org.joml.Matrix4f
 import org.joml.Vector3f
 import org.joml.Vector3fc
 
@@ -21,26 +20,25 @@ constructor(
 	fun computeLocatorGlobalMatrix(
 		name: String?,
 		animationData: ProxyModel,
-		poseStack: PoseStack = PoseStack(),
 		isWorld: Boolean = false
-	): PoseStack {
-		name ?: return poseStack
-		val locator = locators[name] ?: return poseStack
-		val bone = bones[locator.boneName] ?: return poseStack
-
-		computeBoneGlobalMatrix(bone.name, animationData, poseStack, isWorld)
+	): Matrix4f {
+		name ?: return Matrix4f()
+		val locator = locators[name] ?: return Matrix4f()
+		val bone = bones[locator.boneName] ?: return Matrix4f()
 
 		val scale = if (isWorld) 16 else 1
-		poseStack.translate(
+		val matrix = computeBoneGlobalMatrix(bone.name, animationData, isWorld)
+
+		matrix.translate(
 			(locator.offset.x() - bone.pivot.x()) / scale,
 			(locator.offset.y() - bone.pivot.y()) / scale,
 			-(locator.offset.z() - bone.pivot.z()) / scale
 		)
-		poseStack.mulPose(Axis.ZP.rotation(locator.rotation.z().toRadians()))
-		poseStack.mulPose(Axis.YP.rotation(locator.rotation.y().toRadians()))
-		poseStack.mulPose(Axis.XP.rotation(locator.rotation.x().toRadians()))
+		matrix.rotateZ(locator.rotation.z().toRadians())
+		matrix.rotateY(locator.rotation.y().toRadians())
+		matrix.rotateX(locator.rotation.x().toRadians())
 
-		return poseStack
+		return matrix
 	}
 
 	/**
@@ -50,68 +48,68 @@ constructor(
 	fun computeBoneGlobalMatrix(
 		name: String?,
 		animationData: ProxyModel,
-		poseStack: PoseStack = PoseStack(),
 		isWorld: Boolean = false
-	): PoseStack {
-		name ?: return poseStack
-		if (!bones.containsKey(name)) return poseStack
+	): Matrix4f {
+		name ?: return Matrix4f()
+		if (!bones.containsKey(name)) return Matrix4f()
 
 		val scale = if (isWorld) 16 else 1
-		buildChainOnPoseStack(poseStack, name, animationData, scale)
-		return poseStack
+		return buildChain(name, animationData, scale)
 	}
 
 	/**
 	 * 从根到指定骨骼构建完整变换链，应用每层的 pivot 偏移 + 代理变换 + 旋转 + 缩放。
 	 * 使用相对父骨骼的 pivot 偏移来确定位置。
 	 */
-	private fun buildChainOnPoseStack(
-		poseStack: PoseStack,
+	private fun buildChain(
 		startName: String,
 		animationData: ProxyModel,
 		scale: Int
-	) {
+	): Matrix4f {
 		// 收集从 startName 到根的所有骨骼（自身→父级），然后反转得到根→自身的顺序
-		val result = mutableListOf<Pair<BrBone, ProxyBone?>>()
+		val chain = mutableListOf<Pair<BrBone, ProxyBone?>>()
 		var currentName: String? = startName
 		while (true) {
 			val bone = bones[currentName] ?: break
 			val proxy = animationData.bones[currentName]
-			result.add(bone to proxy)
+			chain.add(bone to proxy)
 			currentName = bone.parent
 		}
-		val chain = result.reversed()
+		chain.reverse()
 
+		val matrix = Matrix4f()
 		val prevPivot = Vector3f()
 		for ((bone, proxyBone) in chain) {
 			// pivot 相对父骨骼偏移（模型空间坐标 → 相对坐标）
-			poseStack.translate(
+			matrix.translate(
 				(bone.pivot.x() - prevPivot.x()) / scale,
 				(bone.pivot.y() - prevPivot.y()) / scale,
 				-(bone.pivot.z() - prevPivot.z()) / scale
 			)
 			// ZYX 旋转变换（先 Z → Y → X）
-			poseStack.mulPose(Axis.ZP.rotation(bone.rotation.z().toRadians()))
-			poseStack.mulPose(Axis.YP.rotation(bone.rotation.y().toRadians()))
-			poseStack.mulPose(Axis.XP.rotation(bone.rotation.x().toRadians()))
+			matrix.rotateZ(bone.rotation.z().toRadians())
+			matrix.rotateY(bone.rotation.y().toRadians())
+			matrix.rotateX(bone.rotation.x().toRadians())
 
 			// 代理动画位移
-			if (proxyBone != null) poseStack.translate(
+			if (proxyBone != null) matrix.translate(
 				proxyBone.pos.x / scale,
 				proxyBone.pos.y / scale,
 				-proxyBone.pos.z / scale
 			)
 			// ZYX 旋转变换（先 Z → Y → X）代理动画旋转
 			if (proxyBone != null) {
-				poseStack.mulPose(Axis.ZP.rotation(-proxyBone.rotation.z.toRadians()))
-				poseStack.mulPose(Axis.YP.rotation(-proxyBone.rotation.y.toRadians()))
-				poseStack.mulPose(Axis.XP.rotation(proxyBone.rotation.x.toRadians()))
+				matrix.rotateZ(-proxyBone.rotation.z.toRadians())
+				matrix.rotateY(-proxyBone.rotation.y.toRadians())
+				matrix.rotateX(proxyBone.rotation.x.toRadians())
 				// 代理动画缩放
-				poseStack.scale(proxyBone.scale.x, proxyBone.scale.y, proxyBone.scale.z)
+				matrix.scale(proxyBone.scale.x, proxyBone.scale.y, proxyBone.scale.z)
 			}
 
 			prevPivot.set(bone.pivot)
 		}
+
+		return matrix
 	}
 
 	/** 清空所有骨骼和定位器 */

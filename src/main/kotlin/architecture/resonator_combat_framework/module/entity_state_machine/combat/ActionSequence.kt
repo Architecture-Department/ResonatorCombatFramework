@@ -4,14 +4,24 @@ import architecture.goldenboughs_lib.api.AllOpe
 import net.minecraft.resources.ResourceLocation
 
 /**
- * 战斗动作数据 —— 定义一个完整的多段攻击序列。
+ * 动作序列
  */
 @AllOpe
 data class ActionSequence(
 	val id: ResourceLocation,
 	val stages: Array<Action>,
 ) {
-	fun getStage(index: Int): Action? = stages.getOrNull(index)
+	companion object {
+		@JvmStatic
+		fun of(
+			id: ResourceLocation,
+			vararg stages: Action
+		): ActionSequence {
+			return ActionSequence(id, arrayOf(*stages))
+		}
+	}
+
+	fun getAction(index: Int): Action? = stages.getOrNull(index)
 
 	fun isEnd(index: Int): Boolean {
 		return index >= stages.size - 1

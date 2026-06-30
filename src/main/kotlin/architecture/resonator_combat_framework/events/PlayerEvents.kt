@@ -44,11 +44,12 @@ object PlayerEvents {
 	) {
 		val pos1 = player.position().toVector3f()
 		val poseStack = PoseStack()
+		val locatorMatrix = brModel.computeLocatorGlobalMatrix(name, animationData, isWorld = true)
 		poseStack.pushPose()
 		poseStack.translate(pos1.x, pos1.y, pos1.z)
 		poseStack.mulPose(Axis.YP.rotation(-player.getPreciseBodyRotation(1.0f).toRadians()))
 		poseStack.pushPose()
-		brModel.computeLocatorGlobalMatrix(name, animationData, poseStack, isWorld = true)
+		poseStack.mulPose(locatorMatrix)
 
 		for (x in 0..3) {
 			poseStack.pushPose()

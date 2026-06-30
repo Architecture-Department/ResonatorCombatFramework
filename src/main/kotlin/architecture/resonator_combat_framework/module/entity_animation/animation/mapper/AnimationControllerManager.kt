@@ -1,7 +1,6 @@
 package architecture.resonator_combat_framework.module.entity_animation.animation.mapper
 
 import architecture.goldenboughs_lib.api.AllOpe
-import architecture.goldenboughs_lib.util.PoseStack
 import architecture.resonator_combat_framework.events.registry.AnimationControllers
 import architecture.resonator_combat_framework.module.entity_animation.IProxyAnimationProvider
 import architecture.resonator_combat_framework.module.entity_animation.IProxyAnimationProvider.Companion.getMapperProvider
@@ -17,7 +16,6 @@ import architecture.resonator_combat_framework.module.entity_animation.animation
 import architecture.resonator_combat_framework.util.RcfUtil
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.Entity
-import org.joml.Matrix4f
 import org.joml.Matrix4fc
 import org.joml.Vector3f
 import org.mesdag.particlestorm.particle.MolangParticleEngine
@@ -224,7 +222,7 @@ constructor(
 	@JvmOverloads
 	fun getTickBoneMatrix(boneName: String, proxyModel: ProxyModel = mergedProxy): Matrix4fc {
 		return boneMatrixCache.getOrPut(boneName) {
-			Matrix4f(brModel.computeBoneGlobalMatrix(boneName, proxyModel, PoseStack(), true).last().pose)
+			brModel.computeBoneGlobalMatrix(boneName, proxyModel, true)
 		}
 	}
 
@@ -346,7 +344,8 @@ constructor(
 		val result = mutableListOf<IEntityAnimationController<T>>()
 		val renderedBones = mutableSetOf<String>()
 		for (ctrl in active) {
-			val skip = ctrl.affectedBones.isNotEmpty() && ctrl.affectedBones.all { it in renderedBones } && !ctrl.isOverriding
+			val skip =
+				ctrl.affectedBones.isNotEmpty() && ctrl.affectedBones.all { it in renderedBones } && !ctrl.isOverriding
 			if (skip) continue
 			result.add(ctrl)
 			renderedBones.addAll(ctrl.affectedBones)

@@ -21,7 +21,7 @@ import net.neoforged.bus.api.Event
  * ```
  */
 @AllOpe
-class CombatEvent(
+abstract class CombatEvent(
 	val holder: EntityStateHolder<*>,
 	val entity: LivingEntity,
 ) : Event() {

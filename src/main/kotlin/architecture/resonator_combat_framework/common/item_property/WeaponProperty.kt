@@ -1,0 +1,39 @@
+package architecture.resonator_combat_framework.common.item_property
+
+import architecture.resonator_combat_framework.common.payload.AttackPayload
+import architecture.resonator_combat_framework.init.RcfAttachmentTypes
+import architecture.resonator_combat_framework.module.entity_state_machine.combat.ActionSequence
+import net.minecraft.resources.ResourceLocation
+import net.minecraft.world.InteractionHand
+import net.minecraft.world.entity.LivingEntity
+import net.minecraft.world.item.ItemStack
+import java.util.function.Supplier
+
+class WeaponProperty(
+	id: ResourceLocation,
+	val actionSequence: Supplier<ActionSequence>
+) : ItemProperty(id) {
+	override fun onUse(item: ItemStack, entity: LivingEntity, hand: InteractionHand, pressType: AttackPayload.PressType) {
+	}
+
+	override fun onAttack(
+		item: ItemStack,
+		entity: LivingEntity,
+		hand: InteractionHand,
+		pressType: AttackPayload.PressType
+	) {
+		val stateHolder = entity.getData(RcfAttachmentTypes.STATE_HOLDER)
+		val actionController = stateHolder.actionController
+		val actionSequence = actionSequence.get()
+		if (actionController.actionSequence?.id == actionSequence.id) {
+			if (pressType == AttackPayload.PressType.LONG) {
+				actionController.onCompulsoryNextAction()
+			} else {
+				actionController.onNextAction()
+			}
+		} else {
+			actionController.actionSequence = actionSequence
+			actionController.onNextAction()
+		}
+	}
+}

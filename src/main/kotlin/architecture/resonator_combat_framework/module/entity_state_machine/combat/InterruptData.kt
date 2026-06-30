@@ -35,7 +35,7 @@ data class InterruptData(
 	companion object {
 		@JvmField
 		val DEFAULT = mapOf(
-			ActionState.WINDUP to 1000,
+			ActionState.WINDUP to 5000,
 			ActionState.ATTACK to 10000,
 			ActionState.RECOVERY to 1000,
 			ActionState.EXCESSIVE to 100,

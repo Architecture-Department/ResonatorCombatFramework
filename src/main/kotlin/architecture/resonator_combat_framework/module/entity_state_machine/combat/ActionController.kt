@@ -17,7 +17,7 @@ class ActionController(val entity: LivingEntity) {
 	/** 当前动作集 */
 	final var actionSequence: ActionSequence? = null
 		set(value) {
-			stageIndex = 0
+			stageIndex = -1
 			if (value == null) {
 				actionState = ActionState.EMPTY
 				return
@@ -30,7 +30,7 @@ class ActionController(val entity: LivingEntity) {
 	final var action: Action? = null; private set
 
 	/** 当前连击段索引 */
-	final var stageIndex: Int = 0; private set
+	final var stageIndex: Int = -1; private set
 
 	/** 当前动作阶段 */
 	final var actionState: ActionState = ActionState.EMPTY
@@ -56,16 +56,26 @@ class ActionController(val entity: LivingEntity) {
 
 	/** 切换动作 */
 	fun onChangedAction(target: Action): Boolean {
-		if (action != null && !action!!.isInterruptible(time, holder, target, entity)) {
-			return false
+		if (action != null) {
+			if (!action!!.isInterruptible(time, holder, target, entity)) return false
 		}
 		return onChangedAction(target, CombatActionEvent.Changed.Type.DEFAULT)
 	}
 
+	/** 切换动作 */
+	fun onNextChangedAction(target: Action): Boolean {
+		if (action != null) {
+			if (!action!!.isInterruptible(time, holder, target, entity)) return false
+		}
+		return onChangedAction(target, CombatActionEvent.Changed.Type.NEXT)
+	}
+
 	/** 强制切换动作 */
 	fun onCompulsoryChangedAction(target: Action): Boolean {
-		if (action != null && !action!!.isInterruptible(time, holder, target, entity)) {
-			return onChangedAction(target, CombatActionEvent.Changed.Type.INTERRUPTIBLE)
+		if (action != null) {
+			if (!action!!.isInterruptible(time, holder, target, entity)) {
+				return onChangedAction(target, CombatActionEvent.Changed.Type.INTERRUPTIBLE)
+			}
 		}
 		return onChangedAction(target, CombatActionEvent.Changed.Type.DEFAULT)
 	}
@@ -94,16 +104,45 @@ class ActionController(val entity: LivingEntity) {
 	}
 
 	/** 切换下一段动作 */
-	fun onNextAction() {
+	fun onNextAction(): Boolean {
 		var nextIndex = stageIndex + 1
 		if ((actionSequence?.stages?.size ?: 0) <= nextIndex) {
 			nextIndex = 0
 		}
-		onChangedAction(
-			action?.nextAction(time, stageIndex, nextIndex, actionSequence, entity),
-			CombatActionEvent.Changed.Type.NEXT
-		)
+		val target = if (action != null) {
+			action!!.nextAction(time, stageIndex, nextIndex, actionSequence, entity) ?: return false
+		} else {
+			actionSequence?.getAction(nextIndex) ?: return false
+		}
+		val isSuccess = onNextChangedAction(target)
+		if (isSuccess) {
+			stageIndex = if (actionSequence != null) {
+				nextIndex % (actionSequence!!.stages.size)
+			} else {
+				nextIndex
+			}
+		}
+		return isSuccess
 	}
+
+	/** 强制切换下一段动作 */
+	fun onCompulsoryNextAction(): Boolean {
+		var nextIndex = stageIndex + 1
+		if ((actionSequence?.stages?.size ?: 0) <= nextIndex) {
+			nextIndex = 0
+		}
+		val target = if (action != null) {
+			action!!.nextAction(time, stageIndex, nextIndex, actionSequence, entity) ?: return false
+		} else {
+			actionSequence?.getAction(nextIndex) ?: return false
+		}
+		val isSuccess = onCompulsoryChangedAction(target)
+		if (isSuccess) {
+			stageIndex = nextIndex
+		}
+		return isSuccess
+	}
+
 
 	fun tick() {
 		val action = action ?: return
@@ -136,6 +175,7 @@ class ActionController(val entity: LivingEntity) {
 
 		if (time >= action.timeLength) {
 			onActionEnd()
+			stageIndex = -1
 			return
 		}
 	}

@@ -73,7 +73,7 @@ class BedrockAnimationRegistry(
 					}
 					bakingAnimations[rlOf(
 						fileId.namespace,
-						fileId.path.split('/', limit = 2)[0] + "/" + key
+						fileId.path.substringBeforeLast("/") + "/" + key
 					)] = anim
 				}
 			} catch (e: Exception) {

@@ -1,5 +1,6 @@
 package architecture.resonator_combat_framework.events.registry
 
+import architecture.resonator_combat_framework.common.registry.ItemPropertyRegistry
 import architecture.resonator_combat_framework.module.entity_animation.animation.StaticAnimation
 import architecture.resonator_combat_framework.module.entity_animation.event.StaticAnimationRegistryEvent
 import architecture.resonator_combat_framework.module.entity_animation.registry.BedrockAnimationDataRegistry
@@ -29,9 +30,10 @@ object ResourceReloadRegistry {
 
 	@SubscribeEvent(priority = EventPriority.LOWEST)
 	fun registryLowest(event: AddReloadListenerEvent) {
-		event.addListener(StaticAnimationRegistry.getInstance())
-		event.addListener(ActionRegistry.getInstance())
-		event.addListener(ActionSequenceRegistry.getInstance())
+		event.addListener(StaticAnimationRegistry)
+		event.addListener(ActionRegistry)
+		event.addListener(ActionSequenceRegistry)
+		event.addListener(ItemPropertyRegistry)
 	}
 
 	@SubscribeEvent(priority = EventPriority.HIGHEST)

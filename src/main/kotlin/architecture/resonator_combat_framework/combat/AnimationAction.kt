@@ -1,10 +1,9 @@
 package architecture.resonator_combat_framework.combat
 
-import architecture.resonator_combat_framework.animation.AttackAnimation
 import architecture.resonator_combat_framework.module.entity_animation.IProxyAnimationProvider
 import architecture.resonator_combat_framework.module.entity_animation.IProxyAnimationProvider.Companion.getMapperProvider
+import architecture.resonator_combat_framework.module.entity_animation.animation.StaticAnimation
 import architecture.resonator_combat_framework.module.entity_animation.animation.controller.IEntityAnimationController
-import architecture.resonator_combat_framework.module.entity_animation.registry.StaticAnimationRegistry
 import architecture.resonator_combat_framework.module.entity_state_machine.combat.Action
 import architecture.resonator_combat_framework.module.entity_state_machine.combat.ActionSequence
 import architecture.resonator_combat_framework.module.entity_state_machine.combat.InterruptData
@@ -12,25 +11,23 @@ import architecture.resonator_combat_framework.module.entity_state_machine.comba
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.LivingEntity
+import java.util.function.Supplier
 
-class AnimationAction(
-	override val id: ResourceLocation,
-	val animationId: ResourceLocation,
-	override val timing: StageTiming,
-	override val interruptData: InterruptData = InterruptData(),
-	override val weight: Int,
+class AnimationAction<T : StaticAnimation>
+@JvmOverloads
+constructor(
+	id: ResourceLocation,
+	val animation: Supplier<T?>,
 	val controllerName: ResourceLocation?,
+	timing: StageTiming,
+	interruptData: InterruptData = InterruptData(),
+	override val weight: Int = 2500,
 ) : Action(id, timing, interruptData, weight) {
 
-	fun getAnimation(): AttackAnimation {
-		val holder = StaticAnimationRegistry.find(animationId)
-			?: throw IllegalArgumentException("AnimationAction: AttackAnimation not found: $animationId")
-		return holder.get() as? AttackAnimation
-			?: throw IllegalArgumentException("AnimationAction: $animationId is not an AttackAnimation")
-	}
-
-	fun verify(isClient: Boolean) {
-		getAnimation()
+	fun getAnimation(): T {
+		val animation = animation.get()
+		animation ?: throw IllegalArgumentException("AnimationAction: AttackAnimation not found: ${this.animation}")
+		return animation
 	}
 
 	override fun onStart(entity: LivingEntity, actionSequence: ActionSequence?) {
