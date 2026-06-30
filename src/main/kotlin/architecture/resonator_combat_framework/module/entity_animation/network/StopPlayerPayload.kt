@@ -3,7 +3,7 @@ package architecture.resonator_combat_framework.module.entity_animation.network
 
 import architecture.goldenboughs_lib.api.payload.ToServerAndClientPayload
 import architecture.goldenboughs_lib.util.LibUtil.OPTIONAL_RESOURCE_LOCATION_STREAM_CODEC
-import architecture.resonator_combat_framework.module.entity_animation.IProxyAnimationProvider.Companion.getAnimationTransformer
+import architecture.resonator_combat_framework.module.entity_animation.IProxyAnimationProvider.Companion.getMapperProvider
 import architecture.resonator_combat_framework.util.RcfUtil
 import io.netty.buffer.ByteBuf
 import net.minecraft.client.player.AbstractClientPlayer
@@ -38,7 +38,7 @@ constructor(
 	override fun toClient(context: IPayloadContext, player: AbstractClientPlayer) {
 		val level = context.player().level()
 		val target = (level.getPlayerByUUID(playerUuid) as? AbstractClientPlayer) ?: return
-		val transformer = target.getAnimationTransformer()
+		val transformer = target.getMapperProvider()
 		if (controllerName.isPresent) {
 			transformer.getController(controllerName.get())?.stop(fadeOutTicks)
 		} else {
@@ -47,7 +47,7 @@ constructor(
 	}
 
 	override fun toServer(context: IPayloadContext, player: ServerPlayer) {
-		player.getAnimationTransformer().let { transformer ->
+		player.getMapperProvider().let { transformer ->
 			if (controllerName.isPresent) {
 				transformer.getController(controllerName.get())?.stop(fadeOutTicks)
 			} else {

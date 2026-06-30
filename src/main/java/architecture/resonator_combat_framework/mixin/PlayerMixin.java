@@ -32,7 +32,7 @@ public abstract class PlayerMixin extends LivingEntity implements IPlayerRcf {
 	}
 
 	@Override
-	public @NotNull IEntityAnimationMapperProvider<Player, PlayerModel<Player>> resonator_combat_framework$getAnimationTransformer() {
+	public @NotNull IEntityAnimationMapperProvider<Player, PlayerModel<Player>> resonator_combat_framework$getMapperProvider() {
 		return resonator_combat_framework$transformer;
 	}
 }

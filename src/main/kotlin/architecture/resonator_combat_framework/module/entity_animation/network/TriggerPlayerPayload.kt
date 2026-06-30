@@ -4,7 +4,7 @@ package architecture.resonator_combat_framework.module.entity_animation.network
 import architecture.goldenboughs_lib.api.payload.ToServerAndClientPayload
 import architecture.goldenboughs_lib.util.LibUtil.OPTIONAL_RESOURCE_LOCATION_STREAM_CODEC
 import architecture.resonator_combat_framework.events.registry.AnimationControllers
-import architecture.resonator_combat_framework.module.entity_animation.IProxyAnimationProvider.Companion.getAnimationTransformer
+import architecture.resonator_combat_framework.module.entity_animation.IProxyAnimationProvider.Companion.getMapperProvider
 import architecture.resonator_combat_framework.module.entity_animation.animation.data.AnimationPlayData
 import architecture.resonator_combat_framework.util.RcfUtil
 import io.netty.buffer.ByteBuf
@@ -51,7 +51,7 @@ constructor(
 			fadeInTicks = fadeInTicks,
 			fadeOutTicks = fadeOutTicks
 		)
-		target.getAnimationTransformer().trigger(controllerName.orElse(AnimationControllers.MAIN)!!, animId, config)
+		target.getMapperProvider().trigger(controllerName.orElse(AnimationControllers.MAIN)!!, animId, config)
 	}
 
 	override fun toServer(context: IPayloadContext, player: ServerPlayer) {
@@ -60,7 +60,7 @@ constructor(
 			fadeInTicks = fadeInTicks,
 			fadeOutTicks = fadeOutTicks
 		)
-		player.getAnimationTransformer().trigger(controllerName.orElse(AnimationControllers.MAIN)!!, animId, config)
+		player.getMapperProvider().trigger(controllerName.orElse(AnimationControllers.MAIN)!!, animId, config)
 		PacketDistributor.sendToPlayersTrackingEntityAndSelf(player, this)
 	}
 

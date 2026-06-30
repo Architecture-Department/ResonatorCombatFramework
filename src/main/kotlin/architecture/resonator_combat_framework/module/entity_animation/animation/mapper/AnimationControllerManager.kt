@@ -4,7 +4,7 @@ import architecture.goldenboughs_lib.api.AllOpe
 import architecture.goldenboughs_lib.util.PoseStack
 import architecture.resonator_combat_framework.events.registry.AnimationControllers
 import architecture.resonator_combat_framework.module.entity_animation.IProxyAnimationProvider
-import architecture.resonator_combat_framework.module.entity_animation.IProxyAnimationProvider.Companion.getAnimationTransformer
+import architecture.resonator_combat_framework.module.entity_animation.IProxyAnimationProvider.Companion.getMapperProvider
 import architecture.resonator_combat_framework.module.entity_animation.animation.AnimationEventsToFire
 import architecture.resonator_combat_framework.module.entity_animation.animation.ParticleStormAnimAdapter
 import architecture.resonator_combat_framework.module.entity_animation.animation.controller.BedrockAnimationController
@@ -34,7 +34,7 @@ constructor(
 
 	val mapperProvider: IEntityAnimationMapperProvider<T, *>
 		get() = _mapperProvider
-			?: (holder as IProxyAnimationProvider).getAnimationTransformer() as IEntityAnimationMapperProvider<T, *>
+			?: (holder as IProxyAnimationProvider).getMapperProvider() as IEntityAnimationMapperProvider<T, *>
 
 	/** 名称 → 控制器映射（O(1) 查找） */
 	private val nameMap = mutableMapOf<ResourceLocation, IEntityAnimationController<T>>()

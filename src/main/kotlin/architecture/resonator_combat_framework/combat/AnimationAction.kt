@@ -2,7 +2,7 @@ package architecture.resonator_combat_framework.combat
 
 import architecture.resonator_combat_framework.animation.AttackAnimation
 import architecture.resonator_combat_framework.module.entity_animation.IProxyAnimationProvider
-import architecture.resonator_combat_framework.module.entity_animation.IProxyAnimationProvider.Companion.getAnimationTransformer
+import architecture.resonator_combat_framework.module.entity_animation.IProxyAnimationProvider.Companion.getMapperProvider
 import architecture.resonator_combat_framework.module.entity_animation.animation.controller.IEntityAnimationController
 import architecture.resonator_combat_framework.module.entity_animation.registry.StaticAnimationRegistry
 import architecture.resonator_combat_framework.module.entity_state_machine.combat.Action
@@ -55,6 +55,6 @@ class AnimationAction(
 	}
 
 	protected fun getController(entity: IProxyAnimationProvider): IEntityAnimationController<out Entity>? {
-		return entity.getAnimationTransformer().getController(controllerName)
+		return entity.getMapperProvider().getController(controllerName)
 	}
 }

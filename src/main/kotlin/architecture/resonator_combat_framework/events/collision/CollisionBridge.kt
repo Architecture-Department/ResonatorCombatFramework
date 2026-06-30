@@ -3,7 +3,7 @@ package architecture.resonator_combat_framework.events.collision
 import architecture.resonator_combat_framework.animation.AttackAnimation
 import architecture.resonator_combat_framework.module.collision.event.CollisionEntityEvent
 import architecture.resonator_combat_framework.module.entity_animation.IProxyAnimationProvider
-import architecture.resonator_combat_framework.module.entity_animation.IProxyAnimationProvider.Companion.getAnimationTransformer
+import architecture.resonator_combat_framework.module.entity_animation.IProxyAnimationProvider.Companion.getMapperProvider
 import net.minecraft.world.entity.LivingEntity
 import net.neoforged.bus.api.SubscribeEvent
 import net.neoforged.fml.common.EventBusSubscriber
@@ -27,7 +27,7 @@ object CollisionBridge {
 
 		if (attacker !is IProxyAnimationProvider) return
 
-		val manager = attacker.getAnimationTransformer().animationControllerManager
+		val manager = attacker.getMapperProvider().animationControllerManager
 
 		for (ctrl in manager.getAll()) {
 			val anim = ctrl.currentAnim as? AttackAnimation ?: continue

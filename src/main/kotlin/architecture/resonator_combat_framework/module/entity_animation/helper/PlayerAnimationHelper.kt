@@ -1,7 +1,7 @@
 package architecture.resonator_combat_framework.module.entity_animation.helper
 
 import architecture.resonator_combat_framework.events.registry.AnimationControllers
-import architecture.resonator_combat_framework.module.entity_animation.IProxyAnimationProvider.Companion.getAnimationTransformer
+import architecture.resonator_combat_framework.module.entity_animation.IProxyAnimationProvider.Companion.getMapperProvider
 import architecture.resonator_combat_framework.module.entity_animation.animation.data.AnimationPlayData
 import architecture.resonator_combat_framework.module.entity_animation.network.PausePlayerPayload
 import architecture.resonator_combat_framework.module.entity_animation.network.PlayPlayerPayload
@@ -27,13 +27,13 @@ object PlayerAnimationHelper {
 		isPayload: Boolean = true
 	) {
 		if (this is AbstractClientPlayer) {
-			getAnimationTransformer().trigger(controllerName, animId, config)
+			getMapperProvider().trigger(controllerName, animId, config)
 			return
 		}
 
 		if (this !is ServerPlayer) return
 
-		getAnimationTransformer().trigger(controllerName, animId, config)
+		getMapperProvider().trigger(controllerName, animId, config)
 
 		if (!isPayload) return
 
@@ -95,9 +95,9 @@ object PlayerAnimationHelper {
 		fadeOutTicks: Int = -1,
 		isPayload: Boolean = true
 	) {
-		if (this is AbstractClientPlayer) getAnimationTransformer().stop(name, fadeOutTicks)
+		if (this is AbstractClientPlayer) getMapperProvider().stop(name, fadeOutTicks)
 		else if (this is ServerPlayer) {
-			getAnimationTransformer().stop(name, fadeOutTicks)
+			getMapperProvider().stop(name, fadeOutTicks)
 			if (isPayload) {
 				PacketDistributor.sendToPlayersTrackingEntityAndSelf(
 					this, StopPlayerPayload(uuid, null as ResourceLocation?, fadeOutTicks)
@@ -111,9 +111,9 @@ object PlayerAnimationHelper {
 	@JvmStatic
 	@JvmOverloads
 	fun Player.pauseAnima(name: ResourceLocation = AnimationControllers.MAIN, isPayload: Boolean = true) {
-		if (this is AbstractClientPlayer) getAnimationTransformer().pause(name)
+		if (this is AbstractClientPlayer) getMapperProvider().pause(name)
 		else if (this is ServerPlayer) {
-			getAnimationTransformer().pause(name)
+			getMapperProvider().pause(name)
 			if (isPayload) {
 				PacketDistributor.sendToPlayersTrackingEntityAndSelf(
 					this, PausePlayerPayload(uuid, null as ResourceLocation?)
@@ -125,9 +125,9 @@ object PlayerAnimationHelper {
 	@JvmStatic
 	@JvmOverloads
 	fun Player.resumeAnima(name: ResourceLocation = AnimationControllers.MAIN, isPayload: Boolean = true) {
-		if (this is AbstractClientPlayer) getAnimationTransformer().resume(name)
+		if (this is AbstractClientPlayer) getMapperProvider().resume(name)
 		else if (this is ServerPlayer) {
-			getAnimationTransformer().resume(name)
+			getMapperProvider().resume(name)
 			if (isPayload) {
 				PacketDistributor.sendToPlayersTrackingEntityAndSelf(
 					this, ResumePlayerPayload(uuid, null as ResourceLocation?)
