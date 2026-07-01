@@ -1,7 +1,6 @@
 package architecture.resonator_combat_framework.events.registry
 
 import architecture.goldenboughs_lib.events.registry.PayloadRegistry.playToClient
-import architecture.goldenboughs_lib.events.registry.PayloadRegistry.playToServer
 import architecture.goldenboughs_lib.events.registry.PayloadRegistry.playToServerAndClient
 import architecture.resonator_combat_framework.common.payload.AttackPayload
 import architecture.resonator_combat_framework.module.entity_animation.network.*

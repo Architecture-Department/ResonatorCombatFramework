@@ -1,6 +1,5 @@
 package architecture.resonator_combat_framework.module.entity_animation.mixin.client;
 
-import architecture.resonator_combat_framework.mixed.IPlayerRcf;
 import architecture.resonator_combat_framework.module.entity_animation.IProxyAnimationProvider;
 import net.minecraft.client.Camera;
 import net.minecraft.client.DeltaTracker;

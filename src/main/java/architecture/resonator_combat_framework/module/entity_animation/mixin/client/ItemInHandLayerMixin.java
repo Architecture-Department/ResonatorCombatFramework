@@ -4,7 +4,6 @@ import architecture.resonator_combat_framework.module.entity_animation.IProxyAni
 import architecture.resonator_combat_framework.module.entity_animation.animation.mapper.HumanoidEntityAnimationMapperProvider;
 import architecture.resonator_combat_framework.module.entity_animation.animation.mapper.IEntityAnimationMapperProvider;
 import com.mojang.blaze3d.vertex.PoseStack;
-import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.layers.ItemInHandLayer;
 import net.minecraft.world.entity.HumanoidArm;

@@ -52,10 +52,12 @@ data class BakingBrAnimation
 				val sounds = if (soundsJson != null) BakingBrAnimationSound.parses(soundsJson) else emptyList()
 
 				val particlesJson = animDef.getAsJsonObject("particle_effects")
-				val particles = if (particlesJson != null) BakingBrAnimationParticle.parses(particlesJson) else emptyList()
+				val particles =
+					if (particlesJson != null) BakingBrAnimationParticle.parses(particlesJson) else emptyList()
 
 				val timelinesJson = animDef.getAsJsonObject("timeline")
-				val timelines = if (timelinesJson != null) BakingBrAnimationTimeline.parses(timelinesJson) else emptyList()
+				val timelines =
+					if (timelinesJson != null) BakingBrAnimationTimeline.parses(timelinesJson) else emptyList()
 
 				val length = animDef.get("animation_length")?.asFloat ?: BakingBrBoneAnimation.calcAnimLength(bones)
 				result[animId] = BakingBrAnimation(animId, loop, length, bones, sounds, particles, timelines)

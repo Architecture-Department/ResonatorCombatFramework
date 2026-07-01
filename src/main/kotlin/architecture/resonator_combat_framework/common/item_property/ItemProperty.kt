@@ -9,7 +9,7 @@ import net.minecraft.world.item.ItemStack
 
 @AllOpe
 abstract class ItemProperty(
-	 val id: ResourceLocation
+	val id: ResourceLocation
 ) {
 	abstract fun onUse(item: ItemStack, entity: LivingEntity, hand: InteractionHand, pressType: AttackPayload.PressType)
 

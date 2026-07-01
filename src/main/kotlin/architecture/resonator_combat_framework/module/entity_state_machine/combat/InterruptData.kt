@@ -19,7 +19,7 @@ data class InterruptData(
 	val recovery: Int = 1000,
 	val idle: Int = 0
 ) {
-	companion object{
+	companion object {
 		@JvmField
 		val DEFAULT = InterruptData()
 	}
