@@ -30,6 +30,7 @@ constructor(
 ) {
 	private val _mapperProvider: IEntityAnimationMapperProvider<T, *>? = mapperProvider
 
+	@Suppress("UNCHECKED_CAST")
 	val mapperProvider: IEntityAnimationMapperProvider<T, *>
 		get() = _mapperProvider
 			?: (holder as IProxyAnimationProvider).getMapperProvider() as IEntityAnimationMapperProvider<T, *>

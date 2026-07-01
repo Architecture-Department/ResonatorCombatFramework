@@ -134,4 +134,12 @@ class StaticAnimation(
 		controller: IEntityAnimationController<*>,
 	) {
 	}
+
+	override fun toString(): String {
+		return "StaticAnimation(" +
+			"animationId=$animationId, " +
+			"id=$id, " +
+			"properties=$properties, " +
+			"timedEvents=$timedEvents)"
+	}
 }

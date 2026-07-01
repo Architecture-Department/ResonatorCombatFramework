@@ -9,14 +9,11 @@ enum class ActionState {
 	/** 前摇 */
 	WINDUP,
 
-	/** 攻击 */
-	ATTACK,
+	/** 执行 */
+	ACTIVE,
 
 	/** 后摇 */
 	RECOVERY,
-
-	/** 过度 */
-	EXCESSIVE,
 
 	/** 空闲 */
 	IDLE,

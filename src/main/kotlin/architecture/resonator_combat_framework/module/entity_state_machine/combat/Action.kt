@@ -9,17 +9,25 @@ import net.minecraft.world.entity.LivingEntity
 /**
  * 动作
  *
- * @param timing 前摇/执行/后摇时长
+ * @param durationTick 时长
  * @param interruptData 打断配置
  */
 @AllOpe
 abstract class Action(
 	val id: ResourceLocation,
-	val timing: StageTiming,// TODO 基类不应该带有这个
-	val interruptData: InterruptData,// TODO 基类不应该带有这个
+	val durationTick: Int,
+	val interruptData: InterruptData,
 	val weight: Int = 2500
 ) {
-	val timeLength: Float = timing.windupSec + timing.activeSec + timing.recoverySec
+	val timeLength = durationTick / 20f
+
+	fun getState(time: Float, entity: LivingEntity): ActionState {
+		return when {
+			time < 0f -> ActionState.IDLE
+			time < durationTick -> ActionState.ACTIVE
+			else -> ActionState.IDLE
+		}
+	}
 
 	// ===== 生命周期钩子 =====
 
@@ -43,18 +51,6 @@ abstract class Action(
 
 	fun onSpeedModify(entity: LivingEntity, actionSequence: ActionSequence?, oldValue: Float, newValue: Float) {}
 
-	// ===== 阶段查询 =====
-
-	fun getState(time: Float, entity: LivingEntity): ActionState {
-		return when {
-			time < 0f -> ActionState.IDLE
-			time < timing.windupSec -> ActionState.WINDUP
-			time < timing.windupSec + timing.activeSec -> ActionState.ATTACK
-			time < timeLength -> ActionState.RECOVERY
-			else -> ActionState.IDLE
-		}
-	}
-
 	fun isInterruptible(time: Float, holder: EntityStateHolder<*>, target: Action, entity: LivingEntity): Boolean {
 		val actionState = getState(time, entity)
 		val interruptWeight = interruptData.getInterruptWeight(actionState)
@@ -77,5 +73,9 @@ abstract class Action(
 
 	fun nextAction(time: Float, sourceIndex: Int, actionSequence: ActionSequence?, entity: LivingEntity): Action? {
 		return nextAction(time, sourceIndex, sourceIndex + 1, actionSequence, entity)
+	}
+
+	override fun toString(): String {
+		return "id=$id"
 	}
 }

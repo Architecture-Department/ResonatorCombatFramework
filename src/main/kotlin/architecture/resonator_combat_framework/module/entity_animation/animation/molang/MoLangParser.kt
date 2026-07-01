@@ -38,6 +38,7 @@ object MoLangParser {
 
 	fun <T : MolangFunction> buildFunction(name: String, vararg args: MolangValue): T? {
 		val factory = FUNCTION_FACTORIES[name] ?: return null
+		@Suppress("UNCHECKED_CAST")
 		return factory.create(*args) as T?
 	}
 
