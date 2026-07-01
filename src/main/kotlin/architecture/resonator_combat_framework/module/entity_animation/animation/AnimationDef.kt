@@ -136,7 +136,7 @@ class AnimationDef(
 	}
 
 	override fun toString(): String {
-		return "StaticAnimation(" +
+		return "AnimationDef(" +
 			"animationId=$animationId, " +
 			"id=$id, " +
 			"properties=$properties, " +
