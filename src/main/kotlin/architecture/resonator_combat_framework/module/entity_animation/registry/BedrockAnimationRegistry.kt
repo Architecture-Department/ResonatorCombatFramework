@@ -1,7 +1,7 @@
 package architecture.resonator_combat_framework.module.entity_animation.registry
 
 import architecture.goldenboughs_lib.util.LibUtil.rlOf
-import architecture.resonator_combat_framework.module.entity_animation.animation.baking_animation.BakingBrAnimation
+import architecture.resonator_combat_framework.module.entity_animation.animation.baking_animation.KeyframeAnimation
 import architecture.resonator_combat_framework.util.RcfUtil
 import com.google.gson.Gson
 import com.google.gson.JsonElement
@@ -27,22 +27,22 @@ class BedrockAnimationRegistry(
 		}
 
 		@JvmStatic
-		fun find(animId: ResourceLocation): BakingBrAnimation? {
+		fun find(animId: ResourceLocation): KeyframeAnimation? {
 			return CLIENT.get(animId) ?: SERVER.get(animId)
 		}
 
 		@JvmStatic
-		fun findAll(): Map<ResourceLocation, BakingBrAnimation> = CLIENT.getAll() + SERVER.getAll()
+		fun findAll(): Map<ResourceLocation, KeyframeAnimation> = CLIENT.getAll() + SERVER.getAll()
 	}
 
-	private val bakingAnimations = mutableMapOf<ResourceLocation, BakingBrAnimation>()
+	private val bakingAnimations = mutableMapOf<ResourceLocation, KeyframeAnimation>()
 	private val nbtCache = mutableMapOf<ResourceLocation, CompoundTag>()
 
-	fun get(animId: ResourceLocation): BakingBrAnimation? {
+	fun get(animId: ResourceLocation): KeyframeAnimation? {
 		return bakingAnimations[animId]
 	}
 
-	fun getAll(): Map<ResourceLocation, BakingBrAnimation> = bakingAnimations
+	fun getAll(): Map<ResourceLocation, KeyframeAnimation> = bakingAnimations
 
 	fun getNbtCache(): Map<ResourceLocation, CompoundTag> = nbtCache
 
@@ -66,7 +66,7 @@ class BedrockAnimationRegistry(
 		bakingAnimations.clear()
 		for ((fileId, json) in loaded) {
 			try {
-				val parsed = BakingBrAnimation.parses(json.asJsonObject)
+				val parsed = KeyframeAnimation.parses(json.asJsonObject)
 				parsed.forEach { (key, anim) ->
 					if (!ResourceLocation.isValidPath(key)) {
 						return@forEach

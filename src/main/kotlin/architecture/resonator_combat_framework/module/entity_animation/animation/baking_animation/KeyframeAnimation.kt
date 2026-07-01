@@ -1,8 +1,8 @@
 package architecture.resonator_combat_framework.module.entity_animation.animation.baking_animation
 
 import architecture.resonator_combat_framework.module.entity_animation.animation.LoopType
-import architecture.resonator_combat_framework.module.entity_animation.animation.model.ProxyBone
-import architecture.resonator_combat_framework.module.entity_animation.animation.model.ProxyModel
+import architecture.resonator_combat_framework.module.entity_animation.animation.model.BonePose
+import architecture.resonator_combat_framework.module.entity_animation.animation.model.PoseData
 import architecture.resonator_combat_framework.module.entity_animation.animation.molang.EasingTypes
 import architecture.resonator_combat_framework.module.entity_animation.animation.molang.MolangData
 import architecture.resonator_combat_framework.module.entity_animation.util.AnimationMirrorUtil
@@ -11,7 +11,7 @@ import org.joml.Vector2f
 import org.joml.Vector3f
 import kotlin.math.floor
 
-data class BakingBrAnimation
+data class KeyframeAnimation
 @JvmOverloads constructor(
 	val identifier: String,
 	/** 播放模式：ONCE / LOOP / HOLD_ON_LAST */
@@ -19,20 +19,20 @@ data class BakingBrAnimation
 	/** 动画总时长（秒） */
 	val length: Float,
 	/** 骨骼名 → 骨骼动画数据 */
-	val bones: Map<String, BakingBrBoneAnimation> = emptyMap(),
-	val sounds: List<BakingBrAnimationSound> = emptyList(),
-	val particles: List<BakingBrAnimationParticle> = emptyList(),
-	val timelines: List<BakingBrAnimationTimeline> = emptyList(),
+	val bones: Map<String, BoneTrack> = emptyMap(),
+	val sounds: List<SoundEvent> = emptyList(),
+	val particles: List<ParticleEvent> = emptyList(),
+	val timelines: List<TimelineEvent> = emptyList(),
 ) {
 	companion object {
 
 		@JvmField
-		val EMPTY = BakingBrAnimation("empty", length = 0f)
+		val EMPTY = KeyframeAnimation("empty", length = 0f)
 
 		/** 解析 JSON 根对象的 "animations" 段，每个条目注册为一个 BedrockAnimation */
 		@JvmStatic
-		fun parses(root: JsonObject): MutableMap<String, BakingBrAnimation> {
-			val result = mutableMapOf<String, BakingBrAnimation>()
+		fun parses(root: JsonObject): MutableMap<String, KeyframeAnimation> {
+			val result = mutableMapOf<String, KeyframeAnimation>()
 			val animations = root.getAsJsonObject("animations") ?: return result
 			for ((animKey, animEl) in animations.entrySet()) {
 				val animId = animKey
@@ -46,35 +46,35 @@ data class BakingBrAnimation
 				}
 
 				val bonesJson = animDef.getAsJsonObject("bones")
-				val bones = if (bonesJson != null) BakingBrBoneAnimation.parses(bonesJson) else emptyMap()
+				val bones = if (bonesJson != null) BoneTrack.parses(bonesJson) else emptyMap()
 
 				val soundsJson = animDef.getAsJsonObject("sound_effects")
-				val sounds = if (soundsJson != null) BakingBrAnimationSound.parses(soundsJson) else emptyList()
+				val sounds = if (soundsJson != null) SoundEvent.parses(soundsJson) else emptyList()
 
 				val particlesJson = animDef.getAsJsonObject("particle_effects")
 				val particles =
-					if (particlesJson != null) BakingBrAnimationParticle.parses(particlesJson) else emptyList()
+					if (particlesJson != null) ParticleEvent.parses(particlesJson) else emptyList()
 
 				val timelinesJson = animDef.getAsJsonObject("timeline")
 				val timelines =
-					if (timelinesJson != null) BakingBrAnimationTimeline.parses(timelinesJson) else emptyList()
+					if (timelinesJson != null) TimelineEvent.parses(timelinesJson) else emptyList()
 
-				val length = animDef.get("animation_length")?.asFloat ?: BakingBrBoneAnimation.calcAnimLength(bones)
-				result[animId] = BakingBrAnimation(animId, loop, length, bones, sounds, particles, timelines)
+				val length = animDef.get("animation_length")?.asFloat ?: BoneTrack.calcAnimLength(bones)
+				result[animId] = KeyframeAnimation(animId, loop, length, bones, sounds, particles, timelines)
 			}
 			return result
 		}
 	}
 
 	/** 计算动画在 time 时刻的骨骼变换并写入 proxyModel.localPos/localRot/localScale（局部变换） */
-	fun computeAndWrite(time: Float, proxyModel: ProxyModel, context: MolangData? = null): Set<String> {
+	fun computeAndWrite(time: Float, poseData: PoseData, context: MolangData? = null): Set<String> {
 		val affected = mutableSetOf<String>()
 		for ((boneName, boneAnim) in bones) {
 			val posRes = interpolateFrames(boneAnim.pos, time, context)
 			val rotRes = interpolateFrames(boneAnim.rot, time, context)
 			val scaleRes = interpolateFrames(boneAnim.scale, time, context)
 
-			val bone = proxyModel.getBone(boneName) ?: ProxyBone(boneName).also { proxyModel.addBone(it) }
+			val bone = poseData.getBone(boneName) ?: BonePose(boneName).also { poseData.addBone(it) }
 			bone.setPosEmpty(posRes.value == null)
 			if (posRes.value != null) bone.pos.set(posRes.value) else bone.pos.set(0f, 0f, 0f)
 			bone.setRotEmpty(rotRes.value == null)
@@ -93,7 +93,7 @@ data class BakingBrAnimation
 	data class InterpResult(val value: Vector3f?, val noInterp: Boolean)
 
 	internal fun interpolateFrames(
-		frames: List<BakingBrBoneKeyFrame>, time: Float, context: MolangData? = null
+		frames: List<Keyframe>, time: Float, context: MolangData? = null
 	): InterpResult {
 		if (frames.isEmpty()) return InterpResult(null, false)
 		val afterIdx = frames.indexOfFirst { it.time > time }
@@ -105,22 +105,22 @@ data class BakingBrAnimation
 		val weight = (time - before.time) / (after.time - before.time)
 
 		return when {
-			before.lerp == BakingBrBoneKeyFrame.LerpMode.STEP -> InterpResult(
+			before.lerp == Keyframe.LerpMode.STEP -> InterpResult(
 				Vector3f(before.evaluateValue(context = context)),
 				true
 			)
 
-			before.lerp == BakingBrBoneKeyFrame.LerpMode.CATMULLROM || after.lerp == BakingBrBoneKeyFrame.LerpMode.CATMULLROM -> {
+			before.lerp == Keyframe.LerpMode.CATMULLROM || after.lerp == Keyframe.LerpMode.CATMULLROM -> {
 				val beforePlus = if (afterIdx > 1) frames[afterIdx - 2] else null
 				val afterPlus = if (afterIdx < frames.size - 1) frames[afterIdx + 1] else null
 				val useFirst = beforePlus != null && !(before.hasPreData() && before.hasPostData())
 				val useLast = afterPlus != null && !(after.hasPreData() && after.hasPostData())
 
 				fun buildAxis(
-					bp: (BakingBrBoneKeyFrame) -> Float,
-					bv: (BakingBrBoneKeyFrame) -> Float,
-					av: (BakingBrBoneKeyFrame) -> Float,
-					ap: (BakingBrBoneKeyFrame) -> Float
+					bp: (Keyframe) -> Float,
+					bv: (Keyframe) -> Float,
+					av: (Keyframe) -> Float,
+					ap: (Keyframe) -> Float
 				): Float {
 					val pts = mutableListOf<Vector2f>()
 					if (useFirst) pts.add(Vector2f(beforePlus.time, bp(beforePlus)))
@@ -180,8 +180,8 @@ data class BakingBrAnimation
 	/**
 	 * 返回镜像后的动画副本：左右骨骼名称互换，位置 X 取反，旋转 Y/Z 取反。
 	 */
-	fun mirror(): BakingBrAnimation {
-		val newBones = mutableMapOf<String, BakingBrBoneAnimation>()
+	fun mirror(): KeyframeAnimation {
+		val newBones = mutableMapOf<String, BoneTrack>()
 		for ((name, boneAnim) in bones) {
 			newBones[AnimationMirrorUtil.mirrorBoneName(name)] = boneAnim.mirrored()
 		}

@@ -10,7 +10,7 @@ import com.google.gson.JsonArray
 import com.google.gson.JsonElement
 import org.joml.Vector3f
 
-data class BakingBrBoneKeyFrame
+data class Keyframe
 @JvmOverloads constructor(
 	/** 关键帧时间（秒） */
 	val time: Float,
@@ -51,14 +51,14 @@ data class BakingBrBoneKeyFrame
 	fun hasPostData(): Boolean = post.allNull().not()
 
 	/** 镜像位置关键帧：X 取反 */
-	fun mirroredPos(): BakingBrBoneKeyFrame = copy(
+	fun mirroredPos(): Keyframe = copy(
 		value = value.mirroredPos(),
 		pre = pre.mirroredPos(),
 		post = post.mirroredPos()
 	)
 
 	/** 镜像旋转关键帧：Y/Z 取反 */
-	fun mirroredRot(): BakingBrBoneKeyFrame = copy(
+	fun mirroredRot(): Keyframe = copy(
 		value = value.mirroredRot(),
 		pre = pre.mirroredRot(),
 		post = post.mirroredRot()
@@ -69,25 +69,25 @@ data class BakingBrBoneKeyFrame
 	companion object {
 		/** 解析单组关键帧数据：简单数组 [x,y,z] 或对象 {pre, post, lerp_mode} */
 		@JvmStatic
-		fun parse(element: JsonElement?): List<BakingBrBoneKeyFrame> {
+		fun parse(element: JsonElement?): List<Keyframe> {
 			element ?: return emptyList()
 
 			// 单组值：[x, y, z]（数字→Constant，字符串→MoLang）
 			if (element.isJsonArray) {
-				return listOf(BakingBrBoneKeyFrame(time = 0f, value = parseMolangVector(element.asJsonArray)))
+				return listOf(Keyframe(time = 0f, value = parseMolangVector(element.asJsonArray)))
 			}
 
 			if (!element.isJsonObject) return emptyList()
 			val obj = element.asJsonObject
 
-			val frames = mutableListOf<BakingBrBoneKeyFrame>()
+			val frames = mutableListOf<Keyframe>()
 			for ((timeStr, valEl) in obj.entrySet()) {
 				val time = timeStr.toFloatOrNull() ?: continue
 
 				when {
 					// 值数组：[x, y, z]
 					valEl.isJsonArray -> {
-						frames.add(BakingBrBoneKeyFrame(time = time, value = parseMolangVector(valEl.asJsonArray)))
+						frames.add(Keyframe(time = time, value = parseMolangVector(valEl.asJsonArray)))
 					}
 
 					// 对象：{ "pre": [...], "post": [...], "lerp_mode": "..." }
@@ -106,7 +106,7 @@ data class BakingBrBoneKeyFrame
 								}
 							}
 						} ?: LerpMode.STEP
-						frames.add(BakingBrBoneKeyFrame(time = time, pre = pre, post = post, lerp = lerpMode))
+						frames.add(Keyframe(time = time, pre = pre, post = post, lerp = lerpMode))
 					}
 
 					// 单一 MoLang 字符串：三个轴用同一个表达式
@@ -117,7 +117,7 @@ data class BakingBrBoneKeyFrame
 							null
 						}
 						if (expr != null) {
-							frames.add(BakingBrBoneKeyFrame(time = time, value = MolangVector3(expr, expr, expr)))
+							frames.add(Keyframe(time = time, value = MolangVector3(expr, expr, expr)))
 						}
 					}
 				}

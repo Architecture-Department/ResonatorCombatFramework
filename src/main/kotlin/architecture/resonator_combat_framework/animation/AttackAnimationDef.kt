@@ -7,7 +7,7 @@ import architecture.resonator_combat_framework.module.collision.CollisionEntry
 import architecture.resonator_combat_framework.module.collision.CollisionSystem
 import architecture.resonator_combat_framework.module.entity_animation.animation.controller.IEntityAnimationController
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.BrModel
-import architecture.resonator_combat_framework.module.entity_animation.animation.model.ProxyModel
+import architecture.resonator_combat_framework.module.entity_animation.animation.model.PoseData
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.LivingEntity
@@ -15,7 +15,7 @@ import net.minecraft.world.entity.ai.attributes.Attributes
 import net.minecraft.world.entity.player.Player
 import org.joml.Matrix4f
 
-class AttackAnimation
+class AttackAnimationDef
 @JvmOverloads
 constructor(
 	id: ResourceLocation,
@@ -23,7 +23,7 @@ constructor(
 	stateModifiers: Map<ResourceLocation, Boolean> = emptyMap(),
 	/** 攻击阶段列表 */
 	val phases: List<AttackPhase> = emptyList(),
-) : ActionAnimation(id, animationId, stateModifiers) {
+) : ActionAnimationDef(id, animationId, stateModifiers) {
 
 	constructor(
 		id: ResourceLocation,
@@ -75,9 +75,9 @@ constructor(
 	fun onColliderUpdate(
 		entity: Entity,
 		animTime: Float,
-		proxyModel: ProxyModel,
+		poseData: PoseData,
 		brModel: BrModel,
-		mergedProxy: ProxyModel,
+		mergedProxy: PoseData,
 		controller: IEntityAnimationController<*>,
 	) {
 	}
@@ -97,20 +97,20 @@ constructor(
 	override fun tickAdvance(
 		entity: Entity,
 		animTime: Float,
-		proxyModel: ProxyModel,
+		poseData: PoseData,
 		brModel: BrModel,
-		mergedProxy: ProxyModel,
+		mergedProxy: PoseData,
 		controller: IEntityAnimationController<*>
 	) {
-		starts(entity, animTime, proxyModel, brModel, mergedProxy, controller)
+		starts(entity, animTime, poseData, brModel, mergedProxy, controller)
 	}
 
 	fun starts(
 		entity: Entity,
 		animTime: Float,
-		proxyModel: ProxyModel,
+		poseData: PoseData,
 		brModel: BrModel,
-		mergedProxy: ProxyModel,
+		mergedProxy: PoseData,
 		controller: IEntityAnimationController<*>
 	) {
 		// 通过碰撞数据判断当前实际存在的阶段分组
@@ -141,7 +141,7 @@ constructor(
 		collider(
 			entity,
 			animTime,
-			proxyModel,
+			poseData,
 			brModel,
 			mergedProxy,
 			controller,
@@ -154,17 +154,17 @@ constructor(
 	fun collider(
 		entity: Entity,
 		animTime: Float,
-		proxyModel: ProxyModel,
+		poseData: PoseData,
 		brModel: BrModel,
-		mergedProxy: ProxyModel,
+		mergedProxy: PoseData,
 		controller: IEntityAnimationController<*>,
 		activeIndices: Set<Int>,
 		startedIndices: Set<Int>,
 		endedIndices: Set<Int>,
 	) {
-		RcfEventHooks.AnimationColliderPre(controller, entity, animTime, proxyModel, brModel, mergedProxy)
+		RcfEventHooks.AnimationColliderPre(controller, entity, animTime, poseData, brModel, mergedProxy)
 
-		onColliderUpdate(entity, animTime, proxyModel, brModel, mergedProxy, controller)
+		onColliderUpdate(entity, animTime, poseData, brModel, mergedProxy, controller)
 
 		val data = CollisionSystem.getData(entity)
 
@@ -219,7 +219,7 @@ constructor(
 			}
 		}
 
-		RcfEventHooks.AnimationColliderPost(controller, entity, animTime, proxyModel, brModel, mergedProxy)
+		RcfEventHooks.AnimationColliderPost(controller, entity, animTime, poseData, brModel, mergedProxy)
 	}
 
 	private companion object {

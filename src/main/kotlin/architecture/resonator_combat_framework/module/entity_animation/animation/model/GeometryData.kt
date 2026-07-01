@@ -6,7 +6,7 @@ import com.google.gson.JsonObject
 import org.joml.Vector3f
 import org.joml.Vector3fc
 
-data class BakingBrModel
+data class GeometryData
 @JvmOverloads
 constructor(
 	val identifier: String,
@@ -16,12 +16,12 @@ constructor(
 	companion object {
 
 		@JvmField
-		val EMPTY = BakingBrModel("empty")
+		val EMPTY = GeometryData("empty")
 
 		@JvmStatic
-		fun parses(json: JsonElement): List<BakingBrModel> {
+		fun parses(json: JsonElement): List<GeometryData> {
 			val root = json.asJsonObject
-			val result = mutableListOf<BakingBrModel>()
+			val result = mutableListOf<GeometryData>()
 			val geometryArray = root.getAsJsonArray("minecraft:geometry") ?: return result
 			for (element in geometryArray) {
 				val obj = element.asJsonObject
@@ -44,7 +44,7 @@ constructor(
 					}
 				}
 
-				result.add(BakingBrModel(identifier, bones, locators))
+				result.add(GeometryData(identifier, bones, locators))
 			}
 			return result
 		}

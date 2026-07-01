@@ -5,7 +5,7 @@ import architecture.goldenboughs_lib.api.payload.ToServerAndClientPayload
 import architecture.goldenboughs_lib.util.LibUtil.RESOURCE_LOCATION_OPTIONAL_STREAM_CODEC
 import architecture.resonator_combat_framework.events.registry.AnimationControllers
 import architecture.resonator_combat_framework.module.entity_animation.IProxyAnimationProvider.Companion.getMapperProvider
-import architecture.resonator_combat_framework.module.entity_animation.animation.data.AnimationPlayData
+import architecture.resonator_combat_framework.module.entity_animation.animation.data.PlayConfig
 import architecture.resonator_combat_framework.util.RcfUtil
 import io.netty.buffer.ByteBuf
 import net.minecraft.client.player.AbstractClientPlayer
@@ -46,7 +46,7 @@ constructor(
 	override fun toClient(context: IPayloadContext, player: AbstractClientPlayer) {
 		val level = context.player().level()
 		val target = (level.getPlayerByUUID(playerUuid) as? AbstractClientPlayer) ?: return
-		val config = AnimationPlayData(
+		val config = PlayConfig(
 			speedMultiplier = speedMultiplier,
 			fadeInTicks = fadeInTicks,
 			fadeOutTicks = fadeOutTicks
@@ -55,7 +55,7 @@ constructor(
 	}
 
 	override fun toServer(context: IPayloadContext, player: ServerPlayer) {
-		val config = AnimationPlayData(
+		val config = PlayConfig(
 			speedMultiplier = speedMultiplier,
 			fadeInTicks = fadeInTicks,
 			fadeOutTicks = fadeOutTicks

@@ -2,7 +2,7 @@ package architecture.resonator_combat_framework.module.entity_animation.command
 
 import architecture.goldenboughs_lib.util.CommandContextUtil.getArguments
 import architecture.resonator_combat_framework.events.registry.AnimationControllers
-import architecture.resonator_combat_framework.module.entity_animation.animation.data.AnimationPlayData
+import architecture.resonator_combat_framework.module.entity_animation.animation.data.PlayConfig
 import architecture.resonator_combat_framework.module.entity_animation.helper.PlayerAnimationHelper.pauseAnima
 import architecture.resonator_combat_framework.module.entity_animation.helper.PlayerAnimationHelper.resumeAnima
 import architecture.resonator_combat_framework.module.entity_animation.helper.PlayerAnimationHelper.stopAnima
@@ -99,7 +99,7 @@ object TestAnimCommand {
 			"fade_out"
 		) else -1
 
-		val config = AnimationPlayData(
+		val config = PlayConfig(
 			speedMultiplier = speed,
 			fadeInTicks = fadeIn,
 			fadeOutTicks = fadeOut

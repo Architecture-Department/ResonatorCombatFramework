@@ -5,7 +5,7 @@ import architecture.goldenboughs_lib.api.AllOpe
 /**
  * 动画属性键——类型安全的键，用于链式配置动画的运行时行为。
  *
- * 分层设计（对应 [StaticAnimation] 的继承层次）：
+ * 分层设计（对应 [AnimationDef] 的继承层次）：
  * - [StaticAnimationProperty]：所有动画通用
  * - [ActionAnimationProperty]：动作动画（如持有物品）
  * - [AttackAnimationProperty]：攻击动画
@@ -17,5 +17,5 @@ import architecture.goldenboughs_lib.api.AllOpe
 @AllOpe
 class AnimationProperty<T>(val name: String)
 
-/** 所有 [StaticAnimation] 通用的属性 */
+/** 所有 [AnimationDef] 通用的属性 */
 class StaticAnimationProperty<T>(name: String) : AnimationProperty<T>(name)

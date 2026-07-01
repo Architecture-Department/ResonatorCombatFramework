@@ -4,7 +4,7 @@ import architecture.goldenboughs_lib.util.toPos
 import architecture.resonator_combat_framework.module.entity_animation.animation.controller.IEntityAnimationController
 import architecture.resonator_combat_framework.module.entity_animation.animation.mapper.AnimationControllerManager
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.BrModel
-import architecture.resonator_combat_framework.module.entity_animation.animation.model.ProxyModel
+import architecture.resonator_combat_framework.module.entity_animation.animation.model.PoseData
 import com.mojang.math.Axis
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.Entity
@@ -48,7 +48,7 @@ object ParticleStormAnimAdapter {
 		locatorName: String?,
 		preEffectScriptStr: String?,
 		brModel: BrModel,
-		animationData: ProxyModel,
+		animationData: PoseData,
 		controller: IEntityAnimationController<*>,
 		manager: AnimationControllerManager<*>,
 	): Boolean {
@@ -89,7 +89,7 @@ object ParticleStormAnimAdapter {
 	fun updateEmitterTransform(
 		emitterId: Int,
 		brModel: BrModel,
-		animationData: ProxyModel,
+		animationData: PoseData,
 		locatorName: String?
 	) {
 		val emitter = MolangParticleEngine.INSTANCE.getEmitter(emitterId) ?: return

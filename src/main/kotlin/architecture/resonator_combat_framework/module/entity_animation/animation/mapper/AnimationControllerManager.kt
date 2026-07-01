@@ -9,11 +9,12 @@ import architecture.resonator_combat_framework.module.entity_animation.animation
 import architecture.resonator_combat_framework.module.entity_animation.animation.controller.BedrockAnimationController
 import architecture.resonator_combat_framework.module.entity_animation.animation.controller.IEntityAnimationController
 import architecture.resonator_combat_framework.module.entity_animation.animation.data.ProxyBoneFlags
-import architecture.resonator_combat_framework.module.entity_animation.animation.model.BakingBrModel
+import architecture.resonator_combat_framework.module.entity_animation.animation.model.BonePose
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.BrModel
-import architecture.resonator_combat_framework.module.entity_animation.animation.model.ProxyBone
-import architecture.resonator_combat_framework.module.entity_animation.animation.model.ProxyModel
+import architecture.resonator_combat_framework.module.entity_animation.animation.model.GeometryData
+import architecture.resonator_combat_framework.module.entity_animation.animation.model.PoseData
 import architecture.resonator_combat_framework.util.RcfUtil
+import architecture.resonator_combat_framework.util.RotationUtil
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.Entity
 import org.joml.Matrix4fc
@@ -42,19 +43,19 @@ constructor(
 	private val ordered = mutableListOf<IEntityAnimationController<T>>()
 
 	/** 当前 tick 合并后的代理骨骼 */
-	val mergedProxy = ProxyModel("merged")
+	val mergedPose = PoseData("merged")
 
 	/** 上一 tick 合并结果（用于渲染帧插值） */
-	val prevMergedProxy = ProxyModel("prevMerged")
+	val prevMergedPose = PoseData("prevMerged")
 
 	/** 合并后的骨骼标志 */
-	val mergedFlags = mutableMapOf<String, ProxyBoneFlags>()
+	val mergedBoneFlags = mutableMapOf<String, ProxyBoneFlags>()
 
 	/** 待触发的事件队列（控制器收集 -> tick后统一执行） */
 	private val pendingEvents = mutableListOf<Pair<IEntityAnimationController<*>, AnimationEventsToFire>>()
 
 	/** 几何骨骼定义（外部设置后自动同步到 bones） */
-	var bakingBrModel: BakingBrModel = BakingBrModel.EMPTY
+	var geometry: GeometryData = GeometryData.EMPTY
 		set(value) {
 			field = value
 			rebuildBones()
@@ -148,39 +149,39 @@ constructor(
 		// 清空骨骼矩阵缓存（本 tick 所有数据重算）
 		boneMatrixCache.clear()
 		// 保存当前帧快照供渲染插值（prev -> current）
-		prevMergedProxy.bones.clear()
-		for ((name, bone) in mergedProxy.bones) {
-			val copy = ProxyBone(name)
+		prevMergedPose.bones.clear()
+		for ((name, bone) in mergedPose.bones) {
+			val copy = BonePose(name)
 			copy.pos.set(bone.pos)
 			copy.rotation.set(bone.rotation)
 			copy.scale.set(bone.scale)
 			copy.noInterp = bone.noInterp
-			prevMergedProxy.addBone(copy)
+			prevMergedPose.addBone(copy)
 		}
 
 		for (ctrl in ordered) {
 			ctrl.tick()
 		}
-		remerge()
+		mergeAll()
 		for (ctrl in ordered) {
 			ctrl.tickAdvance()
 		}
 		firePendingEvents()
 	}
 
-	fun remerge() {
-		mergedFlags.clear()
-		mergedProxy.bones.clear()
+	fun mergeAll() {
+		mergedBoneFlags.clear()
+		mergedPose.bones.clear()
 		val coveredBones = mutableSetOf<String>()
 		for (ctrl in ordered.filter { it.isActive() }) {
 			val bac = ctrl as BedrockAnimationController
-			val weight = ctrl.effectiveWeight
+			val weight = ctrl.mergeWeight
 
-			mergedFlags.putAll(bac.activeBoneConfig.resolveBoneFlags(bac.currentAnimTime))
-			for ((name, bone) in bac.proxyModel.bones) {
-				val mb = mergedProxy.getBone(name) ?: run {
-					val nb = ProxyBone(name)
-					mergedProxy.addBone(nb)
+			mergedBoneFlags.putAll(bac.activeBoneConfig.resolveBoneFlags(bac.currentAnimTime))
+			for ((name, bone) in bac.poseData.bones) {
+				val mb = mergedPose.getBone(name) ?: run {
+					val nb = BonePose(name)
+					mergedPose.addBone(nb)
 					nb
 				}
 
@@ -203,7 +204,12 @@ constructor(
 
 				if (bone.hasRot()) {
 					mb.setRotEmpty(false)
-					mb.rotation.add(Vector3f(bone.rotation).mul(weight))
+					// 将骨骼旋转归一化到 [-180,180] 再加权，避免多控制器叠加时走远路
+					val normalized = Vector3f(bone.rotation)
+					normalized.x = RotationUtil.normalizeDelta(normalized.x)
+					normalized.y = RotationUtil.normalizeDelta(normalized.y)
+					normalized.z = RotationUtil.normalizeDelta(normalized.z)
+					mb.rotation.add(normalized.mul(weight))
 				}
 
 				if (bone.hasScale()) {
@@ -221,20 +227,20 @@ constructor(
 	 * 同一 tick 内对同一骨骼的重复查询直接返回缓存。
 	 */
 	@JvmOverloads
-	fun getTickBoneMatrix(boneName: String, proxyModel: ProxyModel = mergedProxy): Matrix4fc {
+	fun getTickBoneMatrix(boneName: String, poseData: PoseData = mergedPose): Matrix4fc {
 		return boneMatrixCache.getOrPut(boneName) {
-			brModel.computeBoneGlobalMatrix(boneName, proxyModel, true)
+			brModel.computeBoneGlobalMatrix(boneName, poseData, true)
 		}
 	}
 
 	/** 获取合并后的插值代理骨骼（逐帧在 prevMergedProxy 和 mergedProxy 之间线性插值） */
-	fun getInterpolatedBone(name: String, partialTick: Float): ProxyBone? = interpolateBone(name, partialTick)
+	fun getInterpolatedBone(name: String, partialTick: Float): BonePose? = interpolateBone(name, partialTick)
 
 	/** 重新合并所有控制器的代理模型 */
-	private fun interpolateBone(name: String, partialTick: Float): ProxyBone? {
-		val currBone = mergedProxy.getBone(name) ?: return null
-		val prevBone = prevMergedProxy.getBone(name)
-		val mb = ProxyBone(name)
+	private fun interpolateBone(name: String, partialTick: Float): BonePose? {
+		val currBone = mergedPose.getBone(name) ?: return null
+		val prevBone = prevMergedPose.getBone(name)
+		val mb = BonePose(name)
 
 		if (currBone.noInterp) {
 			if (currBone.hasPos()) {
@@ -259,7 +265,7 @@ constructor(
 			}
 			if (currBone.hasRot()) {
 				mb.setRotEmpty(false)
-				mb.rotation.set(prevBone.rotation).lerp(currBone.rotation, partialTick)
+				RotationUtil.lerpRotation(prevBone.rotation, currBone.rotation, partialTick, mb.rotation)
 			} else if (prevBone.hasRot()) {
 				mb.setRotEmpty(false)
 				mb.rotation.set(prevBone.rotation)
@@ -286,10 +292,10 @@ constructor(
 	}
 
 	/** 复制 ProxyModel 的所有骨骼到新模型（深拷贝） */
-	private fun copyProxyModel(source: ProxyModel): ProxyModel {
-		val result = ProxyModel("interp")
+	private fun copyProxyModel(source: PoseData): PoseData {
+		val result = PoseData("interp")
 		for ((name, bone) in source.bones) {
-			val copy = ProxyBone(name)
+			val copy = BonePose(name)
 			copy.pos.set(bone.pos)
 			copy.rotation.set(bone.rotation)
 			copy.scale.set(bone.scale)
@@ -303,12 +309,12 @@ constructor(
 	}
 
 	/** 获取合并后的插值代理骨骼（逐帧在 prevMergedProxy 和 mergedProxy 之间线性插值） */
-	fun getInterpolatedProxy(partialTick: Float): ProxyModel {
+	fun getInterpolatedProxy(partialTick: Float): PoseData {
 		// partialTick=0 或 1 时直接返回对应源，避免不必要的插值计算
-		if (partialTick == 0f) return copyProxyModel(prevMergedProxy)
-		if (partialTick == 1f) return copyProxyModel(mergedProxy)
-		val result = ProxyModel("interp")
-		for ((name, _) in mergedProxy.bones) {
+		if (partialTick == 0f) return copyProxyModel(prevMergedPose)
+		if (partialTick == 1f) return copyProxyModel(mergedPose)
+		val result = PoseData("interp")
+		for ((name, _) in mergedPose.bones) {
 			interpolateBone(name, partialTick)?.let { result.addBone(it) }
 		}
 		return result
@@ -370,7 +376,7 @@ constructor(
 
 	/** 合并所有控制器的额外骨骼到 [bones] */
 	fun rebuildBones() {
-		brModel.set(bakingBrModel)
+		brModel.set(geometry)
 		for (ctrl in ordered) {
 			val controller = ctrl as? BedrockAnimationController ?: continue
 			if (controller.extraModel == null) continue
@@ -404,12 +410,12 @@ constructor(
 				RcfUtil.LOGGER.error("[CONTROLLER] {} timeline effects failed: {}", controller.id, e.message)
 			}
 			try {
-				events.sounds.forEach { it.runs(controller, entity, brModel, mergedProxy, data) }
+				events.sounds.forEach { it.runs(controller, entity, brModel, mergedPose, data) }
 			} catch (e: Exception) {
 				RcfUtil.LOGGER.error("[CONTROLLER] {} sound effects failed: {}", controller.id, e.message)
 			}
 			try {
-				events.particles.forEach { it.runs(controller, entity, brModel, mergedProxy, data) }
+				events.particles.forEach { it.runs(controller, entity, brModel, mergedPose, data) }
 			} catch (e: Exception) {
 				RcfUtil.LOGGER.error("[CONTROLLER] {} particle effects failed: {}", controller.id, e.message)
 			}

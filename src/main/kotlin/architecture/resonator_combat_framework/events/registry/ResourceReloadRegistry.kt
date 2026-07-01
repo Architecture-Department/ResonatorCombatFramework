@@ -1,7 +1,7 @@
 package architecture.resonator_combat_framework.events.registry
 
 import architecture.resonator_combat_framework.common.registry.ItemPropertyRegistry
-import architecture.resonator_combat_framework.module.entity_animation.animation.StaticAnimation
+import architecture.resonator_combat_framework.module.entity_animation.animation.AnimationDef
 import architecture.resonator_combat_framework.module.entity_animation.event.StaticAnimationRegistryEvent
 import architecture.resonator_combat_framework.module.entity_animation.registry.BedrockAnimationDataRegistry
 import architecture.resonator_combat_framework.module.entity_animation.registry.BedrockAnimationRegistry
@@ -39,7 +39,7 @@ object ResourceReloadRegistry {
 	@SubscribeEvent(priority = EventPriority.HIGHEST)
 	fun registry(event: StaticAnimationRegistryEvent) {
 		BedrockAnimationRegistry.findAll().forEach { (k, v) ->
-			event.register(k, ::StaticAnimation)
+			event.register(k, ::AnimationDef)
 		}
 	}
 

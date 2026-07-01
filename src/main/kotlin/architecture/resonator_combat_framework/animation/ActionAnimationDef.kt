@@ -1,10 +1,10 @@
 package architecture.resonator_combat_framework.animation
 
-import architecture.resonator_combat_framework.module.entity_animation.animation.StaticAnimation
+import architecture.resonator_combat_framework.module.entity_animation.animation.AnimationDef
 import architecture.resonator_combat_framework.module.entity_state_machine.holder.EntityStateHolder
 import net.minecraft.resources.ResourceLocation
 
-class ActionAnimation
+class ActionAnimationDef
 @JvmOverloads
 constructor(
 	id: ResourceLocation,
@@ -13,7 +13,7 @@ constructor(
 	val stateModifiers: Map<ResourceLocation, Boolean> = mapOf(
 		EntityStateHolder.CAN_SWITCH_ITEM to false
 	),
-) : StaticAnimation(id, animationId) {
+) : AnimationDef(id, animationId) {
 
 	@JvmOverloads
 	constructor(

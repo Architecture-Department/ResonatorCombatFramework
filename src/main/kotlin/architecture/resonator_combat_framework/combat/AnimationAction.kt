@@ -2,9 +2,9 @@ package architecture.resonator_combat_framework.combat
 
 import architecture.resonator_combat_framework.module.entity_animation.IProxyAnimationProvider
 import architecture.resonator_combat_framework.module.entity_animation.IProxyAnimationProvider.Companion.getMapperProvider
-import architecture.resonator_combat_framework.module.entity_animation.animation.StaticAnimation
+import architecture.resonator_combat_framework.module.entity_animation.animation.AnimationDef
 import architecture.resonator_combat_framework.module.entity_animation.animation.controller.IEntityAnimationController
-import architecture.resonator_combat_framework.module.entity_animation.animation.data.AnimationPlayData
+import architecture.resonator_combat_framework.module.entity_animation.animation.data.PlayConfig
 import architecture.resonator_combat_framework.module.entity_state_machine.combat.Action
 import architecture.resonator_combat_framework.module.entity_state_machine.combat.ActionSequence
 import architecture.resonator_combat_framework.module.entity_state_machine.combat.ActionState
@@ -28,7 +28,7 @@ import java.util.function.Supplier
  * @param id
  * @param interruptData 打断数据
  */
-class AnimationAction<T : StaticAnimation>
+class AnimationAction<T : AnimationDef>
 @JvmOverloads
 constructor(
 	id: ResourceLocation,
@@ -65,7 +65,7 @@ constructor(
 		super.onStart(entity, actionSequence)
 		if (entity is IProxyAnimationProvider) {
 			getController(entity)?.trigger(
-				getAnimation(), AnimationPlayData(
+				getAnimation(), PlayConfig(
 					fadeInTicks = fadeInTick,
 					fadeOutTicks = fadeOutTick
 				)

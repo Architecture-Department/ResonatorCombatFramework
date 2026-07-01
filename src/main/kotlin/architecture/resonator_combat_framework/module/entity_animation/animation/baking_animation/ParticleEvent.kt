@@ -5,7 +5,7 @@ import architecture.resonator_combat_framework.core.RcfEventHooks
 import architecture.resonator_combat_framework.module.entity_animation.animation.ParticleStormAnimAdapter
 import architecture.resonator_combat_framework.module.entity_animation.animation.controller.IEntityAnimationController
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.BrModel
-import architecture.resonator_combat_framework.module.entity_animation.animation.model.ProxyModel
+import architecture.resonator_combat_framework.module.entity_animation.animation.model.PoseData
 import architecture.resonator_combat_framework.module.entity_animation.animation.molang.MoLangParser
 import architecture.resonator_combat_framework.module.entity_animation.animation.molang.MolangData
 import architecture.resonator_combat_framework.module.entity_animation.animation.molang.MolangValue
@@ -19,7 +19,7 @@ import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.Entity
 import org.joml.Matrix4f
 
-data class BakingBrAnimationParticle
+data class ParticleEvent
 @JvmOverloads constructor(
 	val time: Float, val effects: List<Effect> = emptyList()
 ) {
@@ -27,7 +27,7 @@ data class BakingBrAnimationParticle
 		controller: IEntityAnimationController<*>,
 		entity: Entity,
 		brModel: BrModel,
-		animationData: ProxyModel,
+		animationData: PoseData,
 		context: MolangData? = null,
 		partialTick: Float = 1f
 	) {
@@ -45,7 +45,7 @@ data class BakingBrAnimationParticle
 			controller: IEntityAnimationController<*>,
 			entity: Entity,
 			brModel: BrModel,
-			animationData: ProxyModel,
+			animationData: PoseData,
 			context: MolangData? = null,
 			partialTick: Float = 1f
 		) {
@@ -107,8 +107,8 @@ data class BakingBrAnimationParticle
 
 	companion object {
 		@JvmStatic
-		fun parses(particlesJson: JsonObject): List<BakingBrAnimationParticle> {
-			val list = mutableListOf<BakingBrAnimationParticle>()
+		fun parses(particlesJson: JsonObject): List<ParticleEvent> {
+			val list = mutableListOf<ParticleEvent>()
 			particlesJson.asMap().forEach { (key, value) ->
 				val effects = mutableListOf<Effect>()
 				if (!value.isJsonArray) {
@@ -116,7 +116,7 @@ data class BakingBrAnimationParticle
 				} else {
 					value.asJsonArray.forEach { parseEffect(it)?.let { e -> effects.add(e) } }
 				}
-				list.add(BakingBrAnimationParticle(key.toFloat(), effects))
+				list.add(ParticleEvent(key.toFloat(), effects))
 			}
 			return list
 		}

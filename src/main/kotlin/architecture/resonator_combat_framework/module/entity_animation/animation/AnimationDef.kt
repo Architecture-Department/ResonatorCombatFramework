@@ -2,13 +2,13 @@ package architecture.resonator_combat_framework.module.entity_animation.animatio
 
 import architecture.goldenboughs_lib.api.AllOpe
 import architecture.resonator_combat_framework.animation.AttackPhase
-import architecture.resonator_combat_framework.module.entity_animation.animation.baking_animation.BakingBrAnimation
-import architecture.resonator_combat_framework.module.entity_animation.animation.baking_animation.BakingBrAnimationParticle
-import architecture.resonator_combat_framework.module.entity_animation.animation.baking_animation.BakingBrAnimationSound
-import architecture.resonator_combat_framework.module.entity_animation.animation.baking_animation.BakingBrAnimationTimeline
+import architecture.resonator_combat_framework.module.entity_animation.animation.baking_animation.KeyframeAnimation
+import architecture.resonator_combat_framework.module.entity_animation.animation.baking_animation.ParticleEvent
+import architecture.resonator_combat_framework.module.entity_animation.animation.baking_animation.SoundEvent
+import architecture.resonator_combat_framework.module.entity_animation.animation.baking_animation.TimelineEvent
 import architecture.resonator_combat_framework.module.entity_animation.animation.controller.IEntityAnimationController
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.BrModel
-import architecture.resonator_combat_framework.module.entity_animation.animation.model.ProxyModel
+import architecture.resonator_combat_framework.module.entity_animation.animation.model.PoseData
 import architecture.resonator_combat_framework.module.entity_animation.animation.molang.MolangData
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.Entity
@@ -17,11 +17,11 @@ import java.util.*
 /**
  * 动画定义——纯生命周期定义，不持有动画数据。
  *
- * 动画数据（[BakingBrAnimation]、[ProxyBoneConfigData]）由 [BedrockAnimationRegistry] 管理，
+ * 动画数据（[KeyframeAnimation]、[ProxyBoneConfigData]）由 [BedrockAnimationRegistry] 管理，
  * 调用时从对应端的 Registry 获取后传入方法。
  */
 @AllOpe
-class StaticAnimation(
+class AnimationDef(
 	val id: ResourceLocation,
 	val animationId: ResourceLocation,
 ) {
@@ -33,23 +33,23 @@ class StaticAnimation(
 	// ===== 动画数据处理（数据由调用方传入） =====
 
 	fun computeAndWrite(
-		anim: BakingBrAnimation,
+		anim: KeyframeAnimation,
 		time: Float,
-		proxyModel: ProxyModel,
+		poseData: PoseData,
 		context: MolangData? = null,
 	): Set<String> {
-		return anim.computeAndWrite(time, proxyModel, context)
+		return anim.computeAndWrite(time, poseData, context)
 	}
 
 	fun collectEvents(
-		anim: BakingBrAnimation,
+		anim: KeyframeAnimation,
 		time: Float,
 		prevTime: Float,
 		alreadyFired: MutableSet<String>,
 	): AnimationEventsToFire {
-		val sounds = mutableListOf<BakingBrAnimationSound>()
-		val particles = mutableListOf<BakingBrAnimationParticle>()
-		val timelines = mutableListOf<BakingBrAnimationTimeline>()
+		val sounds = mutableListOf<SoundEvent>()
+		val particles = mutableListOf<ParticleEvent>()
+		val timelines = mutableListOf<TimelineEvent>()
 		collectTyped(anim.sounds, "sound_", alreadyFired, time, prevTime, sounds)
 		collectTyped(anim.particles, "particle_", alreadyFired, time, prevTime, particles)
 		collectTyped(anim.timelines, "timeline_", alreadyFired, time, prevTime, timelines)
@@ -72,9 +72,9 @@ class StaticAnimation(
 		events.forEachIndexed { i, event ->
 			val key = "$prefix$i"
 			val eventTime = when (event) {
-				is BakingBrAnimationSound -> event.time
-				is BakingBrAnimationParticle -> event.time
-				is BakingBrAnimationTimeline -> event.time
+				is SoundEvent -> event.time
+				is ParticleEvent -> event.time
+				is TimelineEvent -> event.time
 				else -> return@forEachIndexed
 			}
 			// 穿越事件时间边界时触发（支持正放和倒放）
@@ -90,7 +90,7 @@ class StaticAnimation(
 	// ===== 链式属性配置 =====
 
 	@Suppress("UNCHECKED_CAST")
-	fun <T : Any> addProperty(key: AnimationProperty<T>, value: T): StaticAnimation {
+	fun <T : Any> addProperty(key: AnimationProperty<T>, value: T): AnimationDef {
 		properties[key] = value as Any
 		return this
 	}
@@ -104,7 +104,7 @@ class StaticAnimation(
 		return if (property.isPresent) property else getProperty(key)
 	}
 
-	fun addEvent(event: TimedEvent): StaticAnimation {
+	fun addEvent(event: TimedEvent): AnimationDef {
 		timedEvents.add(event)
 		return this
 	}
@@ -114,13 +114,13 @@ class StaticAnimation(
 	// ===== 生命周期钩子 =====
 
 	/** trigger 早期钩子。在骨骼数据写入前、过渡/镜像设置前调用。 */
-	fun onBegin(entity: Entity, animTime: Float, f: Float, proxyModel: ProxyModel, brModel: BrModel) {}
+	fun onBegin(entity: Entity, animTime: Float, f: Float, poseData: PoseData, brModel: BrModel) {}
 
 	/** 动画启动钩子。在 [trigger] 全部初始化完成后调用（含第一帧、extraModel、骨骼重建之后）。 */
-	fun onStart(entity: Entity, animTime: Float, f: Float, proxyModel: ProxyModel, brModel: BrModel) {}
+	fun onStart(entity: Entity, animTime: Float, f: Float, poseData: PoseData, brModel: BrModel) {}
 
 	/** 每 tick 回调（合并前）。在 [tickAnimTime] 后、[remerge] 前调用。 */
-	fun tick(entity: Entity, animTime: Float, deltaTime: Float, proxyModel: ProxyModel, brModel: BrModel) {}
+	fun tick(entity: Entity, animTime: Float, deltaTime: Float, poseData: PoseData, brModel: BrModel) {}
 
 	fun onEnd(entity: Entity) {}
 
@@ -128,9 +128,9 @@ class StaticAnimation(
 	fun tickAdvance(
 		entity: Entity,
 		animTime: Float,
-		proxyModel: ProxyModel,
+		poseData: PoseData,
 		brModel: BrModel,
-		mergedProxy: ProxyModel,
+		mergedProxy: PoseData,
 		controller: IEntityAnimationController<*>,
 	) {
 	}

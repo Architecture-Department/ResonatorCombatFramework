@@ -2,14 +2,14 @@ package architecture.resonator_combat_framework.module.entity_animation.util
 
 import architecture.goldenboughs_lib.util.toRadians
 import architecture.resonator_combat_framework.module.entity_animation.animation.data.*
-import architecture.resonator_combat_framework.module.entity_animation.animation.model.ProxyBone
+import architecture.resonator_combat_framework.module.entity_animation.animation.model.BonePose
 import com.mojang.blaze3d.vertex.PoseStack
 import net.minecraft.client.model.geom.ModelPart
 import net.minecraft.client.model.geom.PartPose
 import org.joml.Quaternionf
 import org.joml.Vector3f
 
-object BoneTransformUtil {
+object ModelPartApplier {
 
 	/**
 	 * 将 ProxyBone 变换数据计算为 Transform，应用轴翻转和单位缩放。
@@ -21,7 +21,7 @@ object BoneTransformUtil {
 	 * @param except 缩放分母（16=世界坐标，1=模型坐标）
 	 */
 	fun computeFor(
-		bone: ProxyBone, flags: ProxyBoneFlags?,
+		bone: BonePose, flags: ProxyBoneFlags?,
 		flipPX: Boolean = false, flipPY: Boolean = false, flipPZ: Boolean = false,
 		flipRX: Boolean = false, flipRY: Boolean = false, flipRZ: Boolean = false,
 		except: Boolean = false,

@@ -6,12 +6,12 @@ import architecture.resonator_combat_framework.event.AnimationColliderEvent
 import architecture.resonator_combat_framework.module.collision.CollisionEntityData
 import architecture.resonator_combat_framework.module.collision.CollisionEntry
 import architecture.resonator_combat_framework.module.collision.event.CollisionEntityEvent
-import architecture.resonator_combat_framework.module.entity_animation.animation.StaticAnimation
+import architecture.resonator_combat_framework.module.entity_animation.animation.AnimationDef
 import architecture.resonator_combat_framework.module.entity_animation.animation.controller.IEntityAnimationController
-import architecture.resonator_combat_framework.module.entity_animation.animation.data.AnimationPlayData
+import architecture.resonator_combat_framework.module.entity_animation.animation.data.PlayConfig
 import architecture.resonator_combat_framework.module.entity_animation.animation.mapper.IEntityAnimationMapperProvider
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.BrModel
-import architecture.resonator_combat_framework.module.entity_animation.animation.model.ProxyModel
+import architecture.resonator_combat_framework.module.entity_animation.animation.model.PoseData
 import architecture.resonator_combat_framework.module.entity_animation.event.*
 import architecture.resonator_combat_framework.module.entity_state_machine.combat.Action
 import architecture.resonator_combat_framework.module.entity_state_machine.combat.ActionState
@@ -78,15 +78,15 @@ object RcfEventHooks {
 	// ===== Animation Trigger =====
 
 	@JvmStatic
-	fun AnimationTriggerPre(controller: IEntityAnimationController<*>, anim: StaticAnimation, config: AnimationPlayData) {
+	fun AnimationTriggerPre(controller: IEntityAnimationController<*>, anim: AnimationDef, config: PlayConfig) {
 		NeoForge.EVENT_BUS.post(AnimationTriggerEvent.Pre(controller, anim, config))
 	}
 
 	@JvmStatic
 	fun AnimationTriggerPost(
 		controller: IEntityAnimationController<*>,
-		anim: StaticAnimation,
-		config: AnimationPlayData
+		anim: AnimationDef,
+		config: PlayConfig
 	) {
 		NeoForge.EVENT_BUS.post(AnimationTriggerEvent.Post(controller, anim, config))
 	}
@@ -143,11 +143,11 @@ object RcfEventHooks {
 		controller: IEntityAnimationController<*>,
 		entity: Entity,
 		animTime: Float,
-		proxyModel: ProxyModel,
+		poseData: PoseData,
 		brModel: BrModel,
-		mergedProxy: ProxyModel
+		mergedProxy: PoseData
 	) {
-		NeoForge.EVENT_BUS.post(AnimationColliderEvent.Pre(controller, entity, animTime, proxyModel, brModel, mergedProxy))
+		NeoForge.EVENT_BUS.post(AnimationColliderEvent.Pre(controller, entity, animTime, poseData, brModel, mergedProxy))
 	}
 
 	@JvmStatic
@@ -155,11 +155,11 @@ object RcfEventHooks {
 		controller: IEntityAnimationController<*>,
 		entity: Entity,
 		animTime: Float,
-		proxyModel: ProxyModel,
+		poseData: PoseData,
 		brModel: BrModel,
-		mergedProxy: ProxyModel
+		mergedProxy: PoseData
 	) {
-		NeoForge.EVENT_BUS.post(AnimationColliderEvent.Post(controller, entity, animTime, proxyModel, brModel, mergedProxy))
+		NeoForge.EVENT_BUS.post(AnimationColliderEvent.Post(controller, entity, animTime, poseData, brModel, mergedProxy))
 	}
 
 	// ===== Animation Phase =====

@@ -19,7 +19,7 @@ constructor(
 	 */
 	fun computeLocatorGlobalMatrix(
 		name: String?,
-		animationData: ProxyModel,
+		animationData: PoseData,
 		isWorld: Boolean = false
 	): Matrix4f {
 		name ?: return Matrix4f()
@@ -47,7 +47,7 @@ constructor(
 	 */
 	fun computeBoneGlobalMatrix(
 		name: String?,
-		animationData: ProxyModel,
+		animationData: PoseData,
 		isWorld: Boolean = false
 	): Matrix4f {
 		name ?: return Matrix4f()
@@ -63,11 +63,11 @@ constructor(
 	 */
 	private fun buildChain(
 		startName: String,
-		animationData: ProxyModel,
+		animationData: PoseData,
 		scale: Int
 	): Matrix4f {
 		// 收集从 startName 到根的所有骨骼（自身→父级），然后反转得到根→自身的顺序
-		val chain = mutableListOf<Pair<BrBone, ProxyBone?>>()
+		val chain = mutableListOf<Pair<BrBone, BonePose?>>()
 		var currentName: String? = startName
 		while (true) {
 			val bone = bones[currentName] ?: break
@@ -119,17 +119,17 @@ constructor(
 	}
 
 	/** 合并模型：骨骼合并不覆盖已有，定位器不覆盖已有 */
-	fun add(model: BakingBrModel?) {
+	fun add(model: GeometryData?) {
 		mergeBones(model, overwriteLocators = false)
 	}
 
 	/** 合并模型：骨骼合并不覆盖已有，定位器覆盖已有 */
-	fun overwriteAdd(model: BakingBrModel?) {
+	fun overwriteAdd(model: GeometryData?) {
 		mergeBones(model, overwriteLocators = true)
 	}
 
 	/** 完全替换为指定模型 */
-	fun set(model: BakingBrModel?) {
+	fun set(model: GeometryData?) {
 		clear()
 		if (model == null) return
 		for (bone in model.bones.values) {
@@ -145,7 +145,7 @@ constructor(
 	 * 骨骼合并不覆盖已有（仅向已有骨骼添加 cubes/locators），
 	 * 定位器按 [overwriteLocators] 决定是否覆盖。
 	 */
-	private fun mergeBones(model: BakingBrModel?, overwriteLocators: Boolean) {
+	private fun mergeBones(model: GeometryData?, overwriteLocators: Boolean) {
 		if (model == null) return
 		for (bone in model.bones.values) {
 			val brBone = bones[bone.name]
@@ -164,10 +164,10 @@ constructor(
 
 	companion object {
 		@JvmStatic
-		fun of(bakingBrModel: BakingBrModel): BrModel {
+		fun of(geometryData: GeometryData): BrModel {
 			return BrModel(
-				bakingBrModel.bones.map { (k, v) -> k to BrBone.of(v) }.toMap().toMutableMap(),
-				bakingBrModel.locators.map { (k, v) -> k to BrLocator.of(v) }.toMap().toMutableMap()
+				geometryData.bones.map { (k, v) -> k to BrBone.of(v) }.toMap().toMutableMap(),
+				geometryData.locators.map { (k, v) -> k to BrLocator.of(v) }.toMap().toMutableMap()
 			)
 		}
 	}
@@ -185,7 +185,7 @@ constructor(
 	val locators: MutableMap<String, BrLocator> = mutableMapOf()
 ) {
 	/** 从 BakingBrModel 合并 cubes 和 locators 到已有骨骼 */
-	fun add(model: BakingBrModel) {
+	fun add(model: GeometryData) {
 		model.bones[name]?.let {
 			cubes.addAll(it.cubes.map(BrCube::of))
 			locators.putAll(it.locators.map { (k, v) -> k to BrLocator.of(v) })
@@ -193,7 +193,7 @@ constructor(
 	}
 
 	/** 从 BakingBrModel 替换 cubes 和 locators */
-	fun set(model: BakingBrModel) {
+	fun set(model: GeometryData) {
 		model.bones[name]?.let {
 			cubes.clear()
 			locators.clear()

@@ -1,6 +1,6 @@
 package architecture.resonator_combat_framework.combat
 
-import architecture.resonator_combat_framework.animation.AttackAnimation
+import architecture.resonator_combat_framework.animation.AttackAnimationDef
 import architecture.resonator_combat_framework.init.AnimationPropertys
 import architecture.resonator_combat_framework.module.entity_state_machine.combat.ActionState
 import architecture.resonator_combat_framework.module.entity_state_machine.combat.InterruptData
@@ -25,7 +25,7 @@ import java.util.function.Supplier
  * @param interruptData 打断数据
  * @param weight 权重
  */
-class AttackAnimationAction<T : AttackAnimation>(
+class AttackAnimationAction<T : AttackAnimationDef>(
 	id: ResourceLocation,
 	animation: Supplier<T?>,
 	controllerId: ResourceLocation?,

@@ -2,7 +2,7 @@ package architecture.resonator_combat_framework.module.entity_animation.helper
 
 import architecture.resonator_combat_framework.events.registry.AnimationControllers
 import architecture.resonator_combat_framework.module.entity_animation.IProxyAnimationProvider.Companion.getMapperProvider
-import architecture.resonator_combat_framework.module.entity_animation.animation.data.AnimationPlayData
+import architecture.resonator_combat_framework.module.entity_animation.animation.data.PlayConfig
 import architecture.resonator_combat_framework.module.entity_animation.network.PausePlayerPayload
 import architecture.resonator_combat_framework.module.entity_animation.network.PlayPlayerPayload
 import architecture.resonator_combat_framework.module.entity_animation.network.ResumePlayerPayload
@@ -22,7 +22,7 @@ object PlayerAnimationHelper {
 	@JvmOverloads
 	fun Player.triggerPlayerAnima(
 		animId: ResourceLocation,
-		config: AnimationPlayData,
+		config: PlayConfig,
 		controllerName: ResourceLocation = AnimationControllers.MAIN,
 		isPayload: Boolean = true
 	) {
@@ -60,7 +60,7 @@ object PlayerAnimationHelper {
 	) {
 		triggerPlayerAnima(
 			animId,
-			AnimationPlayData(
+			PlayConfig(
 				speedMultiplier = speedMultiplier,
 				fadeInTicks = fadeInTicks,
 				fadeOutTicks = fadeOutTicks
@@ -79,7 +79,7 @@ object PlayerAnimationHelper {
 	) {
 		triggerPlayerAnima(
 			animId,
-			AnimationPlayData(
+			PlayConfig(
 				fadeInTicks = transitionTicks,
 				speedMultiplier = speedMultiplier
 			), isPayload = isPayload

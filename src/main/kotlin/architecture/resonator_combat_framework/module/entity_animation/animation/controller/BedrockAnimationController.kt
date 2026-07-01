@@ -2,23 +2,24 @@ package architecture.resonator_combat_framework.module.entity_animation.animatio
 
 import architecture.resonator_combat_framework.core.RcfEventHooks
 import architecture.resonator_combat_framework.module.entity_animation.animation.LoopType
-import architecture.resonator_combat_framework.module.entity_animation.animation.StaticAnimation
-import architecture.resonator_combat_framework.module.entity_animation.animation.baking_animation.BakingBrAnimation
+import architecture.resonator_combat_framework.module.entity_animation.animation.AnimationDef
+import architecture.resonator_combat_framework.module.entity_animation.animation.baking_animation.KeyframeAnimation
 import architecture.resonator_combat_framework.module.entity_animation.animation.controller.IEntityAnimationController.State
 import architecture.resonator_combat_framework.module.entity_animation.animation.data.AnimType
-import architecture.resonator_combat_framework.module.entity_animation.animation.data.AnimationPlayData
+import architecture.resonator_combat_framework.module.entity_animation.animation.data.PlayConfig
 import architecture.resonator_combat_framework.module.entity_animation.animation.data.ProxyBoneConfigData
 import architecture.resonator_combat_framework.module.entity_animation.animation.data.shouldBlend
 import architecture.resonator_combat_framework.module.entity_animation.animation.mapper.AnimationControllerManager
 import architecture.resonator_combat_framework.module.entity_animation.animation.mapper.IEntityAnimationMapperProvider
-import architecture.resonator_combat_framework.module.entity_animation.animation.model.BakingBrModel
-import architecture.resonator_combat_framework.module.entity_animation.animation.model.ProxyBone
-import architecture.resonator_combat_framework.module.entity_animation.animation.model.ProxyModel
+import architecture.resonator_combat_framework.module.entity_animation.animation.model.GeometryData
+import architecture.resonator_combat_framework.module.entity_animation.animation.model.BonePose
+import architecture.resonator_combat_framework.module.entity_animation.animation.model.PoseData
 import architecture.resonator_combat_framework.module.entity_animation.registry.BedrockAnimationDataRegistry
 import architecture.resonator_combat_framework.module.entity_animation.registry.BedrockAnimationRegistry
 import architecture.resonator_combat_framework.module.entity_animation.registry.BedrockModelRegistry
 import architecture.resonator_combat_framework.module.entity_animation.registry.StaticAnimationRegistry
 import architecture.resonator_combat_framework.util.RcfUtil
+import architecture.resonator_combat_framework.util.RotationUtil
 import architecture.resonator_combat_framework.util.TimeUtil
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.Entity
@@ -30,14 +31,14 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 	override val isOverriding: Boolean = true
 ) : IEntityAnimationController<T> {
 
-	val proxyModel = ProxyModel("base")
+	val poseData = PoseData("base")
 
 	final override var state = State.IDLE; private set
-	final override var transitionSource: ProxyModel? = null; private set
-	final override var currentConfig: AnimationPlayData = AnimationPlayData.EMPTY; private set
+	final override var transitionSource: PoseData? = null; private set
+	final override var currentConfig: PlayConfig = PlayConfig.EMPTY; private set
 
 	/** 当前 tick 的动画数据（来自 [animationLoader]，随 [currentAnim] 切换） */
-	final override var currentBakingAnim: BakingBrAnimation? = null; private set
+	final override var currentBakingAnim: KeyframeAnimation? = null; private set
 
 	override var localBoneConfig: ProxyBoneConfigData = ProxyBoneConfigData.EMPTY
 		set(value) {
@@ -66,23 +67,23 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 			return _activeBoneConfig!!
 		}
 
-	final override var blendFactor = 0f; private set
-	final override var blendTarget = 0f; private set
+	final override var fadeProgress = 0f; private set
+	final override var fadeTarget = 0f; private set
 	final override var currentTransitionTicks = ProxyBoneConfigData.DEFAULT_TRANSITION_TICKS; private set
 	final override var speedMultiplier = 1f
 	final override var affectedBones = emptySet<String>(); private set
 
 	protected final var advanceTickCount = 0L; private set
-	final override var currentAnim: StaticAnimation? = null; private set
+	final override var currentAnim: AnimationDef? = null; private set
 	private final val firedEvents = mutableSetOf<String>()
-	final override var extraModel: BakingBrModel? = null; private set
+	final override var extraModel: GeometryData? = null; private set
 	protected final var animTime = 0f; private set
 	protected final var lastRawGameTime = -1f; private set
 
 	override val currentAnimTime: Float get() = currentAnim?.let { animTime } ?: 0f
-	override val effectiveWeight: Float get() = if (transitionSource != null) 1f else blendFactor
-	override val isFadingOut: Boolean get() = state == State.TRANSITIONING
-	override val isFadingIn: Boolean get() = state == State.ANIMATION_TRANSITIONING
+	override val mergeWeight: Float get() = if (transitionSource != null) 1f else fadeProgress
+	override val isFadingOut: Boolean get() = state == State.FADING_OUT
+	override val isFadingIn: Boolean get() = state == State.CROSSFADING
 
 	// ===== 动画数据查询 =====
 
@@ -93,7 +94,7 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 
 	// ===== 触发 =====
 
-	override fun trigger(animId: ResourceLocation, config: AnimationPlayData) {
+	override fun trigger(animId: ResourceLocation, config: PlayConfig) {
 		val anim = StaticAnimationRegistry.get(animId)
 		if (anim == null || anim.get() == null) {
 			RcfUtil.LOGGER.warn("[AnimDebug] Animation not found: $animId")
@@ -102,52 +103,52 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 		trigger(anim.get()!!, config)
 	}
 
-	override fun trigger(anim: StaticAnimation, config: AnimationPlayData) {
+	override fun trigger(anim: AnimationDef, config: PlayConfig) {
 		RcfEventHooks.AnimationTriggerPre(this, anim, config)
 
 		val oldActionAnim = currentAnim
 		oldActionAnim?.onEnd(manager.holder)
 
 		currentAnim = anim
-		val baseAnim = BedrockAnimationRegistry.find(anim.animationId) ?: BakingBrAnimation.EMPTY
+		val baseAnim = BedrockAnimationRegistry.find(anim.animationId) ?: KeyframeAnimation.EMPTY
 		currentBakingAnim = if (config.mirror) baseAnim.mirror() else baseAnim
 		val baseConfig = BedrockAnimationDataRegistry.find(anim.animationId) ?: ProxyBoneConfigData.EMPTY
 		currentBoneConfig = if (config.mirror) baseConfig.mirror() else baseConfig
 		manager.clearEmittersFor(id)
-		proxyModel.bones.clear()
+		poseData.bones.clear()
 		firedEvents.clear()
 		speedMultiplier = config.resolveSpeedMultiplier()
 		currentConfig = config
 
 		snapshotTransitionSource()
 		currentTransitionTicks = config.resolveFadeInTicks(activeBoneConfig.getFadeInTicks())
-		state = State.ANIMATION_TRANSITIONING
-		blendFactor = 0f
-		blendTarget = 1f
+		state = State.CROSSFADING
+		fadeProgress = 0f
+		fadeTarget = 1f
 
 		// 根据播放方向设置初始动画时间
 		animTime = if (speedMultiplier >= 0) 0f else calcEndSecond()
 		if (config.startTime > 0) animTime = config.startTime / 20f
 		lastRawGameTime = -1f
-		affectedBones = anim.computeAndWrite(currentBakingAnim!!, animTime, proxyModel, currentData)
+		affectedBones = anim.computeAndWrite(currentBakingAnim!!, animTime, poseData, currentData)
 		if (transitionSource != null) crossfadeStep()
 
-		anim.onBegin(manager.holder, animTime, 0f, proxyModel, manager.brModel)
-		anim.tick(manager.holder, animTime, 0f, proxyModel, manager.brModel)
+		anim.onBegin(manager.holder, animTime, 0f, poseData, manager.brModel)
+		anim.tick(manager.holder, animTime, 0f, poseData, manager.brModel)
 		extraModel = activeBoneConfig.extraModelId?.let { BedrockModelRegistry.find(it) }
 		manager.rebuildBones()
 
-		anim.onStart(manager.holder, animTime, 0f, proxyModel, manager.brModel)
+		anim.onStart(manager.holder, animTime, 0f, poseData, manager.brModel)
 		RcfEventHooks.AnimationTriggerPost(this, anim, config)
 	}
 
 	// ===== 停止 =====
 
 	override fun stop(fadeOutTicks: Int) {
-		if (state == State.IDLE || state == State.TRANSITIONING) return
+		if (state == State.IDLE || state == State.FADING_OUT) return
 		manager.clearEmittersFor(id)
-		state = State.TRANSITIONING
-		blendTarget = 0f
+		state = State.FADING_OUT
+		fadeTarget = 0f
 		transitionSource = null
 		currentTransitionTicks = if (fadeOutTicks >= 0) fadeOutTicks
 		else currentConfig.resolveFadeOutTicks(activeBoneConfig.getFadeOutTicks())
@@ -155,7 +156,7 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 	}
 
 	override fun pause() {
-		if (state == State.PLAYING || state == State.ANIMATION_TRANSITIONING) {
+		if (state == State.PLAYING || state == State.CROSSFADING) {
 			state = State.PAUSED; transitionSource = null
 		}
 	}
@@ -163,7 +164,7 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 	override fun resume() {
 		if (state != State.PAUSED) return
 		if (currentAnim == null) {
-			state = if (isInFadeIn()) State.ANIMATION_TRANSITIONING else State.PLAYING
+			state = if (isInFadeIn()) State.CROSSFADING else State.PLAYING
 			return
 		}
 
@@ -172,7 +173,7 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 		} else {
 			if (animTime <= 0f && currentLoopType() == LoopType.HOLD_ON_LAST) return
 		}
-		state = if (isInFadeIn()) State.ANIMATION_TRANSITIONING else State.PLAYING
+		state = if (isInFadeIn()) State.CROSSFADING else State.PLAYING
 	}
 
 	fun tickHandler(manager: IEntityAnimationMapperProvider<T, *>) {}
@@ -180,10 +181,10 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 	// ===== crossfade =====
 
 	private fun snapshotTransitionSource() {
-		if (state == State.IDLE || proxyModel.bones.isEmpty()) return
-		transitionSource = ProxyModel("src")
-		for ((name, bone) in proxyModel.bones) {
-			val copy = ProxyBone(name)
+		if (state == State.IDLE || poseData.bones.isEmpty()) return
+		transitionSource = PoseData("src")
+		for ((name, bone) in poseData.bones) {
+			val copy = BonePose(name)
 			copy.pos.set(bone.pos); copy.rotation.set(bone.rotation); copy.scale.set(bone.scale)
 			if (bone.hasPos()) copy.setPosEmpty(false)
 			if (bone.hasRot()) copy.setRotEmpty(false)
@@ -195,28 +196,28 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 	private fun crossfadeStep() {
 		val src = transitionSource ?: return
 		val boneFlags = activeBoneConfig.resolveBoneFlags(currentAnimTime)
-		for ((name, bone) in proxyModel.bones) {
+		for ((name, bone) in poseData.bones) {
 			if (name !in affectedBones) bone.pos.set(0f); bone.rotation.set(0f); bone.scale.set(1f)
 		}
 
-		for ((name, _) in proxyModel.bones) {
-			if (src.getBone(name) == null) src.addBone(ProxyBone(name))
+		for ((name, _) in poseData.bones) {
+			if (src.getBone(name) == null) src.addBone(BonePose(name))
 		}
 
 		for ((name, _) in src.bones) {
-			if (proxyModel.getBone(name) == null) proxyModel.addBone(ProxyBone(name))
+			if (poseData.getBone(name) == null) poseData.addBone(BonePose(name))
 		}
 
 		for ((name, fromBone) in src.bones) {
-			val toBone = proxyModel.getBone(name) ?: continue
+			val toBone = poseData.getBone(name) ?: continue
 			if (!boneFlags[name].shouldBlend()) {
 				fromBone.pos.set(toBone.pos); fromBone.rotation.set(toBone.rotation); fromBone.scale.set(toBone.scale)
 				continue
 			}
 
-			fromBone.pos.lerp(toBone.pos, blendFactor, toBone.pos)
-			fromBone.rotation.lerp(toBone.rotation, blendFactor, toBone.rotation)
-			fromBone.scale.lerp(toBone.scale, blendFactor, toBone.scale)
+			fromBone.pos.lerp(toBone.pos, fadeProgress, toBone.pos)
+			RotationUtil.lerpRotation(fromBone.rotation, toBone.rotation, fadeProgress, toBone.rotation)
+			fromBone.scale.lerp(toBone.scale, fadeProgress, toBone.scale)
 			if (fromBone.hasPos() || toBone.hasPos()) toBone.setPosEmpty(false)
 			if (fromBone.hasRot() || toBone.hasRot()) toBone.setRotEmpty(false)
 			if (fromBone.hasScale() || toBone.hasScale()) toBone.setScaleEmpty(false)
@@ -253,8 +254,8 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 
 	private fun startFadeOut() {
 		pause()
-		state = State.TRANSITIONING
-		blendTarget = 0f
+		state = State.FADING_OUT
+		fadeTarget = 0f
 		currentTransitionTicks = currentConfig.resolveFadeOutTicks(activeBoneConfig.getFadeOutTicks())
 		RcfEventHooks.AnimationComplete(this)
 	}
@@ -295,7 +296,7 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 
 	override fun tickAdvance() {
 		val anim = currentAnim ?: return
-		anim.tickAdvance(manager.holder, currentAnimTime, proxyModel, manager.brModel, manager.mergedProxy, this)
+		anim.tickAdvance(manager.holder, currentAnimTime, poseData, manager.brModel, manager.mergedPose, this)
 	}
 
 	private fun tickHandlerCall() {
@@ -305,17 +306,17 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 	}
 
 	private fun handleStateTransition() {
-		if (state == State.ANIMATION_TRANSITIONING && transitionSource != null) crossfadeStep()
-		if (state == State.ANIMATION_TRANSITIONING && blendFactor >= 1f) {
+		if (state == State.CROSSFADING && transitionSource != null) crossfadeStep()
+		if (state == State.CROSSFADING && fadeProgress >= 1f) {
 			state = State.PLAYING; transitionSource = null; lastRawGameTime = advanceTickCount / 20f
 		}
-		if (state == State.TRANSITIONING && blendFactor <= 0f) forceClear()
+		if (state == State.FADING_OUT && fadeProgress <= 0f) forceClear()
 	}
 
 	override fun tickRender(deltaSec: Float) {
 		if (state != State.PLAYING) return
-		if (affectedBones.isNotEmpty()) proxyModel.bones.keys.filter { it !in affectedBones }
-			.forEach { proxyModel.bones.remove(it) }
+		if (affectedBones.isNotEmpty()) poseData.bones.keys.filter { it !in affectedBones }
+			.forEach { poseData.bones.remove(it) }
 	}
 
 	// ===== 动画后端 =====
@@ -333,7 +334,7 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 		val data = currentData
 		val bakingAnim = currentBakingAnim ?: return
 		if (freezeTime) {
-			affectedBones = anim.computeAndWrite(bakingAnim, animTime, proxyModel, data)
+			affectedBones = anim.computeAndWrite(bakingAnim, animTime, poseData, data)
 			manager.queueEvents(this, anim.collectEvents(bakingAnim, animTime, animTime, firedEvents))
 			return
 		}
@@ -341,8 +342,8 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 		val prevAnimTime = animTime
 		animTime = anim.tickAnimTime(animTime, scaledDelta)
 		data.updateAnimQueries(animTime, scaledDelta)
-		affectedBones = anim.computeAndWrite(bakingAnim, animTime, proxyModel, data)
-		anim.tick(manager.holder, animTime, scaledDelta, proxyModel, manager.brModel)
+		affectedBones = anim.computeAndWrite(bakingAnim, animTime, poseData, data)
+		anim.tick(manager.holder, animTime, scaledDelta, poseData, manager.brModel)
 		manager.queueEvents(this, anim.collectEvents(bakingAnim, animTime, prevAnimTime, firedEvents))
 	}
 
@@ -359,24 +360,24 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 	// ===== 内部 =====
 
 	private fun tickBlend() {
-		if (blendFactor == blendTarget) return
+		if (fadeProgress == fadeTarget) return
 		if (currentTransitionTicks <= 0) {
-			blendFactor = blendTarget; return
+			fadeProgress = fadeTarget; return
 		}
 		val step = 1f / currentTransitionTicks
-		blendFactor = if (blendFactor < blendTarget) (blendFactor + step).coerceAtMost(blendTarget)
-		else (blendFactor - step).coerceAtLeast(blendTarget)
+		fadeProgress = if (fadeProgress < fadeTarget) (fadeProgress + step).coerceAtMost(fadeTarget)
+		else (fadeProgress - step).coerceAtLeast(fadeTarget)
 	}
 
 	private fun forceClear() {
 		currentAnim?.onEnd(manager.holder)
 		manager.clearEmittersFor(id)
 		state = State.IDLE
-		blendFactor = 0f
-		blendTarget = 0f
-		proxyModel.bones.clear()
+		fadeProgress = 0f
+		fadeTarget = 0f
+		poseData.bones.clear()
 		transitionSource = null
-		currentConfig = AnimationPlayData.EMPTY
+		currentConfig = PlayConfig.EMPTY
 		affectedBones = emptySet()
 		currentTransitionTicks = ProxyBoneConfigData.DEFAULT_TRANSITION_TICKS
 		speedMultiplier = 1f

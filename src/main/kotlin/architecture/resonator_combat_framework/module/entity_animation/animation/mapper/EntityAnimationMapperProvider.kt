@@ -2,13 +2,13 @@ package architecture.resonator_combat_framework.module.entity_animation.animatio
 
 import architecture.resonator_combat_framework.events.registry.AnimationControllers
 import architecture.resonator_combat_framework.module.entity_animation.animation.controller.IEntityAnimationController
-import architecture.resonator_combat_framework.module.entity_animation.animation.data.AnimationPlayData
+import architecture.resonator_combat_framework.module.entity_animation.animation.data.PlayConfig
 import architecture.resonator_combat_framework.module.entity_animation.animation.data.ProxyBoneConfigData
 import architecture.resonator_combat_framework.module.entity_animation.animation.data.ProxyBoneFlags
-import architecture.resonator_combat_framework.module.entity_animation.animation.model.ProxyModel
+import architecture.resonator_combat_framework.module.entity_animation.animation.model.PoseData
 import architecture.resonator_combat_framework.module.entity_animation.registry.BedrockAnimationDataRegistry
 import architecture.resonator_combat_framework.module.entity_animation.registry.BedrockAnimationRegistry
-import architecture.resonator_combat_framework.module.entity_animation.util.BoneTransformUtil
+import architecture.resonator_combat_framework.module.entity_animation.util.ModelPartApplier
 import com.mojang.blaze3d.vertex.PoseStack
 import net.minecraft.client.model.EntityModel
 import net.minecraft.resources.ResourceLocation
@@ -37,7 +37,7 @@ abstract class EntityAnimationMapperProvider<T : Entity, M : EntityModel<T>>(
 	// ---- 触发 ----
 
 	/** 触发动画：解析控制器 → 设置骨骼配置 → 触发控制器 */
-	override fun trigger(controllerName: ResourceLocation?, animId: ResourceLocation, playData: AnimationPlayData) {
+	override fun trigger(controllerName: ResourceLocation?, animId: ResourceLocation, playData: PlayConfig) {
 		(animationControllerManager.get(controllerName ?: AnimationControllers.MAIN) ?: mainController).trigger(
 			animId,
 			playData
@@ -147,26 +147,26 @@ abstract class EntityAnimationMapperProvider<T : Entity, M : EntityModel<T>>(
 		val renderable = animationControllerManager.getRenderable()
 		if (renderable.isEmpty()) return
 		val interpolatedProxyModel = animationControllerManager.getInterpolatedProxy(partialTick)
-		applyRootTransform(interpolatedProxyModel, poseStack, animationControllerManager.mergedFlags)
+		applyRootTransform(interpolatedProxyModel, poseStack, animationControllerManager.mergedBoneFlags)
 
-		applyProxyToModel(interpolatedProxyModel, model, animationControllerManager.mergedFlags)
+		applyProxyToModel(interpolatedProxyModel, model, animationControllerManager.mergedBoneFlags)
 	}
 
 	/** 将代理骨骼数据映射到体 model */
 	abstract fun applyProxyToModel(
-		proxyModel: ProxyModel, model: M,
+		poseData: PoseData, model: M,
 		flags: Map<String, ProxyBoneFlags>
 	)
 
 	/** 将 root 骨骼变换应用到 PoseStack */
 	fun applyRootTransform(
-		proxyModel: ProxyModel, poseStack: PoseStack,
+		poseData: PoseData, poseStack: PoseStack,
 		flags: Map<String, ProxyBoneFlags>
 	) {
 		if (!isClient) return
-		val bone = proxyModel.getBone("root") ?: return
+		val bone = poseData.getBone("root") ?: return
 		val boneFlags = flags["root"]
-		val t = BoneTransformUtil.computeFor(bone, boneFlags, flipPY = true, except = true)
-		BoneTransformUtil.applyTo(poseStack, t, boneFlags, 1f)
+		val t = ModelPartApplier.computeFor(bone, boneFlags, flipPY = true, except = true)
+		ModelPartApplier.applyTo(poseStack, t, boneFlags, 1f)
 	}
 }

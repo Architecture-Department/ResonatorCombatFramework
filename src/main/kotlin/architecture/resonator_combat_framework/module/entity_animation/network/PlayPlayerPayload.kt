@@ -5,7 +5,7 @@ import architecture.goldenboughs_lib.util.LibUtil.RESOURCE_LOCATION_OPTIONAL_STR
 import architecture.resonator_combat_framework.events.registry.AnimationControllers
 import architecture.resonator_combat_framework.module.entity_animation.IProxyAnimationProvider.Companion.getMapperProvider
 import architecture.resonator_combat_framework.module.entity_animation.animation.data.AnimType
-import architecture.resonator_combat_framework.module.entity_animation.animation.data.AnimationPlayData
+import architecture.resonator_combat_framework.module.entity_animation.animation.data.PlayConfig
 import architecture.resonator_combat_framework.util.RcfUtil
 import io.netty.buffer.ByteBuf
 import net.minecraft.client.player.AbstractClientPlayer
@@ -59,7 +59,7 @@ constructor(
 
 	override fun type() = TYPE
 
-	private fun buildConfig() = AnimationPlayData(
+	private fun buildConfig() = PlayConfig(
 		animType = animType,
 		speedMultiplier = speedMultiplier,
 		startTime = startTime,

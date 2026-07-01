@@ -3,7 +3,7 @@ package architecture.resonator_combat_framework.module.entity_animation.animatio
 import architecture.goldenboughs_lib.util.LibUtil
 import architecture.resonator_combat_framework.module.entity_animation.animation.controller.IEntityAnimationController
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.BrModel
-import architecture.resonator_combat_framework.module.entity_animation.animation.model.ProxyModel
+import architecture.resonator_combat_framework.module.entity_animation.animation.model.PoseData
 import architecture.resonator_combat_framework.module.entity_animation.animation.molang.MoLangParser
 import architecture.resonator_combat_framework.module.entity_animation.animation.molang.MolangData
 import architecture.resonator_combat_framework.module.entity_animation.animation.molang.MolangValue
@@ -17,7 +17,7 @@ import net.minecraft.sounds.SoundSource
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.player.Player
 
-data class BakingBrAnimationSound
+data class SoundEvent
 @JvmOverloads constructor(
 	val time: Float, val effects: List<Effect> = emptyList()
 ) {
@@ -25,7 +25,7 @@ data class BakingBrAnimationSound
 		controller: IEntityAnimationController<*>,
 		entity: Entity,
 		brModel: BrModel,
-		animationData: ProxyModel,
+		animationData: PoseData,
 		context: MolangData? = null,
 		partialTick: Float = 1f
 	) {
@@ -43,7 +43,7 @@ data class BakingBrAnimationSound
 			controller: IEntityAnimationController<*>,
 			entity: Entity,
 			brModel: BrModel,
-			animationData: ProxyModel,
+			animationData: PoseData,
 			context: MolangData? = null,
 			partialTick: Float = 1f
 		) {
@@ -73,8 +73,8 @@ data class BakingBrAnimationSound
 
 	companion object {
 		@JvmStatic
-		fun parses(soundsJson: JsonObject): List<BakingBrAnimationSound> {
-			val list = mutableListOf<BakingBrAnimationSound>()
+		fun parses(soundsJson: JsonObject): List<SoundEvent> {
+			val list = mutableListOf<SoundEvent>()
 			soundsJson.asMap().forEach { (key, value) ->
 				val effects = mutableListOf<Effect>()
 				if (!value.isJsonArray) {
@@ -82,7 +82,7 @@ data class BakingBrAnimationSound
 				} else {
 					value.asJsonArray.forEach { parseEffect(it)?.let { e -> effects.add(e) } }
 				}
-				list.add(BakingBrAnimationSound(key.toFloat(), effects))
+				list.add(SoundEvent(key.toFloat(), effects))
 			}
 			return list
 		}

@@ -3,7 +3,7 @@ package architecture.resonator_combat_framework.module.entity_animation.animatio
 import architecture.goldenboughs_lib.api.AllOpe
 import architecture.resonator_combat_framework.events.registry.AnimationControllers
 import architecture.resonator_combat_framework.module.entity_animation.animation.controller.IEntityAnimationController
-import architecture.resonator_combat_framework.module.entity_animation.animation.data.AnimationPlayData
+import architecture.resonator_combat_framework.module.entity_animation.animation.data.PlayConfig
 import architecture.resonator_combat_framework.module.entity_animation.animation.data.ProxyBoneConfigData
 import architecture.resonator_combat_framework.module.entity_animation.animation.molang.MolangData
 import com.mojang.blaze3d.vertex.PoseStack
@@ -73,9 +73,9 @@ interface IEntityAnimationMapperProvider<T : Entity, M : EntityModel<T>> {
 	fun resumeAll()
 
 	/** 触发指定动画 */
-	fun trigger(controllerName: ResourceLocation?, animId: ResourceLocation, playData: AnimationPlayData)
+	fun trigger(controllerName: ResourceLocation?, animId: ResourceLocation, playData: PlayConfig)
 
-	fun trigger(animId: ResourceLocation, playData: AnimationPlayData) {
+	fun trigger(animId: ResourceLocation, playData: PlayConfig) {
 		trigger(AnimationControllers.MAIN, animId, playData)
 	}
 }

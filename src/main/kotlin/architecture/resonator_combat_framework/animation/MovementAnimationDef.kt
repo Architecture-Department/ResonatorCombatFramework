@@ -5,7 +5,7 @@ import net.minecraft.world.entity.Entity
 import kotlin.math.max
 import kotlin.math.sqrt
 
-class MovementAnimation
+class MovementAnimationDef
 @JvmOverloads
 constructor(
 	id: ResourceLocation,
@@ -16,7 +16,7 @@ constructor(
 	 * 实体当前速度达到此值时 animSpeedRatio = 1.0。
 	 */
 	var expectedMaxSpeed: Float = 0.25f,
-) : ActionAnimation(id, animationId, stateModifiers) {
+) : ActionAnimationDef(id, animationId, stateModifiers) {
 
 	constructor(
 		id: ResourceLocation,

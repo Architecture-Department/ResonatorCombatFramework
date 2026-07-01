@@ -14,7 +14,7 @@ package architecture.resonator_combat_framework.module.entity_animation.animatio
  * @param fadeOutTicks 淡出时间(tick)，-1 使用默认值
  * @param mirror 是否镜像动画（左右翻转），默认 false
  */
-data class AnimationPlayData(
+data class PlayConfig(
 	val animType: AnimType = AnimType.DEFAULT,
 	val startTime: Int = 0,
 	val endTime: Int = 0,
@@ -41,10 +41,10 @@ data class AnimationPlayData(
 
 	companion object {
 		@JvmField
-		val EMPTY = AnimationPlayData()
+		val EMPTY = PlayConfig()
 
 		@JvmStatic
-		fun of() = AnimationPlayData()
+		fun of() = PlayConfig()
 	}
 }
 

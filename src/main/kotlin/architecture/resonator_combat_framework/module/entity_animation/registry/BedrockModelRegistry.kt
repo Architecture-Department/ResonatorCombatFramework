@@ -1,7 +1,7 @@
 package architecture.resonator_combat_framework.module.entity_animation.registry
 
 import architecture.goldenboughs_lib.util.LibUtil
-import architecture.resonator_combat_framework.module.entity_animation.animation.model.BakingBrModel
+import architecture.resonator_combat_framework.module.entity_animation.animation.model.GeometryData
 import architecture.resonator_combat_framework.util.RcfUtil
 import com.google.gson.Gson
 import com.google.gson.JsonElement
@@ -27,22 +27,22 @@ class BedrockModelRegistry(
 		}
 
 		@JvmStatic
-		fun find(identifier: ResourceLocation): BakingBrModel? {
+		fun find(identifier: ResourceLocation): GeometryData? {
 			return CLIENT.get(identifier) ?: SERVER.get(identifier)
 		}
 
 		@JvmStatic
-		fun findAll(): Map<ResourceLocation, BakingBrModel> = CLIENT.getAll() + SERVER.getAll()
+		fun findAll(): Map<ResourceLocation, GeometryData> = CLIENT.getAll() + SERVER.getAll()
 	}
 
-	private val models = mutableMapOf<ResourceLocation, BakingBrModel>()
+	private val models = mutableMapOf<ResourceLocation, GeometryData>()
 	private val nbtCache = mutableMapOf<ResourceLocation, CompoundTag>()
 
-	fun get(identifier: ResourceLocation): BakingBrModel? {
+	fun get(identifier: ResourceLocation): GeometryData? {
 		return models[identifier] ?: models[LibUtil.rlOf(identifier.namespace, "geometry.${identifier.path}")]
 	}
 
-	fun getAll(): Map<ResourceLocation, BakingBrModel> = models
+	fun getAll(): Map<ResourceLocation, GeometryData> = models
 
 	fun getNbtCache(): Map<ResourceLocation, CompoundTag> = nbtCache
 
@@ -66,7 +66,7 @@ class BedrockModelRegistry(
 		models.clear()
 		for ((fileId, json) in loaded) {
 			try {
-				BakingBrModel.parses(json).forEach { model ->
+				GeometryData.parses(json).forEach { model ->
 					if (!ResourceLocation.isValidPath(model.identifier)) {
 						return@forEach
 					}

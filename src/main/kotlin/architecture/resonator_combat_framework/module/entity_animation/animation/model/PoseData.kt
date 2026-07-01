@@ -3,20 +3,20 @@ package architecture.resonator_combat_framework.module.entity_animation.animatio
 import org.joml.Vector3f
 
 /** 代理骨骼模型：存储每帧计算的骨骼变换（局部 + 累积）。每 tick remerge 后计算填充。 */
-data class ProxyModel
+data class PoseData
 @JvmOverloads
 constructor(
 	val name: String,
-	val bones: HashMap<String, ProxyBone> = hashMapOf(),
+	val bones: HashMap<String, BonePose> = hashMapOf(),
 ) {
 	/** 添加或覆盖骨骼 */
-	fun addBone(bone: ProxyBone): ProxyBone? = bones.put(bone.name, bone)
+	fun addBone(bone: BonePose): BonePose? = bones.put(bone.name, bone)
 
 	/** 按名称获取骨骼 */
-	fun getBone(boneName: String): ProxyBone? = bones[boneName]
+	fun getBone(boneName: String): BonePose? = bones[boneName]
 }
 
-data class ProxyBone
+data class BonePose
 @JvmOverloads
 constructor(
 	val name: String,

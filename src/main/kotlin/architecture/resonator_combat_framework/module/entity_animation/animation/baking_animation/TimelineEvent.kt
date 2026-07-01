@@ -10,7 +10,7 @@ import net.minecraft.server.level.ServerLevel
 import net.minecraft.util.StringUtil
 import net.minecraft.world.entity.Entity
 
-data class BakingBrAnimationTimeline
+data class TimelineEvent
 @JvmOverloads constructor(
 	val time: Float,
 	val molangs: List<MolangValue> = emptyList(),
@@ -66,8 +66,8 @@ data class BakingBrAnimationTimeline
 
 	companion object {
 		@JvmStatic
-		fun parses(timelinesJson: JsonObject): List<BakingBrAnimationTimeline> {
-			val list = mutableListOf<BakingBrAnimationTimeline>()
+		fun parses(timelinesJson: JsonObject): List<TimelineEvent> {
+			val list = mutableListOf<TimelineEvent>()
 			timelinesJson.asMap().forEach { (key, value) ->
 				val molangs = mutableListOf<MolangValue>()
 				val commands = mutableListOf<String>()
@@ -85,7 +85,7 @@ data class BakingBrAnimationTimeline
 						else -> molangs.add(MoLangParser.compileMolang(trimmed))
 					}
 				}
-				list.add(BakingBrAnimationTimeline(key.toFloat(), molangs, commands, entityEvents))
+				list.add(TimelineEvent(key.toFloat(), molangs, commands, entityEvents))
 			}
 			return list
 		}

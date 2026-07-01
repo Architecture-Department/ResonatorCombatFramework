@@ -2,7 +2,7 @@ package architecture.resonator_combat_framework.module.entity_animation.event
 
 import architecture.goldenboughs_lib.api.AllOpe
 import architecture.resonator_combat_framework.module.entity_animation.animation.controller.IEntityAnimationController
-import architecture.resonator_combat_framework.module.entity_animation.animation.data.AnimationPlayData
+import architecture.resonator_combat_framework.module.entity_animation.animation.data.PlayConfig
 import architecture.resonator_combat_framework.module.entity_animation.animation.mapper.AnimationControllerManager
 import architecture.resonator_combat_framework.module.entity_animation.animation.mapper.IEntityAnimationMapperProvider
 import net.minecraft.world.entity.Entity
@@ -18,7 +18,7 @@ abstract class AnimationEvent(
 	/**
 	 * 获取当前动画数据
 	 */
-	fun getAnimationData(): AnimationPlayData {
+	fun getAnimationData(): PlayConfig {
 		return animationController.currentConfig
 	}
 

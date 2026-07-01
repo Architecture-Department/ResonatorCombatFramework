@@ -2,7 +2,7 @@ package architecture.resonator_combat_framework.module.entity_animation.registry
 
 import architecture.goldenboughs_lib.api.AllOpe
 import architecture.goldenboughs_lib.util.LazySupplier
-import architecture.resonator_combat_framework.module.entity_animation.animation.StaticAnimation
+import architecture.resonator_combat_framework.module.entity_animation.animation.AnimationDef
 import architecture.resonator_combat_framework.module.entity_animation.event.StaticAnimationRegistryEvent
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.server.packs.resources.ResourceManager
@@ -12,26 +12,26 @@ import thedarkcolour.kotlinforforge.neoforge.forge.FORGE_BUS
 
 @AllOpe
 object StaticAnimationRegistry :
-	SimplePreparableReloadListener<Map<ResourceLocation, LazySupplier<StaticAnimation>>>() {
-	private val staticAnimations = mutableMapOf<ResourceLocation, LazySupplier<StaticAnimation>>()
+	SimplePreparableReloadListener<Map<ResourceLocation, LazySupplier<AnimationDef>>>() {
+	private val animationsDef = mutableMapOf<ResourceLocation, LazySupplier<AnimationDef>>()
 
-	fun get(id: ResourceLocation): LazySupplier<StaticAnimation>? = staticAnimations[id]
+	fun get(id: ResourceLocation): LazySupplier<AnimationDef>? = animationsDef[id]
 
 	override fun prepare(
 		resourceManager: ResourceManager,
 		profiler: ProfilerFiller
-	): Map<ResourceLocation, LazySupplier<StaticAnimation>> {
+	): Map<ResourceLocation, LazySupplier<AnimationDef>> {
 		return FORGE_BUS.post(StaticAnimationRegistryEvent()).getAll()
 	}
 
 	override fun apply(
-		map: Map<ResourceLocation, LazySupplier<StaticAnimation>>,
+		map: Map<ResourceLocation, LazySupplier<AnimationDef>>,
 		resourceManager: ResourceManager,
 		profiler: ProfilerFiller
 	) {
-		staticAnimations.clear()
-		staticAnimations.putAll(map)
-		staticAnimations.forEach {
+		animationsDef.clear()
+		animationsDef.putAll(map)
+		animationsDef.forEach {
 			it.value.init()
 		}
 	}

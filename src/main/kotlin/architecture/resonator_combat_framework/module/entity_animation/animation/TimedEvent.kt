@@ -6,7 +6,7 @@ import net.minecraft.world.entity.LivingEntity
 
 /**
  * 定时动画事件 —— 在动画播放的指定时间点执行效果。
- * 通过 [StaticAnimation.addEvent] 链式注册，无需创建子类。
+ * 通过 [AnimationDef.addEvent] 链式注册，无需创建子类。
  */
 sealed class TimedEvent(
 	/** 触发时间（秒） */
