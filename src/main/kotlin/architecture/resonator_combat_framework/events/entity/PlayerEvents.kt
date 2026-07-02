@@ -1,8 +1,10 @@
-package architecture.resonator_combat_framework.events.level
+package architecture.resonator_combat_framework.events.entity
 
+import architecture.goldenboughs_lib.event.PlayerDropItemEvent
 import architecture.goldenboughs_lib.util.PoseStack
 import architecture.goldenboughs_lib.util.toPos
 import architecture.goldenboughs_lib.util.toRadians
+import architecture.resonator_combat_framework.init.RcfAttachmentTypes
 import architecture.resonator_combat_framework.module.entity_animation.IAnimationProvider.Companion.getMapperProvider
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.GeometryModel
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.PoseData
@@ -18,6 +20,23 @@ import net.neoforged.neoforge.event.tick.PlayerTickEvent
 @EventBusSubscriber(modid = RcfUtil.ID)
 object PlayerEvents {
 	private var DEBUG = false
+
+	@SubscribeEvent
+	fun onDropItem(event: PlayerDropItemEvent) {
+		val livingEntity = event.player
+		val interactionHand = event.hand
+
+		val stateHolderOptional = livingEntity.getExistingData(RcfAttachmentTypes.STATE_HOLDER)
+		if (stateHolderOptional.isPresent) {
+			val stateHolder = stateHolderOptional.get()
+//			if (!stateHolder.getState(EntityStateHolder.CAN_SWITCH_ITEM)) {
+//				if (interactionHand != InteractionHand.MAIN_HAND && interactionHand != InteractionHand.OFF_HAND) {
+//					event.isCanceled = true
+//				}
+//				return
+//			}
+		}
+	}
 
 	/**
 	 * 客户端 tick：根据状态限制移动和视角，并在调试模式下于 locator 位置生成粒子标记。

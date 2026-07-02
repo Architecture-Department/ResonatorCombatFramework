@@ -1,9 +1,7 @@
-package architecture.resonator_combat_framework.events.level
+package architecture.resonator_combat_framework.events.entity
 
 import architecture.resonator_combat_framework.init.RcfAttachmentTypes
-import architecture.resonator_combat_framework.module.entity_state_machine.holder.EntityStateHolder
 import architecture.resonator_combat_framework.util.RcfUtil
-import net.minecraft.world.entity.EquipmentSlot
 import net.neoforged.bus.api.SubscribeEvent
 import net.neoforged.fml.common.EventBusSubscriber
 import net.neoforged.neoforge.event.entity.living.LivingEquipmentChangeEvent
@@ -23,16 +21,25 @@ object LivingEntityEvents {
 		val stateHolderOptional = livingEntity.getExistingData(RcfAttachmentTypes.STATE_HOLDER)
 		if (stateHolderOptional.isPresent) {
 			val stateHolder = stateHolderOptional.get()
-			if (!stateHolder.getState(EntityStateHolder.CAN_SWITCH_ITEM)) {
-				if (equipmentSlot != EquipmentSlot.MAINHAND && equipmentSlot != EquipmentSlot.OFFHAND) {
-					stateHolder.actionController.onActionForcedEnd()
-				}
-			}
+//			if (!stateHolder.getState(EntityStateHolder.CAN_SWITCH_ITEM)) {
+//				if (equipmentSlot != EquipmentSlot.MAINHAND && equipmentSlot != EquipmentSlot.OFFHAND) {
+//					stateHolder.actionController.onActionForcedEnd()
+//				}
+//			}
 		}
 	}
 
 	@SubscribeEvent
 	fun onLivingSwapItemsHands(event: LivingSwapItemsEvent.Hands) {
+		val livingEntity = event.entity
 
+		val stateHolderOptional = livingEntity.getExistingData(RcfAttachmentTypes.STATE_HOLDER)
+		if (stateHolderOptional.isPresent) {
+			val stateHolder = stateHolderOptional.get()
+//			if (!stateHolder.getState(EntityStateHolder.CAN_SWITCH_ITEM)) {
+//				event.isCanceled = true
+//				return
+//			}
+		}
 	}
 }
