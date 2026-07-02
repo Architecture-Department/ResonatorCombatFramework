@@ -57,6 +57,22 @@ class EntityStateHolder<T : LivingEntity>(
 		@JvmField
 		val CAN_SWITCH_ITEM = RcfUtil.modRl("can_switch_item")
 
+		/** 能否移动（由攻击动画控制） */
+		@JvmField
+		val CAN_MOVE = RcfUtil.modRl("can_move")
+
+		/** 能否转动视角（由攻击动画控制） */
+		@JvmField
+		val CAN_LOOK_AROUND = RcfUtil.modRl("can_look_around")
+
+		/** 移动速度倍率（0=不能移动，1=正常速度），float 状态 */
+		@JvmField
+		val SPEED_MODIFIER = RcfUtil.modRl("speed_modifier")
+
+		/** 最大视角转动速度（弧度/秒），float 状态 */
+		@JvmField
+		val MAX_LOOK_SPEED = RcfUtil.modRl("max_look_speed")
+
 		/** 被骑乘中（它人骑在身上） */
 		@JvmField
 		val VEHICLE_STATE = RcfUtil.modRl("vehicle")
@@ -153,6 +169,9 @@ class EntityStateHolder<T : LivingEntity>(
 	/** 实体状态映射表 */
 	private val states = mutableMapOf<ResourceLocation, Boolean>()
 
+	/** 实体浮点状态映射表（速度倍率、视角速度等） */
+	private val floatStates = mutableMapOf<ResourceLocation, Float>()
+
 	/**
 	 * 每 tick 更新状态标志和动作控制器。
 	 */
@@ -224,6 +243,31 @@ class EntityStateHolder<T : LivingEntity>(
 	fun setState(id: ResourceLocation, value: Boolean) {
 		states[id] = value
 	}
+
+	// ===== 浮点状态管理 =====
+
+	/**
+	 * 获取指定浮点状态的值。
+	 * @param id 状态标识符
+	 * @return 浮点状态值，未设置时返回 0f
+	 */
+	fun getFloatState(id: ResourceLocation): Float = floatStates[id] ?: 0f
+
+	/**
+	 * 设置指定浮点状态的值。
+	 * @param id 状态标识符
+	 * @param value 浮点状态值
+	 */
+	fun setFloatState(id: ResourceLocation, value: Float) {
+		floatStates[id] = value
+	}
+
+	/**
+	 * 获取所有浮点状态的只读视图。
+	 * @return 浮点状态映射表
+	 */
+	fun getFloatStates(): Map<ResourceLocation, Float> = floatStates
+
 
 	/**
 	 * 获取所有状态的只读视图。

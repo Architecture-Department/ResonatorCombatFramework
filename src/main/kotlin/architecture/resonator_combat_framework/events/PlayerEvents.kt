@@ -1,8 +1,9 @@
-﻿package architecture.resonator_combat_framework.events
+package architecture.resonator_combat_framework.events
 
 import architecture.goldenboughs_lib.util.PoseStack
 import architecture.goldenboughs_lib.util.toPos
 import architecture.goldenboughs_lib.util.toRadians
+import architecture.resonator_combat_framework.module.entity_animation.IAnimationProvider
 import architecture.resonator_combat_framework.module.entity_animation.IAnimationProvider.Companion.getMapperProvider
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.GeometryModel
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.PoseData
@@ -10,19 +11,60 @@ import architecture.resonator_combat_framework.util.RcfUtil
 import com.mojang.math.Axis
 import net.minecraft.core.particles.ParticleTypes
 import net.minecraft.world.entity.player.Player
+import net.minecraft.world.item.ItemStack
 import net.minecraft.world.level.Level
 import net.neoforged.bus.api.SubscribeEvent
 import net.neoforged.fml.common.EventBusSubscriber
+import net.neoforged.neoforge.event.entity.living.LivingSwapItemsEvent
 import net.neoforged.neoforge.event.tick.PlayerTickEvent
 
 @EventBusSubscriber(modid = RcfUtil.ID)
 object PlayerEvents {
 	private var DEBUG = false
 
+	/** 玩家上一 tick 的主手物品缓存，用于检测物品是否被强制切换 */
+	private val prevMainHandItem = mutableMapOf<Player, ItemStack>()
+
+	/**
+	 * 玩家 tick 预处理：检测主手物品是否被强制切换。
+	 * 若当前禁止切物品，立即停止所有动作和动画（无过渡）。
+	 */
+	@SubscribeEvent
+	fun onTickPre(event: PlayerTickEvent.Pre) {
+		val player = event.entity
+		val currentItem = player.mainHandItem
+		val prevItem = prevMainHandItem[player]
+		prevMainHandItem[player] = currentItem.copy()
+		// 首次 tick 或无变化不处理
+		if (prevItem == null || ItemStack.isSameItemSameComponents(prevItem, currentItem)) return
+		// 停止动作和动画
+		stopActionAndAnimation(player)
+	}
+
+	/**
+	 * 玩家交换双手物品（F键）。
+	 * 若当前禁止切物品，取消交换并停止动作和动画。
+	 */
+	@SubscribeEvent
+	fun onSwapItems(event: LivingSwapItemsEvent.Hands) {
+		stopActionAndAnimation(event.entity as? Player ?: return)
+	}
+
+	/**
+	 * 停止当前玩家的动作和动画（无过渡）。
+	 */
+	private fun stopActionAndAnimation(player: Player) {
+		
+		val mapper = (player as IAnimationProvider).getMapperProvider() ?: return
+		val manager = mapper.animationControllerManager
+		// 立即停止所有动画（无淡出）
+		manager.getAll().forEach { it.stop(0) }
+		// TODO: 通过 EntityStateHolder 检查 CAN_SWITCH_ITEM
+		// 若禁止则同时停止动作: actionController.onActionEnd()
+	}
+
 	/**
 	 * 玩家 tick 后处理：在客户端调试模式下于 locator 位置生成粒子标记。
-	 *
-	 * @param event 玩家 tick 事件
 	 */
 	@SubscribeEvent
 	fun onTickPre(event: PlayerTickEvent.Post) {
@@ -40,15 +82,6 @@ object PlayerEvents {
 		}
 	}
 
-	/**
-	 * 调试方法：在指定 locator 位置生成 ELECTRIC_SPARK 粒子网格。
-	 *
-	 * @param name locator 名称
-	 * @param brModel 几何模型
-	 * @param animationData 动画姿势数据
-	 * @param player 玩家
-	 * @param level 世界
-	 */
 	private fun test(
 		name: String,
 		brModel: GeometryModel,
@@ -90,3 +123,6 @@ object PlayerEvents {
 		poseStack.popPose()
 	}
 }
+
+
+

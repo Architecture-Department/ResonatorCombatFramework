@@ -21,6 +21,8 @@ constructor(
 	val stateModifiers: Map<ResourceLocation, Boolean> = mapOf(
 		EntityStateHolder.CAN_SWITCH_ITEM to false
 	),
+	/** 动画播放期间期望的浮点状态（速度倍率、视角速度等） */
+	val floatModifiers: Map<ResourceLocation, Float> = emptyMap(),
 ) : AnimationDef(id, animationId) {
 
 	/**
@@ -31,6 +33,8 @@ constructor(
 		id: ResourceLocation,
 		stateModifiers: Map<ResourceLocation, Boolean> = mapOf(
 			EntityStateHolder.CAN_SWITCH_ITEM to false
-		)
-	) : this(id, id, stateModifiers)
+		),
+		floatModifiers: Map<ResourceLocation, Float> = emptyMap()
+	) : this(id, id, stateModifiers, floatModifiers)
 }
+

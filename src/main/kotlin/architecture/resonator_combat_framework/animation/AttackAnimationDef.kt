@@ -5,6 +5,7 @@ import architecture.resonator_combat_framework.core.RcfEventHooks
 import architecture.resonator_combat_framework.init.AnimationProperties
 import architecture.resonator_combat_framework.module.collision.CollisionEntry
 import architecture.resonator_combat_framework.module.collision.CollisionSystem
+import architecture.resonator_combat_framework.module.entity_state_machine.holder.EntityStateHolder
 import architecture.resonator_combat_framework.module.entity_animation.animation.controller.IEntityAnimationController
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.GeometryModel
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.PoseData
@@ -31,7 +32,11 @@ constructor(
 	stateModifiers: Map<ResourceLocation, Boolean> = emptyMap(),
 	/** 攻击阶段列表 */
 	val phases: List<AttackPhase> = emptyList(),
-) : ActionAnimationDef(id, animationId, stateModifiers) {
+	floatModifiers: Map<ResourceLocation, Float> = mapOf(
+		EntityStateHolder.SPEED_MODIFIER to 0f,
+		EntityStateHolder.MAX_LOOK_SPEED to 3f
+	),
+) : ActionAnimationDef(id, animationId, stateModifiers, floatModifiers) {
 
 	/**
 	 * 使用与动画定义 ID 相同的 ID 同时作为动画资源 ID 的便捷构造方法。

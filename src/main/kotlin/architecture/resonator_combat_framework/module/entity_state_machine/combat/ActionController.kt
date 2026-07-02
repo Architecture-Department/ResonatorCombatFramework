@@ -21,8 +21,10 @@ class ActionController(val entity: LivingEntity) {
 	final lateinit var holder: EntityStateHolder<*>
 		internal set
 
-	/** 当前动作集 */
-	* 设置时自动重置舞台索引为 -1，并将动作阶段设为 WINDUP。
+	/**
+	 * 当前动作集。
+	 * 设置时自动重置舞台索引为 -1，并将动作阶段设为 WINDUP。
+	 */
 	final var actionSequence: ActionSequence? = null
 		set(value) {
 			stageIndex = -1
@@ -40,8 +42,10 @@ class ActionController(val entity: LivingEntity) {
 	/** 当前连击段索引 */
 	final var stageIndex: Int = -1; private set
 
-	/** 当前动作阶段 */
-	* 设置时若值发生变化，发射 [CombatEvent.ActionStateChanged] 事件。
+	/**
+	 * 当前动作阶段。
+	 * 设置时若值发生变化，发射 [CombatEvent.ActionStateChanged] 事件。
+	 */
 	final var actionState: ActionState = ActionState.EMPTY
 		set(value) {
 			if (field == value) return
@@ -55,8 +59,10 @@ class ActionController(val entity: LivingEntity) {
 	/** 上一 tick 的动作阶段，用于检测阶段切换 */
 	private var prevActionState: ActionState = ActionState.EMPTY
 
-	/** 战斗速度倍率 */
-	* 设置时若值变化，回调 [Action.onSpeedModify]。最小值限制为 0。
+	/**
+	 * 战斗速度倍率。
+	 * 设置时若值变化，回调 [Action.onSpeedModify]。最小值限制为 0。
+	 */
 	final var combatSpeedMultiplier: Float = 1f
 		set(value) {
 			val newValue = max(value, 0f)
