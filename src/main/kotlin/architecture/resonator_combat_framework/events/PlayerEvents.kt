@@ -8,6 +8,9 @@ import architecture.resonator_combat_framework.module.entity_animation.IAnimatio
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.GeometryModel
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.PoseData
 import architecture.resonator_combat_framework.module.entity_state_machine.holder.EntityStateHolder
+import architecture.resonator_combat_framework.animation.ActionAnimationDef
+import architecture.resonator_combat_framework.combat.AnimationAction
+import architecture.resonator_combat_framework.module.entity_state_machine.event.CombatActionEvent
 import architecture.resonator_combat_framework.util.RcfUtil
 import com.mojang.math.Axis
 import net.minecraft.core.particles.ParticleTypes
