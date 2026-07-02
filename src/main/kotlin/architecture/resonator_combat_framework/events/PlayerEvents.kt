@@ -3,8 +3,8 @@
 import architecture.goldenboughs_lib.util.PoseStack
 import architecture.goldenboughs_lib.util.toPos
 import architecture.goldenboughs_lib.util.toRadians
-import architecture.resonator_combat_framework.module.entity_animation.IProxyAnimationProvider.Companion.getMapperProvider
-import architecture.resonator_combat_framework.module.entity_animation.animation.model.BrModel
+import architecture.resonator_combat_framework.module.entity_animation.IAnimationProvider.Companion.getMapperProvider
+import architecture.resonator_combat_framework.module.entity_animation.animation.model.GeometryModel
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.PoseData
 import architecture.resonator_combat_framework.util.RcfUtil
 import com.mojang.math.Axis
@@ -37,7 +37,7 @@ object PlayerEvents {
 
 	private fun test(
 		name: String,
-		brModel: BrModel,
+		brModel: GeometryModel,
 		animationData: PoseData,
 		player: Player,
 		level: Level

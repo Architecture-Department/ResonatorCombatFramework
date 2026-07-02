@@ -1,7 +1,7 @@
 package architecture.resonator_combat_framework.combat
 
-import architecture.resonator_combat_framework.module.entity_animation.IProxyAnimationProvider
-import architecture.resonator_combat_framework.module.entity_animation.IProxyAnimationProvider.Companion.getMapperProvider
+import architecture.resonator_combat_framework.module.entity_animation.IAnimationProvider
+import architecture.resonator_combat_framework.module.entity_animation.IAnimationProvider.Companion.getMapperProvider
 import architecture.resonator_combat_framework.module.entity_animation.animation.AnimationDef
 import architecture.resonator_combat_framework.module.entity_animation.animation.controller.IEntityAnimationController
 import architecture.resonator_combat_framework.module.entity_animation.animation.data.PlayConfig
@@ -63,7 +63,7 @@ constructor(
 
 	override fun onStart(entity: LivingEntity, actionSequence: ActionSequence?) {
 		super.onStart(entity, actionSequence)
-		if (entity is IProxyAnimationProvider) {
+		if (entity is IAnimationProvider) {
 			getController(entity)?.trigger(
 				getAnimation(), PlayConfig(
 					fadeInTicks = fadeInTick,
@@ -75,19 +75,19 @@ constructor(
 
 	override fun onEnd(entity: LivingEntity, actionSequence: ActionSequence?) {
 		super.onEnd(entity, actionSequence)
-		if (entity is IProxyAnimationProvider) {
+		if (entity is IAnimationProvider) {
 			getController(entity)?.stop()
 		}
 	}
 
 	override fun onSpeedModify(entity: LivingEntity, actionSequence: ActionSequence?, oldValue: Float, newValue: Float) {
 		super.onSpeedModify(entity, actionSequence, oldValue, newValue)
-		if (entity is IProxyAnimationProvider) {
+		if (entity is IAnimationProvider) {
 			getController(entity)?.speedMultiplier = newValue
 		}
 	}
 
-	protected fun getController(entity: IProxyAnimationProvider): IEntityAnimationController<out Entity>? {
+	protected fun getController(entity: IAnimationProvider): IEntityAnimationController<out Entity>? {
 		return entity.getMapperProvider().getController(controllerId)
 	}
 }

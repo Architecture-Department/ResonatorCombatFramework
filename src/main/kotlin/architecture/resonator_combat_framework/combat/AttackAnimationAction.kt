@@ -1,7 +1,7 @@
 package architecture.resonator_combat_framework.combat
 
 import architecture.resonator_combat_framework.animation.AttackAnimationDef
-import architecture.resonator_combat_framework.init.AnimationPropertys
+import architecture.resonator_combat_framework.init.AnimationProperties
 import architecture.resonator_combat_framework.module.entity_state_machine.combat.ActionState
 import architecture.resonator_combat_framework.module.entity_state_machine.combat.InterruptData
 import net.minecraft.resources.ResourceLocation
@@ -69,7 +69,7 @@ class AttackAnimationAction<T : AttackAnimationDef>(
 
 	override fun getAnimation(): T {
 		val animation = super.getAnimation()
-		animation.addProperty(AnimationPropertys.DAMAGE_MULTIPLIER, damageMultiplier)
+		animation.addProperty(AnimationProperties.DAMAGE_MULTIPLIER, damageMultiplier)
 		return animation
 	}
 }

@@ -1,7 +1,7 @@
 package architecture.resonator_combat_framework.module.entity_animation.animation.mapper
 
-import architecture.resonator_combat_framework.module.entity_animation.animation.controller.BedrockAnimationController
-import architecture.resonator_combat_framework.module.entity_animation.animation.data.ProxyBoneFlags
+import architecture.resonator_combat_framework.module.entity_animation.animation.controller.AnimationController
+import architecture.resonator_combat_framework.module.entity_animation.animation.data.BoneFlags
 import net.minecraft.client.model.EntityModel
 import net.minecraft.world.entity.LivingEntity
 
@@ -14,10 +14,10 @@ abstract class LivingEntityAnimationMapperProvider<T : LivingEntity, M : EntityM
 	constructor(holder: T) : this(holder, holder.level().isClientSide, AnimationControllerManager(holder))
 
 	/** 收集所有活跃可渲染控制器的骨骼标志 */
-	fun resolveBoneFlags(animTime: Float): Map<String, ProxyBoneFlags> {
-		val flags = mutableMapOf<String, ProxyBoneFlags>()
+	fun resolveBoneFlags(animTime: Float): Map<String, BoneFlags> {
+		val flags = mutableMapOf<String, BoneFlags>()
 		for (ctrl in animationControllerManager.getRenderable()) {
-			flags.putAll((ctrl as BedrockAnimationController).activeBoneConfig.resolveBoneFlags(animTime))
+			flags.putAll((ctrl as AnimationController).activeBoneConfig.resolveBoneFlags(animTime))
 		}
 		return flags
 	}

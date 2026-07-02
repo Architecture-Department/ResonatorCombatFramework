@@ -3,11 +3,11 @@ package architecture.resonator_combat_framework.module.entity_animation.animatio
 import architecture.resonator_combat_framework.events.registry.AnimationControllers
 import architecture.resonator_combat_framework.module.entity_animation.animation.controller.IEntityAnimationController
 import architecture.resonator_combat_framework.module.entity_animation.animation.data.PlayConfig
-import architecture.resonator_combat_framework.module.entity_animation.animation.data.ProxyBoneConfigData
-import architecture.resonator_combat_framework.module.entity_animation.animation.data.ProxyBoneFlags
+import architecture.resonator_combat_framework.module.entity_animation.animation.data.BoneConfig
+import architecture.resonator_combat_framework.module.entity_animation.animation.data.BoneFlags
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.PoseData
-import architecture.resonator_combat_framework.module.entity_animation.registry.BedrockAnimationDataRegistry
-import architecture.resonator_combat_framework.module.entity_animation.registry.BedrockAnimationRegistry
+import architecture.resonator_combat_framework.module.entity_animation.registry.BoneConfigRegistry
+import architecture.resonator_combat_framework.module.entity_animation.registry.KeyframeAnimationRegistry
 import architecture.resonator_combat_framework.module.entity_animation.util.ModelPartApplier
 import com.mojang.blaze3d.vertex.PoseStack
 import net.minecraft.client.model.EntityModel
@@ -29,9 +29,9 @@ abstract class EntityAnimationMapperProvider<T : Entity, M : EntityModel<T>>(
 	/** 当前渲染帧的 partialTick，供 applyItemTransform 使用 */
 	protected var currentPartialTick = 0f
 
-	val configLoader: BedrockAnimationDataRegistry = BedrockAnimationDataRegistry.getInstance(isClient)
+	val configLoader: BoneConfigRegistry = BoneConfigRegistry.getInstance(isClient)
 
-	val animationLoader: BedrockAnimationRegistry = BedrockAnimationRegistry.getInstance(isClient)
+	val animationLoader: KeyframeAnimationRegistry = KeyframeAnimationRegistry.getInstance(isClient)
 
 
 	// ---- 触发 ----
@@ -126,8 +126,8 @@ abstract class EntityAnimationMapperProvider<T : Entity, M : EntityModel<T>>(
 	// ---- 配置 ----
 
 	/** 获取动画的骨骼配置 */
-	override fun resolveConfig(animId: ResourceLocation): ProxyBoneConfigData =
-		configLoader.get(animId) ?: ProxyBoneConfigData.EMPTY
+	override fun resolveConfig(animId: ResourceLocation): BoneConfig =
+		configLoader.get(animId) ?: BoneConfig.EMPTY
 
 	// ---- 骨骼应用 ----
 
@@ -155,13 +155,13 @@ abstract class EntityAnimationMapperProvider<T : Entity, M : EntityModel<T>>(
 	/** 将代理骨骼数据映射到体 model */
 	abstract fun applyProxyToModel(
 		poseData: PoseData, model: M,
-		flags: Map<String, ProxyBoneFlags>
+		flags: Map<String, BoneFlags>
 	)
 
 	/** 将 root 骨骼变换应用到 PoseStack */
 	fun applyRootTransform(
 		poseData: PoseData, poseStack: PoseStack,
-		flags: Map<String, ProxyBoneFlags>
+		flags: Map<String, BoneFlags>
 	) {
 		if (!isClient) return
 		val bone = poseData.getBone("root") ?: return

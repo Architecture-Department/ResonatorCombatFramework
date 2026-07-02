@@ -2,7 +2,7 @@ package architecture.resonator_combat_framework.module.entity_animation.animatio
 
 import architecture.goldenboughs_lib.api.AllOpe
 import architecture.goldenboughs_lib.util.LibUtil.rlOf
-import architecture.resonator_combat_framework.module.entity_animation.util.AnimationMirrorUtil
+import architecture.resonator_combat_framework.module.entity_animation.util.MirrorUtil
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import net.minecraft.resources.ResourceLocation
@@ -10,10 +10,10 @@ import net.minecraft.resources.ResourceLocation
 // 骨骼配置数据。包含过渡时间、骨骼标志、时间线
 @ExposedCopyVisibility
 @AllOpe
-data class ProxyBoneConfigData
+data class BoneConfig
 private constructor(
-	val bones: Map<String, ProxyBoneFlags> = DEFAULT_FLAGS,
-	val timeline: List<ProxyTimelineEntry> = emptyList(),
+	val bones: Map<String, BoneFlags> = DEFAULT_FLAGS,
+	val timeline: List<TimelineEntry> = emptyList(),
 	val transitionTicks: Int = DEFAULT_TRANSITION_TICKS,
 	private val fadeInTicks: Int = -1,
 	private val fadeOutTicks: Int = -1,
@@ -23,7 +23,7 @@ private constructor(
 	companion object {
 
 		@JvmField
-		val DEFAULT_FLAGS = mapOf("head" to ProxyBoneFlags(mapOf("lock" to false)))
+		val DEFAULT_FLAGS = mapOf("head" to BoneFlags(mapOf("lock" to false)))
 
 		@JvmField
 		val EMPTY = of(emptyMap(), emptyList(), DEFAULT_TRANSITION_TICKS)
@@ -32,24 +32,24 @@ private constructor(
 
 		@JvmStatic
 		fun of(
-			bones: Map<String, ProxyBoneFlags>,
-			timeline: List<ProxyTimelineEntry>,
+			bones: Map<String, BoneFlags>,
+			timeline: List<TimelineEntry>,
 			transitionTicks: Int,
 			fadeInTicks: Int = -1,
 			fadeOutTicks: Int = -1,
 			/** 额外模型数据定义（动画期间动态添加的模型数据） */
 			extraModelId: ResourceLocation? = null
-		): ProxyBoneConfigData {
-			val merged = mutableMapOf<String, ProxyBoneFlags>().apply {
+		): BoneConfig {
+			val merged = mutableMapOf<String, BoneFlags>().apply {
 				putAll(DEFAULT_FLAGS)
 				putAll(bones)
 			}
-			return ProxyBoneConfigData(merged, timeline, transitionTicks, fadeInTicks, fadeOutTicks, extraModelId)
+			return BoneConfig(merged, timeline, transitionTicks, fadeInTicks, fadeOutTicks, extraModelId)
 		}
 
 		/** 从 JSON 解析骨骼配置 */
 		@JvmStatic
-		fun parse(json: JsonObject): ProxyBoneConfigData {
+		fun parse(json: JsonObject): BoneConfig {
 			val transitionTicks = json.get("transition")?.asInt ?: DEFAULT_TRANSITION_TICKS
 			val fadeInTicks = json.get("fade_in")?.asInt ?: -1
 			val fadeOutTicks = json.get("fade_out")?.asInt ?: -1
@@ -57,12 +57,12 @@ private constructor(
 
 			val timelineJson = json.getAsJsonObject("timeline")
 			val timeline = if (timelineJson == null) emptyList() else {
-				val list = mutableListOf<ProxyTimelineEntry>()
+				val list = mutableListOf<TimelineEntry>()
 				for ((timeRange, data) in timelineJson.entrySet()) {
 					val parts = timeRange.split("-")
 					val entry = data.asJsonObject
 					list.add(
-						ProxyTimelineEntry(
+						TimelineEntry(
 							from = parts.getOrNull(0)?.toFloatOrNull() ?: 0f,
 							to = parts.getOrNull(1)?.toFloatOrNull() ?: 0f,
 							bones = parseBonesSection(entry.get("bones"))
@@ -78,14 +78,14 @@ private constructor(
 			return of(bones, timeline, transitionTicks, fadeInTicks, fadeOutTicks, extraModel)
 		}
 
-		private fun parseBonesSection(section: JsonElement?): Map<String, ProxyBoneFlags> {
+		private fun parseBonesSection(section: JsonElement?): Map<String, BoneFlags> {
 			if (section == null || !section.isJsonObject) return emptyMap()
 			val obj = section.asJsonObject
-			val result = mutableMapOf<String, ProxyBoneFlags>()
+			val result = mutableMapOf<String, BoneFlags>()
 			for ((boneName, boneElement) in obj.entrySet()) {
 				if (!boneElement.isJsonObject) continue
 				val boneObj = boneElement.asJsonObject
-				result[boneName] = ProxyBoneFlags(flattenBoneFlags(boneObj))
+				result[boneName] = BoneFlags(flattenBoneFlags(boneObj))
 			}
 			return result
 		}
@@ -113,7 +113,7 @@ private constructor(
 	fun getFadeOutTicks(): Int = if (fadeOutTicks >= 0) fadeOutTicks else transitionTicks
 
 	/** 根据当前动画时间合并基础配置和时间线配置 */
-	fun resolveBoneFlags(animTime: Float): Map<String, ProxyBoneFlags> {
+	fun resolveBoneFlags(animTime: Float): Map<String, BoneFlags> {
 		val result = bones.toMutableMap()
 		for (entry in timeline) {
 			if (animTime >= entry.from && animTime < entry.to) {
@@ -133,16 +133,16 @@ private constructor(
 	}
 
 	/** 返回镜像后的配置（交换左右骨骼名） */
-	fun mirror(): ProxyBoneConfigData {
-		val mirroredBones = bones.mapKeys { AnimationMirrorUtil.mirrorBoneName(it.key) }
+	fun mirror(): BoneConfig {
+		val mirroredBones = bones.mapKeys { MirrorUtil.mirrorBoneName(it.key) }
 		val mirroredTimeline = timeline.map { entry ->
-			entry.copy(bones = entry.bones.mapKeys { AnimationMirrorUtil.mirrorBoneName(it.key) })
+			entry.copy(bones = entry.bones.mapKeys { MirrorUtil.mirrorBoneName(it.key) })
 		}
 		return copy(bones = mirroredBones, timeline = mirroredTimeline)
 	}
 
 	/** 与另一个配置合并（[other] 覆盖 [this]） */
-	fun merge(other: ProxyBoneConfigData): ProxyBoneConfigData {
+	fun merge(other: BoneConfig): BoneConfig {
 		val mergedBones = bones.toMutableMap()
 		mergedBones.putAll(other.bones)
 		val mergedTimeline = timeline + other.timeline

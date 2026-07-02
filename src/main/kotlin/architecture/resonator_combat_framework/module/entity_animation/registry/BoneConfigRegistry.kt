@@ -1,7 +1,7 @@
 package architecture.resonator_combat_framework.module.entity_animation.registry
 
 import architecture.goldenboughs_lib.util.LibUtil.rlOf
-import architecture.resonator_combat_framework.module.entity_animation.animation.baking_animation.KeyframeAnimation
+import architecture.resonator_combat_framework.module.entity_animation.animation.data.BoneConfig
 import architecture.resonator_combat_framework.util.RcfUtil
 import com.google.gson.Gson
 import com.google.gson.JsonElement
@@ -13,36 +13,36 @@ import net.minecraft.server.packs.resources.ResourceManager
 import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener
 import net.minecraft.util.profiling.ProfilerFiller
 
-class BedrockAnimationRegistry(
+class BoneConfigRegistry(
 	val isClient: Boolean
-) : SimpleJsonResourceReloadListener(Gson(), "rcf/animations") {
+) : SimpleJsonResourceReloadListener(Gson(), "rcf/animdatas") {
 
 	companion object {
-		private val CLIENT = BedrockAnimationRegistry(true)
-		private val SERVER = BedrockAnimationRegistry(false)
+		private val CLIENT = BoneConfigRegistry(true)
+		private val SERVER = BoneConfigRegistry(false)
 
 		@JvmStatic
-		fun getInstance(isClient: Boolean): BedrockAnimationRegistry {
+		fun getInstance(isClient: Boolean): BoneConfigRegistry {
 			return if (isClient) CLIENT else SERVER
 		}
 
 		@JvmStatic
-		fun find(animId: ResourceLocation): KeyframeAnimation? {
+		fun find(animId: ResourceLocation): BoneConfig? {
 			return CLIENT.get(animId) ?: SERVER.get(animId)
 		}
 
 		@JvmStatic
-		fun findAll(): Map<ResourceLocation, KeyframeAnimation> = CLIENT.getAll() + SERVER.getAll()
+		fun findAll(): Map<ResourceLocation, BoneConfig> = CLIENT.getAll() + SERVER.getAll()
 	}
 
-	private val bakingAnimations = mutableMapOf<ResourceLocation, KeyframeAnimation>()
+	private val configs = mutableMapOf<ResourceLocation, BoneConfig>()
 	private val nbtCache = mutableMapOf<ResourceLocation, CompoundTag>()
 
-	fun get(animId: ResourceLocation): KeyframeAnimation? {
-		return bakingAnimations[animId]
+	fun get(animId: ResourceLocation): BoneConfig? {
+		return configs[animId]
 	}
 
-	fun getAll(): Map<ResourceLocation, KeyframeAnimation> = bakingAnimations
+	fun getAll(): Map<ResourceLocation, BoneConfig> = configs
 
 	fun getNbtCache(): Map<ResourceLocation, CompoundTag> = nbtCache
 
@@ -63,24 +63,15 @@ class BedrockAnimationRegistry(
 	}
 
 	fun apply(loaded: Map<ResourceLocation, JsonElement>) {
-		bakingAnimations.clear()
+		configs.clear()
 		for ((fileId, json) in loaded) {
 			try {
-				val parsed = KeyframeAnimation.parses(json.asJsonObject)
-				parsed.forEach { (key, anim) ->
-					if (!ResourceLocation.isValidPath(key)) {
-						return@forEach
-					}
-					bakingAnimations[rlOf(
-						fileId.namespace,
-						fileId.path.substringBeforeLast("/") + "/" + key
-					)] = anim
-				}
+				val parse = BoneConfig.parse(json.asJsonObject)
+				configs[rlOf(fileId.namespace, fileId.path)] = parse
 			} catch (e: Exception) {
-				RcfUtil.LOGGER.error("[ANIMATION] Failed to parse: {}", fileId, e)
+				RcfUtil.LOGGER.error("[CONFIG] Failed to parse: {}", fileId, e)
 			}
 		}
-		RcfUtil.LOGGER.info("[ANIMATION] Applied {} animations", bakingAnimations.size)
-
+		RcfUtil.LOGGER.info("[CONFIG] Applied {} bone configs", configs.size)
 	}
 }

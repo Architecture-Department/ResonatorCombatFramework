@@ -10,7 +10,7 @@ import architecture.resonator_combat_framework.module.entity_animation.animation
 import architecture.resonator_combat_framework.module.entity_animation.animation.controller.IEntityAnimationController
 import architecture.resonator_combat_framework.module.entity_animation.animation.data.PlayConfig
 import architecture.resonator_combat_framework.module.entity_animation.animation.mapper.IEntityAnimationMapperProvider
-import architecture.resonator_combat_framework.module.entity_animation.animation.model.BrModel
+import architecture.resonator_combat_framework.module.entity_animation.animation.model.GeometryModel
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.PoseData
 import architecture.resonator_combat_framework.module.entity_animation.event.*
 import architecture.resonator_combat_framework.module.entity_state_machine.combat.Action
@@ -144,7 +144,7 @@ object RcfEventHooks {
 		entity: Entity,
 		animTime: Float,
 		poseData: PoseData,
-		brModel: BrModel,
+		brModel: GeometryModel,
 		mergedProxy: PoseData
 	) {
 		NeoForge.EVENT_BUS.post(AnimationColliderEvent.Pre(controller, entity, animTime, poseData, brModel, mergedProxy))
@@ -156,7 +156,7 @@ object RcfEventHooks {
 		entity: Entity,
 		animTime: Float,
 		poseData: PoseData,
-		brModel: BrModel,
+		brModel: GeometryModel,
 		mergedProxy: PoseData
 	) {
 		NeoForge.EVENT_BUS.post(AnimationColliderEvent.Post(controller, entity, animTime, poseData, brModel, mergedProxy))

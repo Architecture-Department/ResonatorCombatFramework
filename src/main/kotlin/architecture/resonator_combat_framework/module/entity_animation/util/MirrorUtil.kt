@@ -1,7 +1,7 @@
 package architecture.resonator_combat_framework.module.entity_animation.util
 
 /** 动画镜像工具 — 骨骼名称映射 */
-object AnimationMirrorUtil {
+object MirrorUtil {
 
 	/** 骨骼名称镜像映射表 */
 	private val BONE_MIRROR_MAP = mapOf(

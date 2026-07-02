@@ -4,7 +4,7 @@ import architecture.goldenboughs_lib.api.AllOpe
 import architecture.resonator_combat_framework.module.entity_animation.animation.AnimationDef
 import architecture.resonator_combat_framework.module.entity_animation.animation.baking_animation.KeyframeAnimation
 import architecture.resonator_combat_framework.module.entity_animation.animation.data.PlayConfig
-import architecture.resonator_combat_framework.module.entity_animation.animation.data.ProxyBoneConfigData
+import architecture.resonator_combat_framework.module.entity_animation.animation.data.BoneConfig
 import architecture.resonator_combat_framework.module.entity_animation.animation.mapper.AnimationControllerManager
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.GeometryData
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.PoseData
@@ -36,7 +36,7 @@ interface IEntityAnimationController<T : Entity> {
 	/** 控制器管理器 */
 	val manager: AnimationControllerManager<T>
 
-	val currentBoneConfig: ProxyBoneConfigData
+	val currentBoneConfig: BoneConfig
 	val currentBakingAnim: KeyframeAnimation?
 	val extraModel: GeometryData?
 
@@ -57,10 +57,10 @@ interface IEntityAnimationController<T : Entity> {
 	val currentConfig: PlayConfig
 
 	/** 控制器局部骨骼配置（持久，外部设置后不会自动改变） */
-	var localBoneConfig: ProxyBoneConfigData
+	var localBoneConfig: BoneConfig
 
 	/** 当前生效的骨骼配置（由 localBoneConfig + 动画配置合并，含镜像） */
-	val activeBoneConfig: ProxyBoneConfigData
+	val activeBoneConfig: BoneConfig
 
 	/** 当前混合因子 0~1 */
 	val fadeProgress: Float

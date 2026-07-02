@@ -2,7 +2,7 @@ package architecture.resonator_combat_framework.module.entity_animation.animatio
 
 // 人形实体动画映射器
 
-import architecture.resonator_combat_framework.module.entity_animation.animation.data.ProxyBoneFlags
+import architecture.resonator_combat_framework.module.entity_animation.animation.data.BoneFlags
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.PoseData
 import architecture.resonator_combat_framework.module.entity_animation.util.ModelPartApplier
 import com.mojang.blaze3d.vertex.PoseStack
@@ -20,7 +20,7 @@ abstract class HumanoidEntityAnimationMapperProvider<T : LivingEntity, M : Human
 	constructor(holder: T) : this(holder, holder.level().isClientSide, AnimationControllerManager(holder))
 
 	override fun applyProxyToModel(
-		poseData: PoseData, model: M, flags: Map<String, ProxyBoneFlags>
+		poseData: PoseData, model: M, flags: Map<String, BoneFlags>
 	) {
 		if (!isClient) return
 		applyProxyBone(poseData, "head", flags, model.head, model.hat)
@@ -33,7 +33,7 @@ abstract class HumanoidEntityAnimationMapperProvider<T : LivingEntity, M : Human
 
 	/** 将单骨骼数据通过 BoneTransformUtil 计算出 Transform 并应用到 ModelPart */
 	protected fun applyProxyBone(
-		proxy: PoseData, name: String, flags: Map<String, ProxyBoneFlags>, vararg parts: ModelPart
+		proxy: PoseData, name: String, flags: Map<String, BoneFlags>, vararg parts: ModelPart
 	) {
 		val bone = proxy.getBone(name) ?: return
 		val boneFlags = flags[name]
@@ -46,7 +46,7 @@ abstract class HumanoidEntityAnimationMapperProvider<T : LivingEntity, M : Human
 		poseData: PoseData,
 		isLeft: Boolean,
 		poseStack: PoseStack,
-		flags: Map<String, ProxyBoneFlags>
+		flags: Map<String, BoneFlags>
 	) {
 		val name = if (isLeft) "left_item" else "right_item"
 		val bone = poseData.getBone(name) ?: return

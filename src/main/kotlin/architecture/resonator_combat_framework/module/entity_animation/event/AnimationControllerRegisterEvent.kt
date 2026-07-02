@@ -1,7 +1,7 @@
 package architecture.resonator_combat_framework.module.entity_animation.event
 
 import architecture.goldenboughs_lib.api.AllOpe
-import architecture.resonator_combat_framework.module.entity_animation.animation.controller.BedrockAnimationController
+import architecture.resonator_combat_framework.module.entity_animation.animation.controller.AnimationController
 import architecture.resonator_combat_framework.module.entity_animation.animation.controller.IEntityAnimationController
 import architecture.resonator_combat_framework.module.entity_animation.animation.mapper.AnimationControllerManager
 import net.minecraft.resources.ResourceLocation
@@ -24,7 +24,7 @@ class AnimationControllerRegisterEvent<T : Entity> : Event() {
 	fun register(
 		id: ResourceLocation,
 		controllerFactory: (manager: AnimationControllerManager<T>, id: ResourceLocation, isClient: Boolean) -> IEntityAnimationController<T> = { manager, id, isClient ->
-			BedrockAnimationController(manager, id, isClient)
+			AnimationController(manager, id, isClient)
 		},
 		priority: Int
 	) {

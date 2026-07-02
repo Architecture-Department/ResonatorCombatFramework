@@ -2,15 +2,15 @@ package architecture.resonator_combat_framework.module.entity_animation.animatio
 
 import architecture.goldenboughs_lib.api.AllOpe
 import architecture.resonator_combat_framework.events.registry.AnimationControllers
-import architecture.resonator_combat_framework.module.entity_animation.IProxyAnimationProvider
-import architecture.resonator_combat_framework.module.entity_animation.IProxyAnimationProvider.Companion.getMapperProvider
+import architecture.resonator_combat_framework.module.entity_animation.IAnimationProvider
+import architecture.resonator_combat_framework.module.entity_animation.IAnimationProvider.Companion.getMapperProvider
 import architecture.resonator_combat_framework.module.entity_animation.animation.AnimationEventsToFire
 import architecture.resonator_combat_framework.module.entity_animation.animation.ParticleStormAnimAdapter
-import architecture.resonator_combat_framework.module.entity_animation.animation.controller.BedrockAnimationController
+import architecture.resonator_combat_framework.module.entity_animation.animation.controller.AnimationController
 import architecture.resonator_combat_framework.module.entity_animation.animation.controller.IEntityAnimationController
-import architecture.resonator_combat_framework.module.entity_animation.animation.data.ProxyBoneFlags
+import architecture.resonator_combat_framework.module.entity_animation.animation.data.BoneFlags
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.BonePose
-import architecture.resonator_combat_framework.module.entity_animation.animation.model.BrModel
+import architecture.resonator_combat_framework.module.entity_animation.animation.model.GeometryModel
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.GeometryData
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.PoseData
 import architecture.resonator_combat_framework.util.RcfUtil
@@ -34,7 +34,7 @@ constructor(
 	@Suppress("UNCHECKED_CAST")
 	val mapperProvider: IEntityAnimationMapperProvider<T, *>
 		get() = _mapperProvider
-			?: (holder as IProxyAnimationProvider).getMapperProvider() as IEntityAnimationMapperProvider<T, *>
+			?: (holder as IAnimationProvider).getMapperProvider() as IEntityAnimationMapperProvider<T, *>
 
 	/** 名称 → 控制器映射（O(1) 查找） */
 	private val nameMap = mutableMapOf<ResourceLocation, IEntityAnimationController<T>>()
@@ -49,7 +49,7 @@ constructor(
 	val prevMergedPose = PoseData("prevMerged")
 
 	/** 合并后的骨骼标志 */
-	val mergedBoneFlags = mutableMapOf<String, ProxyBoneFlags>()
+	val mergedBoneFlags = mutableMapOf<String, BoneFlags>()
 
 	/** 待触发的事件队列（控制器收集 -> tick后统一执行） */
 	private val pendingEvents = mutableListOf<Pair<IEntityAnimationController<*>, AnimationEventsToFire>>()
@@ -61,7 +61,7 @@ constructor(
 			rebuildBones()
 		}
 
-	var brModel: BrModel = BrModel()
+	var brModel: GeometryModel = GeometryModel()
 
 	/** 本 tick 的骨骼全局矩阵缓存（惰性填充，tick 切换时清空） */
 	private val boneMatrixCache = mutableMapOf<String, Matrix4fc>()
@@ -174,7 +174,7 @@ constructor(
 		mergedPose.bones.clear()
 		val coveredBones = mutableSetOf<String>()
 		for (ctrl in ordered.filter { it.isActive() }) {
-			val bac = ctrl as BedrockAnimationController
+			val bac = ctrl as AnimationController
 			val weight = ctrl.mergeWeight
 
 			mergedBoneFlags.putAll(bac.activeBoneConfig.resolveBoneFlags(bac.currentAnimTime))
@@ -378,7 +378,7 @@ constructor(
 	fun rebuildBones() {
 		brModel.set(geometry)
 		for (ctrl in ordered) {
-			val controller = ctrl as? BedrockAnimationController ?: continue
+			val controller = ctrl as? AnimationController ?: continue
 			if (controller.extraModel == null) continue
 			brModel.overwriteAdd(controller.extraModel)
 		}

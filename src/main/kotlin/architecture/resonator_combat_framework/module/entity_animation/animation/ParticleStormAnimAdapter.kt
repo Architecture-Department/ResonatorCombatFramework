@@ -3,7 +3,7 @@ package architecture.resonator_combat_framework.module.entity_animation.animatio
 import architecture.goldenboughs_lib.util.toPos
 import architecture.resonator_combat_framework.module.entity_animation.animation.controller.IEntityAnimationController
 import architecture.resonator_combat_framework.module.entity_animation.animation.mapper.AnimationControllerManager
-import architecture.resonator_combat_framework.module.entity_animation.animation.model.BrModel
+import architecture.resonator_combat_framework.module.entity_animation.animation.model.GeometryModel
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.PoseData
 import com.mojang.math.Axis
 import net.minecraft.resources.ResourceLocation
@@ -47,7 +47,7 @@ object ParticleStormAnimAdapter {
 		particleId: ResourceLocation,
 		locatorName: String?,
 		preEffectScriptStr: String?,
-		brModel: BrModel,
+		brModel: GeometryModel,
 		animationData: PoseData,
 		controller: IEntityAnimationController<*>,
 		manager: AnimationControllerManager<*>,
@@ -88,7 +88,7 @@ object ParticleStormAnimAdapter {
 	 */
 	fun updateEmitterTransform(
 		emitterId: Int,
-		brModel: BrModel,
+		brModel: GeometryModel,
 		animationData: PoseData,
 		locatorName: String?
 	) {

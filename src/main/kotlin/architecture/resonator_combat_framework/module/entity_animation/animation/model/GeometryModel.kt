@@ -6,7 +6,7 @@ import org.joml.Vector3f
 import org.joml.Vector3fc
 
 // TODO 对应不同体型的玩家取不同的位置
-data class BrModel
+data class GeometryModel
 @JvmOverloads
 constructor(
 	val bones: MutableMap<String, BrBone> = mutableMapOf(),
@@ -164,8 +164,8 @@ constructor(
 
 	companion object {
 		@JvmStatic
-		fun of(geometryData: GeometryData): BrModel {
-			return BrModel(
+		fun of(geometryData: GeometryData): GeometryModel {
+			return GeometryModel(
 				geometryData.bones.map { (k, v) -> k to BrBone.of(v) }.toMap().toMutableMap(),
 				geometryData.locators.map { (k, v) -> k to BrLocator.of(v) }.toMap().toMutableMap()
 			)

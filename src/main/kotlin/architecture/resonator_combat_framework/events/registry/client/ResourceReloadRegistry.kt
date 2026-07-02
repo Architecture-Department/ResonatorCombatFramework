@@ -1,10 +1,10 @@
 package architecture.resonator_combat_framework.events.registry.client
 
 import architecture.resonator_combat_framework.common.registry.ItemPropertyRegistry
-import architecture.resonator_combat_framework.module.entity_animation.registry.BedrockAnimationDataRegistry
-import architecture.resonator_combat_framework.module.entity_animation.registry.BedrockAnimationRegistry
-import architecture.resonator_combat_framework.module.entity_animation.registry.BedrockModelRegistry
-import architecture.resonator_combat_framework.module.entity_animation.registry.StaticAnimationRegistry
+import architecture.resonator_combat_framework.module.entity_animation.registry.BoneConfigRegistry
+import architecture.resonator_combat_framework.module.entity_animation.registry.KeyframeAnimationRegistry
+import architecture.resonator_combat_framework.module.entity_animation.registry.GeometryModelRegistry
+import architecture.resonator_combat_framework.module.entity_animation.registry.AnimationDefRegistry
 import architecture.resonator_combat_framework.module.entity_state_machine.registry.ActionRegistry
 import architecture.resonator_combat_framework.module.entity_state_machine.registry.ActionSequenceRegistry
 import architecture.resonator_combat_framework.util.RcfUtil
@@ -18,14 +18,14 @@ import net.neoforged.neoforge.client.event.RegisterClientReloadListenersEvent
 object ResourceReloadRegistry {
 	@SubscribeEvent
 	fun registry(event: RegisterClientReloadListenersEvent) {
-		event.registerReloadListener(BedrockAnimationDataRegistry.getInstance(true))
-		event.registerReloadListener(BedrockAnimationRegistry.getInstance(true))
-		event.registerReloadListener(BedrockModelRegistry.getInstance(true))
+		event.registerReloadListener(BoneConfigRegistry.getInstance(true))
+		event.registerReloadListener(KeyframeAnimationRegistry.getInstance(true))
+		event.registerReloadListener(GeometryModelRegistry.getInstance(true))
 	}
 
 	@SubscribeEvent(priority = EventPriority.LOWEST)
 	fun registryLowest(event: RegisterClientReloadListenersEvent) {
-		event.registerReloadListener(StaticAnimationRegistry)
+		event.registerReloadListener(AnimationDefRegistry)
 		event.registerReloadListener(ActionRegistry)
 		event.registerReloadListener(ActionSequenceRegistry)
 		event.registerReloadListener(ItemPropertyRegistry)

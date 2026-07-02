@@ -4,7 +4,7 @@ import architecture.goldenboughs_lib.api.AllOpe
 import architecture.resonator_combat_framework.events.registry.AnimationControllers
 import architecture.resonator_combat_framework.module.entity_animation.animation.controller.IEntityAnimationController
 import architecture.resonator_combat_framework.module.entity_animation.animation.data.PlayConfig
-import architecture.resonator_combat_framework.module.entity_animation.animation.data.ProxyBoneConfigData
+import architecture.resonator_combat_framework.module.entity_animation.animation.data.BoneConfig
 import architecture.resonator_combat_framework.module.entity_animation.animation.molang.MolangData
 import com.mojang.blaze3d.vertex.PoseStack
 import net.minecraft.client.model.EntityModel
@@ -24,7 +24,7 @@ interface IEntityAnimationMapperProvider<T : Entity, M : EntityModel<T>> {
 
 	fun tick()
 
-	fun resolveConfig(animId: ResourceLocation): ProxyBoneConfigData
+	fun resolveConfig(animId: ResourceLocation): BoneConfig
 
 	/** 客户端 */
 	fun tickAndRender(model: M, partialTick: Float, poseStack: PoseStack)

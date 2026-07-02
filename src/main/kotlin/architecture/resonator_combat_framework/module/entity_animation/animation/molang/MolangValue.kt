@@ -1,7 +1,7 @@
 package architecture.resonator_combat_framework.module.entity_animation.animation.molang
 
-import architecture.resonator_combat_framework.module.entity_animation.IProxyAnimationProvider
-import architecture.resonator_combat_framework.module.entity_animation.IProxyAnimationProvider.Companion.getMapperProvider
+import architecture.resonator_combat_framework.module.entity_animation.IAnimationProvider
+import architecture.resonator_combat_framework.module.entity_animation.IAnimationProvider.Companion.getMapperProvider
 import architecture.resonator_combat_framework.module.entity_animation.animation.controller.IEntityAnimationController
 import architecture.resonator_combat_framework.module.entity_animation.animation.mapper.AnimationControllerManager
 import net.minecraft.world.entity.Entity
@@ -10,11 +10,11 @@ interface MolangValue {
 	fun eval(context: MolangData? = null): Double
 
 	fun eval(entity: Entity): Double {
-		if (entity !is IProxyAnimationProvider) return 0.0
-		return eval(entity as IProxyAnimationProvider)
+		if (entity !is IAnimationProvider) return 0.0
+		return eval(entity as IAnimationProvider)
 	}
 
-	fun eval(proxyProvider: IProxyAnimationProvider): Double {
+	fun eval(proxyProvider: IAnimationProvider): Double {
 		return eval(MolangData.of(proxyProvider.getMapperProvider().holder))
 	}
 

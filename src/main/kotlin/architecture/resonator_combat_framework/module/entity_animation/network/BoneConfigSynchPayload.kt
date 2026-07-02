@@ -2,7 +2,7 @@ package architecture.resonator_combat_framework.module.entity_animation.network
 
 import architecture.goldenboughs_lib.api.payload.ToClientPayload
 import architecture.goldenboughs_lib.util.LibUtil.RESOURCE_LOCATION_BY_COMPOUND_TAG_MAP_STREAM_CODEC
-import architecture.resonator_combat_framework.module.entity_animation.registry.BedrockAnimationRegistry
+import architecture.resonator_combat_framework.module.entity_animation.registry.KeyframeAnimationRegistry
 import architecture.resonator_combat_framework.util.RcfUtil
 import com.mojang.serialization.JsonOps
 import io.netty.buffer.ByteBuf
@@ -14,22 +14,22 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload
 import net.minecraft.resources.ResourceLocation
 import net.neoforged.neoforge.network.handling.IPayloadContext
 
-data class BedrockAnimationDataSynchsPayload(
+data class BoneConfigSynchPayload(
 	val nbtMap: Map<ResourceLocation, CompoundTag>
 ) : ToClientPayload {
 	companion object {
 		@JvmField
 		val TYPE =
-			CustomPacketPayload.Type<BedrockAnimationDataSynchsPayload>(RcfUtil.modRl("bedrock_animation_data_synchs"))
+			CustomPacketPayload.Type<BoneConfigSynchPayload>(RcfUtil.modRl("bedrock_animation_data_synchs"))
 
 		@JvmField
-		val STREAM_CODEC: StreamCodec<ByteBuf, BedrockAnimationDataSynchsPayload> = StreamCodec.composite(
-			RESOURCE_LOCATION_BY_COMPOUND_TAG_MAP_STREAM_CODEC, BedrockAnimationDataSynchsPayload::nbtMap,
-			::BedrockAnimationDataSynchsPayload
+		val STREAM_CODEC: StreamCodec<ByteBuf, BoneConfigSynchPayload> = StreamCodec.composite(
+			RESOURCE_LOCATION_BY_COMPOUND_TAG_MAP_STREAM_CODEC, BoneConfigSynchPayload::nbtMap,
+			::BoneConfigSynchPayload
 		)
 	}
 
-	constructor() : this(BedrockAnimationRegistry.getInstance(false).getNbtCache())
+	constructor() : this(KeyframeAnimationRegistry.getInstance(false).getNbtCache())
 
 	override fun type(): CustomPacketPayload.Type<out CustomPacketPayload?> = TYPE
 
@@ -37,7 +37,7 @@ data class BedrockAnimationDataSynchsPayload(
 		context: IPayloadContext,
 		player: AbstractClientPlayer
 	) {
-		val instance = BedrockAnimationRegistry.getInstance(true)
+		val instance = KeyframeAnimationRegistry.getInstance(true)
 		instance.clearNbtCache()
 		instance.apply(nbtMap.mapValues {
 			NbtOps.INSTANCE.convertTo(JsonOps.COMPRESSED, it.value)

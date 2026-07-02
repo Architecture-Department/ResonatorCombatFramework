@@ -1,30 +1,30 @@
 package architecture.resonator_combat_framework.module.entity_animation.animation.controller
 
 import architecture.resonator_combat_framework.core.RcfEventHooks
-import architecture.resonator_combat_framework.module.entity_animation.animation.LoopType
 import architecture.resonator_combat_framework.module.entity_animation.animation.AnimationDef
+import architecture.resonator_combat_framework.module.entity_animation.animation.LoopType
 import architecture.resonator_combat_framework.module.entity_animation.animation.baking_animation.KeyframeAnimation
 import architecture.resonator_combat_framework.module.entity_animation.animation.controller.IEntityAnimationController.State
-import architecture.resonator_combat_framework.module.entity_animation.animation.data.AnimType
+import architecture.resonator_combat_framework.module.entity_animation.animation.data.PlayMode
+import architecture.resonator_combat_framework.module.entity_animation.animation.data.BoneConfig
 import architecture.resonator_combat_framework.module.entity_animation.animation.data.PlayConfig
-import architecture.resonator_combat_framework.module.entity_animation.animation.data.ProxyBoneConfigData
 import architecture.resonator_combat_framework.module.entity_animation.animation.data.shouldBlend
 import architecture.resonator_combat_framework.module.entity_animation.animation.mapper.AnimationControllerManager
 import architecture.resonator_combat_framework.module.entity_animation.animation.mapper.IEntityAnimationMapperProvider
-import architecture.resonator_combat_framework.module.entity_animation.animation.model.GeometryData
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.BonePose
+import architecture.resonator_combat_framework.module.entity_animation.animation.model.GeometryData
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.PoseData
-import architecture.resonator_combat_framework.module.entity_animation.registry.BedrockAnimationDataRegistry
-import architecture.resonator_combat_framework.module.entity_animation.registry.BedrockAnimationRegistry
-import architecture.resonator_combat_framework.module.entity_animation.registry.BedrockModelRegistry
-import architecture.resonator_combat_framework.module.entity_animation.registry.StaticAnimationRegistry
+import architecture.resonator_combat_framework.module.entity_animation.registry.AnimationDefRegistry
+import architecture.resonator_combat_framework.module.entity_animation.registry.BoneConfigRegistry
+import architecture.resonator_combat_framework.module.entity_animation.registry.GeometryModelRegistry
+import architecture.resonator_combat_framework.module.entity_animation.registry.KeyframeAnimationRegistry
 import architecture.resonator_combat_framework.util.RcfUtil
 import architecture.resonator_combat_framework.util.RotationUtil
 import architecture.resonator_combat_framework.util.TimeUtil
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.Entity
 
-class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
+class AnimationController<T : Entity> @JvmOverloads constructor(
 	override val manager: AnimationControllerManager<T>,
 	override val id: ResourceLocation,
 	protected val isClient: Boolean,
@@ -40,7 +40,7 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 	/** 当前 tick 的动画数据（来自 [animationLoader]，随 [currentAnim] 切换） */
 	final override var currentBakingAnim: KeyframeAnimation? = null; private set
 
-	override var localBoneConfig: ProxyBoneConfigData = ProxyBoneConfigData.EMPTY
+	override var localBoneConfig: BoneConfig = BoneConfig.EMPTY
 		set(value) {
 			if (currentConfig.mirror) {
 				value.mirror()
@@ -50,16 +50,16 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 		}
 
 	/** 当前的骨骼配置 */
-	final override var currentBoneConfig: ProxyBoneConfigData = ProxyBoneConfigData.EMPTY
+	final override var currentBoneConfig: BoneConfig = BoneConfig.EMPTY
 		private set(value) {
 			field = value
 			_activeBoneConfig = value
 		}
 
 	/** 当前生效的骨骼配置缓存 */
-	private var _activeBoneConfig: ProxyBoneConfigData? = null
+	private var _activeBoneConfig: BoneConfig? = null
 
-	final override val activeBoneConfig: ProxyBoneConfigData
+	final override val activeBoneConfig: BoneConfig
 		get() {
 			if (_activeBoneConfig == null) {
 				_activeBoneConfig = currentBoneConfig.merge(localBoneConfig)
@@ -69,7 +69,7 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 
 	final override var fadeProgress = 0f; private set
 	final override var fadeTarget = 0f; private set
-	final override var currentTransitionTicks = ProxyBoneConfigData.DEFAULT_TRANSITION_TICKS; private set
+	final override var currentTransitionTicks = BoneConfig.DEFAULT_TRANSITION_TICKS; private set
 	final override var speedMultiplier = 1f
 	final override var affectedBones = emptySet<String>(); private set
 
@@ -95,7 +95,7 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 	// ===== 触发 =====
 
 	override fun trigger(animId: ResourceLocation, config: PlayConfig) {
-		val anim = StaticAnimationRegistry.get(animId)
+		val anim = AnimationDefRegistry.get(animId)
 		if (anim == null || anim.get() == null) {
 			RcfUtil.LOGGER.warn("[AnimDebug] Animation not found: $animId")
 			return
@@ -110,9 +110,9 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 		oldActionAnim?.onEnd(manager.holder)
 
 		currentAnim = anim
-		val baseAnim = BedrockAnimationRegistry.find(anim.animationId) ?: KeyframeAnimation.EMPTY
+		val baseAnim = KeyframeAnimationRegistry.find(anim.animationId) ?: KeyframeAnimation.EMPTY
 		currentBakingAnim = if (config.mirror) baseAnim.mirror() else baseAnim
-		val baseConfig = BedrockAnimationDataRegistry.find(anim.animationId) ?: ProxyBoneConfigData.EMPTY
+		val baseConfig = BoneConfigRegistry.find(anim.animationId) ?: BoneConfig.EMPTY
 		currentBoneConfig = if (config.mirror) baseConfig.mirror() else baseConfig
 		manager.clearEmittersFor(id)
 		poseData.bones.clear()
@@ -135,7 +135,7 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 
 		anim.onBegin(manager.holder, animTime, 0f, poseData, manager.brModel)
 		anim.tick(manager.holder, animTime, 0f, poseData, manager.brModel)
-		extraModel = activeBoneConfig.extraModelId?.let { BedrockModelRegistry.find(it) }
+		extraModel = activeBoneConfig.extraModelId?.let { GeometryModelRegistry.find(it) }
 		manager.rebuildBones()
 
 		anim.onStart(manager.holder, animTime, 0f, poseData, manager.brModel)
@@ -237,18 +237,18 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 			if (animTime < endSec || endSec <= 0f) return
 		}
 
-		when (currentConfig.animType) {
-			AnimType.PLAY_ONCE, AnimType.DEFAULT -> when {
+		when (currentConfig.playMode) {
+			PlayMode.PLAY_ONCE, PlayMode.DEFAULT -> when {
 				currentLoopType() == LoopType.ONCE -> startFadeOut()
 				currentLoopType() == LoopType.LOOP -> resetAnimAndRestart()
 				else -> pause()
 			}
 
-			AnimType.LOOP -> {
+			PlayMode.LOOP -> {
 				resetAnimAndRestart(); if (currentConfig.startTime > 0) setAnimStartTime(currentConfig.startTime / 20f)
 			}
 
-			AnimType.STOP_AT_LAST -> pause()
+			PlayMode.STOP_AT_LAST -> pause()
 		}
 	}
 
@@ -379,11 +379,11 @@ class BedrockAnimationController<T : Entity> @JvmOverloads constructor(
 		transitionSource = null
 		currentConfig = PlayConfig.EMPTY
 		affectedBones = emptySet()
-		currentTransitionTicks = ProxyBoneConfigData.DEFAULT_TRANSITION_TICKS
+		currentTransitionTicks = BoneConfig.DEFAULT_TRANSITION_TICKS
 		speedMultiplier = 1f
 		extraModel = null
 		currentBakingAnim = null
-		currentBoneConfig = ProxyBoneConfigData.EMPTY
+		currentBoneConfig = BoneConfig.EMPTY
 		_activeBoneConfig = null
 		manager.rebuildBones()
 	}

@@ -7,7 +7,7 @@ import architecture.resonator_combat_framework.module.entity_animation.animation
 import architecture.resonator_combat_framework.module.entity_animation.animation.baking_animation.SoundEvent
 import architecture.resonator_combat_framework.module.entity_animation.animation.baking_animation.TimelineEvent
 import architecture.resonator_combat_framework.module.entity_animation.animation.controller.IEntityAnimationController
-import architecture.resonator_combat_framework.module.entity_animation.animation.model.BrModel
+import architecture.resonator_combat_framework.module.entity_animation.animation.model.GeometryModel
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.PoseData
 import architecture.resonator_combat_framework.module.entity_animation.animation.molang.MolangData
 import net.minecraft.resources.ResourceLocation
@@ -114,13 +114,13 @@ class AnimationDef(
 	// ===== 生命周期钩子 =====
 
 	/** trigger 早期钩子。在骨骼数据写入前、过渡/镜像设置前调用。 */
-	fun onBegin(entity: Entity, animTime: Float, f: Float, poseData: PoseData, brModel: BrModel) {}
+	fun onBegin(entity: Entity, animTime: Float, f: Float, poseData: PoseData, brModel: GeometryModel) {}
 
 	/** 动画启动钩子。在 [trigger] 全部初始化完成后调用（含第一帧、extraModel、骨骼重建之后）。 */
-	fun onStart(entity: Entity, animTime: Float, f: Float, poseData: PoseData, brModel: BrModel) {}
+	fun onStart(entity: Entity, animTime: Float, f: Float, poseData: PoseData, brModel: GeometryModel) {}
 
 	/** 每 tick 回调（合并前）。在 [tickAnimTime] 后、[remerge] 前调用。 */
-	fun tick(entity: Entity, animTime: Float, deltaTime: Float, poseData: PoseData, brModel: BrModel) {}
+	fun tick(entity: Entity, animTime: Float, deltaTime: Float, poseData: PoseData, brModel: GeometryModel) {}
 
 	fun onEnd(entity: Entity) {}
 
@@ -129,7 +129,7 @@ class AnimationDef(
 		entity: Entity,
 		animTime: Float,
 		poseData: PoseData,
-		brModel: BrModel,
+		brModel: GeometryModel,
 		mergedProxy: PoseData,
 		controller: IEntityAnimationController<*>,
 	) {

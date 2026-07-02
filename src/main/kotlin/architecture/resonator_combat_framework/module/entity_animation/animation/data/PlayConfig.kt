@@ -3,7 +3,7 @@ package architecture.resonator_combat_framework.module.entity_animation.animatio
 /**
  * 动画播放配置。
  *
- * @param animType 动画类型：DEFAULT(按动画本身)、PLAY_ONCE(播放一次)、STOP_AT_LAST(停止于最后一帧)、LOOP(循环)
+ * @param playMode 动画类型：DEFAULT(按动画本身)、PLAY_ONCE(播放一次)、STOP_AT_LAST(停止于最后一帧)、LOOP(循环)
  * @param startTime 起始时间(tick)，默认 0
  * @param endTime 结束时间(tick)：0=持续到动画长度，负数=动画长度-N
  * @param speedMultiplier 动画倍数，默认 1.0
@@ -15,13 +15,13 @@ package architecture.resonator_combat_framework.module.entity_animation.animatio
  * @param mirror 是否镜像动画（左右翻转），默认 false
  */
 data class PlayConfig(
-	val animType: AnimType = AnimType.DEFAULT,
+	val playMode: PlayMode = PlayMode.DEFAULT,
 	val startTime: Int = 0,
 	val endTime: Int = 0,
 	val speedMultiplier: Float = 1f,
 	val durationTicks: Int = 0,
 	val originalAnimLengthSec: Float = 0f,
-	val boneConfig: ProxyBoneConfigData? = null,
+	val boneConfig: BoneConfig? = null,
 	val fadeInTicks: Int = -1,
 	val fadeOutTicks: Int = -1,
 	val mirror: Boolean = false
@@ -48,7 +48,7 @@ data class PlayConfig(
 	}
 }
 
-enum class AnimType {
+enum class PlayMode {
 	/** 按动画本身的 loop 类型 */
 	DEFAULT,
 

@@ -21,7 +21,7 @@ object ModelPartApplier {
 	 * @param except 缩放分母（16=世界坐标，1=模型坐标）
 	 */
 	fun computeFor(
-		bone: BonePose, flags: ProxyBoneFlags?,
+		bone: BonePose, flags: BoneFlags?,
 		flipPX: Boolean = false, flipPY: Boolean = false, flipPZ: Boolean = false,
 		flipRX: Boolean = false, flipRY: Boolean = false, flipRZ: Boolean = false,
 		except: Boolean = false,
@@ -71,7 +71,7 @@ object ModelPartApplier {
 	 * 将 Transform 应用到 PoseStack（用于 root/物品变换）。
 	 * 使用 Quaternionf.rotationZYX 避免万向锁。
 	 */
-	fun applyTo(poseStack: PoseStack, t: Transform, flags: ProxyBoneFlags?, weight: Float) {
+	fun applyTo(poseStack: PoseStack, t: Transform, flags: BoneFlags?, weight: Float) {
 		if (!t.hasAnyPos && !t.hasAnyRot && !t.hasAnyScale) return
 		val useWeight = if (flags.shouldBlend()) weight else 1f
 		if (t.hasAnyPos) poseStack.translate(
@@ -97,7 +97,7 @@ object ModelPartApplier {
 	 * 将 Transform 应用到 ModelPart（用于 HumanoidModel 骨骼）。
 	 * 支持 lock/normal 两种模式：lock 模式以 initialPose 为基准增量。
 	 */
-	fun applyTo(part: ModelPart, t: Transform, flags: ProxyBoneFlags?, weight: Float) {
+	fun applyTo(part: ModelPart, t: Transform, flags: BoneFlags?, weight: Float) {
 		val useWeight = if (flags.shouldBlend()) weight else 1f
 		val lockPos = flags.lockPos()
 		val lockRot = flags.lockRotation()

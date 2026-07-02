@@ -1,7 +1,7 @@
 package architecture.resonator_combat_framework.module.entity_animation.helper
 
 import architecture.resonator_combat_framework.events.registry.AnimationControllers
-import architecture.resonator_combat_framework.module.entity_animation.IProxyAnimationProvider.Companion.getMapperProvider
+import architecture.resonator_combat_framework.module.entity_animation.IAnimationProvider.Companion.getMapperProvider
 import architecture.resonator_combat_framework.module.entity_animation.animation.data.PlayConfig
 import architecture.resonator_combat_framework.module.entity_animation.network.PausePlayerPayload
 import architecture.resonator_combat_framework.module.entity_animation.network.PlayPlayerPayload
@@ -40,7 +40,7 @@ object PlayerAnimationHelper {
 		PacketDistributor.sendToPlayersTrackingEntityAndSelf(
 			this, PlayPlayerPayload(
 				playerUuid = uuid, controllerName = controllerName,
-				animId = animId, animType = config.animType,
+				animId = animId, playMode = config.playMode,
 				speedMultiplier = config.resolveSpeedMultiplier(),
 				startTime = config.startTime, endTime = config.endTime,
 				fadeInTicks = config.fadeInTicks, fadeOutTicks = config.fadeOutTicks

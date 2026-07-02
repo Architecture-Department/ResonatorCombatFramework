@@ -2,8 +2,8 @@
 
 import architecture.resonator_combat_framework.init.RcfAttachmentTypes
 import architecture.resonator_combat_framework.module.collision.CollisionSystem
-import architecture.resonator_combat_framework.module.entity_animation.IProxyAnimationProvider
-import architecture.resonator_combat_framework.module.entity_animation.IProxyAnimationProvider.Companion.getMapperProvider
+import architecture.resonator_combat_framework.module.entity_animation.IAnimationProvider
+import architecture.resonator_combat_framework.module.entity_animation.IAnimationProvider.Companion.getMapperProvider
 import architecture.resonator_combat_framework.util.RcfUtil
 import net.neoforged.bus.api.SubscribeEvent
 import net.neoforged.fml.common.EventBusSubscriber
@@ -15,7 +15,7 @@ object EntityEvents {
 	fun onTickPre(event: EntityTickEvent.Pre) {
 		val entity = event.entity
 		entity.getExistingDataOrNull(RcfAttachmentTypes.MOLANG_DATA)?.apply {}
-		if (entity is IProxyAnimationProvider) {
+		if (entity is IAnimationProvider) {
 			entity.getMapperProvider().tick()
 		}
 		entity.getExistingDataOrNull(RcfAttachmentTypes.STATE_HOLDER)?.apply {

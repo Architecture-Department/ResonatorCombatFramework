@@ -19,11 +19,11 @@ object PayloadRegistry {
 		registrar.playToServerAndClient(TriggerPlayerPayload.TYPE, TriggerPlayerPayload.STREAM_CODEC)
 		registrar.playToServerAndClient(PausePlayerPayload.TYPE, PausePlayerPayload.STREAM_CODEC)
 		registrar.playToServerAndClient(ResumePlayerPayload.TYPE, ResumePlayerPayload.STREAM_CODEC)
-		registrar.playToClient(BedrockAnimationDataSynchsPayload.TYPE, BedrockAnimationDataSynchsPayload.STREAM_CODEC)
-		registrar.playToClient(BedrockModelDataSynchsPayload.TYPE, BedrockModelDataSynchsPayload.STREAM_CODEC)
+		registrar.playToClient(BoneConfigSynchPayload.TYPE, BoneConfigSynchPayload.STREAM_CODEC)
+		registrar.playToClient(GeometryModelSynchPayload.TYPE, GeometryModelSynchPayload.STREAM_CODEC)
 		registrar.playToClient(
-			ProxyBoneConfigDataDataSynchsPayload.TYPE,
-			ProxyBoneConfigDataDataSynchsPayload.STREAM_CODEC
+			BoneConfigMapSynchPayload.TYPE,
+			BoneConfigMapSynchPayload.STREAM_CODEC
 		)
 //		registrar.playToServerAndClient(SyncEntityStatePayload.TYPE, SyncEntityStatePayload.STREAM_CODEC)
 		registrar.playToServerAndClient(AttackPayload.TYPE, AttackPayload.STREAM_CODEC)

@@ -11,7 +11,7 @@ import net.minecraft.util.profiling.ProfilerFiller
 import thedarkcolour.kotlinforforge.neoforge.forge.FORGE_BUS
 
 @AllOpe
-object StaticAnimationRegistry :
+object AnimationDefRegistry :
 	SimplePreparableReloadListener<Map<ResourceLocation, LazySupplier<AnimationDef>>>() {
 	private val animationsDef = mutableMapOf<ResourceLocation, LazySupplier<AnimationDef>>()
 

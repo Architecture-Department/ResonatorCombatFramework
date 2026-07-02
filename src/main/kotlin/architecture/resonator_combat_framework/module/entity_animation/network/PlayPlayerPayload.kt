@@ -3,8 +3,8 @@ package architecture.resonator_combat_framework.module.entity_animation.network
 import architecture.goldenboughs_lib.api.payload.ToServerAndClientPayload
 import architecture.goldenboughs_lib.util.LibUtil.RESOURCE_LOCATION_OPTIONAL_STREAM_CODEC
 import architecture.resonator_combat_framework.events.registry.AnimationControllers
-import architecture.resonator_combat_framework.module.entity_animation.IProxyAnimationProvider.Companion.getMapperProvider
-import architecture.resonator_combat_framework.module.entity_animation.animation.data.AnimType
+import architecture.resonator_combat_framework.module.entity_animation.IAnimationProvider.Companion.getMapperProvider
+import architecture.resonator_combat_framework.module.entity_animation.animation.data.PlayMode
 import architecture.resonator_combat_framework.module.entity_animation.animation.data.PlayConfig
 import architecture.resonator_combat_framework.util.RcfUtil
 import io.netty.buffer.ByteBuf
@@ -26,7 +26,7 @@ constructor(
 	val playerUuid: UUID,
 	val controllerName: Optional<ResourceLocation> = Optional.empty(),
 	val animId: ResourceLocation,
-	val animType: AnimType = AnimType.DEFAULT,
+	val playMode: PlayMode = PlayMode.DEFAULT,
 	val speedMultiplier: Float = 1f,
 	val startTime: Int = 0,
 	val endTime: Int = 0,
@@ -39,7 +39,7 @@ constructor(
 		playerUuid: UUID,
 		controllerName: ResourceLocation?,
 		animId: ResourceLocation,
-		animType: AnimType = AnimType.DEFAULT,
+		playMode: PlayMode = PlayMode.DEFAULT,
 		speedMultiplier: Float = 1f,
 		startTime: Int = 0,
 		endTime: Int = 0,
@@ -49,7 +49,7 @@ constructor(
 		playerUuid,
 		Optional.ofNullable(controllerName),
 		animId,
-		animType,
+		playMode,
 		speedMultiplier,
 		startTime,
 		endTime,
@@ -60,7 +60,7 @@ constructor(
 	override fun type() = TYPE
 
 	private fun buildConfig() = PlayConfig(
-		animType = animType,
+		playMode = playMode,
 		speedMultiplier = speedMultiplier,
 		startTime = startTime,
 		endTime = endTime,
@@ -80,9 +80,9 @@ constructor(
 	}
 
 	companion object {
-		private val ANIM_TYPE_CODEC: StreamCodec<ByteBuf, AnimType> =
+		private val ANIM_TYPE_CODEC: StreamCodec<ByteBuf, PlayMode> =
 			ByteBufCodecs.BYTE.map(
-				{ AnimType.entries[it.toInt()] },
+				{ PlayMode.entries[it.toInt()] },
 				{ it.ordinal.toByte() }
 			)
 
@@ -95,7 +95,7 @@ constructor(
 				UUIDUtil.STREAM_CODEC.encode(buf, p.playerUuid)
 				RESOURCE_LOCATION_OPTIONAL_STREAM_CODEC.encode(buf, p.controllerName)
 				ResourceLocation.STREAM_CODEC.encode(buf, p.animId)
-				ANIM_TYPE_CODEC.encode(buf, p.animType)
+				ANIM_TYPE_CODEC.encode(buf, p.playMode)
 				ByteBufCodecs.FLOAT.encode(buf, p.speedMultiplier)
 				ByteBufCodecs.VAR_INT.encode(buf, p.startTime)
 				ByteBufCodecs.VAR_INT.encode(buf, p.endTime)

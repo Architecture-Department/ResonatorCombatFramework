@@ -1,8 +1,8 @@
 package architecture.resonator_combat_framework.events
 
-import architecture.resonator_combat_framework.module.entity_animation.network.BedrockAnimationDataSynchsPayload
-import architecture.resonator_combat_framework.module.entity_animation.network.BedrockModelDataSynchsPayload
-import architecture.resonator_combat_framework.module.entity_animation.network.ProxyBoneConfigDataDataSynchsPayload
+import architecture.resonator_combat_framework.module.entity_animation.network.BoneConfigMapSynchPayload
+import architecture.resonator_combat_framework.module.entity_animation.network.BoneConfigSynchPayload
+import architecture.resonator_combat_framework.module.entity_animation.network.GeometryModelSynchPayload
 import architecture.resonator_combat_framework.util.RcfUtil
 import net.neoforged.bus.api.SubscribeEvent
 import net.neoforged.fml.common.EventBusSubscriber
@@ -15,9 +15,9 @@ object GameEvents {
 	@SubscribeEvent
 	fun onDatapackSync(event: OnDatapackSyncEvent) {
 		if (event.relevantPlayers.toList().isEmpty() || event.relevantPlayers.findFirst().isEmpty) return
-		val payload = BedrockAnimationDataSynchsPayload()
-		val payload1 = BedrockModelDataSynchsPayload()
-		val payload2 = ProxyBoneConfigDataDataSynchsPayload()
+		val payload = BoneConfigSynchPayload()
+		val payload1 = GeometryModelSynchPayload()
+		val payload2 = BoneConfigMapSynchPayload()
 		event.relevantPlayers.forEach { player ->
 			if (player == null || player.connection.getConnection().isMemoryConnection) return@forEach
 			PacketDistributor.sendToPlayer(player, payload, payload1, payload2)

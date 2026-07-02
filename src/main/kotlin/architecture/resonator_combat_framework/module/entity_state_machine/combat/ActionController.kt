@@ -5,8 +5,6 @@ import architecture.resonator_combat_framework.core.RcfEventHooks
 import architecture.resonator_combat_framework.module.entity_state_machine.event.CombatActionEvent
 import architecture.resonator_combat_framework.module.entity_state_machine.holder.EntityStateHolder
 import architecture.resonator_combat_framework.util.TimeUtil
-import net.minecraft.client.Minecraft
-import net.minecraft.network.chat.Component
 import net.minecraft.world.entity.LivingEntity
 import kotlin.math.max
 
@@ -147,16 +145,6 @@ class ActionController(val entity: LivingEntity) {
 
 
 	fun tick() {
-		Minecraft.getInstance().gui.setOverlayMessage(
-			Component.literal(
-				"%.2f ".format(time) +
-					"$action " +
-					"$actionState " +
-					"$prevActionState " +
-					"${action?.isInterruptible(time, holder, action!!, entity)}"
-			),
-			false
-		)
 		val action = action ?: return
 		val rawDelta = 1 / 20f
 		val scaledDelta = TimeUtil.calcScaledDelta(rawDelta, combatSpeedMultiplier)

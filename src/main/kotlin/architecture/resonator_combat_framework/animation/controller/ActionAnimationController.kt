@@ -1,7 +1,7 @@
 package architecture.resonator_combat_framework.animation.controller
 
 import architecture.resonator_combat_framework.config.RcfConfig
-import architecture.resonator_combat_framework.module.entity_animation.animation.controller.BedrockAnimationController
+import architecture.resonator_combat_framework.module.entity_animation.animation.controller.AnimationController
 import architecture.resonator_combat_framework.module.entity_animation.animation.mapper.AnimationControllerManager
 import architecture.resonator_combat_framework.module.entity_animation.animation.mapper.IEntityAnimationMapperProvider
 import architecture.resonator_combat_framework.module.entity_animation.animation.mapper.LivingEntityAnimationMapperProvider
@@ -16,7 +16,7 @@ class ActionAnimationController<T : Entity>(
 	manager: AnimationControllerManager<T>,
 	id: ResourceLocation,
 	isClient: Boolean
-) : BedrockAnimationController<T>(manager, id, isClient) {
+) : AnimationController<T>(manager, id, isClient) {
 	var mainHandItem: ItemStack? = null
 	var offhandItem: ItemStack? = null
 

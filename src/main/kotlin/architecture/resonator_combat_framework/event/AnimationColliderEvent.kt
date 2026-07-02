@@ -2,7 +2,7 @@ package architecture.resonator_combat_framework.event
 
 import architecture.goldenboughs_lib.api.AllOpe
 import architecture.resonator_combat_framework.module.entity_animation.animation.controller.IEntityAnimationController
-import architecture.resonator_combat_framework.module.entity_animation.animation.model.BrModel
+import architecture.resonator_combat_framework.module.entity_animation.animation.model.GeometryModel
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.PoseData
 import net.minecraft.world.entity.Entity
 import net.neoforged.bus.api.Event
@@ -18,7 +18,7 @@ sealed class AnimationColliderEvent(
 	val entity: Entity,
 	val animTime: Float,
 	val poseData: PoseData,
-	val brModel: BrModel,
+	val brModel: GeometryModel,
 	val mergedProxy: PoseData,
 ) : Event() {
 
@@ -28,7 +28,7 @@ sealed class AnimationColliderEvent(
 		entity: Entity,
 		animTime: Float,
 		poseData: PoseData,
-		brModel: BrModel,
+		brModel: GeometryModel,
 		mergedProxy: PoseData,
 	) : AnimationColliderEvent(controller, entity, animTime, poseData, brModel, mergedProxy)
 
@@ -38,7 +38,7 @@ sealed class AnimationColliderEvent(
 		entity: Entity,
 		animTime: Float,
 		poseData: PoseData,
-		brModel: BrModel,
+		brModel: GeometryModel,
 		mergedProxy: PoseData,
 	) : AnimationColliderEvent(controller, entity, animTime, poseData, brModel, mergedProxy)
 }

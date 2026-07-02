@@ -13,16 +13,16 @@ import net.minecraft.server.packs.resources.ResourceManager
 import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener
 import net.minecraft.util.profiling.ProfilerFiller
 
-class BedrockModelRegistry(
+class GeometryModelRegistry(
 	val isClient: Boolean
 ) : SimpleJsonResourceReloadListener(Gson(), "rcf/models") {
 
 	companion object {
-		private val CLIENT = BedrockModelRegistry(true)
-		private val SERVER = BedrockModelRegistry(false)
+		private val CLIENT = GeometryModelRegistry(true)
+		private val SERVER = GeometryModelRegistry(false)
 
 		@JvmStatic
-		fun getInstance(isClient: Boolean): BedrockModelRegistry {
+		fun getInstance(isClient: Boolean): GeometryModelRegistry {
 			return if (isClient) CLIENT else SERVER
 		}
 

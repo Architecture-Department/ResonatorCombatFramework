@@ -5,7 +5,7 @@ import architecture.resonator_combat_framework.module.entity_animation.animation
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.PoseData
 import architecture.resonator_combat_framework.module.entity_animation.animation.molang.EasingTypes
 import architecture.resonator_combat_framework.module.entity_animation.animation.molang.MolangData
-import architecture.resonator_combat_framework.module.entity_animation.util.AnimationMirrorUtil
+import architecture.resonator_combat_framework.module.entity_animation.util.MirrorUtil
 import com.google.gson.JsonObject
 import org.joml.Vector2f
 import org.joml.Vector3f
@@ -183,18 +183,18 @@ data class KeyframeAnimation
 	fun mirror(): KeyframeAnimation {
 		val newBones = mutableMapOf<String, BoneTrack>()
 		for ((name, boneAnim) in bones) {
-			newBones[AnimationMirrorUtil.mirrorBoneName(name)] = boneAnim.mirrored()
+			newBones[MirrorUtil.mirrorBoneName(name)] = boneAnim.mirrored()
 		}
 		return copy(
 			bones = newBones,
 			sounds = sounds.map { sound ->
 				sound.copy(effects = sound.effects.map { effect ->
-					effect.copy(locatorName = effect.locatorName?.let { AnimationMirrorUtil.mirrorBoneName(it) })
+					effect.copy(locatorName = effect.locatorName?.let { MirrorUtil.mirrorBoneName(it) })
 				})
 			},
 			particles = particles.map { particle ->
 				particle.copy(effects = particle.effects.map { effect ->
-					effect.copy(locatorName = effect.locatorName?.let { AnimationMirrorUtil.mirrorBoneName(it) })
+					effect.copy(locatorName = effect.locatorName?.let { MirrorUtil.mirrorBoneName(it) })
 				})
 			}
 		)

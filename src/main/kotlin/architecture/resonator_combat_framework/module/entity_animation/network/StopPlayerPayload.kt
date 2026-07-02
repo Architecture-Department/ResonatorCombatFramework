@@ -3,7 +3,7 @@ package architecture.resonator_combat_framework.module.entity_animation.network
 
 import architecture.goldenboughs_lib.api.payload.ToServerAndClientPayload
 import architecture.goldenboughs_lib.util.LibUtil.RESOURCE_LOCATION_OPTIONAL_STREAM_CODEC
-import architecture.resonator_combat_framework.module.entity_animation.IProxyAnimationProvider.Companion.getMapperProvider
+import architecture.resonator_combat_framework.module.entity_animation.IAnimationProvider.Companion.getMapperProvider
 import architecture.resonator_combat_framework.util.RcfUtil
 import io.netty.buffer.ByteBuf
 import net.minecraft.client.player.AbstractClientPlayer

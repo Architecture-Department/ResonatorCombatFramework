@@ -25,7 +25,7 @@ import architecture.goldenboughs_lib.api.AllOpe
  * scale.lock     — 锁定缩放
  */
 @AllOpe
-data class ProxyBoneFlags(
+data class BoneFlags(
 	val flags: Map<String, Boolean> = emptyMap()
 ) {
 	/** 第三方可直接读取 flags 中的 key */
@@ -34,20 +34,20 @@ data class ProxyBoneFlags(
 
 // ═══════════════ Lock 控制（nullable receiver，null 时默认 true） ═══════════════
 
-fun ProxyBoneFlags?.lockVanilla(): Boolean = this?.flags?.get("lock") ?: true
-fun ProxyBoneFlags?.lockPos(): Boolean = lockVanilla() || (this?.flags?.get("pos.lock") ?: true)
-fun ProxyBoneFlags?.lockRotation(): Boolean = lockVanilla() || (this?.flags?.get("rot.lock") ?: true)
-fun ProxyBoneFlags?.lockScale(): Boolean = lockVanilla() || (this?.flags?.get("scale.lock") ?: true)
-fun ProxyBoneFlags?.hasAnyLockState(): Boolean = lockPos() || lockRotation() || lockScale()
+fun BoneFlags?.lockVanilla(): Boolean = this?.flags?.get("lock") ?: true
+fun BoneFlags?.lockPos(): Boolean = lockVanilla() || (this?.flags?.get("pos.lock") ?: true)
+fun BoneFlags?.lockRotation(): Boolean = lockVanilla() || (this?.flags?.get("rot.lock") ?: true)
+fun BoneFlags?.lockScale(): Boolean = lockVanilla() || (this?.flags?.get("scale.lock") ?: true)
+fun BoneFlags?.hasAnyLockState(): Boolean = lockPos() || lockRotation() || lockScale()
 
 // ═══════════════ 过渡控制（nullable receiver，null 时默认 true） ═══════════════
 
-fun ProxyBoneFlags?.shouldBlend(): Boolean = this?.flags?.get("blend") ?: true
-fun ProxyBoneFlags?.shouldTransition(): Boolean = this?.flags?.get("transition") ?: true
-fun ProxyBoneFlags?.shouldFadeIn(): Boolean = this?.flags?.get("fade_in") ?: shouldTransition()
-fun ProxyBoneFlags?.shouldFadeOut(): Boolean = this?.flags?.get("fade_out") ?: shouldTransition()
+fun BoneFlags?.shouldBlend(): Boolean = this?.flags?.get("blend") ?: true
+fun BoneFlags?.shouldTransition(): Boolean = this?.flags?.get("transition") ?: true
+fun BoneFlags?.shouldFadeIn(): Boolean = this?.flags?.get("fade_in") ?: shouldTransition()
+fun BoneFlags?.shouldFadeOut(): Boolean = this?.flags?.get("fade_out") ?: shouldTransition()
 
 // ═══════════════ 轴启用控制（nullable receiver，null 时默认 true） ═══════════════
 
-fun ProxyBoneFlags?.isEnabled(axis: String): Boolean = this?.flags?.get(axis) ?: true
+fun BoneFlags?.isEnabled(axis: String): Boolean = this?.flags?.get(axis) ?: true
 

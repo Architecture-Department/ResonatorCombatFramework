@@ -1,10 +1,10 @@
 package architecture.resonator_combat_framework.module.entity_animation.animation.mapper
 
 import architecture.resonator_combat_framework.core.RcfEventHooks
-import architecture.resonator_combat_framework.module.entity_animation.animation.data.ProxyBoneFlags
+import architecture.resonator_combat_framework.module.entity_animation.animation.data.BoneFlags
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.GeometryData
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.PoseData
-import architecture.resonator_combat_framework.module.entity_animation.registry.BedrockModelRegistry
+import architecture.resonator_combat_framework.module.entity_animation.registry.GeometryModelRegistry
 import architecture.resonator_combat_framework.util.RcfUtil
 import net.minecraft.client.model.PlayerModel
 import net.minecraft.world.entity.player.Player
@@ -24,7 +24,7 @@ class PlayerAnimationMapperProvider(
 
 	init {
 		animationControllerManager.geometry =
-			BedrockModelRegistry.getInstance(isClient).get(IDENTIFIER) ?: GeometryData.EMPTY
+			GeometryModelRegistry.getInstance(isClient).get(IDENTIFIER) ?: GeometryData.EMPTY
 		RcfEventHooks.AnimationControllerRegister<Player>().getSortedEntries()
 			.forEach { (controllerName, controllerFactory, priority) ->
 				animationControllerManager.add(
@@ -38,7 +38,7 @@ class PlayerAnimationMapperProvider(
 	override fun applyProxyToModel(
 		poseData: PoseData,
 		model: PlayerModel<Player>,
-		flags: Map<String, ProxyBoneFlags>
+		flags: Map<String, BoneFlags>
 	) {
 		if (!isClient) return
 		super.applyProxyToModel(poseData, model, flags)

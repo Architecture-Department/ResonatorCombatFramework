@@ -1,6 +1,6 @@
 package architecture.resonator_combat_framework.module.entity_animation.command
 
-import architecture.resonator_combat_framework.module.entity_animation.registry.BedrockAnimationRegistry
+import architecture.resonator_combat_framework.module.entity_animation.registry.KeyframeAnimationRegistry
 import com.mojang.brigadier.context.CommandContext
 import com.mojang.brigadier.suggestion.SuggestionProvider
 import com.mojang.brigadier.suggestion.Suggestions
@@ -14,7 +14,7 @@ object AnimationIdArgumentProvider : SuggestionProvider<CommandSourceStack> {
 		ctx: CommandContext<CommandSourceStack>,
 		builder: SuggestionsBuilder
 	): CompletableFuture<Suggestions> {
-		val animIds = BedrockAnimationRegistry.getInstance(true).getAll().keys
+		val animIds = KeyframeAnimationRegistry.getInstance(true).getAll().keys
 		return SharedSuggestionProvider.suggest(animIds.map { it.path }, builder)
 	}
 }

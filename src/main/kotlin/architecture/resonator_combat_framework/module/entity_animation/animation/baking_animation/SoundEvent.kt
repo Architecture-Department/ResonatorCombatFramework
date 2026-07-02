@@ -2,7 +2,7 @@ package architecture.resonator_combat_framework.module.entity_animation.animatio
 
 import architecture.goldenboughs_lib.util.LibUtil
 import architecture.resonator_combat_framework.module.entity_animation.animation.controller.IEntityAnimationController
-import architecture.resonator_combat_framework.module.entity_animation.animation.model.BrModel
+import architecture.resonator_combat_framework.module.entity_animation.animation.model.GeometryModel
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.PoseData
 import architecture.resonator_combat_framework.module.entity_animation.animation.molang.MoLangParser
 import architecture.resonator_combat_framework.module.entity_animation.animation.molang.MolangData
@@ -24,7 +24,7 @@ data class SoundEvent
 	fun runs(
 		controller: IEntityAnimationController<*>,
 		entity: Entity,
-		brModel: BrModel,
+		brModel: GeometryModel,
 		animationData: PoseData,
 		context: MolangData? = null,
 		partialTick: Float = 1f
@@ -42,7 +42,7 @@ data class SoundEvent
 		fun run(
 			controller: IEntityAnimationController<*>,
 			entity: Entity,
-			brModel: BrModel,
+			brModel: GeometryModel,
 			animationData: PoseData,
 			context: MolangData? = null,
 			partialTick: Float = 1f

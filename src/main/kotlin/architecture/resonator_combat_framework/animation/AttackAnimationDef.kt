@@ -2,11 +2,11 @@ package architecture.resonator_combat_framework.animation
 
 import architecture.goldenboughs_lib.util.LibUtil.rlOf
 import architecture.resonator_combat_framework.core.RcfEventHooks
-import architecture.resonator_combat_framework.init.AnimationPropertys
+import architecture.resonator_combat_framework.init.AnimationProperties
 import architecture.resonator_combat_framework.module.collision.CollisionEntry
 import architecture.resonator_combat_framework.module.collision.CollisionSystem
 import architecture.resonator_combat_framework.module.entity_animation.animation.controller.IEntityAnimationController
-import architecture.resonator_combat_framework.module.entity_animation.animation.model.BrModel
+import architecture.resonator_combat_framework.module.entity_animation.animation.model.GeometryModel
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.PoseData
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.Entity
@@ -65,7 +65,7 @@ constructor(
 		phase: AttackPhase
 	): Double {
 		return attacker.getAttributeValue(Attributes.ATTACK_DAMAGE) *
-			getProperty(AnimationPropertys.DAMAGE_MULTIPLIER, phase).orElse(1.0f)!!
+			getProperty(AnimationProperties.DAMAGE_MULTIPLIER, phase).orElse(1.0f)!!
 	}
 
 	/**
@@ -76,7 +76,7 @@ constructor(
 		entity: Entity,
 		animTime: Float,
 		poseData: PoseData,
-		brModel: BrModel,
+		brModel: GeometryModel,
 		mergedProxy: PoseData,
 		controller: IEntityAnimationController<*>,
 	) {
@@ -98,7 +98,7 @@ constructor(
 		entity: Entity,
 		animTime: Float,
 		poseData: PoseData,
-		brModel: BrModel,
+		brModel: GeometryModel,
 		mergedProxy: PoseData,
 		controller: IEntityAnimationController<*>
 	) {
@@ -109,7 +109,7 @@ constructor(
 		entity: Entity,
 		animTime: Float,
 		poseData: PoseData,
-		brModel: BrModel,
+		brModel: GeometryModel,
 		mergedProxy: PoseData,
 		controller: IEntityAnimationController<*>
 	) {
@@ -155,7 +155,7 @@ constructor(
 		entity: Entity,
 		animTime: Float,
 		poseData: PoseData,
-		brModel: BrModel,
+		brModel: GeometryModel,
 		mergedProxy: PoseData,
 		controller: IEntityAnimationController<*>,
 		activeIndices: Set<Int>,
