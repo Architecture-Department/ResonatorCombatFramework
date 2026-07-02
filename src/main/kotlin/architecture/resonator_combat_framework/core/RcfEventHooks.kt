@@ -26,6 +26,10 @@ import net.minecraft.world.entity.LivingEntity
 import net.neoforged.neoforge.common.NeoForge
 import org.joml.Vector3d
 
+/**
+ * RCF 事件钩子 —— 集中转发战斗、动画、碰撞、粒子等系统的事件到 NeoForge 总线。
+ * 各模块通过此对象发射事件，外部监听者通过 [NeoForge.EVENT_BUS] 订阅。
+ */
 object RcfEventHooks {
 
 	// ===== Combat (entity_state_machine) =====

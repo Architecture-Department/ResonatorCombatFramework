@@ -3,8 +3,8 @@ package architecture.resonator_combat_framework.module.entity_animation.animatio
 import architecture.goldenboughs_lib.api.AllOpe
 import architecture.resonator_combat_framework.module.entity_animation.animation.AnimationDef
 import architecture.resonator_combat_framework.module.entity_animation.animation.baking_animation.KeyframeAnimation
-import architecture.resonator_combat_framework.module.entity_animation.animation.data.PlayConfig
 import architecture.resonator_combat_framework.module.entity_animation.animation.data.BoneConfig
+import architecture.resonator_combat_framework.module.entity_animation.animation.data.PlayConfig
 import architecture.resonator_combat_framework.module.entity_animation.animation.mapper.AnimationControllerManager
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.GeometryData
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.PoseData
@@ -12,7 +12,7 @@ import architecture.resonator_combat_framework.module.entity_animation.animation
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.Entity
 
-/** 动画控制器接口 */
+/** 动画控制器接口——定义实体动画控制器的完整行为契约。 */
 @AllOpe
 interface IEntityAnimationController<T : Entity> {
 	/** 控制器状态机 */
@@ -36,8 +36,13 @@ interface IEntityAnimationController<T : Entity> {
 	/** 控制器管理器 */
 	val manager: AnimationControllerManager<T>
 
+	/** 当前骨骼配置（由动画定义决定） */
 	val currentBoneConfig: BoneConfig
+
+	/** 当前烘培动画数据 */
 	val currentBakingAnim: KeyframeAnimation?
+
+	/** 额外模型数据（动画期间动态添加） */
 	val extraModel: GeometryData?
 
 	/** 控制器唯一标识 */
@@ -92,7 +97,7 @@ interface IEntityAnimationController<T : Entity> {
 	/** 是否正在淡出（TRANSITIONING 状态） */
 	val isFadingOut: Boolean
 
-	/** 是否正在淡入（ANIMATION_TRANSITIONING 状态） */
+	/** 是否正在淡入（CROSSFADING 状态） */
 	val isFadingIn: Boolean
 
 	/** 当前动画播放时间（秒），含过渡混合时间 */
@@ -101,6 +106,7 @@ interface IEntityAnimationController<T : Entity> {
 	/** 当前播放的动画实例（外部只读） */
 	val currentAnim: AnimationDef?
 
+	/** 当前动画的资源 ID */
 	val currentAnimId: ResourceLocation? get() = currentAnim?.animationId
 
 	// ===== 触发/停止 =====
@@ -108,7 +114,14 @@ interface IEntityAnimationController<T : Entity> {
 	/** 触发动画播放 */
 	fun trigger(animId: ResourceLocation, config: PlayConfig = PlayConfig.EMPTY)
 
-	/** 简易触发 */
+	/**
+	 * 简易触发——使用常用参数快速播放动画。
+	 *
+	 * @param animId 动画资源 ID
+	 * @param speedMultiplier 播放速度倍率
+	 * @param fadeInTicks 淡入 tick 数（-1 使用默认值）
+	 * @param fadeOutTicks 淡出 tick 数（-1 使用默认值）
+	 */
 	fun trigger(
 		animId: ResourceLocation,
 		speedMultiplier: Float = 1f,
@@ -143,7 +156,7 @@ interface IEntityAnimationController<T : Entity> {
 	/** 游戏刻推进（20tps） */
 	fun tick()
 
-	/** 合并后tick */
+	/** 合并后 tick */
 	fun tickAdvance()
 
 	/** 渲染帧更新过渡状态 */

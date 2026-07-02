@@ -10,8 +10,14 @@ import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 import org.jetbrains.annotations.Contract
 
+/**
+ * RCF 工具类 —— 提供 Mod ID、日志、资源位置创建、注册表快捷方法等通用工具。
+ */
 object RcfUtil {
+	/** Mod ID */
 	const val ID: String = "resonator_combat_framework"
+
+	/** Mod 名称 */
 	const val NAME: String = "ResonatorCombatFramework"
 
 	@JvmStatic

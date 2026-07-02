@@ -16,8 +16,8 @@ import org.joml.Matrix4f
  * @property shape       碰撞形状（相对坐标）。
  * @property worldMatrix 预计算的世界空间变换矩阵（含实体坐标 + 骨骼层次）。
  *                       为 null 时使用相对坐标 + 实体位置直接变换。
- * @property hasEffect   是否触发碰撞
- * @property raycastMode 射线遮挡检查模式。
+ * @property hasEffect   是否触发碰撞。若为 false 则跳过命中判定。
+ * @property raycastMode 射线遮挡检查模式，用于防止碰撞体穿透方块打到目标。
  */
 data class CollisionEntry(
 	val id: ResourceLocation,

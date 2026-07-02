@@ -19,6 +19,9 @@ import net.minecraft.network.chat.Component
 import net.minecraft.world.entity.player.Player
 
 /**
+ * 动画测试命令，用于在游戏中测试玩家动画的播放、停止、暂停和恢复。
+ *
+ * 基本用法：
  * ```
  * /test_anim <target> play <animId> [speed] [fadeIn]
  * /test_anim <target> stop [fadeOut]
@@ -27,6 +30,10 @@ import net.minecraft.world.entity.player.Player
  * ```
  */
 object TestAnimCommand {
+	/**
+	 * 向命令调度器注册 [test_anim] 命令树。
+	 * 需要 OP 权限等级 2。
+	 */
 	fun register(dispatcher: CommandDispatcher<CommandSourceStack>) {
 		dispatcher.register(
 			Commands.literal("test_anim")
@@ -83,6 +90,10 @@ object TestAnimCommand {
 		)
 	}
 
+	/**
+	 * 处理 play 子命令，解析参数并触发动画播放。
+	 * @return 命令执行结果码（1=成功，0=失败）
+	 */
 	private fun handlePlay(ctx: CommandContext<CommandSourceStack>): Int {
 		val arguments = ctx.getArguments() ?: return 0
 
@@ -111,6 +122,10 @@ object TestAnimCommand {
 		return 1
 	}
 
+	/**
+	 * 从命令上下文中获取目标玩家。
+	 * @throws RuntimeException 当获取失败时包装原始异常
+	 */
 	private fun getPlayer(ctx: CommandContext<CommandSourceStack>): Player {
 		return try {
 			EntityArgument.getPlayer(ctx, "target")
@@ -119,6 +134,10 @@ object TestAnimCommand {
 		}
 	}
 
+	/**
+	 * 执行一个不返回结果的操作（stop/pause/resume），并将操作应用到目标玩家。
+	 * @return 固定返回 1 表示成功
+	 */
 	private fun action(ctx: CommandContext<CommandSourceStack>, fn: Player.() -> Unit): Int {
 		fn(getPlayer(ctx))
 		return 1

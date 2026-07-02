@@ -10,6 +10,10 @@ import net.minecraft.server.packs.resources.SimplePreparableReloadListener
 import net.minecraft.util.profiling.ProfilerFiller
 import thedarkcolour.kotlinforforge.neoforge.forge.FORGE_BUS
 
+/**
+ * 动作注册表 —— 管理所有 [Action] 实例的注册与生命周期。
+ * 继承 [SimplePreparableReloadListener]，在资源重载时通过 [ActionRegistryEvent] 收集动作定义。
+ */
 @AllOpe
 object ActionRegistry : SimplePreparableReloadListener<Map<ResourceLocation, LazySupplier<Action>>>() {
 	private val actions = mutableMapOf<ResourceLocation, LazySupplier<Action>>()

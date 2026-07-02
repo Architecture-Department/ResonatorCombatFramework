@@ -19,7 +19,18 @@ import net.neoforged.neoforge.network.PacketDistributor
 import net.neoforged.neoforge.network.handling.IPayloadContext
 import java.util.*
 
-/** 触发动画数据包*/
+/**
+ * 触发动画数据包（双向：服务端↔客户端）。
+ * 触发指定玩家播放指定动画，支持速度倍率和淡入淡出控制。
+ * 在服务端和所有追踪该玩家的客户端之间同步。
+ *
+ * @property playerUuid 目标玩家的 UUID
+ * @property controllerName 目标控制器名称，为空则使用主控制器
+ * @property animId 要触发的动画 ID
+ * @property speedMultiplier 播放速度倍率
+ * @property fadeInTicks 淡入时长（tick），-1 表示默认
+ * @property fadeOutTicks 淡出时长（tick），-1 表示默认
+ */
 data class TriggerPlayerPayload
 @JvmOverloads
 constructor(
@@ -91,4 +102,3 @@ constructor(
 		)
 	}
 }
-

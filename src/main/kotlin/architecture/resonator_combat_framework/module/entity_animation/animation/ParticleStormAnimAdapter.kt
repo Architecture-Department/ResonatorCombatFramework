@@ -25,7 +25,13 @@ import org.mesdag.particlestorm.particle.ParticleEmitter
  */
 object ParticleStormAnimAdapter {
 
-	/** 发射器追踪键：controllerId + locatorName */
+	/**
+	 * 生成发射器追踪键：controllerId + locatorName。
+	 *
+	 * @param controllerName 控制器 ID
+	 * @param locatorName 定位器名称（null 表示实体本身）
+	 * @return 追踪用字符串键
+	 */
 	private fun trackKey(controllerName: ResourceLocation, locatorName: String?): String =
 		"${controllerName}:${locatorName ?: "@entity"}"
 
@@ -80,6 +86,9 @@ object ParticleStormAnimAdapter {
 		return true
 	}
 
+	/**
+	 * 将 [Vector3dc] 转为 Minecraft 的 [Vec3]。
+	 */
 	fun Vector3dc.toVec3(): Vec3 = Vec3(x(), y(), z())
 
 	/**

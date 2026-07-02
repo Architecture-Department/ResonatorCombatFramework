@@ -9,12 +9,12 @@ import org.joml.Vector3f
 /**
  * 骨骼碰撞体 —— 在 [OBB] 基础上记录所属骨骼和局部旋转。
  *
- * 世界坐标 = 实体位置 + 骨骼全局变换 + [center] 偏移 + [rotation] 旋转
+ * 世界坐标计算：实体位置 + 骨骼全局变换 + [center] 偏移 + [rotation] 旋转（ZYX 顺序）。
  *
- * @param boneName     所属骨骼名称
- * @param center       相对骨骼原点的偏移
- * @param halfExtents  碰撞体半边长
- * @param rotation     相对骨骼的局部旋转（度），ZYX 顺序
+ * @property boneName     所属骨骼名称，用于从模型中查找骨骼变换矩阵
+ * @property center       相对骨骼原点的偏移
+ * @property halfExtents  碰撞体半边长
+ * @property rotation     相对骨骼的局部旋转（度），ZYX 欧拉角顺序
  */
 open class BoneCollider(
 	val boneName: String,

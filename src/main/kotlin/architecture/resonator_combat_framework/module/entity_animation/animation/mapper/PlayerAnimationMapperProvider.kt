@@ -9,7 +9,11 @@ import architecture.resonator_combat_framework.util.RcfUtil
 import net.minecraft.client.model.PlayerModel
 import net.minecraft.world.entity.player.Player
 
-/** 玩家动画映射器——零外部依赖 + 渲染入口 */
+/**
+ * 玩家动画映射器，零外部依赖，提供玩家的动画渲染入口。
+ * 继承 [HumanoidEntityAnimationMapperProvider]，额外处理玩家模型的附加层（外套、袖子、裤腿）。
+ * 初始化时从注册表加载玩家几何模型并注册所有动画控制器。
+ */
 class PlayerAnimationMapperProvider(
 	val player: Player,
 	isClient: Boolean = player.level().isClientSide,
@@ -34,7 +38,13 @@ class PlayerAnimationMapperProvider(
 			}
 	}
 
-	/** 附加层：外套/袖子/裤腿 */
+	/**
+	 * 将代理骨骼数据映射到 PlayerModel，包含附加层（外套/袖子/裤腿）。
+	 *
+	 * @param poseData 代理骨骼姿态数据
+	 * @param model 目标 PlayerModel
+	 * @param flags 骨骼标志映射
+	 */
 	override fun applyProxyToModel(
 		poseData: PoseData,
 		model: PlayerModel<Player>,

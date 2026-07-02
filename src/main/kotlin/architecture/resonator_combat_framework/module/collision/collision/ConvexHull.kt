@@ -10,8 +10,12 @@ import kotlin.math.sqrt
 /**
  * ConvexHull（凸多边形碰撞体），可绑定到骨骼。
  *
- * @param boneName  绑定的骨骼名。不为 null 时，需要对应的 boneMatrix 才能变换到世界空间
- * @param vertices  定义凸多边形的顶点列表（模型坐标，需构成凸多面体）
+ * 使用 SAT（分离轴定理）与目标实体的 AABB 进行碰撞检测。
+ * 支持自定义顶点构成的任意凸多面体。
+ *
+ * @property boneName  绑定的骨骼名。不为 null 时，需要对应的 boneMatrix 才能变换到世界空间。
+ *                      为 null 时使用实体位置直接变换。
+ * @property vertices  定义凸多边形的顶点列表（模型坐标）。顶点需构成凸多面体。
  */
 data class ConvexHull(
 	val boneName: String? = null,
@@ -100,6 +104,15 @@ data class ConvexHull(
 	}
 
 	private companion object {
+		/**
+		 * 在给定 SAT 分离轴上测试凸多边形投影与 AABB 投影是否重叠。
+		 *
+		 * @param worldVerts  世界坐标下的凸多边形顶点
+		 * @param aabbCenter  AABB 中心
+		 * @param aabbHalf    AABB 半边长
+		 * @param axis        分离轴
+		 * @return true 表示在该轴上两投影重叠
+		 */
 		fun testAxis(
 			worldVerts: List<Vector3f>, aabbCenter: Vector3f, aabbHalf: Vector3f, axis: Vector3f,
 		): Boolean {
@@ -112,6 +125,16 @@ data class ConvexHull(
 			return !(hullMin > aabbMax || hullMax < aabbMin)
 		}
 
+		/**
+		 * 从凸多边形的顶点列表中计算面法线。
+		 *
+		 * 遍历所有三点组合，计算候选法线，
+		 * 仅保留所有顶点在法线同侧（即外表面）的法线。
+		 * 对近似平行的法线进行去重。
+		 *
+		 * @param verts 顶点列表
+		 * @return 唯一的外表面法线列表
+		 */
 		fun computeFaceNormals(verts: List<Vector3f>): List<Vector3f> {
 			val normals = mutableListOf<Vector3f>()
 			val n = verts.size

@@ -9,10 +9,14 @@ import net.minecraft.client.model.geom.PartPose
 import org.joml.Quaternionf
 import org.joml.Vector3f
 
+/**
+ * 模型部件变换应用工具，负责将骨骼动画的变换数据应用到 [ModelPart] 或 [PoseStack] 上。
+ * 支持位置/旋转/缩放的逐轴控制、锁定模式（以 initialPose 为基准）以及权重混合。
+ */
 object ModelPartApplier {
 
 	/**
-	 * 将 ProxyBone 变换数据计算为 Transform，应用轴翻转和单位缩放。
+	 * 将代理骨骼变换数据计算为 [Transform]，应用轴翻转和单位缩放。
 	 *
 	 * @param bone 代理骨骼数据
 	 * @param flags 骨骼标志（控制各轴是否启用）
@@ -70,6 +74,11 @@ object ModelPartApplier {
 	/**
 	 * 将 Transform 应用到 PoseStack（用于 root/物品变换）。
 	 * 使用 Quaternionf.rotationZYX 避免万向锁。
+	 *
+	 * @param poseStack 目标变换堆栈
+	 * @param t 变换数据
+	 * @param flags 骨骼标志
+	 * @param weight 混合权重（0~1）
 	 */
 	fun applyTo(poseStack: PoseStack, t: Transform, flags: BoneFlags?, weight: Float) {
 		if (!t.hasAnyPos && !t.hasAnyRot && !t.hasAnyScale) return
@@ -95,7 +104,12 @@ object ModelPartApplier {
 
 	/**
 	 * 将 Transform 应用到 ModelPart（用于 HumanoidModel 骨骼）。
-	 * 支持 lock/normal 两种模式：lock 模式以 initialPose 为基准增量。
+	 * 支持 lock/normal 两种模式：lock 模式以 [ModelPart.initialPose] 为基准增量。
+	 *
+	 * @param part 目标模型部件
+	 * @param t 变换数据
+	 * @param flags 骨骼标志
+	 * @param weight 混合权重（0~1）
 	 */
 	fun applyTo(part: ModelPart, t: Transform, flags: BoneFlags?, weight: Float) {
 		val useWeight = if (flags.shouldBlend()) weight else 1f
@@ -123,7 +137,10 @@ object ModelPartApplier {
 
 	// ===== 内部辅助方法 =====
 
-	/** 布尔值转 ±1 */
+	/**
+	 * 布尔值转 ±1 系数。
+	 * @return true 时返回 -1f，false 时返回 1f
+	 */
 	private fun sign(flip: Boolean): Float = if (flip) -1f else 1f
 
 	/**
@@ -184,7 +201,13 @@ object ModelPartApplier {
 		if (t.hasScaleZ) part.zScale += t.scale.z * w
 	}
 
-	/** 变换数据：位掩码标记哪些轴有值，避免 JOML Vec 默认值歧义 */
+	/**
+	 * 变换数据：使用位掩码标记哪些轴有实际数据，避免 JOML Vector3f 默认零值歧义。
+	 * @property mask 位掩码，标识各轴数据是否有效
+	 * @property pos 位置偏移
+	 * @property rot 旋转角度（度）
+	 * @property scale 缩放增量（相对 1.0 的偏移量）
+	 */
 	data class Transform(
 		private val mask: Int,
 		val pos: Vector3f,
@@ -203,13 +226,13 @@ object ModelPartApplier {
 			const val SCL_Z = 0x100
 		}
 
-		/** 是否有任何位置数据 */
+		/** 是否包含任何位置数据 */
 		val hasAnyPos: Boolean get() = mask and (POS_X or POS_Y or POS_Z) != 0
 
-		/** 是否有任何旋转数据 */
+		/** 是否包含任何旋转数据 */
 		val hasAnyRot: Boolean get() = mask and (ROT_X or ROT_Y or ROT_Z) != 0
 
-		/** 是否有任何缩放数据 */
+		/** 是否包含任何缩放数据 */
 		val hasAnyScale: Boolean get() = mask and (SCL_X or SCL_Y or SCL_Z) != 0
 
 		val hasPosX: Boolean get() = mask and POS_X != 0

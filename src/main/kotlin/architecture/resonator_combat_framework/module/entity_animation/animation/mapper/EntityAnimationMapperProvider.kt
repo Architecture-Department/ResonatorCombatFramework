@@ -2,9 +2,9 @@ package architecture.resonator_combat_framework.module.entity_animation.animatio
 
 import architecture.resonator_combat_framework.events.registry.AnimationControllers
 import architecture.resonator_combat_framework.module.entity_animation.animation.controller.IEntityAnimationController
-import architecture.resonator_combat_framework.module.entity_animation.animation.data.PlayConfig
 import architecture.resonator_combat_framework.module.entity_animation.animation.data.BoneConfig
 import architecture.resonator_combat_framework.module.entity_animation.animation.data.BoneFlags
+import architecture.resonator_combat_framework.module.entity_animation.animation.data.PlayConfig
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.PoseData
 import architecture.resonator_combat_framework.module.entity_animation.registry.BoneConfigRegistry
 import architecture.resonator_combat_framework.module.entity_animation.registry.KeyframeAnimationRegistry
@@ -14,7 +14,19 @@ import net.minecraft.client.model.EntityModel
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.Entity
 
-/** 实体动画映射器基类——管理控制器生命周期、触发/停止/暂停/恢复 */
+/**
+ * 实体动画映射器基类，管理控制器生命周期和骨骼变换应用。
+ * 实现了 [IEntityAnimationMapperProvider] 接口的核心功能：
+ * - 动画触发/停止/暂停/恢复
+ * - 游戏刻推进和渲染帧处理
+ * - 骨骼配置解析和代理骨骼→模型映射
+ *
+ * @param T 实体类型
+ * @param M 实体模型类型
+ * @property holder 所属实体
+ * @property isClient 是否为客户端
+ * @property animationControllerManager 动画控制器管理器
+ */
 abstract class EntityAnimationMapperProvider<T : Entity, M : EntityModel<T>>(
 	override val holder: T,
 	override val isClient: Boolean = holder.level().isClientSide,
@@ -29,14 +41,22 @@ abstract class EntityAnimationMapperProvider<T : Entity, M : EntityModel<T>>(
 	/** 当前渲染帧的 partialTick，供 applyItemTransform 使用 */
 	protected var currentPartialTick = 0f
 
+	/** 骨骼配置加载器 */
 	val configLoader: BoneConfigRegistry = BoneConfigRegistry.getInstance(isClient)
 
+	/** 动画数据加载器 */
 	val animationLoader: KeyframeAnimationRegistry = KeyframeAnimationRegistry.getInstance(isClient)
 
 
 	// ---- 触发 ----
 
-	/** 触发动画：解析控制器 → 设置骨骼配置 → 触发控制器 */
+	/**
+	 * 触发动画：解析控制器 → 设置骨骼配置 → 触发控制器。
+	 *
+	 * @param controllerName 控制器名称，null 则使用主控制器
+	 * @param animId 动画 ID
+	 * @param playData 播放配置
+	 */
 	override fun trigger(controllerName: ResourceLocation?, animId: ResourceLocation, playData: PlayConfig) {
 		(animationControllerManager.get(controllerName ?: AnimationControllers.MAIN) ?: mainController).trigger(
 			animId,
@@ -46,24 +66,41 @@ abstract class EntityAnimationMapperProvider<T : Entity, M : EntityModel<T>>(
 
 	// ---- 停止 ----
 
-	/** 停止指定控制器的动画 */
+	/**
+	 * 停止指定控制器的动画。
+	 *
+	 * @param controllerName 控制器名称
+	 * @param fadeOutTicks 淡出时长（tick），-1 表示立即停止
+	 */
 	override fun stop(controllerName: ResourceLocation, fadeOutTicks: Int) {
 		(animationControllerManager.get(controllerName) ?: mainController).stop(fadeOutTicks)
 	}
 
-	/** 停止所有控制器的动画 */
+	/**
+	 * 停止所有控制器的动画。
+	 *
+	 * @param fadeOutTicks 淡出时长（tick）
+	 */
 	override fun stopAll(fadeOutTicks: Int) {
 		animationControllerManager.getAll().forEach { it.stop(fadeOutTicks) }
 	}
 
 	// ---- 暂停/恢复 ----
 
-	/** 暂停指定控制器的动画 */
+	/**
+	 * 暂停指定控制器的动画。
+	 *
+	 * @param controllerName 控制器名称
+	 */
 	override fun pause(controllerName: ResourceLocation) {
 		(animationControllerManager.get(controllerName) ?: mainController).pause()
 	}
 
-	/** 恢复指定控制器的动画 */
+	/**
+	 * 恢复指定控制器的动画。
+	 *
+	 * @param controllerName 控制器名称
+	 */
 	override fun resume(controllerName: ResourceLocation) {
 		(animationControllerManager.get(controllerName) ?: mainController).resume()
 	}
@@ -76,29 +113,56 @@ abstract class EntityAnimationMapperProvider<T : Entity, M : EntityModel<T>>(
 
 	// ---- 状态查询 ----
 
-	/** 是否有任意控制器活跃 */
+	/**
+	 * 是否有任意控制器活跃。
+	 *
+	 * @return 是否有活跃控制器
+	 */
 	override fun isActive(): Boolean = animationControllerManager.isAnyActive()
 
-	/** 获取指定控制器（不存在返回主控制器） */
+	/**
+	 * 获取指定控制器（不存在返回主控制器）。
+	 *
+	 * @param controllerName 控制器名称
+	 * @return 控制器实例
+	 */
 	override fun getController(controllerName: ResourceLocation?): IEntityAnimationController<T>? =
 		animationControllerManager.get(controllerName ?: AnimationControllers.MAIN) ?: mainController
 
-	/** 获取所有控制器 */
+	/**
+	 * 获取所有控制器。
+	 *
+	 * @return 控制器列表
+	 */
 	override fun controllers(): List<IEntityAnimationController<T>> = animationControllerManager.getAll()
 
-	/** 是否存在指定控制器 */
+	/**
+	 * 是否存在指定控制器。
+	 *
+	 * @param controllerName 控制器名称
+	 * @return 是否存在
+	 */
 	override fun hasController(controllerName: ResourceLocation): Boolean =
 		animationControllerManager.has(controllerName)
 
 	// ---- 控制器管理 ----
 
-	/** 添加控制器（禁止覆盖 MAIN） */
+	/**
+	 * 添加控制器（禁止覆盖 MAIN）。
+	 *
+	 * @param name 控制器名称
+	 * @param controller 控制器实例
+	 */
 	protected fun addController(name: ResourceLocation, controller: IEntityAnimationController<T>) {
 		if (name == AnimationControllers.MAIN) return
 		animationControllerManager.add(name, controller)
 	}
 
-	/** 移除控制器（禁止移除 MAIN） */
+	/**
+	 * 移除控制器（禁止移除 MAIN）。
+	 *
+	 * @param name 控制器名称
+	 */
 	protected fun removeController(name: ResourceLocation) {
 		if (name == AnimationControllers.MAIN) return
 		animationControllerManager.remove(name)
@@ -106,32 +170,58 @@ abstract class EntityAnimationMapperProvider<T : Entity, M : EntityModel<T>>(
 
 	// ---- 高级查询 ----
 
-	/** 获取所有活跃控制器（按优先级排序） */
+	/**
+	 * 获取所有活跃控制器（按优先级排序）。
+	 *
+	 * @return 活跃控制器列表
+	 */
 	override fun getActiveControllersSorted(): List<IEntityAnimationController<T>> =
 		animationControllerManager.getSortedActive()
 
-	/** 获取可渲染的控制器列表 */
+	/**
+	 * 获取可渲染的控制器列表。
+	 *
+	 * @return 可渲染控制器列表
+	 */
 	override fun getRenderableControllers(): List<IEntityAnimationController<T>> =
 		animationControllerManager.getRenderable()
 
-	/** 查找阻塞指定控制器的高优先级控制器 */
+	/**
+	 * 查找阻塞指定控制器的高优先级控制器。
+	 *
+	 * @param controller 目标控制器
+	 * @return 阻塞的控制器列表
+	 */
 	override fun findBlockingControllers(controller: IEntityAnimationController<T>): List<IEntityAnimationController<T>> =
 		animationControllerManager.findBlocking(controller)
 
 	// ---- 游戏刻推进 ----
 
-	/** 游戏刻推进 */
+	/**
+	 * 游戏刻推进，委托给动画控制器管理器。
+	 */
 	override fun tick() = animationControllerManager.tick()
 
 	// ---- 配置 ----
 
-	/** 获取动画的骨骼配置 */
+	/**
+	 * 获取动画的骨骼配置。
+	 *
+	 * @param animId 动画 ID
+	 * @return 骨骼配置
+	 */
 	override fun resolveConfig(animId: ResourceLocation): BoneConfig =
 		configLoader.get(animId) ?: BoneConfig.EMPTY
 
 	// ---- 骨骼应用 ----
 
-	/** 由 Mixin 每帧调用：更新过渡状态 → 重新合并 → 渲染到模型 */
+	/**
+	 * 由 Mixin 每帧调用：更新过渡状态 → 重新合并 → 渲染到模型。
+	 *
+	 * @param model 实体模型
+	 * @param partialTick 渲染帧插值系数
+	 * @param poseStack 姿态栈
+	 */
 	override fun tickAndRender(model: M, partialTick: Float, poseStack: PoseStack) {
 		if (!isClient || !isActive()) return
 		val tickSec = (holder.tickCount + partialTick) / 20f
@@ -152,13 +242,26 @@ abstract class EntityAnimationMapperProvider<T : Entity, M : EntityModel<T>>(
 		applyProxyToModel(interpolatedProxyModel, model, animationControllerManager.mergedBoneFlags)
 	}
 
-	/** 将代理骨骼数据映射到体 model */
+	/**
+	 * 将代理骨骼数据映射到 Minecraft 实体模型。
+	 * 子类需根据具体的模型类型实现骨骼映射逻辑。
+	 *
+	 * @param poseData 代理骨骼姿态数据
+	 * @param model 目标实体模型
+	 * @param flags 骨骼标志映射
+	 */
 	abstract fun applyProxyToModel(
 		poseData: PoseData, model: M,
 		flags: Map<String, BoneFlags>
 	)
 
-	/** 将 root 骨骼变换应用到 PoseStack */
+	/**
+	 * 将 root 骨骼变换应用到 PoseStack。
+	 *
+	 * @param poseData 代理骨骼姿态数据
+	 * @param poseStack 姿态栈
+	 * @param flags 骨骼标志映射
+	 */
 	fun applyRootTransform(
 		poseData: PoseData, poseStack: PoseStack,
 		flags: Map<String, BoneFlags>

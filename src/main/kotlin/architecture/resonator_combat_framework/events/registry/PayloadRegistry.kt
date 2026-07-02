@@ -9,6 +9,9 @@ import net.neoforged.bus.api.SubscribeEvent
 import net.neoforged.fml.common.EventBusSubscriber
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent
 
+/**
+ * 网络数据包注册 —— 在 [RegisterPayloadHandlersEvent] 中注册所有自定义网络数据包。
+ */
 @EventBusSubscriber(modid = RcfUtil.ID)
 object PayloadRegistry {
 	@SubscribeEvent

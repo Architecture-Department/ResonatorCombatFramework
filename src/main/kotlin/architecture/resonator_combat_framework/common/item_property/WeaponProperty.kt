@@ -10,6 +10,16 @@ import net.minecraft.world.entity.LivingEntity
 import net.minecraft.world.item.ItemStack
 import java.util.function.Supplier
 
+/**
+ * 武器物品属性。
+ *
+ * 扩展 [ItemProperty]，为武器物品提供攻击动作调度逻辑。
+ * 根据攻击类型（短按/长按）调度不同的动作序列或独立动作，
+ * 并通过状态机的动作控制器驱动攻击动画与打击判定。
+ *
+ * @property actionSequence 默认攻击动作序列的提供者
+ * @property longAction 长按攻击时的独立动作提供者（可选）
+ */
 class WeaponProperty
 @JvmOverloads
 constructor(
@@ -17,7 +27,13 @@ constructor(
 	val actionSequence: Supplier<ActionSequence>,
 	val longAction: Supplier<Action>? = null
 ) : ItemProperty(id) {
-	override fun onUse(item: ItemStack, entity: LivingEntity, hand: InteractionHand, pressType: AttackPayload.PressType) {
+
+	override fun onUse(
+		item: ItemStack,
+		entity: LivingEntity,
+		hand: InteractionHand,
+		pressType: AttackPayload.PressType
+	) {
 	}
 
 	override fun onAttack(

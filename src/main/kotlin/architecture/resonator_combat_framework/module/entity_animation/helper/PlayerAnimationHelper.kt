@@ -13,11 +13,23 @@ import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.entity.player.Player
 import net.neoforged.neoforge.network.PacketDistributor
 
+/**
+ * 玩家动画辅助工具，提供播放、停止、暂停和恢复动画的扩展方法。
+ *
+ * 所有方法同时支持客户端（[AbstractClientPlayer]）和服务端（[ServerPlayer]）操作，
+ * 服务端操作会自动向追踪该实体的所有玩家同步网络数据包。
+ */
 object PlayerAnimationHelper {
 
-	// ========== 触发（三种模式） ==========
+	// ========== 动画触发（三种重载） ==========
 
-	/** 完整数据类模式 */
+	/**
+	 * 通过完整的 [PlayConfig] 配置触发玩家动画。
+	 * @param animId 动画资源 ID
+	 * @param config 播放配置（速度、淡入淡出等）
+	 * @param controllerName 目标控制器名称，默认为 [AnimationControllers.MAIN]
+	 * @param isPayload 是否同步网络数据包（仅服务端有效），默认为 true
+	 */
 	@JvmStatic
 	@JvmOverloads
 	fun Player.triggerPlayerAnima(
@@ -48,7 +60,14 @@ object PlayerAnimationHelper {
 		)
 	}
 
-	/** 完整参数模式：速度 + 淡入 + 淡出 */
+	/**
+	 * 通过简化参数触发玩家动画（速度 + 淡入 + 淡出）。
+	 * @param animId 动画资源 ID
+	 * @param speedMultiplier 播放速度倍率，默认为 1.0
+	 * @param fadeInTicks 淡入过渡刻数，-1 表示使用默认值
+	 * @param fadeOutTicks 淡出过渡刻数，-1 表示使用默认值
+	 * @param isPayload 是否同步网络数据包
+	 */
 	@JvmStatic
 	@JvmOverloads
 	fun Player.triggerPlayerAnima(
@@ -68,7 +87,13 @@ object PlayerAnimationHelper {
 		)
 	}
 
-	/** 过渡时间模式：过渡时间 + 速度 */
+	/**
+	 * 通过过渡时间和速度触发玩家动画。
+	 * @param animId 动画资源 ID
+	 * @param transitionTicks 过渡（淡入）刻数
+	 * @param speedMultiplier 播放速度倍率，默认为 1.0
+	 * @param isPayload 是否同步网络数据包
+	 */
 	@JvmStatic
 	@JvmOverloads
 	fun Player.triggerPlayerAnima(
@@ -88,6 +113,12 @@ object PlayerAnimationHelper {
 
 	// ========== 停止 ==========
 
+	/**
+	 * 停止指定控制器的动画播放。
+	 * @param name 目标控制器名称，默认为 [AnimationControllers.MAIN]
+	 * @param fadeOutTicks 淡出刻数，-1 表示使用默认值
+	 * @param isPayload 是否同步网络数据包
+	 */
 	@JvmStatic
 	@JvmOverloads
 	fun Player.stopAnima(
@@ -108,6 +139,11 @@ object PlayerAnimationHelper {
 
 	// ========== 暂停 / 恢复 ==========
 
+	/**
+	 * 暂停指定控制器的动画播放。
+	 * @param name 目标控制器名称，默认为 [AnimationControllers.MAIN]
+	 * @param isPayload 是否同步网络数据包
+	 */
 	@JvmStatic
 	@JvmOverloads
 	fun Player.pauseAnima(name: ResourceLocation = AnimationControllers.MAIN, isPayload: Boolean = true) {
@@ -122,6 +158,11 @@ object PlayerAnimationHelper {
 		}
 	}
 
+	/**
+	 * 恢复指定控制器的动画播放。
+	 * @param name 目标控制器名称，默认为 [AnimationControllers.MAIN]
+	 * @param isPayload 是否同步网络数据包
+	 */
 	@JvmStatic
 	@JvmOverloads
 	fun Player.resumeAnima(name: ResourceLocation = AnimationControllers.MAIN, isPayload: Boolean = true) {
@@ -136,4 +177,3 @@ object PlayerAnimationHelper {
 		}
 	}
 }
-

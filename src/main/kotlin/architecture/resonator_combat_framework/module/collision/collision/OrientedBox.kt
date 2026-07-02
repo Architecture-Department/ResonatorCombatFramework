@@ -8,19 +8,21 @@ import org.joml.Vector3f
 import kotlin.math.sqrt
 
 /**
- * OBB 系列的中间基类。
+ * OBB 系列的中间抽象基类。
  *
  * 提供 [center] 和 [halfExtents] 公共字段，
  * [OBB]（保持 data class）和 [BoneCollider] 均继承此类。
+ * 此类实现 [CollisionShape.computeWorldBounds] 的默认逻辑。
  *
- * @param center      碰撞体中心相对骨骼/实体原点的偏移
- * @param halfExtents 碰撞体半边长
+ * @property center      碰撞体中心相对骨骼/实体原点的偏移
+ * @property halfExtents 碰撞体半边长
  */
 @AllOpe
 abstract class OrientedBox(
 	val center: Vector3f,
 	val halfExtents: Vector3f,
 ) : CollisionShape {
+
 	override fun computeWorldBounds(entry: CollisionEntry, attacker: Entity): WorldBounds {
 		val h = halfExtents
 		val sphereRadius = sqrt(h.x * h.x + h.y * h.y + h.z * h.z)
@@ -32,7 +34,15 @@ abstract class OrientedBox(
 	}
 
 	/**
-	 * 球体提前退出检测。若两包围球不相交则直接返回 true，无需执行 SAT。
+	 * 球体提前退出检测。
+	 *
+	 * 在完整 SAT 检测前，先判断两包围球是否相交。
+	 * 若不相交则直接返回 true，跳过昂贵的 SAT 计算。
+	 *
+	 * @param entry    碰撞条目
+	 * @param attacker 攻击者实体
+	 * @param targetBox 目标实体的 AABB
+	 * @return true 表示两包围球不相交，SAT 可跳过
 	 */
 	protected fun isSphereFar(
 		entry: CollisionEntry,

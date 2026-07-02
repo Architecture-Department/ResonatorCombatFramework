@@ -1,10 +1,10 @@
 package architecture.resonator_combat_framework.events.registry.client
 
 import architecture.resonator_combat_framework.common.registry.ItemPropertyRegistry
-import architecture.resonator_combat_framework.module.entity_animation.registry.BoneConfigRegistry
-import architecture.resonator_combat_framework.module.entity_animation.registry.KeyframeAnimationRegistry
-import architecture.resonator_combat_framework.module.entity_animation.registry.GeometryModelRegistry
 import architecture.resonator_combat_framework.module.entity_animation.registry.AnimationDefRegistry
+import architecture.resonator_combat_framework.module.entity_animation.registry.BoneConfigRegistry
+import architecture.resonator_combat_framework.module.entity_animation.registry.GeometryModelRegistry
+import architecture.resonator_combat_framework.module.entity_animation.registry.KeyframeAnimationRegistry
 import architecture.resonator_combat_framework.module.entity_state_machine.registry.ActionRegistry
 import architecture.resonator_combat_framework.module.entity_state_machine.registry.ActionSequenceRegistry
 import architecture.resonator_combat_framework.util.RcfUtil
@@ -14,6 +14,9 @@ import net.neoforged.bus.api.SubscribeEvent
 import net.neoforged.fml.common.EventBusSubscriber
 import net.neoforged.neoforge.client.event.RegisterClientReloadListenersEvent
 
+/**
+ * 客户端资源重载注册 —— 注册需要随资源包重载而重新加载的监听器。
+ */
 @EventBusSubscriber(modid = RcfUtil.ID, value = [Dist.CLIENT])
 object ResourceReloadRegistry {
 	@SubscribeEvent

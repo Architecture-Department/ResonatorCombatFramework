@@ -30,6 +30,9 @@ object AttackInputEvents {
 
 	// ===== 事件拦截 =====
 
+	/**
+	 * 拦截交互按键事件。左键被 RCF 能力物品拦截用于攻击，右键在双持模式下拦截用于副手攻击。
+	 */
 	@SubscribeEvent(priority = EventPriority.HIGHEST)
 	fun onInteractionKeyMappingTriggered(event: InputEvent.InteractionKeyMappingTriggered) {
 		val instance = Minecraft.getInstance()
@@ -54,6 +57,9 @@ object AttackInputEvents {
 
 	// ===== 按键追踪 =====
 
+	/**
+	 * 客户端 tick 事件：追踪攻击按键状态，在按下/释放时发送 [AttackPayload]。
+	 */
 	@SubscribeEvent
 	fun onClientTickPre(event: ClientTickEvent.Pre) {
 		val minecraft = Minecraft.getInstance()
@@ -78,6 +84,12 @@ object AttackInputEvents {
 
 	// ===== 判断方法 =====
 
+	/**
+	 * 检查物品栈是否持有 RCF 战斗能力。
+	 *
+	 * @param itemStack 要检查的物品栈
+	 * @return 是否持有 RCF 能力
+	 */
 	private fun hasRcfCapability(itemStack: ItemStack): Boolean =
 		itemStack.getCapability(RcfCapabilitys.ITEM_ABILITY) != null
 

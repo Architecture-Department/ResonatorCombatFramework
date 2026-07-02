@@ -19,6 +19,11 @@ import net.neoforged.neoforge.event.tick.PlayerTickEvent
 object PlayerEvents {
 	private var DEBUG = false
 
+	/**
+	 * 玩家 tick 后处理：在客户端调试模式下于 locator 位置生成粒子标记。
+	 *
+	 * @param event 玩家 tick 事件
+	 */
 	@SubscribeEvent
 	fun onTickPre(event: PlayerTickEvent.Post) {
 		val player = event.entity
@@ -35,6 +40,15 @@ object PlayerEvents {
 		}
 	}
 
+	/**
+	 * 调试方法：在指定 locator 位置生成 ELECTRIC_SPARK 粒子网格。
+	 *
+	 * @param name locator 名称
+	 * @param brModel 几何模型
+	 * @param animationData 动画姿势数据
+	 * @param player 玩家
+	 * @param level 世界
+	 */
 	private fun test(
 		name: String,
 		brModel: GeometryModel,

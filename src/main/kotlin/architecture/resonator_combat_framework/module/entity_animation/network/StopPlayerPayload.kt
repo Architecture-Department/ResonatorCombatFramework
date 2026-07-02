@@ -17,7 +17,15 @@ import net.neoforged.neoforge.network.PacketDistributor
 import net.neoforged.neoforge.network.handling.IPayloadContext
 import java.util.*
 
-/** 停止动画数据包。从服务端发送到客户端，停止指定动画*/
+/**
+ * 停止动画数据包（双向：服务端↔客户端）。
+ * 停止指定玩家的动画播放，可指定停止单个控制器或所有控制器，
+ * 并支持淡出时长。在服务端和所有追踪该玩家的客户端之间同步。
+ *
+ * @property playerUuid 目标玩家的 UUID
+ * @property controllerName 要停止的控制器名称，为空则停止所有控制器
+ * @property fadeOutTicks 淡出时长（tick），-1 表示立即停止
+ */
 data class StopPlayerPayload
 @JvmOverloads
 constructor(
@@ -81,4 +89,3 @@ constructor(
 		)
 	}
 }
-

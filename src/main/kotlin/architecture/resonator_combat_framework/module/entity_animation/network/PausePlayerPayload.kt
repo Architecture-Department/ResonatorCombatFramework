@@ -16,7 +16,13 @@ import net.neoforged.neoforge.network.PacketDistributor
 import net.neoforged.neoforge.network.handling.IPayloadContext
 import java.util.*
 
-/**暂停动画数据包*/
+/**
+ * 暂停玩家动画数据包（双向：服务端↔客户端）。
+ * 暂停指定玩家的动画控制器，并在服务端和所有追踪该玩家的客户端之间同步。
+ *
+ * @property playerUuid 目标玩家的 UUID
+ * @property controllerName 要暂停的控制器名称，为空则暂停主控制器
+ */
 data class PausePlayerPayload
 @JvmOverloads
 constructor(
@@ -55,4 +61,3 @@ constructor(
 		)
 	}
 }
-

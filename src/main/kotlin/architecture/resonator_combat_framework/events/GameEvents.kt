@@ -12,6 +12,11 @@ import net.neoforged.neoforge.network.PacketDistributor
 
 @EventBusSubscriber(modid = RcfUtil.ID)
 object GameEvents {
+	/**
+	 * 数据包同步回调：向相关玩家发送骨骼配置和几何模型同步数据包。
+	 *
+	 * @param event 数据包同步事件
+	 */
 	@SubscribeEvent
 	fun onDatapackSync(event: OnDatapackSyncEvent) {
 		if (event.relevantPlayers.toList().isEmpty() || event.relevantPlayers.findFirst().isEmpty) return

@@ -6,6 +6,8 @@ import net.minecraft.resources.ResourceLocation
 import net.neoforged.bus.api.Event
 
 /**
+ * [Action] 注册事件 —— 在资源重载时由 [ActionRegistry] 触发，
+ * 用于收集所有注册的 Action。
  * [Action]注册事件
  */
 class ActionRegistryEvent : Event() {

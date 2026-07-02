@@ -17,5 +17,8 @@ import architecture.goldenboughs_lib.api.AllOpe
 @AllOpe
 class AnimationProperty<T>(val name: String)
 
-/** 所有 [AnimationDef] 通用的属性 */
+/**
+ * 静态动画属性——所有 [AnimationDef] 通用的属性键。
+ * 用于链式配置动画的通用运行时行为，与具体动画类型无关。
+ */
 class StaticAnimationProperty<T>(name: String) : AnimationProperty<T>(name)

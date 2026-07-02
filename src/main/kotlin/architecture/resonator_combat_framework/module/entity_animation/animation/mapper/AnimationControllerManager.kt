@@ -10,8 +10,8 @@ import architecture.resonator_combat_framework.module.entity_animation.animation
 import architecture.resonator_combat_framework.module.entity_animation.animation.controller.IEntityAnimationController
 import architecture.resonator_combat_framework.module.entity_animation.animation.data.BoneFlags
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.BonePose
-import architecture.resonator_combat_framework.module.entity_animation.animation.model.GeometryModel
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.GeometryData
+import architecture.resonator_combat_framework.module.entity_animation.animation.model.GeometryModel
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.PoseData
 import architecture.resonator_combat_framework.util.RcfUtil
 import architecture.resonator_combat_framework.util.RotationUtil
@@ -21,7 +21,15 @@ import org.joml.Matrix4fc
 import org.joml.Vector3f
 import org.mesdag.particlestorm.particle.MolangParticleEngine
 
-/** 动画控制器管理器 */
+/**
+ * 动画控制器管理器，负责管理实体上所有动画控制器的生命周期、骨骼合并和事件调度。
+ * 维护名称到控制器的映射（O(1)查找）和有序控制器列表（决定骨骼合并优先级）。
+ * 提供骨骼变换合并、帧间插值、ParticleStorm 发射器追踪等功能。
+ *
+ * @param T 实体类型
+ * @property holder 所属实体
+ * @property mapperProvider 动画映射器提供者
+ */
 @AllOpe
 class AnimationControllerManager<T : Entity>
 @JvmOverloads
@@ -69,13 +77,24 @@ constructor(
 	/** 发射器追踪："controllerId:locatorName" → ParticleStorm 发射器 ID */
 	private val emitterTracker = mutableMapOf<String, Int>()
 
-	/** 注册发射器追踪 */
+	/**
+	 * 注册发射器追踪。
+	 *
+	 * @param controllerId 控制器 ID
+	 * @param locatorName 定位器名称
+	 * @param emitterId ParticleStorm 发射器 ID
+	 */
 	fun trackEmitter(controllerId: ResourceLocation, locatorName: String?, emitterId: Int) {
 		val key = "${controllerId}:${locatorName ?: "@entity"}"
 		emitterTracker[key] = emitterId
 	}
 
-	/** 清除指定控制器+定位器的发射器 */
+	/**
+	 * 清除指定控制器和定位器的发射器。
+	 *
+	 * @param controllerId 控制器 ID
+	 * @param locatorName 定位器名称
+	 */
 	fun clearEmitter(controllerId: ResourceLocation, locatorName: String?) {
 		if (!RcfUtil.PARTICLESTORM_LOADED) return
 		val key = "${controllerId}:${locatorName ?: "@entity"}"
@@ -83,7 +102,11 @@ constructor(
 		MolangParticleEngine.INSTANCE.removeEmitter(id, false)
 	}
 
-	/** 清除指定控制器的所有发射器（动画切换/结束时调用） */
+	/**
+	 * 清除指定控制器的所有发射器（动画切换/结束时调用）。
+	 *
+	 * @param controllerId 控制器 ID
+	 */
 	fun clearEmittersFor(controllerId: ResourceLocation) {
 		if (!RcfUtil.PARTICLESTORM_LOADED) return
 		val prefix = "${controllerId}:"
@@ -92,7 +115,11 @@ constructor(
 		toRemove.forEach { MolangParticleEngine.INSTANCE.removeEmitter(it, false) }
 	}
 
-	/** 更新所有已追踪发射器的 parentSpace，实现骨骼跟随。每渲染帧调用 */
+	/**
+	 * 更新所有已追踪发射器的 parentSpace，实现骨骼跟随。每渲染帧调用。
+	 *
+	 * @param partialTick 渲染帧插值系数
+	 */
 	fun updateEmitterTransforms(partialTick: Float) {
 		if (!RcfUtil.PARTICLESTORM_LOADED) return
 		if (emitterTracker.isEmpty()) return
@@ -103,18 +130,36 @@ constructor(
 		}
 	}
 
-	/** 追加控制器到末尾 */
+	/**
+	 * 追加控制器到末尾。
+	 *
+	 * @param name 控制器名称
+	 * @param controller 控制器实例
+	 */
 	fun add(name: ResourceLocation, controller: IEntityAnimationController<T>) {
 		nameMap[name] = controller
 		ordered.add(controller)
 	}
 
-	/** 在指定索引插入控制器 */
+	/**
+	 * 在指定索引插入控制器。
+	 *
+	 * @param index 插入位置
+	 * @param name 控制器名称
+	 * @param controller 控制器实例
+	 */
 	fun add(index: Int, name: ResourceLocation, controller: IEntityAnimationController<T>) {
 		nameMap[name] = controller
 		ordered.add(index, controller)
 	}
 
+	/**
+	 * 在指定控制器之后插入新控制器。
+	 *
+	 * @param afterName 参考控制器名称
+	 * @param name 新控制器名称
+	 * @param controller 新控制器实例
+	 */
 	fun addAfter(afterName: ResourceLocation, name: ResourceLocation, controller: IEntityAnimationController<T>) {
 		val after = nameMap[afterName]
 		if (after != null) {
@@ -126,6 +171,13 @@ constructor(
 		}
 	}
 
+	/**
+	 * 在指定控制器之前插入新控制器。
+	 *
+	 * @param beforeName 参考控制器名称
+	 * @param name 新控制器名称
+	 * @param controller 新控制器实例
+	 */
 	fun addBefore(beforeName: ResourceLocation, name: ResourceLocation, controller: IEntityAnimationController<T>) {
 		val before = nameMap[beforeName]
 		if (before != null) {
@@ -137,14 +189,21 @@ constructor(
 		}
 	}
 
-	/** 移除控制器并立即停止 */
+	/**
+	 * 移除控制器并立即停止。
+	 *
+	 * @param name 控制器名称
+	 */
 	fun remove(name: ResourceLocation) {
 		val ctrl = nameMap.remove(name) ?: return
 		ctrl.stop(0)
 		ordered.remove(ctrl)
 	}
 
-	/** 推进所有控制器的动画时间并重新合并 */
+	/**
+	 * 推进所有控制器的动画时间并重新合并骨骼。
+	 * 流程：清缓存 → 保存上一帧快照 → 逐控制器 tick → 合并骨骼 → tickAdvance → 触发事件。
+	 */
 	fun tick() {
 		// 清空骨骼矩阵缓存（本 tick 所有数据重算）
 		boneMatrixCache.clear()
@@ -169,6 +228,10 @@ constructor(
 		firePendingEvents()
 	}
 
+	/**
+	 * 合并所有活跃控制器的骨骼变换。
+	 * 按控制器顺序逐层叠加，支持权重混合、归一化旋转和骨骼覆盖。
+	 */
 	fun mergeAll() {
 		mergedBoneFlags.clear()
 		mergedPose.bones.clear()
@@ -225,6 +288,10 @@ constructor(
 	/**
 	 * 获取骨骼的全局变换矩阵（惰性计算 + 缓存）。
 	 * 同一 tick 内对同一骨骼的重复查询直接返回缓存。
+	 *
+	 * @param boneName 骨骼名称
+	 * @param poseData 姿态数据
+	 * @return 全局变换矩阵
 	 */
 	@JvmOverloads
 	fun getTickBoneMatrix(boneName: String, poseData: PoseData = mergedPose): Matrix4fc {
@@ -233,10 +300,22 @@ constructor(
 		}
 	}
 
-	/** 获取合并后的插值代理骨骼（逐帧在 prevMergedProxy 和 mergedProxy 之间线性插值） */
+	/**
+	 * 获取合并后的插值骨骼（逐帧在 prevMergedPose 和 mergedPose 之间线性插值）。
+	 *
+	 * @param name 骨骼名称
+	 * @param partialTick 渲染帧插值系数
+	 * @return 插值后的骨骼姿态，如果骨骼不存在则返回 null
+	 */
 	fun getInterpolatedBone(name: String, partialTick: Float): BonePose? = interpolateBone(name, partialTick)
 
-	/** 重新合并所有控制器的代理模型 */
+	/**
+	 * 对单根骨骼进行帧间线性插值。
+	 *
+	 * @param name 骨骼名称
+	 * @param partialTick 渲染帧插值系数
+	 * @return 插值后的骨骼姿态
+	 */
 	private fun interpolateBone(name: String, partialTick: Float): BonePose? {
 		val currBone = mergedPose.getBone(name) ?: return null
 		val prevBone = prevMergedPose.getBone(name)
@@ -291,7 +370,12 @@ constructor(
 		return mb
 	}
 
-	/** 复制 ProxyModel 的所有骨骼到新模型（深拷贝） */
+	/**
+	 * 深拷贝 PoseData 的所有骨骼到新对象。
+	 *
+	 * @param source 源姿态数据
+	 * @return 深拷贝后的姿态数据
+	 */
 	private fun copyProxyModel(source: PoseData): PoseData {
 		val result = PoseData("interp")
 		for ((name, bone) in source.bones) {
@@ -308,9 +392,14 @@ constructor(
 		return result
 	}
 
-	/** 获取合并后的插值代理骨骼（逐帧在 prevMergedProxy 和 mergedProxy 之间线性插值） */
+	/**
+	 * 获取合并后的插值骨骼数据副本（逐帧在 prevMergedPose 和 mergedPose 之间线性插值）。
+	 * partialTick=0 或 1 时直接返回对应源，避免不必要的插值计算。
+	 *
+	 * @param partialTick 渲染帧插值系数
+	 * @return 插值后的姿态数据
+	 */
 	fun getInterpolatedProxy(partialTick: Float): PoseData {
-		// partialTick=0 或 1 时直接返回对应源，避免不必要的插值计算
 		if (partialTick == 0f) return copyProxyModel(prevMergedPose)
 		if (partialTick == 1f) return copyProxyModel(mergedPose)
 		val result = PoseData("interp")
@@ -320,31 +409,64 @@ constructor(
 		return result
 	}
 
-	/** 按名称获取控制器 */
+	/**
+	 * 按名称获取控制器。
+	 *
+	 * @param name 控制器名称
+	 * @return 控制器实例，不存在时返回 null
+	 */
 	fun get(name: ResourceLocation): IEntityAnimationController<T>? = nameMap[name]
 
-	/** 获取主控制器 */
+	/**
+	 * 获取主控制器。
+	 *
+	 * @return 主控制器实例
+	 */
 	fun getMainController(): IEntityAnimationController<T> = nameMap[AnimationControllers.MAIN]
 		?: error("Main controller not initialized")
 
-	/** 获取所有控制器（按添加顺序） */
+	/**
+	 * 获取所有控制器（按添加顺序）。
+	 *
+	 * @return 控制器列表
+	 */
 	fun getAll(): List<IEntityAnimationController<T>> = ordered
 
-	/** 是否存在指定控制器 */
+	/**
+	 * 是否存在指定控制器。
+	 *
+	 * @param name 控制器名称
+	 * @return 是否存在
+	 */
 	fun has(name: ResourceLocation): Boolean = name in nameMap
 
-	/** 是否有任意控制器活跃 */
+	/**
+	 * 是否有任意控制器活跃。
+	 *
+	 * @return 是否有活跃控制器
+	 */
 	fun isAnyActive(): Boolean = ordered.any { it.isActive() }
 
-	/** 指定控制器是否活跃 */
+	/**
+	 * 指定控制器是否活跃。
+	 *
+	 * @param name 控制器名称
+	 * @return 是否活跃
+	 */
 	fun isActive(name: ResourceLocation): Boolean = nameMap[name]?.isActive() == true
 
-	/** 获取所有活跃控制器 */
+	/**
+	 * 获取所有活跃控制器。
+	 *
+	 * @return 活跃控制器列表
+	 */
 	fun getSortedActive(): List<IEntityAnimationController<T>> = ordered.filter { it.isActive() }
 
 	/**
 	 * 获取可渲染的控制器列表（用于 root 变换）。
 	 * 从高到低遍历，isOverriding=true 的控制器若骨骼全被高优先级渲染过则跳过。
+	 *
+	 * @return 可渲染的控制器列表
 	 */
 	fun getRenderable(): List<IEntityAnimationController<T>> {
 		val active = getSortedActive()
@@ -360,7 +482,12 @@ constructor(
 		return result
 	}
 
-	/** 查找排在 controller 之前、isOverriding 且骨骼冲突的更高优先级控制器 */
+	/**
+	 * 查找排在 controller 之前、isOverriding 且骨骼冲突的更高优先级控制器。
+	 *
+	 * @param controller 目标控制器
+	 * @return 阻塞目标控制器的更高优先级控制器列表
+	 */
 	fun findBlocking(controller: IEntityAnimationController<T>): List<IEntityAnimationController<T>> {
 		if (!controller.isActive()) return emptyList()
 		val active = getSortedActive()
@@ -374,7 +501,9 @@ constructor(
 		return blocking
 	}
 
-	/** 合并所有控制器的额外骨骼到 [bones] */
+	/**
+	 * 合并所有控制器的额外骨骼到几何模型。
+	 */
 	fun rebuildBones() {
 		brModel.set(geometry)
 		for (ctrl in ordered) {
@@ -384,7 +513,13 @@ constructor(
 		}
 	}
 
-	/** 两控制器的 affectedBones 是否有交集 */
+	/**
+	 * 判断两个控制器的 affectedBones 是否有交集。
+	 *
+	 * @param a 控制器 A
+	 * @param b 控制器 B
+	 * @return 是否有骨骼冲突
+	 */
 	fun hasBoneConflict(a: IEntityAnimationController<T>, b: IEntityAnimationController<T>): Boolean {
 		val aBones = a.affectedBones
 		val bBones = b.affectedBones
@@ -392,12 +527,20 @@ constructor(
 		return aBones.intersect(bBones).isNotEmpty()
 	}
 
-	/** 添加待触发的事件到队列（由控制器在 tickBackend 中收集） */
+	/**
+	 * 添加待触发的事件到队列（由控制器在 tickBackend 中收集）。
+	 *
+	 * @param animationController 事件来源控制器
+	 * @param events 待触发的事件
+	 */
 	fun queueEvents(animationController: IEntityAnimationController<*>, events: EventsToFire) {
 		pendingEvents.add(animationController to events)
 	}
 
-	/** 执行所有待触发的动画事件并清空队列 */
+	/**
+	 * 执行所有待触发的动画事件并清空队列。
+	 * 按类型分组执行：先时间线脚本，再声音，最后粒子。
+	 */
 	fun firePendingEvents() {
 		if (pendingEvents.isEmpty()) return
 		val entity = mapperProvider.holder

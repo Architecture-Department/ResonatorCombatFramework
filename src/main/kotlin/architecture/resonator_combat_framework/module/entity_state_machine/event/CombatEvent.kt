@@ -7,6 +7,9 @@ import net.minecraft.world.entity.LivingEntity
 import net.neoforged.bus.api.Event
 
 /**
+ * 基础战斗事件 —— 由 [ActionController] 在状态转换时触发，供外部模块处理。
+ *
+ * 当前包含 [ActionStateChanged] 子事件，在动作阶段切换时发射。
  * 战斗事件 —— 由 [CombatController] 在状态转换时触发，供外部模块处理。
  *
  * 外部监听示例：

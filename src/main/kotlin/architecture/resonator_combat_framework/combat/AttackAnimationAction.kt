@@ -9,21 +9,16 @@ import net.minecraft.world.entity.LivingEntity
 import java.util.function.Supplier
 
 /**
- * 攻击动画动作
+ * 攻击动画动作。
  *
- * @param T
- * @constructor
- * @param windupTick 前摇 Tick
- * @property activeTick 执行 Tick
- * @param recoveryTick 后摇 Tick
- * @property damageMultiplier 伤害倍率
- * @param id 动作id
- * @param animation 动画
- * @param controllerId 动画控制器id
- * @param fadeInTick 淡入 Tick
- * @param fadeOutTick 淡出 Tick
- * @param interruptData 打断数据
- * @param weight 权重
+ * 扩展 [AnimationAction]，为攻击动画提供前摇（WINDUP）、执行（ACTIVE）、后摇（RECOVERY）三个阶段的时间划分，
+ * 并在获取动画实例时自动注入伤害倍率属性。
+ *
+ * @param T 攻击动画定义的具体类型
+ * @property windupTick 总前摇 tick 数（淡入 + 前摇）
+ * @property activeTick 执行阶段 tick 数
+ * @property recoveryTick 总后摇 tick 数（后摇 + 淡出）
+ * @property damageMultiplier 伤害倍率，在获取动画时注入到动画属性中
  */
 class AttackAnimationAction<T : AttackAnimationDef>(
 	id: ResourceLocation,
@@ -48,12 +43,12 @@ class AttackAnimationAction<T : AttackAnimationDef>(
 	weight
 ) {
 	/**
-	 * 前摇 Tick
+	 * 前摇 tick 数（包含 [fadeInTick]）。
 	 */
 	val windupTick: Int = fadeInTick + windupTick
 
 	/**
-	 * 后摇 Tick
+	 * 后摇 tick 数（包含 [fadeOutTick]）。
 	 */
 	val recoveryTick: Int = recoveryTick + fadeOutTick
 

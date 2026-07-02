@@ -2,7 +2,12 @@ package architecture.resonator_combat_framework.module.entity_animation.animatio
 
 import org.joml.Vector3f
 
-/** 代理骨骼模型：存储每帧计算的骨骼变换（局部 + 累积）。每 tick remerge 后计算填充。 */
+/**
+ * 代理骨骼模型——存储每帧计算的骨骼变换（局部 + 累积）。每 tick remerge 后计算填充。
+ *
+ * @property name 模型名称
+ * @property bones 骨骼名称到姿态数据的映射
+ */
 data class PoseData
 @JvmOverloads
 constructor(
@@ -16,6 +21,18 @@ constructor(
 	fun getBone(boneName: String): BonePose? = bones[boneName]
 }
 
+/**
+ * 骨骼姿态数据——存储一根骨骼在某一帧的变换值（位移、旋转、缩放）。
+ *
+ * 使用空掩码（emptyMask）标记哪些分量已被显式设置，
+ * 以区分"保持默认值"和"未设置"两种状态。
+ *
+ * @property name 骨骼名称
+ * @property pos 局部位移
+ * @property rotation 局部旋转（欧拉角，度）
+ * @property scale 局部缩放
+ * @property noInterp 标记此骨骼来自 STEP 关键帧，渲染插值时应跳过
+ */
 data class BonePose
 @JvmOverloads
 constructor(

@@ -6,6 +6,15 @@ import com.google.gson.JsonObject
 import org.joml.Vector3f
 import org.joml.Vector3fc
 
+/**
+ * 几何模型数据——存储从 JSON 解析的实体几何结构。
+ *
+ * 包含骨骼、立方体和定位器的定义，是运行时模型装配的源数据。
+ *
+ * @property identifier 模型标识符
+ * @property bones 骨骼名称到烘培骨骼数据的映射
+ * @property locators 定位器名称到烘培定位器数据的映射
+ */
 data class GeometryData
 @JvmOverloads
 constructor(
@@ -18,6 +27,13 @@ constructor(
 		@JvmField
 		val EMPTY = GeometryData("empty")
 
+		/**
+		 * 从 JSON 元素解析 [GeometryData] 列表。
+		 * 兼容 Minecraft 基岩版几何模型格式（minecraft:geometry 数组）。
+		 *
+		 * @param json JSON 元素
+		 * @return 解析后的几何模型数据列表
+		 */
 		@JvmStatic
 		fun parses(json: JsonElement): List<GeometryData> {
 			val root = json.asJsonObject
@@ -51,6 +67,16 @@ constructor(
 	}
 }
 
+/**
+ * 烘培骨骼数据——运行时使用的简化骨骼结构。
+ *
+ * @property name 骨骼名称
+ * @property parent 父骨骼名称
+ * @property pivot 轴心点（模型空间坐标）
+ * @property rotation 默认旋转（欧拉角，度）
+ * @property cubes 立方体列表
+ * @property locators 定位器映射
+ */
 data class BakingBrBone
 @JvmOverloads
 constructor(
@@ -62,6 +88,12 @@ constructor(
 	val locators: Map<String, BakingBrLocator> = emptyMap()
 ) {
 	companion object {
+		/**
+		 * 从 JSON 数组解析 [BakingBrBone] 列表。
+		 *
+		 * @param json JSON 元素
+		 * @return 骨骼名称到烘培骨骼的映射
+		 */
 		@JvmStatic
 		fun parses(json: JsonElement): Map<String, BakingBrBone> {
 			val list = mutableMapOf<String, BakingBrBone>()
@@ -92,6 +124,14 @@ constructor(
 	}
 }
 
+/**
+ * 烘培立方体数据——模型中的单个立方体定义。
+ *
+ * @property inflate 膨胀值
+ * @property origin 原点坐标
+ * @property size 尺寸
+ * @property rotation 旋转
+ */
 data class BakingBrCube
 @JvmOverloads
 constructor(
@@ -101,6 +141,12 @@ constructor(
 	val rotation: Vector3fc = Vector3f()
 ) {
 	companion object {
+		/**
+		 * 从 JSON 数组解析 [BakingBrCube] 列表。
+		 *
+		 * @param json JSON 元素
+		 * @return 立方体列表
+		 */
 		@JvmStatic
 		fun parses(json: JsonElement): List<BakingBrCube> {
 			val list = mutableListOf<BakingBrCube>()
@@ -124,6 +170,16 @@ constructor(
 	}
 }
 
+/**
+ * 烘培定位器数据——骨骼上的附着点定义。
+ *
+ * 用于粒子发射器、音效等特效的定位。
+ *
+ * @property name 定位器名称
+ * @property boneName 所属骨骼名称
+ * @property offset 相对骨骼的偏移
+ * @property rotation 相对骨骼的旋转
+ */
 data class BakingBrLocator
 @JvmOverloads
 constructor(
@@ -134,6 +190,13 @@ constructor(
 ) {
 
 	companion object {
+		/**
+		 * 从 JSON 对象解析指定骨骼的定位器列表。
+		 *
+		 * @param boneName 骨骼名称
+		 * @param obj 骨骼 JSON 对象
+		 * @return 定位器名称到定位器数据的映射
+		 */
 		@JvmStatic
 		fun parses(boneName: String, obj: JsonObject?): MutableMap<String, BakingBrLocator> {
 			val locators = mutableMapOf<String, BakingBrLocator>()

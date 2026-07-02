@@ -17,7 +17,13 @@ import net.neoforged.neoforge.network.PacketDistributor
 import net.neoforged.neoforge.network.handling.IPayloadContext
 import java.util.*
 
-/** 恢复动画数据包 */
+/**
+ * 恢复动画数据包（双向：服务端↔客户端）。
+ * 恢复指定玩家已暂停的动画控制器，并在服务端和所有追踪该玩家的客户端之间同步。
+ *
+ * @property playerUuid 目标玩家的 UUID
+ * @property controllerName 要恢复的控制器名称，为空则恢复主控制器
+ */
 data class ResumePlayerPayload
 @JvmOverloads
 constructor(
@@ -63,4 +69,3 @@ constructor(
 		)
 	}
 }
-

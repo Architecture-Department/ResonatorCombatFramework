@@ -15,18 +15,20 @@ import net.minecraft.world.entity.LivingEntity
 import java.util.function.Supplier
 
 /**
- * 动画动作
+ * 动画动作。
  *
- * @param T
- * @constructor
- * @property animation 动画
- * @property controllerId 动画控制器id
- * @property fadeInTick 淡入
- * @property animationTick 动画时长
- * @property fadeOutTick 淡出
- * @property weight 权重
- * @param id
- * @param interruptData 打断数据
+ * 将动画定义（[AnimationDef]）包装为状态机可调度的 [Action]，
+ * 在动作启动/结束/速度变化时自动控制对应动画控制器的播放、停止与速度同步。
+ *
+ * 动作阶段划分为：WINDUP（淡入）→ ACTIVE（动画播放）→ RECOVERY（淡出）。
+ *
+ * @param T 动画定义的具体类型
+ * @property animation 动画定义的延迟提供者
+ * @property controllerId 目标动画控制器的 ID
+ * @property fadeInTick 淡入过渡的 tick 数
+ * @property animationTick 动画持续 tick 数
+ * @property fadeOutTick 淡出过渡的 tick 数
+ * @property weight 动作权重
  */
 class AnimationAction<T : AnimationDef>
 @JvmOverloads
@@ -55,6 +57,12 @@ constructor(
 		}
 	}
 
+	/**
+	 * 获取动画定义实例。
+	 *
+	 * @return 动画定义实例
+	 * @throws IllegalArgumentException 当动画提供者返回 null 时
+	 */
 	fun getAnimation(): T {
 		val animation = animation.get()
 		animation ?: throw IllegalArgumentException("AnimationAction: AttackAnimation not found: ${this.animation}")
@@ -87,6 +95,12 @@ constructor(
 		}
 	}
 
+	/**
+	 * 获取与当前动作关联的动画控制器。
+	 *
+	 * @param entity 实现了 [IAnimationProvider] 的实体
+	 * @return 对应的动画控制器，可能为 null
+	 */
 	protected fun getController(entity: IAnimationProvider): IEntityAnimationController<out Entity>? {
 		return entity.getMapperProvider().getController(controllerId)
 	}

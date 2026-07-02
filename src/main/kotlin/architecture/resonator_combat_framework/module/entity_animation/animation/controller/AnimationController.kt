@@ -5,9 +5,9 @@ import architecture.resonator_combat_framework.module.entity_animation.animation
 import architecture.resonator_combat_framework.module.entity_animation.animation.LoopType
 import architecture.resonator_combat_framework.module.entity_animation.animation.baking_animation.KeyframeAnimation
 import architecture.resonator_combat_framework.module.entity_animation.animation.controller.IEntityAnimationController.State
-import architecture.resonator_combat_framework.module.entity_animation.animation.data.PlayMode
 import architecture.resonator_combat_framework.module.entity_animation.animation.data.BoneConfig
 import architecture.resonator_combat_framework.module.entity_animation.animation.data.PlayConfig
+import architecture.resonator_combat_framework.module.entity_animation.animation.data.PlayMode
 import architecture.resonator_combat_framework.module.entity_animation.animation.data.shouldBlend
 import architecture.resonator_combat_framework.module.entity_animation.animation.mapper.AnimationControllerManager
 import architecture.resonator_combat_framework.module.entity_animation.animation.mapper.IEntityAnimationMapperProvider
@@ -24,6 +24,16 @@ import architecture.resonator_combat_framework.util.TimeUtil
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.Entity
 
+/**
+ * 动画控制器——[IEntityAnimationController] 的默认实现。
+ *
+ * 管理动画的触发、播放、过渡（crossfade）、暂停/恢复、循环及事件触发等完整生命周期。
+ *
+ * @param manager 所属的动画控制器管理器
+ * @param id 控制器唯一标识
+ * @param isClient 是否为客户端
+ * @param isOverriding 是否覆盖模式（true=覆盖低优先级动画，false=叠加）
+ */
 class AnimationController<T : Entity> @JvmOverloads constructor(
 	override val manager: AnimationControllerManager<T>,
 	override val id: ResourceLocation,
@@ -37,7 +47,7 @@ class AnimationController<T : Entity> @JvmOverloads constructor(
 	final override var transitionSource: PoseData? = null; private set
 	final override var currentConfig: PlayConfig = PlayConfig.EMPTY; private set
 
-	/** 当前 tick 的动画数据（来自 [animationLoader]，随 [currentAnim] 切换） */
+	/** 当前 tick 的动画数据（来自 [KeyframeAnimationRegistry]，随 [currentAnim] 切换） */
 	final override var currentBakingAnim: KeyframeAnimation? = null; private set
 
 	override var localBoneConfig: BoneConfig = BoneConfig.EMPTY
@@ -56,7 +66,7 @@ class AnimationController<T : Entity> @JvmOverloads constructor(
 			_activeBoneConfig = value
 		}
 
-	/** 当前生效的骨骼配置缓存 */
+	/** 当前生效的骨骼配置缓存（合并 localBoneConfig 后的结果） */
 	private var _activeBoneConfig: BoneConfig? = null
 
 	final override val activeBoneConfig: BoneConfig
@@ -176,10 +186,17 @@ class AnimationController<T : Entity> @JvmOverloads constructor(
 		state = if (isInFadeIn()) State.CROSSFADING else State.PLAYING
 	}
 
+	/**
+	 * tick 处理钩子——由子类重写以实现自定义 tick 行为。
+	 */
 	fun tickHandler(manager: IEntityAnimationMapperProvider<T, *>) {}
 
 	// ===== crossfade =====
 
+	/**
+	 * 记录当前姿态快照作为 crossfade 过渡的源。
+	 * 新动画触发时保存旧动画的骨骼数据，用于后续混合。
+	 */
 	private fun snapshotTransitionSource() {
 		if (state == State.IDLE || poseData.bones.isEmpty()) return
 		transitionSource = PoseData("src")
@@ -193,6 +210,10 @@ class AnimationController<T : Entity> @JvmOverloads constructor(
 		}
 	}
 
+	/**
+	 * 执行一帧 crossfade 混合——从过渡源姿态逐步过渡到当前动画姿态。
+	 * 根据 [fadeProgress] 对每根骨骼的位置/旋转/缩放进行线性插值。
+	 */
 	private fun crossfadeStep() {
 		val src = transitionSource ?: return
 		val boneFlags = activeBoneConfig.resolveBoneFlags(currentAnimTime)
@@ -226,6 +247,10 @@ class AnimationController<T : Entity> @JvmOverloads constructor(
 
 	// ===== 播放边界 =====
 
+	/**
+	 * 检查播放边界——动画播放到末尾后的处理。
+	 * 根据循环类型和播放模式决定停止、循环或保持最后一帧。
+	 */
 	private fun checkPlaybackBounds() {
 		if (state != State.PLAYING) return
 		val anim = currentAnim ?: return
@@ -252,6 +277,7 @@ class AnimationController<T : Entity> @JvmOverloads constructor(
 		}
 	}
 
+	/** 开始淡出流程，触发动画完成事件 */
 	private fun startFadeOut() {
 		pause()
 		state = State.FADING_OUT
@@ -260,6 +286,7 @@ class AnimationController<T : Entity> @JvmOverloads constructor(
 		RcfEventHooks.AnimationComplete(this)
 	}
 
+	/** 计算动画结束时间（秒），支持正放和倒放 */
 	private fun calcEndSecond(): Float {
 		val config = currentConfig
 		val animLength = currentLength()
@@ -271,6 +298,7 @@ class AnimationController<T : Entity> @JvmOverloads constructor(
 		}
 	}
 
+	/** 重置动画时间到起点（根据播放方向），清除已触发事件记录 */
 	fun resetAnimAndRestart() {
 		animTime = if (speedMultiplier >= 0) 0f else calcEndSecond()
 		firedEvents.clear()
@@ -305,6 +333,12 @@ class AnimationController<T : Entity> @JvmOverloads constructor(
 		RcfEventHooks.AnimationControllerTickHandlerPost(id, this, manager.mapperProvider)
 	}
 
+	/**
+	 * 处理状态转换：
+	 * - CROSSFADING 中持续执行 crossfade 混合
+	 * - CROSSFADING 完成后切换到 PLAYING
+	 * - FADING_OUT 完成后清理动画并回到 IDLE
+	 */
 	private fun handleStateTransition() {
 		if (state == State.CROSSFADING && transitionSource != null) crossfadeStep()
 		if (state == State.CROSSFADING && fadeProgress >= 1f) {
@@ -321,14 +355,25 @@ class AnimationController<T : Entity> @JvmOverloads constructor(
 
 	// ===== 动画后端 =====
 
+	/** 将所有骨骼冻结在零帧位置 */
 	fun freezeAllAtFrameZero() {
 		animTime = 0f; lastRawGameTime = -1f
 	}
 
+	/**
+	 * 手动设置动画起始时间（秒）。
+	 * 用于从指定时间点继续播放。
+	 */
 	fun setAnimStartTime(timeSec: Float) {
 		animTime = timeSec
 	}
 
+	/**
+	 * 后端 tick——执行动画姿态计算和事件收集。
+	 *
+	 * @param gameTime 当前游戏时间（秒）
+	 * @param freezeTime 是否冻结时间（true 时仅计算当前帧姿态，不推进时间）
+	 */
 	fun tickBackend(gameTime: Float, freezeTime: Boolean = false) {
 		val anim = currentAnim ?: return
 		val data = currentData
@@ -347,6 +392,10 @@ class AnimationController<T : Entity> @JvmOverloads constructor(
 		manager.queueEvents(this, anim.collectEvents(bakingAnim, animTime, prevAnimTime, firedEvents))
 	}
 
+	/**
+	 * 计算缩放后的 delta 时间。
+	 * 结合 speedMultiplier 和实际游戏时间差计算动画步进。
+	 */
 	private fun calcScaledDelta(gameTime: Float): Float {
 		if (lastRawGameTime < 0f) {
 			lastRawGameTime = gameTime; return 0f
@@ -359,6 +408,7 @@ class AnimationController<T : Entity> @JvmOverloads constructor(
 
 	// ===== 内部 =====
 
+	/** 按帧推进 fadeProgress 向 fadeTarget 靠近 */
 	private fun tickBlend() {
 		if (fadeProgress == fadeTarget) return
 		if (currentTransitionTicks <= 0) {
@@ -369,6 +419,10 @@ class AnimationController<T : Entity> @JvmOverloads constructor(
 		else (fadeProgress - step).coerceAtLeast(fadeTarget)
 	}
 
+	/**
+	 * 强制清理所有动画状态并回到 IDLE。
+	 * 在淡出完成或动画显式停止时调用。
+	 */
 	private fun forceClear() {
 		currentAnim?.onEnd(manager.holder)
 		manager.clearEmittersFor(id)

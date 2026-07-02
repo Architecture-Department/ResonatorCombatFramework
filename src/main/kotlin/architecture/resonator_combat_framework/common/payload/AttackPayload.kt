@@ -16,20 +16,30 @@ import net.neoforged.neoforge.network.PacketDistributor
 import net.neoforged.neoforge.network.handling.IPayloadContext
 
 /**
- * 客户端→服务端：玩家攻击请求。
+ * 攻击网络包。
  *
- * @param hand 发起攻击的手（MAIN_HAND=左键 / OFF_HAND=右键）
- * @param pressType 短按/长按
+ * 客户端→服务端的攻击请求，同时由服务端广播回所有追踪该实体的客户端以保证同步。
+ * 服务端和客户端均会执行实际逻辑（通过 [WeaponProperty.onAttack]），
+ * 但由于服务端是权威端，伤害计算以服务端结果为准。
+ *
+ * @property hand 发起攻击的手（MAIN_HAND=左键攻击 / OFF_HAND=右键攻击）
+ * @property pressType 攻击类型：短按（SHORT）/ 长按（LONG）
  */
 class AttackPayload(
 	val hand: InteractionHand,
-	val pressType: PressType,
+	val pressType: AttackPayload.PressType,
 ) : ToServerAndClientPayload {
+
 	/**
-	 * 攻击类型：短按 / 长按
+	 * 按压类型枚举。
+	 *
+	 * 区分玩家的短按单击与长按蓄力操作，用于触发不同的攻击行为。
 	 */
 	enum class PressType {
+		/** 短按（单击） */
 		SHORT,
+
+		/** 长按（按住） */
 		LONG;
 
 		companion object {
@@ -50,6 +60,9 @@ class AttackPayload(
 		execute(player)
 	}
 
+	/**
+	 * 执行攻击逻辑：获取当前手持物品的 [WeaponProperty] 并调用其 [WeaponProperty.onAttack] 方法。
+	 */
 	private fun execute(player: net.minecraft.world.entity.player.Player) {
 		val itemStack = player.getItemInHand(hand)
 		val ability = itemStack.getCapability(RcfCapabilitys.ITEM_ABILITY)

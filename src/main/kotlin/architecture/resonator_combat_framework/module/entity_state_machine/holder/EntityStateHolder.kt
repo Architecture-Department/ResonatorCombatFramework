@@ -10,6 +10,15 @@ import net.minecraft.world.entity.Pose
 import net.minecraft.world.phys.Vec3
 import kotlin.math.abs
 
+/**
+ * 实体状态持有者 —— 存储并管理实体的运行时状态标志和动作控制器。
+ * 维护一组以 [ResourceLocation] 为键的布尔状态（如是否移动、攻击、游泳等），
+ * 持有 [ActionController] 驱动战斗动作。
+ *
+ * @param T 实体类型
+ * @param entity 所属实体
+ * @param actionController 动作控制器
+ */
 @AllOpe
 class EntityStateHolder<T : LivingEntity>(
 	val entity: T,
@@ -141,13 +150,22 @@ class EntityStateHolder<T : LivingEntity>(
 		val POSE_INHALING = RcfUtil.modRl("pose_inhaling")
 	}
 
+	/** 实体状态映射表 */
 	private val states = mutableMapOf<ResourceLocation, Boolean>()
 
+	/**
+	 * 每 tick 更新状态标志和动作控制器。
+	 */
 	fun tick() {
 		tickStates()
 		actionController.tick()
 	}
 
+	/**
+	 * 更新所有预定义状态标志。
+	 * 根据实体的移动量、姿态、骑乘、物品使用等条件，
+	 * 同步设置 MOVE_STATE、SPRINTING_STATE 等状态标志。
+	 */
 	fun tickStates() {
 		val limbSwingAmount = entity.walkAnimation.speed(1f)
 		val velocity: Vec3 = entity.deltaMovement
@@ -184,16 +202,46 @@ class EntityStateHolder<T : LivingEntity>(
 		setState(POSE_INHALING, entity.pose == Pose.INHALING)
 	}
 
+	/**
+	 * 检查是否包含指定状态。
+	 * @param id 状态标识符
+	 * @return 是否存在该状态
+	 */
 	fun containState(id: ResourceLocation): Boolean = states.containsKey(id)
+
+	/**
+	 * 获取指定状态的值。
+	 * @param id 状态标识符
+	 * @return 状态值，未设置时返回 false
+	 */
 	fun getState(id: ResourceLocation): Boolean = states[id] ?: false
+
+	/**
+	 * 设置指定状态的值。
+	 * @param id 状态标识符
+	 * @param value 状态值
+	 */
 	fun setState(id: ResourceLocation, value: Boolean) {
 		states[id] = value
 	}
 
+	/**
+	 * 获取所有状态的只读视图。
+	 * @return 状态映射表
+	 */
 	fun getStates(): Map<ResourceLocation, Boolean> = states
+
+	/**
+	 * 清除所有状态标志。
+	 */
 	fun clearStates() {
 		states.clear()
 	}
 
+	/**
+	 * 获取移动动画触发阈值。
+	 * 当实体的水平平均速度超过此值时触发移动状态。
+	 * @return 速度阈值
+	 */
 	fun getMotionAnimThreshold(): Float = 0.015f
 }

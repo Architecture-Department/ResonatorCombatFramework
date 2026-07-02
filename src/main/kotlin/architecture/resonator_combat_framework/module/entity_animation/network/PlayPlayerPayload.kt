@@ -4,8 +4,8 @@ import architecture.goldenboughs_lib.api.payload.ToServerAndClientPayload
 import architecture.goldenboughs_lib.util.LibUtil.RESOURCE_LOCATION_OPTIONAL_STREAM_CODEC
 import architecture.resonator_combat_framework.events.registry.AnimationControllers
 import architecture.resonator_combat_framework.module.entity_animation.IAnimationProvider.Companion.getMapperProvider
-import architecture.resonator_combat_framework.module.entity_animation.animation.data.PlayMode
 import architecture.resonator_combat_framework.module.entity_animation.animation.data.PlayConfig
+import architecture.resonator_combat_framework.module.entity_animation.animation.data.PlayMode
 import architecture.resonator_combat_framework.util.RcfUtil
 import io.netty.buffer.ByteBuf
 import net.minecraft.client.player.AbstractClientPlayer
@@ -19,7 +19,21 @@ import net.neoforged.neoforge.network.PacketDistributor
 import net.neoforged.neoforge.network.handling.IPayloadContext
 import java.util.*
 
-/**播放动画数据包。从服务端发送到客户端，触发动画播放*/
+/**
+ * 播放动画数据包（双向：服务端↔客户端）。
+ * 从服务端发送到客户端，触发指定玩家的动画播放。包含完整的播放配置：
+ * 播放模式、速度倍率、起止时间和淡入淡出。
+ *
+ * @property playerUuid 目标玩家的 UUID
+ * @property controllerName 目标控制器名称，为空则使用主控制器
+ * @property animId 要播放的动画 ID
+ * @property playMode 播放模式
+ * @property speedMultiplier 播放速度倍率
+ * @property startTime 起始时间（tick）
+ * @property endTime 结束时间（tick）
+ * @property fadeInTicks 淡入时长（tick），-1 表示默认
+ * @property fadeOutTicks 淡出时长（tick），-1 表示默认
+ */
 data class PlayPlayerPayload
 @JvmOverloads
 constructor(
@@ -118,4 +132,3 @@ constructor(
 		)
 	}
 }
-

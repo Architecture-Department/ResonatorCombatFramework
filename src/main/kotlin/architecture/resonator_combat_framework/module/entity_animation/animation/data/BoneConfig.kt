@@ -7,13 +7,20 @@ import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import net.minecraft.resources.ResourceLocation
 
-// 骨骼配置数据。包含过渡时间、骨骼标志、时间线
+/**
+ * 骨骼配置数据。包含过渡时间、骨骼标志、时间线等动画行为配置。
+ *
+ * 用于控制动画播放时的骨骼混合行为、淡入淡出时间以及动画期间的骨骼标志动态切换。
+ */
 @ExposedCopyVisibility
 @AllOpe
 data class BoneConfig
 private constructor(
+	/** 骨骼名到标志配置的映射 */
 	val bones: Map<String, BoneFlags> = DEFAULT_FLAGS,
+	/** 动画时间线配置，在不同时间段动态覆盖骨骼标志 */
 	val timeline: List<TimelineEntry> = emptyList(),
+	/** 默认过渡 tick 数（淡入/淡出的备用值） */
 	val transitionTicks: Int = DEFAULT_TRANSITION_TICKS,
 	private val fadeInTicks: Int = -1,
 	private val fadeOutTicks: Int = -1,
@@ -30,6 +37,17 @@ private constructor(
 
 		const val DEFAULT_TRANSITION_TICKS: Int = 3
 
+		/**
+		 * 创建 [BoneConfig] 实例，自动合并默认骨骼标志。
+		 *
+		 * @param bones 骨骼标志映射
+		 * @param timeline 时间线条目
+		 * @param transitionTicks 默认过渡 tick 数
+		 * @param fadeInTicks 淡入 tick 数（-1 使用 transitionTicks）
+		 * @param fadeOutTicks 淡出 tick 数（-1 使用 transitionTicks）
+		 * @param extraModelId 额外模型 ID
+		 * @return 合并了默认标志的 [BoneConfig]
+		 */
 		@JvmStatic
 		fun of(
 			bones: Map<String, BoneFlags>,
@@ -37,7 +55,6 @@ private constructor(
 			transitionTicks: Int,
 			fadeInTicks: Int = -1,
 			fadeOutTicks: Int = -1,
-			/** 额外模型数据定义（动画期间动态添加的模型数据） */
 			extraModelId: ResourceLocation? = null
 		): BoneConfig {
 			val merged = mutableMapOf<String, BoneFlags>().apply {

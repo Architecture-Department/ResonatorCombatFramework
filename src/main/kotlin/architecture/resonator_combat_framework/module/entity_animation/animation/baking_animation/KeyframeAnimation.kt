@@ -11,6 +11,18 @@ import org.joml.Vector2f
 import org.joml.Vector3f
 import kotlin.math.floor
 
+/**
+ * 关键帧动画数据类，表示一个完整的 Bedrock 格式动画定义。
+ * 包含动画标识符、播放模式、时长、骨骼关键帧轨道，以及时间线上的声音/粒子/脚本事件。
+ *
+ * @property identifier 动画的唯一标识符
+ * @property loop 播放模式：ONCE（一次）/ LOOP（循环）/ HOLD_ON_LAST（保持最后一帧）
+ * @property length 动画总时长（秒）
+ * @property bones 骨骼名称到骨骼动画轨道的映射
+ * @property sounds 时间线上的声音事件列表
+ * @property particles 时间线上的粒子事件列表
+ * @property timelines 时间线上的脚本事件列表
+ */
 data class KeyframeAnimation
 @JvmOverloads constructor(
 	val identifier: String,
@@ -29,7 +41,12 @@ data class KeyframeAnimation
 		@JvmField
 		val EMPTY = KeyframeAnimation("empty", length = 0f)
 
-		/** 解析 JSON 根对象的 "animations" 段，每个条目注册为一个 BedrockAnimation */
+		/**
+		 * 解析 JSON 根对象的 "animations" 段，每个条目注册为一个 KeyframeAnimation。
+		 *
+		 * @param root JSON 根对象
+		 * @return 动画标识符到动画对象的映射表
+		 */
 		@JvmStatic
 		fun parses(root: JsonObject): MutableMap<String, KeyframeAnimation> {
 			val result = mutableMapOf<String, KeyframeAnimation>()
@@ -66,7 +83,15 @@ data class KeyframeAnimation
 		}
 	}
 
-	/** 计算动画在 time 时刻的骨骼变换并写入 proxyModel.localPos/localRot/localScale（局部变换） */
+	/**
+	 * 计算动画在指定时刻的骨骼变换并写入 PoseData。
+	 * 对每根骨骼插值计算位置/旋转/缩放，写入局部变换数据。
+	 *
+	 * @param time 动画时间（秒）
+	 * @param poseData 目标姿态数据容器
+	 * @param context MoLang 运行上下文
+	 * @return 受此帧影响的骨骼名称集合
+	 */
 	fun computeAndWrite(time: Float, poseData: PoseData, context: MolangData? = null): Set<String> {
 		val affected = mutableSetOf<String>()
 		for ((boneName, boneAnim) in bones) {
@@ -88,10 +113,22 @@ data class KeyframeAnimation
 	}
 
 	/**
-	 * 插值关键帧序列，返回 time 时刻的值
+	 * 关键帧插值结果。
+	 *
+	 * @property value 插值后的 Vector3f 值
+	 * @property noInterp 是否标记为不插值（STEP 模式）
 	 */
 	data class InterpResult(val value: Vector3f?, val noInterp: Boolean)
 
+	/**
+	 * 对关键帧序列进行插值，返回指定时刻的值。
+	 * 支持 LINEAR（线性插值）、CATMULLROM（Catmull-Rom 样条插值）和 STEP（无插值）三种模式。
+	 *
+	 * @param frames 关键帧列表
+	 * @param time 当前动画时间（秒）
+	 * @param context MoLang 运行上下文
+	 * @return 插值结果
+	 */
 	internal fun interpolateFrames(
 		frames: List<Keyframe>, time: Float, context: MolangData? = null
 	): InterpResult {
@@ -158,7 +195,12 @@ data class KeyframeAnimation
 	}
 
 	/**
-	 * 分段 Catmull-Rom 样条求值
+	 * 分段 Catmull-Rom 样条求值。
+	 * 将时间归一化到 [0,1] 后在控制点序列上进行样条插值。
+	 *
+	 * @param points 控制点列表（每个点包含时间和值）
+	 * @param time 归一化时间 [0,1]
+	 * @return 插值后的值
 	 */
 	internal fun splineLerp(points: List<Vector2f>, time: Float): Float {
 		val p = (points.size - 1) * time
@@ -179,6 +221,9 @@ data class KeyframeAnimation
 
 	/**
 	 * 返回镜像后的动画副本：左右骨骼名称互换，位置 X 取反，旋转 Y/Z 取反。
+	 * 用于为对称攻击动画生成镜像版本（如左手版和右手版）。
+	 *
+	 * @return 镜像后的动画副本
 	 */
 	fun mirror(): KeyframeAnimation {
 		val newBones = mutableMapOf<String, BoneTrack>()
@@ -200,4 +245,3 @@ data class KeyframeAnimation
 		)
 	}
 }
-

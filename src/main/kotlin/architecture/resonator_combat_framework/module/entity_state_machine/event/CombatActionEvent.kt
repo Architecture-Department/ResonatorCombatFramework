@@ -6,6 +6,14 @@ import net.minecraft.world.entity.LivingEntity
 import net.neoforged.bus.api.ICancellableEvent
 
 /** 动作 */
+/**
+ * 战斗动作事件 —— 在 [ActionController] 中动作生命周期的各个节点触发。
+ * 包含开始、结束、切换、打断判定和 tick 前/后等子事件。
+ *
+ * @param holder 实体状态持有者
+ * @param entity 事件关联的生物实体
+ * @param action 事件关联的动作
+ */
 abstract class CombatActionEvent(
 	holder: EntityStateHolder<*>,
 	entity: LivingEntity,

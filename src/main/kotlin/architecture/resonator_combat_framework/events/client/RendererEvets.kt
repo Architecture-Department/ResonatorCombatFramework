@@ -11,6 +11,9 @@ import net.neoforged.neoforge.client.event.RenderHandEvent
 
 @EventBusSubscriber(modid = RcfUtil.ID, value = [Dist.CLIENT])
 object RendererEvets {
+	/**
+	 * 取消手部渲染：在第一人称渲染通道时隐藏原版手部模型。
+	 */
 	@SubscribeEvent
 	fun onRenderHand(event: RenderHandEvent) {
 		if (FirstPersonRender.isFirstPersonPass()) {

@@ -6,6 +6,12 @@ import org.joml.Vector3f
 import org.joml.Vector3fc
 
 // TODO 对应不同体型的玩家取不同的位置
+/**
+ * 运行时几何模型——由 [GeometryData] 构建的可变模型实例。
+ *
+ * 支持骨骼和定位器的动态合并、替换和变换矩阵计算。
+ * 每帧根据动画姿态数据更新骨骼变换。
+ */
 data class GeometryModel
 @JvmOverloads
 constructor(
@@ -16,6 +22,11 @@ constructor(
 	/**
 	 * 用 PoseStack 计算定位器的变换矩阵（模型空间）。
 	 * 先计算所属骨骼的变换，再应用定位器相对于骨骼的偏移。
+	 *
+	 * @param name 定位器名称（null 返回空矩阵）
+	 * @param animationData 当前帧动画姿态数据
+	 * @param isWorld 是否为世界空间坐标
+	 * @return 定位器的 4x4 变换矩阵
 	 */
 	fun computeLocatorGlobalMatrix(
 		name: String?,
@@ -44,6 +55,11 @@ constructor(
 	/**
 	 * 用 PoseStack 计算骨骼的层次变换矩阵（模型空间）。
 	 * 从根到目标骨骼构建完整变换链。
+	 *
+	 * @param name 骨骼名称（null 返回空矩阵）
+	 * @param animationData 当前帧动画姿态数据
+	 * @param isWorld 是否为世界空间坐标
+	 * @return 骨骼的 4x4 变换矩阵
 	 */
 	fun computeBoneGlobalMatrix(
 		name: String?,
@@ -60,6 +76,11 @@ constructor(
 	/**
 	 * 从根到指定骨骼构建完整变换链，应用每层的 pivot 偏移 + 代理变换 + 旋转 + 缩放。
 	 * 使用相对父骨骼的 pivot 偏移来确定位置。
+	 *
+	 * @param startName 起始骨骼名称
+	 * @param animationData 当前帧动画姿态数据
+	 * @param scale 缩放系数
+	 * @return 累积的 4x4 变换矩阵
 	 */
 	private fun buildChain(
 		startName: String,
@@ -141,7 +162,7 @@ constructor(
 	}
 
 	/**
-	 * 合并 BakingBrModel 的骨骼和定位器到当前模型。
+	 * 合并 [GeometryData] 的骨骼和定位器到当前模型。
 	 * 骨骼合并不覆盖已有（仅向已有骨骼添加 cubes/locators），
 	 * 定位器按 [overwriteLocators] 决定是否覆盖。
 	 */
@@ -163,6 +184,12 @@ constructor(
 	}
 
 	companion object {
+		/**
+		 * 从 [GeometryData] 构建 [GeometryModel] 实例。
+		 *
+		 * @param geometryData 源几何数据
+		 * @return 新的 [GeometryModel] 实例
+		 */
 		@JvmStatic
 		fun of(geometryData: GeometryData): GeometryModel {
 			return GeometryModel(
@@ -173,7 +200,16 @@ constructor(
 	}
 }
 
-/** 骨骼数据 */
+/**
+ * 运行时骨骼数据。
+ *
+ * @property name 骨骼名称
+ * @property parent 父骨骼名称
+ * @property pivot 轴心点
+ * @property rotation 默认旋转
+ * @property cubes 立方体列表
+ * @property locators 定位器映射
+ */
 data class BrBone
 @JvmOverloads
 constructor(
@@ -184,7 +220,7 @@ constructor(
 	val cubes: MutableList<BrCube> = mutableListOf(),
 	val locators: MutableMap<String, BrLocator> = mutableMapOf()
 ) {
-	/** 从 BakingBrModel 合并 cubes 和 locators 到已有骨骼 */
+	/** 从 [GeometryData] 合并 cubes 和 locators 到已有骨骼 */
 	fun add(model: GeometryData) {
 		model.bones[name]?.let {
 			cubes.addAll(it.cubes.map(BrCube::of))
@@ -192,7 +228,7 @@ constructor(
 		}
 	}
 
-	/** 从 BakingBrModel 替换 cubes 和 locators */
+	/** 从 [GeometryData] 替换 cubes 和 locators */
 	fun set(model: GeometryData) {
 		model.bones[name]?.let {
 			cubes.clear()
@@ -203,6 +239,12 @@ constructor(
 	}
 
 	companion object {
+		/**
+		 * 从 [BakingBrBone] 转换为运行时 [BrBone]。
+		 *
+		 * @param bone 烘培骨骼数据
+		 * @return 运行时骨骼实例
+		 */
 		@JvmStatic
 		fun of(bone: BakingBrBone): BrBone {
 			return BrBone(
@@ -217,7 +259,14 @@ constructor(
 	}
 }
 
-/** 立方体数据 */
+/**
+ * 运行时立方体数据。
+ *
+ * @property inflate 膨胀值
+ * @property origin 原点坐标
+ * @property size 尺寸
+ * @property rotation 旋转
+ */
 data class BrCube
 @JvmOverloads
 constructor(
@@ -227,6 +276,12 @@ constructor(
 	val rotation: Vector3f = Vector3f()
 ) {
 	companion object {
+		/**
+		 * 从 [BakingBrCube] 转换为运行时 [BrCube]。
+		 *
+		 * @param cube 烘培立方体数据
+		 * @return 运行时立方体实例
+		 */
 		@JvmStatic
 		fun of(cube: BakingBrCube): BrCube {
 			return BrCube(
@@ -239,7 +294,14 @@ constructor(
 	}
 }
 
-/** 定位器数据 */
+/**
+ * 运行时定位器数据。
+ *
+ * @property name 定位器名称
+ * @property boneName 所属骨骼名称
+ * @property offset 相对骨骼偏移
+ * @property rotation 相对骨骼旋转
+ */
 data class BrLocator
 @JvmOverloads
 constructor(
@@ -249,6 +311,12 @@ constructor(
 	val rotation: Vector3fc = Vector3f()
 ) {
 	companion object {
+		/**
+		 * 从 [BakingBrLocator] 转换为运行时 [BrLocator]。
+		 *
+		 * @param locator 烘培定位器数据
+		 * @return 运行时定位器实例
+		 */
 		@JvmStatic
 		fun of(locator: BakingBrLocator): BrLocator {
 			return BrLocator(

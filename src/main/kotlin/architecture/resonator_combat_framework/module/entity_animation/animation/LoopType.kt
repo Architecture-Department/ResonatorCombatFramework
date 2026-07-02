@@ -6,6 +6,13 @@ import com.mojang.serialization.Codec
 import io.netty.buffer.ByteBuf
 import net.minecraft.network.codec.StreamCodec
 
+/**
+ * 动画循环类型——控制动画播放到末尾后的行为。
+ *
+ * @property ONCE 播放一次后停止
+ * @property LOOP 循环播放
+ * @property HOLD_ON_LAST 保持最后一帧
+ */
 enum class LoopType {
 	ONCE,
 	LOOP,

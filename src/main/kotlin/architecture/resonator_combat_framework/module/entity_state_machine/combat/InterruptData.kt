@@ -4,7 +4,16 @@ import architecture.goldenboughs_lib.api.AllOpe
 
 /**
  * 打断配置 —— 定义攻击段各部分的可打断性及外部规则。
- * 如果定义为-1则不可能被打断
+ *
+ * 权重值含义：
+ * - ≥ 0：可被打断，当 `打断权重 < 目标动作权重` 时打断成功
+ * - -1：不可被打断
+ *
+ * 默认值：
+ * - WINDUP 前摇: 5000
+ * - ACTIVE 执行: 10000
+ * - RECOVERY 后摇: 1000
+ * - IDLE 空闲: 0（随时可打断）
  *
  * @constructor Creates a new InterruptData
  * @property windup 前摇
@@ -20,6 +29,7 @@ data class InterruptData(
 	val idle: Int = 0
 ) {
 	companion object {
+		/** 默认打断配置（各阶段均使用默认权重） */
 		@JvmField
 		val DEFAULT = InterruptData()
 	}

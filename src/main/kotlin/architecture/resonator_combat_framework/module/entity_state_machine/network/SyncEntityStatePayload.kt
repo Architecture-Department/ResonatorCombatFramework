@@ -10,6 +10,12 @@ import net.minecraft.resources.ResourceLocation
 /**
  * 实体状态同步数据包。
  * 服务端 -> 客户端，同步状态变更。
+ *
+ * @param entityId 实体 ID
+ * @param layerId 层级标识符
+ * @param stateId 状态标识符
+ * @param timer 计时器值
+ * @param immediate 是否立即同步
  */
 data class SyncEntityStatePayload(
 	val entityId: Int,
