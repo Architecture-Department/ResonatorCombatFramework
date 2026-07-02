@@ -88,6 +88,16 @@ constructor(
 		}
 	}
 
+	/**
+	 * 强制结束动作（无过渡停止动画）。
+	 * 用于强制切物品等需要立即中断的场景。
+	 */
+	fun onForcedEnd(entity: LivingEntity, actionSequence: ActionSequence?) {
+		if (entity is IAnimationProvider) {
+			getController(entity)?.stop(0)
+		}
+	}
+
 	override fun onSpeedModify(entity: LivingEntity, actionSequence: ActionSequence?, oldValue: Float, newValue: Float) {
 		super.onSpeedModify(entity, actionSequence, oldValue, newValue)
 		if (entity is IAnimationProvider) {

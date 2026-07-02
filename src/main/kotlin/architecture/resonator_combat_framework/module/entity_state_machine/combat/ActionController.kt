@@ -5,6 +5,7 @@ import architecture.resonator_combat_framework.core.RcfEventHooks
 import architecture.resonator_combat_framework.module.entity_state_machine.event.CombatActionEvent
 import architecture.resonator_combat_framework.module.entity_state_machine.holder.EntityStateHolder
 import architecture.resonator_combat_framework.util.TimeUtil
+import architecture.resonator_combat_framework.combat.AnimationAction
 import net.minecraft.world.entity.LivingEntity
 import kotlin.math.max
 
@@ -144,6 +145,22 @@ class ActionController(val entity: LivingEntity) {
 			action!!.onEnd(entity, actionSequence)
 			RcfEventHooks.CombatActionEnd(holder, entity, action!!)
 			onChangedAction(null, CombatActionEvent.Changed.Type.END)
+		}
+	}
+
+	/**
+	 * 强制结束当前动作（无过渡）。
+	 * 与 [onActionEnd] 的区别在于动作的 onEnd 会收到 force=true 信号，
+	 * 用于需要立即停止动画（无淡出）的场景，如强制切物品。
+	 */
+	fun onActionForcedEnd() {
+		time = 0f
+		combatSpeedMultiplier = 1f
+		actionState = ActionState.EMPTY
+		if (action != null) {
+			(action as? AnimationAction<*>)?.onForcedEnd(entity, actionSequence)
+			RcfEventHooks.CombatActionEnd(holder, entity, action!!)
+			onChangedAction(null, CombatActionEvent.Changed.Type.INTERRUPTIBLE)
 		}
 	}
 
