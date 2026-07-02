@@ -1,8 +1,8 @@
 package architecture.resonator_combat_framework.module.entity_animation.event
 
 import architecture.goldenboughs_lib.api.AllOpe
-import architecture.resonator_combat_framework.animation.AttackPhase
 import architecture.resonator_combat_framework.module.entity_animation.animation.controller.IEntityAnimationController
+import architecture.resonator_combat_framework.module.entity_state_machine.combat.AttackPhase
 import net.neoforged.bus.api.Event
 
 /**
@@ -10,23 +10,23 @@ import net.neoforged.bus.api.Event
  */
 @AllOpe
 class PhaseEvent(
-	val controller: IEntityAnimationController<*>,
-	val phase: AttackPhase,
+    val controller: IEntityAnimationController<*>,
+    val phase: AttackPhase,
 ) : Event() {
 
-	/**
-	 * 阶段开始事件 —— 当攻击动画进入某个 [AttackPhase] 时触发。
-	 */
-	class Start(
-		controller: IEntityAnimationController<*>,
-		phase: AttackPhase,
-	) : PhaseEvent(controller, phase)
+    /**
+     * 阶段开始事件 —— 当攻击动画进入某个 [AttackPhase] 时触发。
+     */
+    class Start(
+        controller: IEntityAnimationController<*>,
+        phase: AttackPhase,
+    ) : PhaseEvent(controller, phase)
 
-	/**
-	 * 阶段结束事件 —— 当攻击动画离开某个 [AttackPhase] 时触发。
-	 */
-	class End(
-		controller: IEntityAnimationController<*>,
-		phase: AttackPhase,
-	) : PhaseEvent(controller, phase)
+    /**
+     * 阶段结束事件 —— 当攻击动画离开某个 [AttackPhase] 时触发。
+     */
+    class End(
+        controller: IEntityAnimationController<*>,
+        phase: AttackPhase,
+    ) : PhaseEvent(controller, phase)
 }

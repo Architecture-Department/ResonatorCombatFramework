@@ -1,7 +1,6 @@
 package architecture.resonator_combat_framework.module.entity_animation.animation
 
 import architecture.goldenboughs_lib.api.AllOpe
-import architecture.resonator_combat_framework.animation.AttackPhase
 import architecture.resonator_combat_framework.module.entity_animation.animation.baking_animation.KeyframeAnimation
 import architecture.resonator_combat_framework.module.entity_animation.animation.baking_animation.ParticleEvent
 import architecture.resonator_combat_framework.module.entity_animation.animation.baking_animation.SoundEvent
@@ -12,7 +11,6 @@ import architecture.resonator_combat_framework.module.entity_animation.animation
 import architecture.resonator_combat_framework.module.entity_animation.animation.molang.MolangData
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.Entity
-import java.util.*
 
 /**
  * 动画定义——纯生命周期定义，不持有动画数据。
@@ -25,8 +23,6 @@ class AnimationDef(
 	val id: ResourceLocation,
 	val animationId: ResourceLocation,
 ) {
-	private val properties = mutableMapOf<AnimationProperty<*>, Any>()
-	private val timedEvents = mutableListOf<TimedEvent>() // TODO
 
 	constructor(id: ResourceLocation) : this(id, id)
 
@@ -110,53 +106,6 @@ class AnimationDef(
 		}
 	}
 
-	// ===== 链式属性配置 =====
-
-	/**
-	 * 链式添加动画属性。
-	 *
-	 * @param key 属性键
-	 * @param value 属性值
-	 * @return 自身，支持链式调用
-	 */
-	@Suppress("UNCHECKED_CAST")
-	fun <T : Any> addProperty(key: AnimationProperty<T>, value: T): AnimationDef {
-		properties[key] = value as Any
-		return this
-	}
-
-	/**
-	 * 获取指定键的动画属性。
-	 *
-	 * @param key 属性键
-	 * @return 属性值的 Optional 包装
-	 */
-	@Suppress("UNCHECKED_CAST")
-	fun <T : Any> getProperty(key: AnimationProperty<T>): Optional<T> =
-		Optional.ofNullable((properties[key] as? T))
-
-	/**
-	 * 获取属性，优先从攻击阶段获取，再回退到动画定义本身。
-	 */
-	fun <T : Any> getProperty(key: AnimationProperty<T>, phase: AttackPhase): Optional<T> {
-		val property = phase.getProperty(key)
-		return if (property.isPresent) property else getProperty(key)
-	}
-
-	/**
-	 * 添加一个定时事件。
-	 *
-	 * @param event 定时事件
-	 * @return 自身，支持链式调用
-	 */
-	fun addEvent(event: TimedEvent): AnimationDef {
-		timedEvents.add(event)
-		return this
-	}
-
-	/** 获取所有已注册的定时事件 */
-	fun getTimedEvents(): List<TimedEvent> = timedEvents
-
 	// ===== 生命周期钩子 =====
 
 	/** trigger 早期钩子。在骨骼数据写入前、过渡/镜像设置前调用。 */
@@ -185,8 +134,7 @@ class AnimationDef(
 	override fun toString(): String {
 		return "AnimationDef(" +
 			"animationId=$animationId, " +
-			"id=$id, " +
-			"properties=$properties, " +
-			"timedEvents=$timedEvents)"
+			"id=$id" +
+			")"
 	}
 }
