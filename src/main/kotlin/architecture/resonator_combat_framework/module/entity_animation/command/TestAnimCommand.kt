@@ -37,7 +37,7 @@ object TestAnimCommand {
 							Commands.literal("play")
 								.then(
 									Commands.argument("anim_id", ResourceLocationArgument.id())
-										.suggests(AnimationIdArgumentProvider)
+										.suggests(IdArgumentProvider)
 										.executes { handlePlay(it) }
 										.then(
 											Commands.argument("speed", FloatArgumentType.floatArg(Float.MIN_VALUE))

@@ -10,11 +10,11 @@ import org.joml.Vector3d
 /**
  * 粒子生成事件 —— [AttackAnimation.tickAdvance] 中每 tick 生成粒子时触发。
  */
-abstract class AnimationParticleEvent(
+abstract class ParticleEvent(
 	val particleId: ResourceLocation,
 	val locatorName: String,
 	animationController: IEntityAnimationController<*>
-) : AnimationEvent(animationController) {
+) : AnimEvent(animationController) {
 
 	class Pre(
 		animationController: IEntityAnimationController<*>,
@@ -23,7 +23,7 @@ abstract class AnimationParticleEvent(
 		val particle: Value<ParticleType<*>?>,
 		val rotate: Value<Vector3d>,
 		val pos: Value<Vector3d>
-	) : AnimationParticleEvent(particleId, locatorName, animationController), ICancellableEvent
+	) : ParticleEvent(particleId, locatorName, animationController), ICancellableEvent
 
 	class Post(
 		animationController: IEntityAnimationController<*>,
@@ -32,5 +32,5 @@ abstract class AnimationParticleEvent(
 		val particle: ParticleType<*>?,
 		val rotate: Vector3d,
 		val pos: Vector3d
-	) : AnimationParticleEvent(particleId, locatorName, animationController)
+	) : ParticleEvent(particleId, locatorName, animationController)
 }

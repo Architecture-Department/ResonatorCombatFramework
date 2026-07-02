@@ -9,7 +9,7 @@ import net.minecraft.commands.CommandSourceStack
 import net.minecraft.commands.SharedSuggestionProvider
 import java.util.concurrent.CompletableFuture
 
-object AnimationIdArgumentProvider : SuggestionProvider<CommandSourceStack> {
+object IdArgumentProvider : SuggestionProvider<CommandSourceStack> {
 	override fun getSuggestions(
 		ctx: CommandContext<CommandSourceStack>,
 		builder: SuggestionsBuilder

@@ -12,7 +12,7 @@ import net.neoforged.bus.api.Event
  * 监听此事件可拦截或响应动画触发。
  */
 @AllOpe
-class AnimationTriggerEvent(
+class TriggerEvent(
 	val controller: IEntityAnimationController<*>,
 	val anim: AnimationDef,
 	val config: PlayConfig,
@@ -23,12 +23,12 @@ class AnimationTriggerEvent(
 		controller: IEntityAnimationController<*>,
 		anim: AnimationDef,
 		config: PlayConfig,
-	) : AnimationTriggerEvent(controller, anim, config)
+	) : TriggerEvent(controller, anim, config)
 
 	/** 触发后 */
 	class Post(
 		controller: IEntityAnimationController<*>,
 		anim: AnimationDef,
 		config: PlayConfig,
-	) : AnimationTriggerEvent(controller, anim, config)
+	) : TriggerEvent(controller, anim, config)
 }

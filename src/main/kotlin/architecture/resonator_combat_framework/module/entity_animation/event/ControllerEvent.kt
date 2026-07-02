@@ -9,7 +9,7 @@ import net.neoforged.bus.api.Event
 import net.neoforged.bus.api.ICancellableEvent
 
 @AllOpe
-abstract class AnimationControllerEvent<T : Entity>(
+abstract class ControllerEvent<T : Entity>(
 	val id: ResourceLocation,
 	val animaController: IEntityAnimationController<T>,
 	val animaMapper: IEntityAnimationMapperProvider<T, *>
@@ -19,23 +19,23 @@ abstract class AnimationControllerEvent<T : Entity>(
 		id: ResourceLocation,
 		animaController: IEntityAnimationController<T>,
 		animaMapper: IEntityAnimationMapperProvider<T, *>
-	) : AnimationControllerEvent<T>(id, animaController, animaMapper), ICancellableEvent
+	) : ControllerEvent<T>(id, animaController, animaMapper), ICancellableEvent
 
 	class TickHandlerPost<T : Entity>(
 		id: ResourceLocation,
 		animaController: IEntityAnimationController<T>,
 		animaMapper: IEntityAnimationMapperProvider<T, *>
-	) : AnimationControllerEvent<T>(id, animaController, animaMapper)
+	) : ControllerEvent<T>(id, animaController, animaMapper)
 
 	class TickPre<T : Entity>(
 		id: ResourceLocation,
 		animaController: IEntityAnimationController<T>,
 		animaMapper: IEntityAnimationMapperProvider<T, *>
-	) : AnimationControllerEvent<T>(id, animaController, animaMapper), ICancellableEvent
+	) : ControllerEvent<T>(id, animaController, animaMapper), ICancellableEvent
 
 	class TickPost<T : Entity>(
 		id: ResourceLocation,
 		animaController: IEntityAnimationController<T>,
 		animaMapper: IEntityAnimationMapperProvider<T, *>
-	) : AnimationControllerEvent<T>(id, animaController, animaMapper)
+	) : ControllerEvent<T>(id, animaController, animaMapper)
 }

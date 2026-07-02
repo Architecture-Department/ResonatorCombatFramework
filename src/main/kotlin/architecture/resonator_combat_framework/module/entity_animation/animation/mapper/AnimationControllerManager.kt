@@ -4,7 +4,7 @@ import architecture.goldenboughs_lib.api.AllOpe
 import architecture.resonator_combat_framework.events.registry.AnimationControllers
 import architecture.resonator_combat_framework.module.entity_animation.IAnimationProvider
 import architecture.resonator_combat_framework.module.entity_animation.IAnimationProvider.Companion.getMapperProvider
-import architecture.resonator_combat_framework.module.entity_animation.animation.AnimationEventsToFire
+import architecture.resonator_combat_framework.module.entity_animation.animation.EventsToFire
 import architecture.resonator_combat_framework.module.entity_animation.animation.ParticleStormAnimAdapter
 import architecture.resonator_combat_framework.module.entity_animation.animation.controller.AnimationController
 import architecture.resonator_combat_framework.module.entity_animation.animation.controller.IEntityAnimationController
@@ -52,7 +52,7 @@ constructor(
 	val mergedBoneFlags = mutableMapOf<String, BoneFlags>()
 
 	/** 待触发的事件队列（控制器收集 -> tick后统一执行） */
-	private val pendingEvents = mutableListOf<Pair<IEntityAnimationController<*>, AnimationEventsToFire>>()
+	private val pendingEvents = mutableListOf<Pair<IEntityAnimationController<*>, EventsToFire>>()
 
 	/** 几何骨骼定义（外部设置后自动同步到 bones） */
 	var geometry: GeometryData = GeometryData.EMPTY
@@ -393,7 +393,7 @@ constructor(
 	}
 
 	/** 添加待触发的事件到队列（由控制器在 tickBackend 中收集） */
-	fun queueEvents(animationController: IEntityAnimationController<*>, events: AnimationEventsToFire) {
+	fun queueEvents(animationController: IEntityAnimationController<*>, events: EventsToFire) {
 		pendingEvents.add(animationController to events)
 	}
 

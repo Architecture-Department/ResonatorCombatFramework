@@ -2,7 +2,7 @@ package architecture.resonator_combat_framework.core
 
 import architecture.goldenboughs_lib.util.Value
 import architecture.resonator_combat_framework.animation.AttackPhase
-import architecture.resonator_combat_framework.event.AnimationColliderEvent
+import architecture.resonator_combat_framework.event.ColliderEvent
 import architecture.resonator_combat_framework.module.collision.CollisionEntityData
 import architecture.resonator_combat_framework.module.collision.CollisionEntry
 import architecture.resonator_combat_framework.module.collision.event.CollisionEntityEvent
@@ -79,7 +79,7 @@ object RcfEventHooks {
 
 	@JvmStatic
 	fun AnimationTriggerPre(controller: IEntityAnimationController<*>, anim: AnimationDef, config: PlayConfig) {
-		NeoForge.EVENT_BUS.post(AnimationTriggerEvent.Pre(controller, anim, config))
+		NeoForge.EVENT_BUS.post(TriggerEvent.Pre(controller, anim, config))
 	}
 
 	@JvmStatic
@@ -88,14 +88,14 @@ object RcfEventHooks {
 		anim: AnimationDef,
 		config: PlayConfig
 	) {
-		NeoForge.EVENT_BUS.post(AnimationTriggerEvent.Post(controller, anim, config))
+		NeoForge.EVENT_BUS.post(TriggerEvent.Post(controller, anim, config))
 	}
 
 	// ===== Animation Complete =====
 
 	@JvmStatic
 	fun AnimationComplete(controller: IEntityAnimationController<*>) {
-		NeoForge.EVENT_BUS.post(AnimationCompleteEvent(controller))
+		NeoForge.EVENT_BUS.post(CompleteEvent(controller))
 	}
 
 	// ===== Animation Controller Tick =====
@@ -106,7 +106,7 @@ object RcfEventHooks {
 		controller: IEntityAnimationController<T>,
 		mapper: IEntityAnimationMapperProvider<T, *>
 	): Boolean {
-		return NeoForge.EVENT_BUS.post(AnimationControllerEvent.TickPre(id, controller, mapper)).isCanceled
+		return NeoForge.EVENT_BUS.post(ControllerEvent.TickPre(id, controller, mapper)).isCanceled
 	}
 
 	@JvmStatic
@@ -115,7 +115,7 @@ object RcfEventHooks {
 		controller: IEntityAnimationController<T>,
 		mapper: IEntityAnimationMapperProvider<T, *>
 	) {
-		NeoForge.EVENT_BUS.post(AnimationControllerEvent.TickPost(id, controller, mapper))
+		NeoForge.EVENT_BUS.post(ControllerEvent.TickPost(id, controller, mapper))
 	}
 
 	@JvmStatic
@@ -124,7 +124,7 @@ object RcfEventHooks {
 		controller: IEntityAnimationController<T>,
 		mapper: IEntityAnimationMapperProvider<T, *>
 	): Boolean {
-		return NeoForge.EVENT_BUS.post(AnimationControllerEvent.TickHandlerPre(id, controller, mapper)).isCanceled
+		return NeoForge.EVENT_BUS.post(ControllerEvent.TickHandlerPre(id, controller, mapper)).isCanceled
 	}
 
 	@JvmStatic
@@ -133,7 +133,7 @@ object RcfEventHooks {
 		controller: IEntityAnimationController<T>,
 		mapper: IEntityAnimationMapperProvider<T, *>
 	) {
-		NeoForge.EVENT_BUS.post(AnimationControllerEvent.TickHandlerPost(id, controller, mapper))
+		NeoForge.EVENT_BUS.post(ControllerEvent.TickHandlerPost(id, controller, mapper))
 	}
 
 	// ===== Animation Collider =====
@@ -147,7 +147,7 @@ object RcfEventHooks {
 		brModel: GeometryModel,
 		mergedProxy: PoseData
 	) {
-		NeoForge.EVENT_BUS.post(AnimationColliderEvent.Pre(controller, entity, animTime, poseData, brModel, mergedProxy))
+		NeoForge.EVENT_BUS.post(ColliderEvent.Pre(controller, entity, animTime, poseData, brModel, mergedProxy))
 	}
 
 	@JvmStatic
@@ -159,19 +159,19 @@ object RcfEventHooks {
 		brModel: GeometryModel,
 		mergedProxy: PoseData
 	) {
-		NeoForge.EVENT_BUS.post(AnimationColliderEvent.Post(controller, entity, animTime, poseData, brModel, mergedProxy))
+		NeoForge.EVENT_BUS.post(ColliderEvent.Post(controller, entity, animTime, poseData, brModel, mergedProxy))
 	}
 
 	// ===== Animation Phase =====
 
 	@JvmStatic
 	fun AnimationPhaseStart(controller: IEntityAnimationController<*>, phase: AttackPhase) {
-		NeoForge.EVENT_BUS.post(AnimationPhaseEvent.Start(controller, phase))
+		NeoForge.EVENT_BUS.post(PhaseEvent.Start(controller, phase))
 	}
 
 	@JvmStatic
 	fun AnimationPhaseEnd(controller: IEntityAnimationController<*>, phase: AttackPhase) {
-		NeoForge.EVENT_BUS.post(AnimationPhaseEvent.End(controller, phase))
+		NeoForge.EVENT_BUS.post(PhaseEvent.End(controller, phase))
 	}
 
 	// ===== Collision =====
@@ -201,9 +201,9 @@ object RcfEventHooks {
 		particle: Value<ParticleType<*>?>,
 		rotate: Value<Vector3d>,
 		pos: Value<Vector3d>
-	): AnimationParticleEvent.Pre {
+	): ParticleEvent.Pre {
 		return NeoForge.EVENT_BUS.post(
-			AnimationParticleEvent.Pre(
+			ParticleEvent.Pre(
 				controller,
 				locatorName,
 				particleId,
@@ -223,13 +223,13 @@ object RcfEventHooks {
 		rotate: Vector3d,
 		pos: Vector3d
 	) {
-		NeoForge.EVENT_BUS.post(AnimationParticleEvent.Post(controller, locatorName, particleId, particle, rotate, pos))
+		NeoForge.EVENT_BUS.post(ParticleEvent.Post(controller, locatorName, particleId, particle, rotate, pos))
 	}
 
 	// ===== Controller Register =====
 
 	@JvmStatic
-	fun <T : Entity> AnimationControllerRegister(): AnimationControllerRegisterEvent<T> {
-		return NeoForge.EVENT_BUS.post(AnimationControllerRegisterEvent<T>())
+	fun <T : Entity> AnimationControllerRegister(): ControllerRegisterEvent<T> {
+		return NeoForge.EVENT_BUS.post(ControllerRegisterEvent<T>())
 	}
 }

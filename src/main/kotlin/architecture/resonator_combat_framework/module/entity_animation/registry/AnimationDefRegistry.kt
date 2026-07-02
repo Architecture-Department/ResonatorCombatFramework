@@ -3,7 +3,7 @@ package architecture.resonator_combat_framework.module.entity_animation.registry
 import architecture.goldenboughs_lib.api.AllOpe
 import architecture.goldenboughs_lib.util.LazySupplier
 import architecture.resonator_combat_framework.module.entity_animation.animation.AnimationDef
-import architecture.resonator_combat_framework.module.entity_animation.event.StaticAnimationRegistryEvent
+import architecture.resonator_combat_framework.module.entity_animation.event.AnimationDefRegistryEvent
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.server.packs.resources.ResourceManager
 import net.minecraft.server.packs.resources.SimplePreparableReloadListener
@@ -21,7 +21,7 @@ object AnimationDefRegistry :
 		resourceManager: ResourceManager,
 		profiler: ProfilerFiller
 	): Map<ResourceLocation, LazySupplier<AnimationDef>> {
-		return FORGE_BUS.post(StaticAnimationRegistryEvent()).getAll()
+		return FORGE_BUS.post(AnimationDefRegistryEvent()).getAll()
 	}
 
 	override fun apply(

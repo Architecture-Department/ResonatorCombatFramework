@@ -12,7 +12,7 @@ import net.neoforged.bus.api.Event
  * 动画控制器注册事件
  */
 @AllOpe
-class AnimationControllerRegisterEvent<T : Entity> : Event() {
+class ControllerRegisterEvent<T : Entity> : Event() {
 	private val entries = mutableMapOf<ResourceLocation, ControllerEntry<T>>()
 
 	/**

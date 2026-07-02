@@ -12,7 +12,7 @@ import net.neoforged.bus.api.Event
  * 动画事件基类
  */
 @AllOpe
-abstract class AnimationEvent(
+abstract class AnimEvent(
 	val animationController: IEntityAnimationController<*>,
 ) : Event() {
 	/**

@@ -46,14 +46,14 @@ class AnimationDef(
 		time: Float,
 		prevTime: Float,
 		alreadyFired: MutableSet<String>,
-	): AnimationEventsToFire {
+	): EventsToFire {
 		val sounds = mutableListOf<SoundEvent>()
 		val particles = mutableListOf<ParticleEvent>()
 		val timelines = mutableListOf<TimelineEvent>()
 		collectTyped(anim.sounds, "sound_", alreadyFired, time, prevTime, sounds)
 		collectTyped(anim.particles, "particle_", alreadyFired, time, prevTime, particles)
 		collectTyped(anim.timelines, "timeline_", alreadyFired, time, prevTime, timelines)
-		return AnimationEventsToFire(sounds, particles, timelines)
+		return EventsToFire(sounds, particles, timelines)
 	}
 
 	/**

@@ -13,7 +13,7 @@ import net.neoforged.bus.api.Event
  * 监听此事件可动态修改碰撞体的属性（大小、位置、效果等）。
  */
 @AllOpe
-sealed class AnimationColliderEvent(
+sealed class ColliderEvent(
 	val controller: IEntityAnimationController<*>,
 	val entity: Entity,
 	val animTime: Float,
@@ -30,7 +30,7 @@ sealed class AnimationColliderEvent(
 		poseData: PoseData,
 		brModel: GeometryModel,
 		mergedProxy: PoseData,
-	) : AnimationColliderEvent(controller, entity, animTime, poseData, brModel, mergedProxy)
+	) : ColliderEvent(controller, entity, animTime, poseData, brModel, mergedProxy)
 
 	/** 碰撞体更新后触发 */
 	class Post(
@@ -40,5 +40,5 @@ sealed class AnimationColliderEvent(
 		poseData: PoseData,
 		brModel: GeometryModel,
 		mergedProxy: PoseData,
-	) : AnimationColliderEvent(controller, entity, animTime, poseData, brModel, mergedProxy)
+	) : ColliderEvent(controller, entity, animTime, poseData, brModel, mergedProxy)
 }

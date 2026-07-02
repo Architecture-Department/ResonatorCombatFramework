@@ -1,7 +1,7 @@
 package architecture.resonator_combat_framework.events.registry
 
 import architecture.resonator_combat_framework.animation.controller.ActionAnimationController
-import architecture.resonator_combat_framework.module.entity_animation.event.AnimationControllerRegisterEvent
+import architecture.resonator_combat_framework.module.entity_animation.event.ControllerRegisterEvent
 import architecture.resonator_combat_framework.util.RcfUtil
 import net.minecraft.resources.ResourceLocation
 import net.neoforged.bus.api.SubscribeEvent
@@ -22,9 +22,9 @@ object AnimationControllers {
 }
 
 @EventBusSubscriber(modid = RcfUtil.ID)
-object AnimationControllerRegistry {
+object ControllerRegistry {
 	@SubscribeEvent
-	fun registry(event: AnimationControllerRegisterEvent<*>) {
+	fun registry(event: ControllerRegisterEvent<*>) {
 		event.register(AnimationControllers.BACKGROUND_ACTION, priority = 3000)
 		event.register(AnimationControllers.ACTION, ::ActionAnimationController, 4000)
 		event.register(AnimationControllers.MAIN, priority = 5000)

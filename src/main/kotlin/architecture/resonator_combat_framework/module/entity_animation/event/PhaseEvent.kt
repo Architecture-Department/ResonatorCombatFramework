@@ -9,7 +9,7 @@ import net.neoforged.bus.api.Event
  * 攻击阶段事件 —— 攻击动画的阶段开始/结束时触发。
  */
 @AllOpe
-class AnimationPhaseEvent(
+class PhaseEvent(
 	val controller: IEntityAnimationController<*>,
 	val phase: AttackPhase,
 ) : Event() {
@@ -18,11 +18,11 @@ class AnimationPhaseEvent(
 	class Start(
 		controller: IEntityAnimationController<*>,
 		phase: AttackPhase,
-	) : AnimationPhaseEvent(controller, phase)
+	) : PhaseEvent(controller, phase)
 
 	/** 阶段结束 */
 	class End(
 		controller: IEntityAnimationController<*>,
 		phase: AttackPhase,
-	) : AnimationPhaseEvent(controller, phase)
+	) : PhaseEvent(controller, phase)
 }

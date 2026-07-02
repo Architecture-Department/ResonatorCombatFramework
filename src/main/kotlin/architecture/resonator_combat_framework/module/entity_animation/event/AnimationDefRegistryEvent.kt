@@ -8,7 +8,7 @@ import net.neoforged.bus.api.Event
 /**
  * [AnimationDef]注册事件
  */
-class StaticAnimationRegistryEvent : Event() {
+class AnimationDefRegistryEvent : Event() {
 	private val map = linkedMapOf<ResourceLocation, LazySupplier<AnimationDef>>()
 
 	fun <T : AnimationDef> register(

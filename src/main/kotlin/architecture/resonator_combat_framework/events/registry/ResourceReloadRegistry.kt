@@ -2,11 +2,11 @@ package architecture.resonator_combat_framework.events.registry
 
 import architecture.resonator_combat_framework.common.registry.ItemPropertyRegistry
 import architecture.resonator_combat_framework.module.entity_animation.animation.AnimationDef
-import architecture.resonator_combat_framework.module.entity_animation.event.StaticAnimationRegistryEvent
-import architecture.resonator_combat_framework.module.entity_animation.registry.BoneConfigRegistry
-import architecture.resonator_combat_framework.module.entity_animation.registry.KeyframeAnimationRegistry
-import architecture.resonator_combat_framework.module.entity_animation.registry.GeometryModelRegistry
+import architecture.resonator_combat_framework.module.entity_animation.event.AnimationDefRegistryEvent
 import architecture.resonator_combat_framework.module.entity_animation.registry.AnimationDefRegistry
+import architecture.resonator_combat_framework.module.entity_animation.registry.BoneConfigRegistry
+import architecture.resonator_combat_framework.module.entity_animation.registry.GeometryModelRegistry
+import architecture.resonator_combat_framework.module.entity_animation.registry.KeyframeAnimationRegistry
 import architecture.resonator_combat_framework.module.entity_animation.util.GeckoLibCacheServer
 import architecture.resonator_combat_framework.module.entity_state_machine.event.ActionRegistryEvent
 import architecture.resonator_combat_framework.module.entity_state_machine.event.ActionSequenceRegistryEvent
@@ -37,7 +37,7 @@ object ResourceReloadRegistry {
 	}
 
 	@SubscribeEvent(priority = EventPriority.HIGHEST)
-	fun registry(event: StaticAnimationRegistryEvent) {
+	fun registry(event: AnimationDefRegistryEvent) {
 		KeyframeAnimationRegistry.findAll().forEach { (k, v) ->
 			event.register(k, ::AnimationDef)
 		}
