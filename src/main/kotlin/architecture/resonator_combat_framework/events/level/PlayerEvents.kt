@@ -1,44 +1,23 @@
-package architecture.resonator_combat_framework.events
+package architecture.resonator_combat_framework.events.level
 
 import architecture.goldenboughs_lib.util.PoseStack
 import architecture.goldenboughs_lib.util.toPos
 import architecture.goldenboughs_lib.util.toRadians
-import architecture.resonator_combat_framework.init.RcfAttachmentTypes
 import architecture.resonator_combat_framework.module.entity_animation.IAnimationProvider.Companion.getMapperProvider
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.GeometryModel
 import architecture.resonator_combat_framework.module.entity_animation.animation.model.PoseData
-import architecture.resonator_combat_framework.module.entity_state_machine.holder.EntityStateHolder
-import architecture.resonator_combat_framework.animation.ActionAnimationDef
-import architecture.resonator_combat_framework.combat.AnimationAction
-import architecture.resonator_combat_framework.module.entity_state_machine.event.CombatActionEvent
 import architecture.resonator_combat_framework.util.RcfUtil
 import com.mojang.math.Axis
 import net.minecraft.core.particles.ParticleTypes
-import net.minecraft.world.entity.EquipmentSlot
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
 import net.neoforged.bus.api.SubscribeEvent
 import net.neoforged.fml.common.EventBusSubscriber
-import net.neoforged.neoforge.event.entity.living.LivingEquipmentChangeEvent
 import net.neoforged.neoforge.event.tick.PlayerTickEvent
 
 @EventBusSubscriber(modid = RcfUtil.ID)
 object PlayerEvents {
 	private var DEBUG = false
-
-	/**
-	 * 玩家装备变化事件（主手物品切换/丢弃/交换）。
-	 * 若当前禁止切物品（CAN_SWITCH_ITEM = false），由动作系统处理停止。
-	 */
-	@SubscribeEvent
-	fun onEquipmentChange(event: LivingEquipmentChangeEvent) {
-		if (event.slot != EquipmentSlot.MAINHAND) return
-		val player = event.entity as? Player ?: return
-		val stateHolder = player.getData(RcfAttachmentTypes.STATE_HOLDER)
-		if (stateHolder.getState(EntityStateHolder.CAN_SWITCH_ITEM)) return
-		// 禁止切物品：强制结束动作（无过渡），动作的 onEnd 会自动停止动画
-		stateHolder.actionController.onActionForcedEnd()
-	}
 
 	/**
 	 * 客户端 tick：根据状态限制移动和视角，并在调试模式下于 locator 位置生成粒子标记。
@@ -48,20 +27,6 @@ object PlayerEvents {
 		val player = event.entity
 		val level = player.level()
 		if (!level.isClientSide) return
-
-		val stateHolder = player.getData(RcfAttachmentTypes.STATE_HOLDER)
-
-		// 移动限制
-		if (!stateHolder.getState(EntityStateHolder.CAN_MOVE) || stateHolder.getFloatState(EntityStateHolder.SPEED_MODIFIER) <= 0.01f) {
-			player.xxa = 0f
-			player.zza = 0f
-		}
-
-		// 视角限制
-		if (!stateHolder.getState(EntityStateHolder.CAN_LOOK_AROUND)) {
-			// 阻止玩家视角变化
-			// 简单地保持当前旋转不变
-		}
 
 		// 调试粒子
 		if (DEBUG) {

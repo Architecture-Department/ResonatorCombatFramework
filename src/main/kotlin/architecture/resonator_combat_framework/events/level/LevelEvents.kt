@@ -1,4 +1,4 @@
-package architecture.resonator_combat_framework.events
+package architecture.resonator_combat_framework.events.level
 
 import architecture.resonator_combat_framework.module.entity_animation.animation.molang.MolangData
 import architecture.resonator_combat_framework.util.RcfUtil

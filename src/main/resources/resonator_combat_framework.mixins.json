@@ -5,6 +5,7 @@
 	"mixins": [
 		"EntityMixin",
 		"PlayerMixin",
+		"InventoryMixin",
 		"gecko_lib.GeckoLibCacheAccessor",
 		"gecko_lib.GeckoLibCacheMixin"
 	],
