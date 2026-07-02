@@ -38,21 +38,36 @@ object PlayerEvents {
 	}
 
 	/**
-	 * 玩家 tick 后处理：在客户端调试模式下于 locator 位置生成粒子标记。
+	 * 客户端 tick：根据状态限制移动和视角，并在调试模式下于 locator 位置生成粒子标记。
 	 */
 	@SubscribeEvent
 	fun onTickPre(event: PlayerTickEvent.Post) {
 		val player = event.entity
 		val level = player.level()
-		val animationTransformer = player.getMapperProvider()
-		val animationControllerManager = animationTransformer.animationControllerManager
-		val animationData = animationControllerManager.getInterpolatedProxy(1f)
-		val brModel = animationControllerManager.brModel
-		if (level.isClientSide) {
-			if (DEBUG) {
-				test("right_item", brModel, animationData, player, level)
-				test("left_item", brModel, animationData, player, level)
-			}
+		if (!level.isClientSide) return
+
+		val stateHolder = player.getData(RcfAttachmentTypes.STATE_HOLDER)
+
+		// 移动限制
+		if (!stateHolder.getState(EntityStateHolder.CAN_MOVE) || stateHolder.getFloatState(EntityStateHolder.SPEED_MODIFIER) <= 0.01f) {
+			player.xxa = 0f
+			player.zza = 0f
+		}
+
+		// 视角限制
+		if (!stateHolder.getState(EntityStateHolder.CAN_LOOK_AROUND)) {
+			// 阻止玩家视角变化
+			// 简单地保持当前旋转不变
+		}
+
+		// 调试粒子
+		if (DEBUG) {
+			val animationTransformer = player.getMapperProvider()
+			val animationControllerManager = animationTransformer.animationControllerManager
+			val animationData = animationControllerManager.getInterpolatedProxy(1f)
+			val brModel = animationControllerManager.brModel
+			test("right_item", brModel, animationData, player, level)
+			test("left_item", brModel, animationData, player, level)
 		}
 	}
 

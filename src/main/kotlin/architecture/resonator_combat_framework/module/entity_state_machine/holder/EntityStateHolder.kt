@@ -1,4 +1,4 @@
-﻿package architecture.resonator_combat_framework.module.entity_state_machine.holder
+package architecture.resonator_combat_framework.module.entity_state_machine.holder
 
 import architecture.goldenboughs_lib.api.AllOpe
 import architecture.resonator_combat_framework.module.entity_state_machine.combat.ActionController
@@ -268,7 +268,6 @@ class EntityStateHolder<T : LivingEntity>(
 	 */
 	fun getFloatStates(): Map<ResourceLocation, Float> = floatStates
 
-
 	/**
 	 * 获取所有状态的只读视图。
 	 * @return 状态映射表
@@ -280,6 +279,36 @@ class EntityStateHolder<T : LivingEntity>(
 	 */
 	fun clearStates() {
 		states.clear()
+	}
+
+	/**
+	 * 批量应用外部状态修饰。
+	 * 由动画系统在 onStart 时调用，设置 CAN_MOVE、CAN_LOOK_AROUND 等状态。
+	 * @param modifiers 状态映射表（key=状态ID, value=目标布尔值）
+	 */
+	fun applyStateModifiers(modifiers: Map<ResourceLocation, Boolean>) {
+		states.putAll(modifiers)
+	}
+
+	/**
+	 * 批量应用外部浮点状态修饰。
+	 * 由动画系统在 onStart 时调用，设置 SPEED_MODIFIER、MAX_LOOK_SPEED 等状态。
+	 * @param modifiers 浮点状态映射表（key=状态ID, value=目标浮点值）
+	 */
+	fun applyFloatModifiers(modifiers: Map<ResourceLocation, Float>) {
+		floatStates.putAll(modifiers)
+	}
+
+	/**
+	 * 清除所有外部状态修饰，恢复为默认值。
+	 * 由动画系统在 onEnd 时调用。
+	 */
+	fun clearExternalStates() {
+		states.remove(CAN_SWITCH_ITEM)
+		states.remove(CAN_MOVE)
+		states.remove(CAN_LOOK_AROUND)
+		floatStates.remove(SPEED_MODIFIER)
+		floatStates.remove(MAX_LOOK_SPEED)
 	}
 
 	/**

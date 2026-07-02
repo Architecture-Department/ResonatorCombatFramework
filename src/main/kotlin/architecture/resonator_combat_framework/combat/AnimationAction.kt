@@ -9,6 +9,8 @@ import architecture.resonator_combat_framework.module.entity_state_machine.comba
 import architecture.resonator_combat_framework.module.entity_state_machine.combat.ActionSequence
 import architecture.resonator_combat_framework.module.entity_state_machine.combat.ActionState
 import architecture.resonator_combat_framework.module.entity_state_machine.combat.InterruptData
+import architecture.resonator_combat_framework.animation.ActionAnimationDef
+import architecture.resonator_combat_framework.init.RcfAttachmentTypes
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.LivingEntity
@@ -69,24 +71,31 @@ constructor(
 		return animation
 	}
 
-	override fun onStart(entity: LivingEntity, actionSequence: ActionSequence?) {
-		super.onStart(entity, actionSequence)
-		if (entity is IAnimationProvider) {
-			getController(entity)?.trigger(
-				getAnimation(), PlayConfig(
-					fadeInTicks = fadeInTick,
-					fadeOutTicks = fadeOutTick
-				)
-			)
-		}
-	}
+    override fun onStart(entity: LivingEntity, actionSequence: ActionSequence?) {
+        super.onStart(entity, actionSequence)
+        if (entity is IAnimationProvider) {
+            getController(entity)?.trigger(
+                getAnimation(), PlayConfig(
+                    fadeInTicks = fadeInTick,
+                    fadeOutTicks = fadeOutTick
+                )
+            )
+        }
+        val anim = getAnimation()
+        if (anim is ActionAnimationDef) {
+            val holder = entity.getData(RcfAttachmentTypes.STATE_HOLDER)
+            holder.applyStateModifiers(anim.stateModifiers)
+            holder.applyFloatModifiers(anim.floatModifiers)
+        }
+    }
 
-	override fun onEnd(entity: LivingEntity, actionSequence: ActionSequence?) {
-		super.onEnd(entity, actionSequence)
-		if (entity is IAnimationProvider) {
-			getController(entity)?.stop()
-		}
-	}
+    override fun onEnd(entity: LivingEntity, actionSequence: ActionSequence?) {
+        entity.getData(RcfAttachmentTypes.STATE_HOLDER).clearExternalStates()
+        super.onEnd(entity, actionSequence)
+        if (entity is IAnimationProvider) {
+            getController(entity)?.stop()
+        }
+    }
 
 	/**
 	 * 强制结束动作（无过渡停止动画）。
