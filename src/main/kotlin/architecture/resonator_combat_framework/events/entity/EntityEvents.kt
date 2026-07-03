@@ -2,8 +2,8 @@
 
 import architecture.resonator_combat_framework.init.RcfAttachmentTypes
 import architecture.resonator_combat_framework.module.collision.CollisionSystem
-import architecture.resonator_combat_framework.module.entity_animation.IAnimationProvider
-import architecture.resonator_combat_framework.module.entity_animation.IAnimationProvider.Companion.getMapperProvider
+import architecture.resonator_combat_framework.module.animation.IAnimationProvider
+import architecture.resonator_combat_framework.module.animation.IAnimationProvider.Companion.getMapperProvider
 import architecture.resonator_combat_framework.util.RcfUtil
 import net.minecraft.world.entity.LivingEntity
 import net.neoforged.bus.api.SubscribeEvent

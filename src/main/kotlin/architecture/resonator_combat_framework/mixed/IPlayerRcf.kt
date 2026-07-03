@@ -1,6 +1,6 @@
 package architecture.resonator_combat_framework.mixed
 
-import architecture.resonator_combat_framework.module.entity_animation.IAnimationProvider
+import architecture.resonator_combat_framework.module.animation.IAnimationProvider
 
 interface IPlayerRcf : IAnimationProvider
 

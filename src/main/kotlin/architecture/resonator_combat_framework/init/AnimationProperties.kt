@@ -1,6 +1,6 @@
 package architecture.resonator_combat_framework.init
 
-import architecture.resonator_combat_framework.module.entity_state_machine.combat.ActionProperties
+import architecture.resonator_combat_framework.module.combat.ActionProperties
 
 /**
  * 动画属性定义  —— 委托到 [ActionProperties]。

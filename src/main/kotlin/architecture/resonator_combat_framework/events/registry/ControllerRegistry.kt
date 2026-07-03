@@ -1,7 +1,7 @@
 package architecture.resonator_combat_framework.events.registry
 
-import architecture.resonator_combat_framework.animation.controller.ActionAnimationController
-import architecture.resonator_combat_framework.module.entity_animation.event.ControllerRegisterEvent
+import architecture.resonator_combat_framework.animation.ActionAnimationController
+import architecture.resonator_combat_framework.module.animation.event.ControllerRegisterEvent
 import architecture.resonator_combat_framework.util.RcfUtil
 import net.minecraft.resources.ResourceLocation
 import net.neoforged.bus.api.SubscribeEvent

@@ -5,18 +5,17 @@ import architecture.resonator_combat_framework.core.RcfEventHooks
 import architecture.resonator_combat_framework.init.RcfAttachmentTypes
 import architecture.resonator_combat_framework.module.collision.CollisionEntry
 import architecture.resonator_combat_framework.module.collision.CollisionSystem
-import architecture.resonator_combat_framework.module.entity_animation.IAnimationProvider
-import architecture.resonator_combat_framework.module.entity_animation.animation.AnimationDef
-import architecture.resonator_combat_framework.module.entity_animation.animation.controller.AnimationController
-import architecture.resonator_combat_framework.module.entity_animation.animation.controller.IEntityAnimationController
-import architecture.resonator_combat_framework.module.entity_animation.animation.model.GeometryModel
-import architecture.resonator_combat_framework.module.entity_animation.animation.model.PoseData
-import architecture.resonator_combat_framework.module.entity_state_machine.combat.ActionSequence
-import architecture.resonator_combat_framework.module.entity_state_machine.combat.ActionState
-import architecture.resonator_combat_framework.module.entity_state_machine.combat.AttackPhase
-import architecture.resonator_combat_framework.module.entity_state_machine.combat.BooleanStateProperty
-import architecture.resonator_combat_framework.module.entity_state_machine.combat.FloatStateProperty
-import architecture.resonator_combat_framework.module.entity_state_machine.combat.InterruptData
+import architecture.resonator_combat_framework.module.animation.IAnimationProvider
+import architecture.resonator_combat_framework.module.animation.AnimationDef
+import architecture.resonator_combat_framework.module.animation.controller.AnimationController
+import architecture.resonator_combat_framework.module.animation.controller.IEntityAnimationController
+import architecture.resonator_combat_framework.module.animation.model.GeometryModel
+import architecture.resonator_combat_framework.module.animation.model.PoseData
+import architecture.resonator_combat_framework.module.combat.ActionSequence
+import architecture.resonator_combat_framework.module.combat.ActionState
+import architecture.resonator_combat_framework.module.combat.BooleanStateProperty
+import architecture.resonator_combat_framework.module.combat.FloatStateProperty
+import architecture.resonator_combat_framework.module.combat.InterruptData
 import architecture.resonator_combat_framework.util.RcfUtil
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.Entity
@@ -30,8 +29,8 @@ import java.util.function.Supplier
  * 攻击动画动作。
  *
  * 扩展 [AnimationAction]，为攻击动画提供前摇（WINDUP）、执行（ACTIVE）、后摇（RECOVERY）三个阶段的时间划分。
- * 攻击阶段（[AttackPhase]）的碰撞体管理、伤害计算等战斗逻辑在此类中处理。
- * 状态修饰通过 [addProperty] 存入 [Action.properties] 或 [AttackPhase.addProperty]，
+ * 攻击阶段（[AttackActionPhase]）的碰撞体管理、伤害计算等战斗逻辑在此类中处理。
+ * 状态修饰通过 [addProperty] 存入 [Action.properties] 或 [AttackActionPhase.addProperty]，
  * 以 [BooleanStateProperty] 或 [FloatStateProperty] 为键，运行时自动应用。
  *
  * @property activeTick 执行阶段 tick 数
@@ -53,7 +52,7 @@ class AttackAnimationAction(
 	/** 伤害倍率 */
 	val damageMultiplier: Float = 1.0f,
 	/** 攻击阶段列表 */
-	val phases: List<AttackPhase> = emptyList(),
+	val phases: List<AttackActionPhase> = emptyList(),
 ) : AnimationAction(
 	id,
 	animation,
@@ -238,7 +237,7 @@ class AttackAnimationAction(
 
 	// ===== 伤害计算 =====
 
-	fun onHurtEntity(attacker: LivingEntity, target: LivingEntity, phase: AttackPhase): Boolean {
+	fun onHurtEntity(attacker: LivingEntity, target: LivingEntity, phase: AttackActionPhase): Boolean {
 		val amount = getDamage(attacker).toFloat()
 		val source = if (attacker is Player) attacker.damageSources().playerAttack(attacker)
 		else attacker.damageSources().mobAttack(attacker)

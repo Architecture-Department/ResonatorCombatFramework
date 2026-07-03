@@ -2,8 +2,8 @@ package architecture.resonator_combat_framework.common.item_property
 
 import architecture.resonator_combat_framework.common.payload.AttackPayload
 import architecture.resonator_combat_framework.init.RcfAttachmentTypes
-import architecture.resonator_combat_framework.module.entity_state_machine.combat.Action
-import architecture.resonator_combat_framework.module.entity_state_machine.combat.ActionSequence
+import architecture.resonator_combat_framework.module.combat.Action
+import architecture.resonator_combat_framework.module.combat.ActionSequence
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.InteractionHand
 import net.minecraft.world.entity.LivingEntity

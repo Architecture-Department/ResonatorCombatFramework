@@ -1,9 +1,9 @@
 package architecture.resonator_combat_framework.event
 
 import architecture.goldenboughs_lib.api.AllOpe
-import architecture.resonator_combat_framework.module.entity_animation.animation.controller.IEntityAnimationController
-import architecture.resonator_combat_framework.module.entity_animation.animation.model.GeometryModel
-import architecture.resonator_combat_framework.module.entity_animation.animation.model.PoseData
+import architecture.resonator_combat_framework.module.animation.controller.IEntityAnimationController
+import architecture.resonator_combat_framework.module.animation.model.GeometryModel
+import architecture.resonator_combat_framework.module.animation.model.PoseData
 import net.minecraft.world.entity.Entity
 import net.neoforged.bus.api.Event
 

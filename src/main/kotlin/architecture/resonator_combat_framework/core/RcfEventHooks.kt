@@ -5,20 +5,20 @@ import architecture.resonator_combat_framework.event.ColliderEvent
 import architecture.resonator_combat_framework.module.collision.CollisionEntityData
 import architecture.resonator_combat_framework.module.collision.CollisionEntry
 import architecture.resonator_combat_framework.module.collision.event.CollisionEntityEvent
-import architecture.resonator_combat_framework.module.entity_animation.animation.AnimationDef
-import architecture.resonator_combat_framework.module.entity_animation.animation.controller.IEntityAnimationController
-import architecture.resonator_combat_framework.module.entity_animation.animation.data.PlayConfig
-import architecture.resonator_combat_framework.module.entity_animation.animation.mapper.IEntityAnimationMapperProvider
-import architecture.resonator_combat_framework.module.entity_animation.animation.model.GeometryModel
-import architecture.resonator_combat_framework.module.entity_animation.animation.model.PoseData
-import architecture.resonator_combat_framework.module.entity_animation.event.*
-import architecture.resonator_combat_framework.module.entity_state_machine.combat.Action
-import architecture.resonator_combat_framework.module.entity_state_machine.combat.ActionState
-import architecture.resonator_combat_framework.module.entity_state_machine.combat.AttackPhase
-import architecture.resonator_combat_framework.module.entity_state_machine.event.CombatActionEvent
-import architecture.resonator_combat_framework.module.entity_state_machine.event.CombatActionEvent.Changed.Type
-import architecture.resonator_combat_framework.module.entity_state_machine.event.CombatEvent
-import architecture.resonator_combat_framework.module.entity_state_machine.holder.EntityStateHolder
+import architecture.resonator_combat_framework.module.animation.AnimationDef
+import architecture.resonator_combat_framework.module.animation.controller.IEntityAnimationController
+import architecture.resonator_combat_framework.module.animation.data.PlayConfig
+import architecture.resonator_combat_framework.module.animation.mapper.IEntityAnimationMapperProvider
+import architecture.resonator_combat_framework.module.animation.model.GeometryModel
+import architecture.resonator_combat_framework.module.animation.model.PoseData
+import architecture.resonator_combat_framework.module.animation.event.*
+import architecture.resonator_combat_framework.module.combat.Action
+import architecture.resonator_combat_framework.module.combat.ActionState
+import architecture.resonator_combat_framework.combat.AttackActionPhase
+import architecture.resonator_combat_framework.module.state_machine.event.CombatActionEvent
+import architecture.resonator_combat_framework.module.state_machine.event.CombatActionEvent.Changed.Type
+import architecture.resonator_combat_framework.module.state_machine.event.CombatEvent
+import architecture.resonator_combat_framework.module.state_machine.holder.EntityStateHolder
 import net.minecraft.core.particles.ParticleType
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.Entity
@@ -170,12 +170,12 @@ object RcfEventHooks {
     // ===== Animation Phase =====
 
     @JvmStatic
-    fun AnimationPhaseStart(controller: IEntityAnimationController<*>, phase: AttackPhase) {
+    fun AnimationPhaseStart(controller: IEntityAnimationController<*>, phase: AttackActionPhase) {
         NeoForge.EVENT_BUS.post(PhaseEvent.Start(controller, phase))
     }
 
     @JvmStatic
-    fun AnimationPhaseEnd(controller: IEntityAnimationController<*>, phase: AttackPhase) {
+    fun AnimationPhaseEnd(controller: IEntityAnimationController<*>, phase: AttackActionPhase) {
         NeoForge.EVENT_BUS.post(PhaseEvent.End(controller, phase))
     }
 

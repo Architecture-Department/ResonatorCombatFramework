@@ -3,7 +3,14 @@ package architecture.resonator_combat_framework.events.registry
 import architecture.goldenboughs_lib.events.registry.PayloadRegistry.playToClient
 import architecture.goldenboughs_lib.events.registry.PayloadRegistry.playToServerAndClient
 import architecture.resonator_combat_framework.common.payload.AttackPayload
-import architecture.resonator_combat_framework.module.entity_animation.network.*
+import architecture.resonator_combat_framework.module.animation.network.command.PausePlayerPayload
+import architecture.resonator_combat_framework.module.animation.network.command.PlayPlayerPayload
+import architecture.resonator_combat_framework.module.animation.network.command.ResumePlayerPayload
+import architecture.resonator_combat_framework.module.animation.network.command.StopPlayerPayload
+import architecture.resonator_combat_framework.module.animation.network.command.TriggerPlayerPayload
+import architecture.resonator_combat_framework.module.animation.network.keyframe_animation.BoneConfigSynchPayload
+import architecture.resonator_combat_framework.module.animation.network.keyframe_animation.GeometryModelSynchPayload
+import architecture.resonator_combat_framework.module.animation.network.keyframe_animation.KeyframeAnimationSynchPayload
 import architecture.resonator_combat_framework.util.RcfUtil
 import net.neoforged.bus.api.SubscribeEvent
 import net.neoforged.fml.common.EventBusSubscriber
@@ -22,11 +29,11 @@ object PayloadRegistry {
 		registrar.playToServerAndClient(TriggerPlayerPayload.TYPE, TriggerPlayerPayload.STREAM_CODEC)
 		registrar.playToServerAndClient(PausePlayerPayload.TYPE, PausePlayerPayload.STREAM_CODEC)
 		registrar.playToServerAndClient(ResumePlayerPayload.TYPE, ResumePlayerPayload.STREAM_CODEC)
-		registrar.playToClient(BoneConfigSynchPayload.TYPE, BoneConfigSynchPayload.STREAM_CODEC)
+		registrar.playToClient(KeyframeAnimationSynchPayload.TYPE, KeyframeAnimationSynchPayload.STREAM_CODEC)
 		registrar.playToClient(GeometryModelSynchPayload.TYPE, GeometryModelSynchPayload.STREAM_CODEC)
 		registrar.playToClient(
-			BoneConfigMapSynchPayload.TYPE,
-			BoneConfigMapSynchPayload.STREAM_CODEC
+			BoneConfigSynchPayload.TYPE,
+			BoneConfigSynchPayload.STREAM_CODEC
 		)
 //		registrar.playToServerAndClient(SyncEntityStatePayload.TYPE, SyncEntityStatePayload.STREAM_CODEC)
 		registrar.playToServerAndClient(AttackPayload.TYPE, AttackPayload.STREAM_CODEC)

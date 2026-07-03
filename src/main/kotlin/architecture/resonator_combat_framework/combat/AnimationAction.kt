@@ -1,12 +1,17 @@
 package architecture.resonator_combat_framework.combat
 
 import architecture.resonator_combat_framework.init.RcfAttachmentTypes
-import architecture.resonator_combat_framework.module.entity_animation.IAnimationProvider
-import architecture.resonator_combat_framework.module.entity_animation.IAnimationProvider.Companion.getMapperProvider
-import architecture.resonator_combat_framework.module.entity_animation.animation.AnimationDef
-import architecture.resonator_combat_framework.module.entity_animation.animation.controller.IEntityAnimationController
-import architecture.resonator_combat_framework.module.entity_animation.animation.data.PlayConfig
-import architecture.resonator_combat_framework.module.entity_state_machine.combat.*
+import architecture.resonator_combat_framework.module.combat.Action
+import architecture.resonator_combat_framework.module.combat.ActionSequence
+import architecture.resonator_combat_framework.module.combat.ActionState
+import architecture.resonator_combat_framework.module.combat.BooleanStateProperty
+import architecture.resonator_combat_framework.module.combat.FloatStateProperty
+import architecture.resonator_combat_framework.module.combat.InterruptData
+import architecture.resonator_combat_framework.module.animation.IAnimationProvider
+import architecture.resonator_combat_framework.module.animation.IAnimationProvider.Companion.getMapperProvider
+import architecture.resonator_combat_framework.module.animation.AnimationDef
+import architecture.resonator_combat_framework.module.animation.controller.IEntityAnimationController
+import architecture.resonator_combat_framework.module.animation.data.PlayConfig
 import architecture.resonator_combat_framework.util.RcfUtil
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.Entity
@@ -16,10 +21,10 @@ import java.util.function.Supplier
 /**
  * 动画动作。
  *
- * 将动画定义（[AnimationDef]）包装为状态机可调度的 [Action]，
+ * 将动画定义（[AnimationDef]）包装为状态机可调度的 [architecture.resonator_combat_framework.module.combat.Action]，
  * 在动作启动/结束/速度变化时自动控制对应动画控制器的播放、停止与速度同步。
- * 状态修饰通过 [addProperty] 存入 [Action.properties]，
- * 以 [BooleanStateProperty] 或 [FloatStateProperty] 为键，运行时自动应用。
+ * 状态修饰通过 [addProperty] 存入 [architecture.resonator_combat_framework.module.combat.Action.properties]，
+ * 以 [architecture.resonator_combat_framework.module.combat.BooleanStateProperty] 或 [architecture.resonator_combat_framework.module.combat.FloatStateProperty] 为键，运行时自动应用。
  *
  * @property animation 动画定义的延迟提供者
  * @property controllerId 目标动画控制器的 ID
@@ -67,14 +72,13 @@ constructor(
 	override fun onStart(entity: LivingEntity, actionSequence: ActionSequence?) {
 		super.onStart(entity, actionSequence)
 		applyModifiers(entity)
-		if (entity is IAnimationProvider) {
-			getController(entity)?.trigger(
-				getAnimation(), PlayConfig(
-					fadeInTicks = fadeInTick,
-					fadeOutTicks = fadeOutTick
-				)
+		if (entity !is IAnimationProvider) return
+		getController(entity)?.trigger(
+			getAnimation(), PlayConfig(
+				fadeInTicks = fadeInTick,
+				fadeOutTicks = fadeOutTick
 			)
-		}
+		)
 	}
 
 	override fun onEnd(entity: LivingEntity, actionSequence: ActionSequence?) {
@@ -103,7 +107,7 @@ constructor(
 	}
 
 	/**
-	 * 从 [Action.properties] 中读取 [BooleanStateProperty] 和 [FloatStateProperty] 键，
+	 * 从 [Action.properties] 中读取 [architecture.resonator_combat_framework.module.combat.BooleanStateProperty] 和 [architecture.resonator_combat_framework.module.combat.FloatStateProperty] 键，
 	 * 应用到 [EntityStateHolder]。
 	 */
 	@Suppress("UNCHECKED_CAST")
