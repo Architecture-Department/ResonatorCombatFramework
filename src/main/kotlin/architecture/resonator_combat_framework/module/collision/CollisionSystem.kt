@@ -137,7 +137,7 @@ object CollisionSystem {
 		data: CollisionEntityData,
 		boundsCache: Map<CollisionEntry, WorldBounds>,
 	) {
-		val check = RcfEventHooks.CollisionEntityCheck(attacker, entry, target, data)
+		val check = RcfEventHooks.collisionEntityCheck(attacker, entry, target, data)
 		if (check.isCanceled) return
 		if (data.isAlreadyHit(entry.groupId, target.uuid)) return
 
@@ -149,7 +149,7 @@ object CollisionSystem {
 		if (check.isRecord) {
 			data.markHit(entry.groupId, target.uuid)
 		}
-		RcfEventHooks.CollisionEntityHit(attacker, entry, target, data)
+		RcfEventHooks.collisionEntityHit(attacker, entry, target, data)
 	}
 
 	// ===== 球体距离提前退出 =====

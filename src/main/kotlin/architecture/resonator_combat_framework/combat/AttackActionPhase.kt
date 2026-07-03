@@ -1,5 +1,6 @@
 package architecture.resonator_combat_framework.combat
 
+import architecture.goldenboughs_lib.api.AllOpe
 import architecture.resonator_combat_framework.module.combat.ActionProperty
 import architecture.resonator_combat_framework.module.combat.BooleanStateProperty
 import architecture.resonator_combat_framework.module.combat.FloatStateProperty
@@ -10,17 +11,27 @@ import java.util.*
  * 状态修饰通过 [ActionProperty] 键存储在 [properties] 中，
  * 在阶段开始时自动应用到 [EntityStateHolder]，结束时恢复。
  *
- * @param startTime 阶段起始时间（秒）
- * @param endTime 阶段结束时间（秒）
+ * @param startTick 阶段起始时间
+ * @param endTick 阶段结束时间
  * @param colliders 本阶段中用于碰撞检测的骨骼-碰撞体绑定列表
  */
-data class AttackActionPhase
-@JvmOverloads
-constructor(
-	val startTime: Float,
-	val endTime: Float,
-	val colliders: List<JointColliderPair> = emptyList()
+@AllOpe
+data class AttackActionPhase(
+	val startTick: Int,
+	val endTick: Int,
+	val colliders: Array<JointColliderPair>
 ) {
+	companion object {
+		fun of(
+			startTick: Int,
+			endTick: Int,
+			vararg colliders: JointColliderPair
+		): AttackActionPhase = AttackActionPhase(startTick, endTick, arrayOf(*colliders))
+	}
+
+	val startTime = startTick / 20f
+	val endTime = endTick / 20f
+
 	/** 阶段属性映射表 */
 	private val properties = mutableMapOf<ActionProperty<*>, Any>()
 
@@ -57,4 +68,24 @@ constructor(
 		properties.filterKeys { it is FloatStateProperty }
 			.mapKeys { it.key as FloatStateProperty }
 			.mapValues { it.value as Float }
+
+	override fun equals(other: Any?): Boolean {
+		if (this === other) return true
+		if (other !is AttackActionPhase) return false
+
+		if (startTime != other.startTime) return false
+		if (endTime != other.endTime) return false
+		if (!colliders.contentEquals(other.colliders)) return false
+		if (properties != other.properties) return false
+
+		return true
+	}
+
+	override fun hashCode(): Int {
+		var result = startTime.hashCode()
+		result = 31 * result + endTime.hashCode()
+		result = 31 * result + colliders.contentHashCode()
+		result = 31 * result + properties.hashCode()
+		return result
+	}
 }

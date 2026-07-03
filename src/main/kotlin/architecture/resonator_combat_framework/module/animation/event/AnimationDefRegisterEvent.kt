@@ -9,7 +9,7 @@ import net.neoforged.bus.api.Event
  * [AnimationDef] 注册事件，用于将动画定义注册到动画系统中。
  * 支持懒加载（[LazySupplier]），动画定义仅在首次使用时才被初始化。
  */
-class AnimationDefRegistryEvent : Event() {
+class AnimationDefRegisterEvent : Event() {
 	private val map = linkedMapOf<ResourceLocation, LazySupplier<AnimationDef>>()
 
 	/**

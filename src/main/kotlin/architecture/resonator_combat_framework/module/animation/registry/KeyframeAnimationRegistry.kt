@@ -127,6 +127,6 @@ class KeyframeAnimationRegistry(
 			}
 		}
 		RcfUtil.LOGGER.info("[ANIMATION] Applied {} animations", bakingAnimations.size)
-
+		AnimationDefRegistry.rebuild()
 	}
 }

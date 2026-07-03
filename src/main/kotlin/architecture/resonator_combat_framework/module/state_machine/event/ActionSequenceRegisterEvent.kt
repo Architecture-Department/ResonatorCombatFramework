@@ -10,7 +10,7 @@ import net.neoforged.bus.api.Event
  * 用于收集所有注册的 ActionSequence。
  * [ActionSequence]注册事件
  */
-class ActionSequenceRegistryEvent : Event() {
+class ActionSequenceRegisterEvent : Event() {
 	private val map = linkedMapOf<ResourceLocation, LazySupplier<ActionSequence>>()
 
 	fun <T : ActionSequence> register(

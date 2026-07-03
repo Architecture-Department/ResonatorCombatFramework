@@ -2,13 +2,12 @@ package architecture.resonator_combat_framework.module.animation.registry
 
 import architecture.goldenboughs_lib.api.AllOpe
 import architecture.goldenboughs_lib.util.LazySupplier
+import architecture.resonator_combat_framework.core.RcfEventHooks
 import architecture.resonator_combat_framework.module.animation.AnimationDef
-import architecture.resonator_combat_framework.module.animation.event.AnimationDefRegistryEvent
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.server.packs.resources.ResourceManager
 import net.minecraft.server.packs.resources.SimplePreparableReloadListener
 import net.minecraft.util.profiling.ProfilerFiller
-import thedarkcolour.kotlinforforge.neoforge.forge.FORGE_BUS
 
 /**
  * 动画定义注册表，通过资源重载监听器收集所有 [AnimationDef]。
@@ -35,7 +34,7 @@ object AnimationDefRegistry :
 	 * 重新从事件总线收集所有 [AnimationDef] 并初始化。
 	 */
 	fun rebuild() {
-		val prepared = FORGE_BUS.post(AnimationDefRegistryEvent()).getAll()
+		val prepared = RcfEventHooks.animationDefRegister()
 		animationsDef.clear()
 		animationsDef.putAll(prepared)
 		animationsDef.forEach { it.value.init() }
@@ -45,7 +44,7 @@ object AnimationDefRegistry :
 		resourceManager: ResourceManager,
 		profiler: ProfilerFiller
 	): Map<ResourceLocation, LazySupplier<AnimationDef>> {
-		return FORGE_BUS.post(AnimationDefRegistryEvent()).getAll()
+		return RcfEventHooks.animationDefRegister()
 	}
 
 	override fun apply(

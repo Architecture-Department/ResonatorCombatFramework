@@ -2,7 +2,6 @@ package architecture.resonator_combat_framework.module.animation.network.keyfram
 
 import architecture.goldenboughs_lib.api.payload.ToClientPayload
 import architecture.goldenboughs_lib.util.LibUtil.RESOURCE_LOCATION_BY_COMPOUND_TAG_MAP_STREAM_CODEC
-import architecture.resonator_combat_framework.module.animation.registry.AnimationDefRegistry
 import architecture.resonator_combat_framework.module.animation.registry.KeyframeAnimationRegistry
 import architecture.resonator_combat_framework.util.RcfUtil
 import com.mojang.serialization.JsonOps
@@ -43,6 +42,5 @@ data class KeyframeAnimationSynchPayload(
 		instance.apply(nbtMap.mapValues {
 			NbtOps.INSTANCE.convertTo(JsonOps.COMPRESSED, it.value)
 		})
-		AnimationDefRegistry.rebuild()
 	}
 }

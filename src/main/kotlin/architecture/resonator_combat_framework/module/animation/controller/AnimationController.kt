@@ -113,7 +113,7 @@ class AnimationController<T : Entity> @JvmOverloads constructor(
 	}
 
 	override fun trigger(anim: AnimationDef, config: PlayConfig) {
-		RcfEventHooks.AnimationTriggerPre(this, anim, config)
+		RcfEventHooks.animationTriggerPre(this, anim, config)
 
 		val oldActionAnim = currentAnim
 		oldActionAnim?.onEnd(manager.holder)
@@ -148,7 +148,7 @@ class AnimationController<T : Entity> @JvmOverloads constructor(
 		manager.rebuildBones()
 
 		anim.onStart(manager.holder, animTime, 0f, poseData, manager.brModel)
-		RcfEventHooks.AnimationTriggerPost(this, anim, config)
+		RcfEventHooks.animationTriggerPost(this, anim, config)
 	}
 
 	// ===== 停止 =====
@@ -282,7 +282,7 @@ class AnimationController<T : Entity> @JvmOverloads constructor(
 		state = IEntityAnimationController.State.FADING_OUT
 		fadeTarget = 0f
 		currentTransitionTicks = currentConfig.resolveFadeOutTicks(activeBoneConfig.getFadeOutTicks())
-		RcfEventHooks.AnimationComplete(this)
+		RcfEventHooks.animationComplete(this)
 	}
 
 	/** 计算动画结束时间（秒），支持正放和倒放 */
@@ -306,10 +306,10 @@ class AnimationController<T : Entity> @JvmOverloads constructor(
 	// ===== 游戏刻推进 =====
 
 	final override fun tick() {
-		if (RcfEventHooks.AnimationControllerTickPre(id, this, manager.mapperProvider)) return
+		if (RcfEventHooks.animationControllerTickPre(id, this, manager.mapperProvider)) return
 		tickHandlerCall()
 		if (state == IEntityAnimationController.State.IDLE || state == IEntityAnimationController.State.PAUSED) {
-			RcfEventHooks.AnimationControllerTickPost(id, this, manager.mapperProvider)
+			RcfEventHooks.animationControllerTickPost(id, this, manager.mapperProvider)
 			return
 		}
 		checkPlaybackBounds()
@@ -318,7 +318,7 @@ class AnimationController<T : Entity> @JvmOverloads constructor(
 			advanceTickCount++; tickBackend(advanceTickCount / 20f)
 		} else tickBackend(0f, freezeTime = true)
 		handleStateTransition()
-		RcfEventHooks.AnimationControllerTickPost(id, this, manager.mapperProvider)
+		RcfEventHooks.animationControllerTickPost(id, this, manager.mapperProvider)
 	}
 
 	override fun tickAdvance() {
@@ -327,9 +327,9 @@ class AnimationController<T : Entity> @JvmOverloads constructor(
 	}
 
 	private fun tickHandlerCall() {
-		if (RcfEventHooks.AnimationControllerTickHandlerPre(id, this, manager.mapperProvider)) return
+		if (RcfEventHooks.animationControllerTickHandlerPre(id, this, manager.mapperProvider)) return
 		tickHandler(manager.mapperProvider)
-		RcfEventHooks.AnimationControllerTickHandlerPost(id, this, manager.mapperProvider)
+		RcfEventHooks.animationControllerTickHandlerPost(id, this, manager.mapperProvider)
 	}
 
 	/**

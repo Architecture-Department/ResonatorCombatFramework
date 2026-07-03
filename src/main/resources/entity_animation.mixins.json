@@ -1,11 +1,11 @@
 {
 	"required": true,
-	"package": "architecture.resonator_combat_framework.module.entity_animation.mixin",
+	"package": "architecture.resonator_combat_framework.module.animation.mixin",
 	"compatibilityLevel": "JAVA_21",
 	"client": [
-      "architecture.resonator_combat_framework.module.animation.mixin.client.CameraAccessor",
-      "architecture.resonator_combat_framework.module.animation.mixin.client.LivingEntityRendererMixin",
-      "architecture.resonator_combat_framework.module.animation.mixin.client.PlayerModelMixin"
+      "client.CameraAccessor",
+      "client.LivingEntityRendererMixin",
+      "client.PlayerModelMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

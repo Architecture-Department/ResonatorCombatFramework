@@ -152,9 +152,9 @@ abstract class Action(
 		val actionState = getState(time, entity)
 		val interruptWeight = interruptData.getInterruptWeight(actionState)
 		if (interruptWeight < 0) {
-			return RcfEventHooks.CombatActionInterruptible(holder, entity, this, target, false)
+			return RcfEventHooks.combatActionInterruptible(holder, entity, this, target, false)
 		}
-		return RcfEventHooks.CombatActionInterruptible(holder, entity, this, target, interruptWeight < target.weight)
+		return RcfEventHooks.combatActionInterruptible(holder, entity, this, target, interruptWeight < target.weight)
 	}
 
 	fun nextAction(

@@ -50,7 +50,7 @@ class ActionController(val entity: LivingEntity) {
 	final var actionState: ActionState = ActionState.EMPTY
 		set(value) {
 			if (field == value) return
-			RcfEventHooks.CombatActionStateChanged(holder, entity, field, value)
+			RcfEventHooks.combatActionStateChanged(holder, entity, field, value)
 			field = value
 		}
 
@@ -120,7 +120,7 @@ class ActionController(val entity: LivingEntity) {
 	 * @return 是否成功切换
 	 */
 	private fun onChangedAction(value: Action?, type: CombatActionEvent.Changed.Type): Boolean {
-		val event = RcfEventHooks.CombatActionChanged(holder, entity, action, value, type)
+		val event = RcfEventHooks.combatActionChanged(holder, entity, action, value, type)
 		if (event.isCanceled) {
 			return false
 		}
@@ -138,7 +138,7 @@ class ActionController(val entity: LivingEntity) {
 		actionState = ActionState.EMPTY
 		if (action != null) {
 			action!!.onEnd(entity, actionSequence)
-			RcfEventHooks.CombatActionEnd(holder, entity, action!!)
+			RcfEventHooks.combatActionEnd(holder, entity, action!!)
 			onChangedAction(null, CombatActionEvent.Changed.Type.END)
 		}
 	}
@@ -154,7 +154,7 @@ class ActionController(val entity: LivingEntity) {
 		actionState = ActionState.EMPTY
 		if (action != null) {
 			(action as? AnimationAction)?.onForcedEnd(entity, actionSequence)
-			RcfEventHooks.CombatActionEnd(holder, entity, action!!)
+			RcfEventHooks.combatActionEnd(holder, entity, action!!)
 			onChangedAction(null, CombatActionEvent.Changed.Type.INTERRUPTIBLE)
 		}
 	}
@@ -222,12 +222,12 @@ class ActionController(val entity: LivingEntity) {
 		if (scaledDelta <= 0f) return
 
 		if (time <= 0f) {
-			RcfEventHooks.CombatActionStart(holder, entity, action)
+			RcfEventHooks.combatActionStart(holder, entity, action)
 			action.onStart(entity, actionSequence)
 		}
-		if (!RcfEventHooks.CombatActionTickPre(holder, entity, action)) {
+		if (!RcfEventHooks.combatActionTickPre(holder, entity, action)) {
 			action.onTick(entity, actionSequence, time)
-			RcfEventHooks.CombatActionTickPost(holder, entity, action)
+			RcfEventHooks.combatActionTickPost(holder, entity, action)
 		}
 		actionState = action.getState(time, entity)
 		// 阶段切换回调

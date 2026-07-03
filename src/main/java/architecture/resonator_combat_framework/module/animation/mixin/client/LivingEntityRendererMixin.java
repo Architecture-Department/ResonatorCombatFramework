@@ -35,7 +35,9 @@ public abstract class LivingEntityRendererMixin<T extends LivingEntity> {
 		if (!(entity instanceof Player player) || !(model instanceof PlayerModel<?> playerModel)) {
 			return;
 		}
+		//noinspection rawtypes
 		IEntityAnimationMapperProvider transformer = player.resonator_combat_framework$getMapperProvider();
+		//noinspection unchecked
 		transformer.tickAndRender(playerModel, partialTicks, poseStack);
 	}
 }

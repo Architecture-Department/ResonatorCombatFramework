@@ -3,14 +3,15 @@ package architecture.resonator_combat_framework.combat
 import architecture.goldenboughs_lib.util.LibUtil.rlOf
 import architecture.resonator_combat_framework.core.RcfEventHooks
 import architecture.resonator_combat_framework.init.RcfAttachmentTypes
-import architecture.resonator_combat_framework.module.collision.CollisionEntry
-import architecture.resonator_combat_framework.module.collision.CollisionSystem
-import architecture.resonator_combat_framework.module.animation.IAnimationProvider
 import architecture.resonator_combat_framework.module.animation.AnimationDef
+import architecture.resonator_combat_framework.module.animation.IAnimationProvider
 import architecture.resonator_combat_framework.module.animation.controller.AnimationController
 import architecture.resonator_combat_framework.module.animation.controller.IEntityAnimationController
 import architecture.resonator_combat_framework.module.animation.model.GeometryModel
 import architecture.resonator_combat_framework.module.animation.model.PoseData
+import architecture.resonator_combat_framework.module.animation.registry.AnimationDefRegistry
+import architecture.resonator_combat_framework.module.collision.CollisionEntry
+import architecture.resonator_combat_framework.module.collision.CollisionSystem
 import architecture.resonator_combat_framework.module.combat.ActionSequence
 import architecture.resonator_combat_framework.module.combat.ActionState
 import architecture.resonator_combat_framework.module.combat.BooleanStateProperty
@@ -52,7 +53,7 @@ class AttackAnimationAction(
 	/** 伤害倍率 */
 	val damageMultiplier: Float = 1.0f,
 	/** 攻击阶段列表 */
-	val phases: List<AttackActionPhase> = emptyList(),
+	vararg val phases: AttackActionPhase,
 ) : AnimationAction(
 	id,
 	animation,
@@ -63,12 +64,37 @@ class AttackAnimationAction(
 	interruptData,
 	weight
 ) {
-	/** 前摇总 tick 数（含淡入） */
+	constructor(
+		id: ResourceLocation,
+		animationId: ResourceLocation,
+		controllerId: ResourceLocation?,
+		fadeInTick: Int = 1,
+		windupTick: Int = 0,
+		activeTick: Int = 4,
+		recoveryTick: Int = 2,
+		fadeOutTick: Int = 1,
+		interruptData: InterruptData = InterruptData(),
+		weight: Int = 2500,
+		damageMultiplier: Float = 1.0f,
+		vararg phases: AttackActionPhase,
+	) : this(
+		id,
+ 		AnimationDefRegistry.get(animationId)!!,
+		controllerId,
+		fadeInTick,
+		windupTick,
+		activeTick,
+		recoveryTick,
+		fadeOutTick,
+		interruptData,
+		weight,
+		damageMultiplier,
+		*phases,
+	)
+
 	val totalWindupTick: Int = fadeInTick + windupTick
 
-	/** 后摇总 tick 数（含淡出） */
 	val totalRecoveryTick: Int = recoveryTick + fadeOutTick
-
 	override fun getState(time: Float, entity: LivingEntity): ActionState {
 		val t = time * 20f
 		return when {
@@ -160,8 +186,8 @@ class AttackAnimationAction(
 		val startedIndices = currentPhaseIndices - existingPhaseIndices
 		val endedIndices = existingPhaseIndices - currentPhaseIndices
 
-		startedIndices.forEach { RcfEventHooks.AnimationPhaseStart(controller, phases[it]) }
-		endedIndices.forEach { RcfEventHooks.AnimationPhaseEnd(controller, phases[it]) }
+		startedIndices.forEach { RcfEventHooks.animationPhaseStart(controller, phases[it]) }
+		endedIndices.forEach { RcfEventHooks.animationPhaseEnd(controller, phases[it]) }
 
 		applyPhaseModifiers(entity, startedIndices, endedIndices)
 
@@ -183,7 +209,7 @@ class AttackAnimationAction(
 		startedIndices: Set<Int>,
 		endedIndices: Set<Int>,
 	) {
-		RcfEventHooks.AnimationColliderPre(controller, entity, animTime, poseData, brModel, mergedProxy)
+		RcfEventHooks.animationColliderPre(controller, entity, animTime, poseData, brModel, mergedProxy)
 		onColliderUpdate(entity, animTime, poseData, brModel, mergedProxy, controller)
 
 		val data = CollisionSystem.getData(entity)
@@ -221,14 +247,15 @@ class AttackAnimationAction(
 					.mul(brModel.computeBoneGlobalMatrix(pair.boneName, mergedProxy, true))
 			}
 		}
-		RcfEventHooks.AnimationColliderPost(controller, entity, animTime, poseData, brModel, mergedProxy)
+		RcfEventHooks.animationColliderPost(controller, entity, animTime, poseData, brModel, mergedProxy)
 	}
 
 	protected open fun onColliderUpdate(
 		entity: Entity, animTime: Float, poseData: PoseData,
 		brModel: GeometryModel, mergedProxy: PoseData,
 		controller: IEntityAnimationController<*>,
-	) {}
+	) {
+	}
 
 	private fun cleanupColliders(entity: LivingEntity) {
 		val data = CollisionSystem.getData(entity)

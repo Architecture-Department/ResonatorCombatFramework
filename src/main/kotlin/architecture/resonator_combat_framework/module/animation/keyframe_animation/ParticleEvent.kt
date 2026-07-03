@@ -115,7 +115,7 @@ data class ParticleEvent
 				.mul(brModel.computeLocatorGlobalMatrix(locatorName, animationData, isWorld = true))
 			var pos = matrix.toPos()
 			var rotate = matrix.toRot()
-			val event = RcfEventHooks.AnimationParticlePre(
+			val event = RcfEventHooks.animationParticlePre(
 				controller,
 				locatorName,
 				particleId,
@@ -130,7 +130,7 @@ data class ParticleEvent
 			pos = event.pos.newValue
 			rotate = event.rotate.newValue
 
-			RcfEventHooks.AnimationParticlePost(
+			RcfEventHooks.animationParticlePost(
 				controller,
 				locatorName,
 				particleId,
