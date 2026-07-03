@@ -2,6 +2,7 @@ package architecture.resonator_combat_framework.events.registry
 
 import architecture.resonator_combat_framework.common.registry.ItemPropertyRegistry
 import architecture.resonator_combat_framework.module.animation.event.AnimationDefRegisterEvent
+import architecture.resonator_combat_framework.module.animation.registry.AnimationDefRegistry
 import architecture.resonator_combat_framework.module.animation.registry.BoneConfigRegistry
 import architecture.resonator_combat_framework.module.animation.registry.GeometryModelRegistry
 import architecture.resonator_combat_framework.module.animation.registry.KeyframeAnimationRegistry
@@ -28,7 +29,7 @@ object ResourceReloadRegistry {
 
 	@SubscribeEvent(priority = EventPriority.LOWEST)
 	fun registryLowest(event: AddReloadListenerEvent) {
-//		event.addListener(AnimationDefRegistry)
+		event.addListener(AnimationDefRegistry)
 		event.addListener(ActionRegistry)
 		event.addListener(ActionSequenceRegistry)
 		event.addListener(ItemPropertyRegistry)
