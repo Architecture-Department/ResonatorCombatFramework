@@ -250,7 +250,7 @@ class AttackAnimationAction(
 		RcfEventHooks.animationColliderPost(controller, entity, animTime, poseData, brModel, mergedProxy)
 	}
 
-	protected open fun onColliderUpdate(
+	protected fun onColliderUpdate(
 		entity: Entity, animTime: Float, poseData: PoseData,
 		brModel: GeometryModel, mergedProxy: PoseData,
 		controller: IEntityAnimationController<*>,
