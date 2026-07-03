@@ -27,7 +27,6 @@ object ResourceReloadRegistry {
 
 	@SubscribeEvent(priority = EventPriority.LOWEST)
 	fun registryLowest(event: RegisterClientReloadListenersEvent) {
-//		event.registerReloadListener(AnimationDefRegistry)
 		event.registerReloadListener(ActionRegistry)
 		event.registerReloadListener(ActionSequenceRegistry)
 		event.registerReloadListener(ItemPropertyRegistry)

@@ -4,6 +4,7 @@ import architecture.resonator_combat_framework.core.RcfEventHooks
 import architecture.resonator_combat_framework.init.RcfAttachmentTypes
 import architecture.resonator_combat_framework.module.collision.collision.OBB
 import architecture.resonator_combat_framework.module.collision.collision.WorldBounds
+import architecture.resonator_combat_framework.util.RcfUtil
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.LivingEntity
 import net.minecraft.world.level.ClipContext
@@ -41,6 +42,11 @@ object CollisionSystem {
 		return entity.getData(RcfAttachmentTypes.ENTITY_COLLISION)
 	}
 
+	@JvmStatic
+	fun hasData(entity: Entity): Boolean {
+		return entity.hasData(RcfAttachmentTypes.ENTITY_COLLISION)
+	}
+
 	/**
 	 * 每 tick 调用一次，处理指定实体的碰撞检测逻辑。
 	 * 仅在服务端执行。
@@ -49,9 +55,11 @@ object CollisionSystem {
 	 */
 	@JvmStatic
 	fun tick(entity: Entity) {
-		if (entity.level().isClientSide) return
-		val data = entity.getData(RcfAttachmentTypes.ENTITY_COLLISION) ?: return
-		if (data.activeColliders.isEmpty()) return
+		if (entity.level().isClientSide || hasData(entity)) return
+		val data = getData(entity)
+		if (data.activeColliders.isEmpty()) {
+			return
+		}
 		processEntity(entity, data)
 	}
 
@@ -70,6 +78,7 @@ object CollisionSystem {
 		val targets = attacker.level().getEntities(attacker, searchBox) { e ->
 			e is LivingEntity && e != attacker && e.isAlive
 		}
+		RcfUtil.LOGGER.info("[COLLISION] {} found {} potential targets", attacker, targets.size)
 
 		for (target in targets) {
 			for (entry in data.activeColliders) {
@@ -145,6 +154,7 @@ object CollisionSystem {
 		if (!checkCollision(entry, attacker, target)) return
 		if (!isValidHit(entry, attacker, target)) return
 		if (!entry.hasEffect) return
+		RcfUtil.LOGGER.info("[COLLISION] HIT! {} -> {}", attacker, target)
 
 		if (check.isRecord) {
 			data.markHit(entry.groupId, target.uuid)
@@ -172,15 +182,9 @@ object CollisionSystem {
 		val cx = (box.minX + box.maxX) * 0.5
 		val cy = (box.minY + box.maxY) * 0.5
 		val cz = (box.minZ + box.maxZ) * 0.5
-		val distSqr =
-			(wb.cx - cx) * (wb.cx - cx) +
-				(wb.cy - cy) * (wb.cy - cy) +
-				(wb.cz - cz) * (wb.cz - cz)
-		val halfExtents = sqrt(
-			((box.maxX - box.minX) * 0.5).let { it * it } +
-				((box.maxY - box.minY) * 0.5).let { it * it } +
-				((box.maxZ - box.minZ) * 0.5).let { it * it }
-		).toFloat()
+		val distSqr = (wb.cx - cx) * (wb.cx - cx) + (wb.cy - cy) * (wb.cy - cy) + (wb.cz - cz) * (wb.cz - cz)
+		val halfExtents =
+			sqrt(((box.maxX - box.minX) * 0.5).let { it * it } + ((box.maxY - box.minY) * 0.5).let { it * it } + ((box.maxZ - box.minZ) * 0.5).let { it * it }).toFloat()
 		val maxDist = wb.sphereRadius + halfExtents
 		return distSqr <= maxDist * maxDist
 	}
@@ -222,8 +226,7 @@ object CollisionSystem {
 		val clip = attacker.level().clip(
 			ClipContext(from, to, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, attacker)
 		)
-		return clip.type == HitResult.Type.MISS ||
-			clip.location.distanceToSqr(from) >= from.distanceToSqr(to) * 0.9
+		return clip.type == HitResult.Type.MISS || clip.location.distanceToSqr(from) >= from.distanceToSqr(to) * 0.9
 	}
 
 	/**
@@ -237,8 +240,7 @@ object CollisionSystem {
 	private fun getRaycastOrigin(entry: CollisionEntry, attacker: Entity, mode: CollisionRaycastMode): Vec3 {
 		return when (mode) {
 			CollisionRaycastMode.FROM_COLLIDER -> getColliderCenter(entry, attacker)
-			CollisionRaycastMode.FROM_ENTITY ->
-				attacker.position().add(0.0, attacker.eyeHeight * 0.7, 0.0)
+			CollisionRaycastMode.FROM_ENTITY -> attacker.position().add(0.0, attacker.eyeHeight * 0.7, 0.0)
 
 			CollisionRaycastMode.NONE -> Vec3.ZERO
 		}

@@ -14,8 +14,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-// 在 vanilla setupAnim() 之后、renderToBuffer() 之前注入
-// 参考 TheElixir 模式：读 ModelPart 初始值 → 动画偏移 → 写回
 @Mixin(LivingEntityRenderer.class)
 public abstract class LivingEntityRendererMixin<T extends LivingEntity> {
 	@Shadow
