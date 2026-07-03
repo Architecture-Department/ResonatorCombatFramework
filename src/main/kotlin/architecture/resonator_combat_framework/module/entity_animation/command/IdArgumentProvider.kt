@@ -18,7 +18,7 @@ object IdArgumentProvider : SuggestionProvider<CommandSourceStack> {
 		ctx: CommandContext<CommandSourceStack>,
 		builder: SuggestionsBuilder
 	): CompletableFuture<Suggestions> {
-		val animIds = KeyframeAnimationRegistry.getInstance(true).getAll().keys
-		return SharedSuggestionProvider.suggest(animIds.map { it.path }, builder)
+		val animIds = KeyframeAnimationRegistry.findAll().keys
+		return SharedSuggestionProvider.suggest(animIds.map { it.toString() }, builder)
 	}
 }

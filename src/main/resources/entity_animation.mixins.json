@@ -4,11 +4,8 @@
 	"compatibilityLevel": "JAVA_21",
 	"client": [
 		"client.CameraAccessor",
-		"client.ItemInHandLayerMixin",
-		"client.LevelRendererMixin",
 		"client.LivingEntityRendererMixin",
-		"client.PlayerModelMixin",
-		"client.PlayerRendererMixin"
+		"client.PlayerModelMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

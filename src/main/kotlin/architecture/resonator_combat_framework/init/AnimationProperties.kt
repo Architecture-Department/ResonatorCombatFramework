@@ -1,15 +1,12 @@
 package architecture.resonator_combat_framework.init
 
-import architecture.resonator_combat_framework.module.entity_state_machine.combat.AttackActionProperty
-import org.jetbrains.annotations.NotNull
+import architecture.resonator_combat_framework.module.entity_state_machine.combat.ActionProperties
 
 /**
- * 动作属性定义 —— 持有 [AttackActionProperty] 实例，
- * 供 Action 系统在运行时读取和修改行为属性。
+ * 动画属性定义  —— 委托到 [ActionProperties]。
+ * 保留此类以兼容旧引用。
  */
 object AnimationProperties {
 	@JvmField
-	val DAMAGE_MULTIPLIER = AttackActionProperty<@NotNull Float>(
-		"damage_multiplier"
-	)
+	val DAMAGE_MULTIPLIER = ActionProperties.DAMAGE_MULTIPLIER
 }

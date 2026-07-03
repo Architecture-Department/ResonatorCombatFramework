@@ -6,6 +6,7 @@ import architecture.resonator_combat_framework.module.entity_state_machine.holde
 import architecture.resonator_combat_framework.util.RcfUtil
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.LivingEntity
+import java.util.*
 
 /**
  * 动作 —— 定义一次攻击动作的完整生命周期，包含时长、阶段判定、打断规则和各阶段回调。
@@ -46,6 +47,32 @@ abstract class Action(
 		@JvmField
 		val CAN_SWITCH_ITEM = RcfUtil.modRl("can_switch_item")
 	}
+
+	/** 动作属性映射表 */
+	val properties = mutableMapOf<ActionProperty<*>, Any>()
+
+	// ===== 属性系统 =====
+
+	/**
+	 * 链式添加动作属性。
+	 * @param key 属性键
+	 * @param value 属性值
+	 * @return 自身，支持链式调用
+	 */
+	@Suppress("UNCHECKED_CAST")
+	fun <T : Any> addProperty(key: ActionProperty<T>, value: T): Action {
+		properties[key] = value as Any
+		return this
+	}
+
+	/**
+	 * 获取指定键的动作属性。
+	 * @param key 属性键
+	 * @return 属性值的 Optional 包装
+	 */
+	@Suppress("UNCHECKED_CAST")
+	fun <T : Any> getProperty(key: ActionProperty<T>): Optional<T> =
+		Optional.ofNullable((properties[key] as? T))
 
 	val timeLength = durationTick / 20f
 

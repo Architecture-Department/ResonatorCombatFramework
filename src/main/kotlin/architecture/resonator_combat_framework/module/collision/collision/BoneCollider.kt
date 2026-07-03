@@ -16,7 +16,7 @@ import org.joml.Vector3f
  * @property halfExtents  碰撞体半边长
  * @property rotation     相对骨骼的局部旋转（度），ZYX 欧拉角顺序
  */
-open class BoneCollider(
+class BoneCollider(
 	val boneName: String,
 	center: Vector3f,
 	halfExtents: Vector3f,

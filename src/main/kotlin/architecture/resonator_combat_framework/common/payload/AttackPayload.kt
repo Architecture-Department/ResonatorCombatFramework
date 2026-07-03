@@ -27,7 +27,7 @@ import net.neoforged.neoforge.network.handling.IPayloadContext
  */
 class AttackPayload(
 	val hand: InteractionHand,
-	val pressType: AttackPayload.PressType,
+	val pressType: PressType,
 ) : ToServerAndClientPayload {
 
 	/**

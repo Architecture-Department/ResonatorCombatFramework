@@ -1,11 +1,11 @@
-﻿package architecture.resonator_combat_framework.module.entity_state_machine.combat
+package architecture.resonator_combat_framework.module.entity_state_machine.combat
 
 import architecture.goldenboughs_lib.api.AllOpe
+import architecture.resonator_combat_framework.combat.AnimationAction
 import architecture.resonator_combat_framework.core.RcfEventHooks
 import architecture.resonator_combat_framework.module.entity_state_machine.event.CombatActionEvent
 import architecture.resonator_combat_framework.module.entity_state_machine.holder.EntityStateHolder
 import architecture.resonator_combat_framework.util.TimeUtil
-import architecture.resonator_combat_framework.combat.AnimationAction
 import net.minecraft.world.entity.LivingEntity
 import kotlin.math.max
 
@@ -70,8 +70,7 @@ class ActionController(val entity: LivingEntity) {
 			action?.onSpeedModify(entity, actionSequence, field, newValue)
 			field = newValue
 		}
-
-	/** 切换动作 */
+	
 	/**
 	 * 切换动作，若当前有动作则先检查打断性。
 	 *
@@ -85,7 +84,6 @@ class ActionController(val entity: LivingEntity) {
 		return onChangedAction(target, CombatActionEvent.Changed.Type.DEFAULT)
 	}
 
-	/** 切换动作 */
 	/**
 	 * 切换到下一段动作（NEXT 类型）。
 	 *
@@ -99,7 +97,6 @@ class ActionController(val entity: LivingEntity) {
 		return onChangedAction(target, CombatActionEvent.Changed.Type.NEXT)
 	}
 
-	/** 强制切换动作 */
 	/**
 	 * 强制切换动作。若当前动作不可打断则使用 INTERRUPTIBLE 类型强制切换。
 	 *
@@ -115,7 +112,6 @@ class ActionController(val entity: LivingEntity) {
 		return onChangedAction(target, CombatActionEvent.Changed.Type.DEFAULT)
 	}
 
-	/** 切换动作 */
 	/**
 	 * 切换动作的内部实现。发射 [CombatActionEvent.Changed] 事件并检查是否被取消。
 	 *
@@ -133,7 +129,6 @@ class ActionController(val entity: LivingEntity) {
 		return true
 	}
 
-	/** 动作结束 */
 	/**
 	 * 结束当前动作。重置时间和速度倍率，调用 onEnd 回调并发射结束事件。
 	 */
@@ -158,7 +153,7 @@ class ActionController(val entity: LivingEntity) {
 		combatSpeedMultiplier = 1f
 		actionState = ActionState.EMPTY
 		if (action != null) {
-			(action as? AnimationAction<*>)?.onForcedEnd(entity, actionSequence)
+			(action as? AnimationAction)?.onForcedEnd(entity, actionSequence)
 			RcfEventHooks.CombatActionEnd(holder, entity, action!!)
 			onChangedAction(null, CombatActionEvent.Changed.Type.INTERRUPTIBLE)
 		}
