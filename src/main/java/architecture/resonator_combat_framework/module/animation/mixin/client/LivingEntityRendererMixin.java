@@ -1,3 +1,8 @@
+/**
+ * LivingEntityRenderer Mixin —— 在生物渲染前驱动动画控制器更新。
+ * 注入到 [LivingEntityRenderer.render] 中，调用 [IEntityAnimationMapperProvider.tickAndRender]
+ * 更新模型变换和过渡插值。
+ */
 package architecture.resonator_combat_framework.module.animation.mixin.client;
 
 import architecture.resonator_combat_framework.module.animation.mapper.IEntityAnimationMapperProvider;

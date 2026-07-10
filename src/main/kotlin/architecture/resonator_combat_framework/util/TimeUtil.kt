@@ -9,7 +9,7 @@ package architecture.resonator_combat_framework.util
  * - speedMultiplier < 0：倒放
  * - speedMultiplier = 0：暂停
  *
- * 动画系统在 [BedrockAnimationController.calcScaledDelta] 中额外追踪游戏刻 delta，
+ * 动画系统在 [AnimationController.calcScaledDelta] 中额外追踪游戏刻 delta，
  * 最终缩放部分与此公式一致。
  */
 object TimeUtil {

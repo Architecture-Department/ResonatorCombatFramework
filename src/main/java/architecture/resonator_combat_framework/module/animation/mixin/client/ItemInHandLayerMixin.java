@@ -1,3 +1,7 @@
+/**
+ * ItemInHandLayer Mixin —— 在手持物品渲染前应用动画骨骼变换。
+ * 注入到 [ItemInHandLayer.renderArmWithItem] 中，使手持物品跟随动画骨骼位置。
+ */
 package architecture.resonator_combat_framework.module.animation.mixin.client;
 
 import architecture.resonator_combat_framework.module.animation.IAnimationProvider;

@@ -1,3 +1,7 @@
+/**
+ * GeckoLib 缓存访问器 —— 通过 @Invoker 暴露 GeckoLibCache 的私有静态方法。
+ * 用于在自定义资源加载流程中调用 GeckoLib 的动画/模型加载逻辑。
+ */
 package architecture.resonator_combat_framework.mixin.gecko_lib;
 
 import net.minecraft.resources.ResourceLocation;

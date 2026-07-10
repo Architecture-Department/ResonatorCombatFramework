@@ -10,6 +10,10 @@ import net.neoforged.neoforge.event.OnDatapackSyncEvent
 import net.neoforged.neoforge.network.PacketDistributor
 
 
+/**
+ * 游戏通用事件 —— 处理数据包同步等全局性事件。
+ * 在数据包同步时将骨骼配置、几何模型等数据从服务端推送到客户端。
+ */
 @EventBusSubscriber(modid = RcfUtil.ID)
 object GameEvents {
 	/**

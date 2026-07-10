@@ -14,6 +14,13 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload
 import net.minecraft.resources.ResourceLocation
 import net.neoforged.neoforge.network.handling.IPayloadContext
 
+/**
+ * 关键帧动画同步数据包 —— 服务端→客户端。
+ * 在数据包同步（[OnDatapackSyncEvent]）时将服务端的关键帧动画数据发送给客户端，
+ * 保证客户端在资源重载后获取最新的动画定义。
+ *
+ * @property nbtMap 动画 ID 到 NBT 序列化数据的映射
+ */
 data class KeyframeAnimationSynchPayload(
 	val nbtMap: Map<ResourceLocation, CompoundTag>
 ) : ToClientPayload {

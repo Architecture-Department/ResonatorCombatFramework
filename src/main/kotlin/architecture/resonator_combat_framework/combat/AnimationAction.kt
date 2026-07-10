@@ -1,17 +1,12 @@
 package architecture.resonator_combat_framework.combat
 
 import architecture.resonator_combat_framework.init.RcfAttachmentTypes
-import architecture.resonator_combat_framework.module.combat.Action
-import architecture.resonator_combat_framework.module.combat.ActionSequence
-import architecture.resonator_combat_framework.module.combat.ActionState
-import architecture.resonator_combat_framework.module.combat.BooleanStateProperty
-import architecture.resonator_combat_framework.module.combat.FloatStateProperty
-import architecture.resonator_combat_framework.module.combat.InterruptData
+import architecture.resonator_combat_framework.module.animation.AnimationDef
 import architecture.resonator_combat_framework.module.animation.IAnimationProvider
 import architecture.resonator_combat_framework.module.animation.IAnimationProvider.Companion.getMapperProvider
-import architecture.resonator_combat_framework.module.animation.AnimationDef
 import architecture.resonator_combat_framework.module.animation.controller.IEntityAnimationController
 import architecture.resonator_combat_framework.module.animation.data.PlayConfig
+import architecture.resonator_combat_framework.module.combat.*
 import architecture.resonator_combat_framework.util.RcfUtil
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.Entity
@@ -50,12 +45,17 @@ constructor(
 	interruptData,
 	weight
 ) {
+	val fadeInTime = fadeInTick / 20f
+	val activeTime = (fadeInTick + animationTick) / 20f
+
+	override val durationTime = (fadeInTick + animationTick + fadeOutTick) / 20f
+
 	override fun getState(time: Float, entity: LivingEntity): ActionState {
 		return when {
 			time < 0f -> ActionState.IDLE
-			time < fadeInTick / 20f -> ActionState.WINDUP
-			time < fadeInTick / 20f + animationTick / 20f -> ActionState.ACTIVE
-			time < timeLength -> ActionState.RECOVERY
+			time < fadeInTime -> ActionState.WINDUP
+			time < activeTime -> ActionState.ACTIVE
+			time < durationTime -> ActionState.RECOVERY
 			else -> ActionState.IDLE
 		}
 	}
@@ -69,30 +69,37 @@ constructor(
 		return anim
 	}
 
-	override fun onStart(entity: LivingEntity, actionSequence: ActionSequence?) {
-		super.onStart(entity, actionSequence)
+	override fun onStart(entity: LivingEntity, actionController: ActionController, actionSequence: ActionSequence?) {
+		super.onStart(entity, actionController, actionSequence)
 		applyModifiers(entity)
 		if (entity !is IAnimationProvider) return
-		getController(entity)?.trigger(
+		val combatSpeedMultiplier = actionController.combatSpeedMultiplier
+		getAnimationController(entity)?.trigger(
 			getAnimation(), PlayConfig(
-				fadeInTicks = fadeInTick,
-				fadeOutTicks = fadeOutTick
+				fadeInTicks = (fadeInTick / combatSpeedMultiplier).toInt(),
+				fadeOutTicks = (fadeOutTick / combatSpeedMultiplier).toInt()
 			)
 		)
 	}
 
-	override fun onEnd(entity: LivingEntity, actionSequence: ActionSequence?) {
-		super.onEnd(entity, actionSequence)
+	override fun onEnd(entity: LivingEntity, actionController: ActionController, actionSequence: ActionSequence?) {
+		super.onEnd(entity, actionController, actionSequence)
 		clearModifiers(entity)
 		if (entity is IAnimationProvider) {
-			getController(entity)?.stop()
+			getAnimationController(entity)?.stop()
 		}
 	}
 
-	override fun onSpeedModify(entity: LivingEntity, actionSequence: ActionSequence?, oldValue: Float, newValue: Float) {
-		super.onSpeedModify(entity, actionSequence, oldValue, newValue)
+	override fun onSpeedModify(
+		entity: LivingEntity,
+		actionController: ActionController,
+		actionSequence: ActionSequence?,
+		oldValue: Float,
+		newValue: Float
+	) {
+		super.onSpeedModify(entity, actionController, actionSequence, oldValue, newValue)
 		if (entity is IAnimationProvider) {
-			getController(entity)?.speedMultiplier = newValue
+			getAnimationController(entity)?.speedMultiplier = newValue
 		}
 	}
 
@@ -102,7 +109,7 @@ constructor(
 	fun onForcedEnd(entity: LivingEntity, actionSequence: ActionSequence?) {
 		clearModifiers(entity)
 		if (entity is IAnimationProvider) {
-			getController(entity)?.stop(0)
+			getAnimationController(entity)?.stop(0)
 		}
 	}
 
@@ -150,7 +157,7 @@ constructor(
 	/**
 	 * 获取与当前动作关联的动画控制器。
 	 */
-	protected fun getController(entity: IAnimationProvider): IEntityAnimationController<out Entity>? {
+	protected fun getAnimationController(entity: IAnimationProvider): IEntityAnimationController<out Entity>? {
 		return entity.getMapperProvider().getController(controllerId)
 	}
 }

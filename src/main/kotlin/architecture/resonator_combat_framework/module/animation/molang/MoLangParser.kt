@@ -1,3 +1,18 @@
+/**
+ * MoLang 表达式解析器 —— 支持 Bedrock 标准 MoLang 语法的词法分析和 AST 构建。
+ *
+ * 支持的语法特性：
+ * - 算术运算（+ - * / %）
+ * - 比较运算（== != < > <= >=）
+ * - 逻辑运算（&& || !）
+ * - 三元条件（a ? b : c）
+ * - 赋值（=）
+ * - 变量引用（v.xxx, q.xxx, t.xxx）
+ * - 内置函数（math.sin, math.cos, math.lerp 等）
+ * - 循环（loop, for_each, break, continue）
+ * - 块表达式（{...}），return
+ * - 作用域嵌套
+ */
 package architecture.resonator_combat_framework.module.animation.molang
 
 import architecture.resonator_combat_framework.module.animation.molang.function.MolangFunction

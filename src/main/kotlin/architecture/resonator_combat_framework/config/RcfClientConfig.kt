@@ -5,6 +5,10 @@ import architecture.resonator_combat_framework.util.RcfUtil
 import net.neoforged.neoforge.common.ModConfigSpec
 import net.neoforged.neoforge.common.ModConfigSpec.BooleanValue
 
+/**
+ * RCF 客户端配置 —— 定义客户端可配置项。
+ * 当前包含物品切换动画开关。
+ */
 class RcfClientConfig(builder: ModConfigSpec.Builder) : BasicConfig(RcfUtil.ID, builder) {
 	@JvmField
 	val itemSwitchingAnimation: BooleanValue =

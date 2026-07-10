@@ -8,7 +8,6 @@ import net.neoforged.bus.api.Event
 /**
  * [ActionSequence] 注册事件 —— 在资源重载时由 [ActionSequenceRegistry] 触发，
  * 用于收集所有注册的 ActionSequence。
- * [ActionSequence]注册事件
  */
 class ActionSequenceRegisterEvent : Event() {
 	private val map = linkedMapOf<ResourceLocation, LazySupplier<ActionSequence>>()

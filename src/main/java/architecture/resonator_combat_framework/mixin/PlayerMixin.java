@@ -1,3 +1,7 @@
+/**
+ * Player Mixin —— 向 [Player] 注入 RCF 动画提供接口 [IPlayerRcf]。
+ * 在玩家构造时创建 [PlayerAnimationMapperProvider]，使玩家实体支持动画系统。
+ */
 package architecture.resonator_combat_framework.mixin;
 
 import architecture.resonator_combat_framework.mixed.IPlayerRcf;

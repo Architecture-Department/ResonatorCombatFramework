@@ -7,6 +7,7 @@ import architecture.resonator_combat_framework.module.combat.ActionSequence
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.InteractionHand
 import net.minecraft.world.entity.LivingEntity
+import net.minecraft.world.entity.ai.attributes.Attributes
 import net.minecraft.world.item.ItemStack
 import java.util.function.Supplier
 
@@ -36,6 +37,10 @@ constructor(
 	) {
 	}
 
+	/**
+	 * 攻击处理入口 —— 被 [AttackPayload] 从服务端/客户端的网络包处理中调用。
+	 * 根据按压类型决定调度逻辑：长按触发独立动作（若有），短按在动作序列中推进到下一段。
+	 */
 	override fun onAttack(
 		item: ItemStack,
 		entity: LivingEntity,
@@ -55,6 +60,10 @@ constructor(
 			actionController.actionSequence = actionSequence
 		}
 
-		actionController.onNextAction()
+		if (actionController.onNextAction()) {
+			actionController.combatSpeedMultiplier = entity.getAttributeValue(Attributes.ATTACK_SPEED).toFloat()
+		} else {
+			actionController.combatSpeedMultiplier = 1f
+		}
 	}
 }

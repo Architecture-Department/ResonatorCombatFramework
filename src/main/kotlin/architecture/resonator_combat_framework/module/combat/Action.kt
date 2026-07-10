@@ -48,6 +48,8 @@ abstract class Action(
 		val CAN_SWITCH_ITEM = RcfUtil.modRl("can_switch_item")
 	}
 
+	val durationTime = durationTick / 20f
+
 	/** 动作属性映射表 */
 	val properties = mutableMapOf<ActionProperty<*>, Any>()
 
@@ -74,8 +76,6 @@ abstract class Action(
 	fun <T : Any> getProperty(key: ActionProperty<T>): Optional<T> =
 		Optional.ofNullable((properties[key] as? T))
 
-	val timeLength = durationTick / 20f
-
 	fun getState(time: Float, entity: LivingEntity): ActionState {
 		return when {
 			time < 0f -> ActionState.IDLE
@@ -92,7 +92,7 @@ abstract class Action(
 	 * @param entity 执行动作的生物
 	 * @param actionSequence 所属动作序列
 	 */
-	fun onStart(entity: LivingEntity, actionSequence: ActionSequence?) {}
+	fun onStart(entity: LivingEntity, actionController: ActionController, actionSequence: ActionSequence?) {}
 
 	/**
 	 * 每 tick 调用。
@@ -101,7 +101,7 @@ abstract class Action(
 	 * @param actionSequence 所属动作序列
 	 * @param time 当前已播放时间（秒）
 	 */
-	fun onTick(entity: LivingEntity, actionSequence: ActionSequence?, time: Float) {}
+	fun onTick(entity: LivingEntity, actionController: ActionController, actionSequence: ActionSequence?, time: Float) {}
 
 	/**
 	 * 进入前摇阶段时调用。
@@ -110,7 +110,13 @@ abstract class Action(
 	 * @param actionSequence 所属动作序列
 	 * @param time 当前已播放时间（秒）
 	 */
-	fun onWindup(entity: LivingEntity, actionSequence: ActionSequence?, time: Float) {}
+	fun onWindup(
+		entity: LivingEntity,
+		actionController: ActionController,
+		actionSequence: ActionSequence?,
+		time: Float
+	) {
+	}
 
 	/**
 	 * 进入执行阶段（攻击判定窗口）时调用。
@@ -119,7 +125,13 @@ abstract class Action(
 	 * @param actionSequence 所属动作序列
 	 * @param time 当前已播放时间（秒）
 	 */
-	fun onActive(entity: LivingEntity, actionSequence: ActionSequence?, time: Float) {}
+	fun onActive(
+		entity: LivingEntity,
+		actionController: ActionController,
+		actionSequence: ActionSequence?,
+		time: Float
+	) {
+	}
 
 	/**
 	 * 进入后摇阶段时调用。
@@ -128,7 +140,13 @@ abstract class Action(
 	 * @param actionSequence 所属动作序列
 	 * @param time 当前已播放时间（秒）
 	 */
-	fun onRecovery(entity: LivingEntity, actionSequence: ActionSequence?, time: Float) {}
+	fun onRecovery(
+		entity: LivingEntity,
+		actionController: ActionController,
+		actionSequence: ActionSequence?,
+		time: Float
+	) {
+	}
 
 	/**
 	 * 动作结束时调用。
@@ -136,7 +154,7 @@ abstract class Action(
 	 * @param entity 执行动作的生物
 	 * @param actionSequence 所属动作序列
 	 */
-	fun onEnd(entity: LivingEntity, actionSequence: ActionSequence?) {}
+	fun onEnd(entity: LivingEntity, actionController: ActionController, actionSequence: ActionSequence?) {}
 
 	/**
 	 * 战斗速度倍率变化时调用。
@@ -146,7 +164,14 @@ abstract class Action(
 	 * @param oldValue 原速度倍率
 	 * @param newValue 新速度倍率
 	 */
-	fun onSpeedModify(entity: LivingEntity, actionSequence: ActionSequence?, oldValue: Float, newValue: Float) {}
+	fun onSpeedModify(
+		entity: LivingEntity,
+		actionController: ActionController,
+		actionSequence: ActionSequence?,
+		oldValue: Float,
+		newValue: Float
+	) {
+	}
 
 	fun isInterruptible(time: Float, holder: EntityStateHolder<*>, target: Action, entity: LivingEntity): Boolean {
 		val actionState = getState(time, entity)

@@ -13,21 +13,19 @@ import java.util.*
  *
  * @param startTick 阶段起始时间
  * @param endTick 阶段结束时间
+ * @param colliderCount sweep 采样基数（乘以攻击速度后取整为实际采样数，至少为基数）
  * @param colliders 本阶段中用于碰撞检测的骨骼-碰撞体绑定列表
  */
 @AllOpe
 data class AttackActionPhase(
 	val startTick: Int,
 	val endTick: Int,
+	/** 每次攻击最多命中实体数 */
+	val maxStrikes: Int = 3,
+	val damageMultiplier: Float = 1.0f,
+	val colliderCount: Int = 3,
 	val colliders: Array<JointColliderPair>
 ) {
-	companion object {
-		fun of(
-			startTick: Int,
-			endTick: Int,
-			vararg colliders: JointColliderPair
-		): AttackActionPhase = AttackActionPhase(startTick, endTick, arrayOf(*colliders))
-	}
 
 	val startTime = startTick / 20f
 	val endTime = endTick / 20f
@@ -75,6 +73,9 @@ data class AttackActionPhase(
 
 		if (startTime != other.startTime) return false
 		if (endTime != other.endTime) return false
+		if (maxStrikes != other.maxStrikes) return false
+		if (damageMultiplier != other.damageMultiplier) return false
+		if (colliderCount != other.colliderCount) return false
 		if (!colliders.contentEquals(other.colliders)) return false
 		if (properties != other.properties) return false
 
@@ -84,6 +85,9 @@ data class AttackActionPhase(
 	override fun hashCode(): Int {
 		var result = startTime.hashCode()
 		result = 31 * result + endTime.hashCode()
+		result = 31 * result + maxStrikes
+		result = 31 * result + damageMultiplier.hashCode()
+		result = 31 * result + colliderCount
 		result = 31 * result + colliders.contentHashCode()
 		result = 31 * result + properties.hashCode()
 		return result

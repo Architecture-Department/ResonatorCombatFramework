@@ -6,11 +6,18 @@ import net.neoforged.bus.api.SubscribeEvent
 import net.neoforged.fml.common.EventBusSubscriber
 import net.neoforged.neoforge.event.tick.LevelTickEvent
 
+/**
+ * 世界 tick 事件 —— 驱动世界级别的 MoLang 数据更新。
+ */
 @EventBusSubscriber(modid = RcfUtil.ID)
 object LevelEvents {
 	@SubscribeEvent
 	fun onTickPre(event: LevelTickEvent.Pre) {
-		val molangData = MolangData.of(event.level)
-		// TODO 补充
+		val level = event.level
+		MolangData.of(level)
+	}
+
+	@SubscribeEvent
+	fun onTickPost(event: LevelTickEvent.Post) {
 	}
 }

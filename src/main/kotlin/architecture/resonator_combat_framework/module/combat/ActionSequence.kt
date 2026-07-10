@@ -4,9 +4,6 @@ import architecture.goldenboughs_lib.api.AllOpe
 import net.minecraft.resources.ResourceLocation
 
 /**
- * 动作序列
- */
-/**
  * 动作序列 —— 由多个 [Action] 组成的连击序列。
  * 通过 [ActionController] 驱动，按顺序依次播放各段动作，支持循环和打断。
  *

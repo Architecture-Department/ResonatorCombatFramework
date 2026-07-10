@@ -30,9 +30,8 @@ object RotationUtil {
 	}
 
 	/**
-	 * 将差值归一化到 [-180, 180] 范围，确保走最短路径。
+	 * 将角度差值归一化到 [-180, 180] 范围，确保走最短路径。
 	 */
-	/** 将角度差值归一化到 [-180, 180] 范围 */
 	@JvmStatic
 	fun normalizeDelta(delta: Float): Float {
 		val d = delta % 360f

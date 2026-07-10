@@ -1,3 +1,8 @@
+/**
+ * PlayerModel Mixin —— 在每帧动画设置前重置玩家模型部件到初始姿态。
+ * 注入到 [PlayerModel.setupAnim] 头部，确保 RCF 动画完全控制模型变换，
+ * 不受原版动画系统的残留影响。
+ */
 package architecture.resonator_combat_framework.module.animation.mixin.client;
 
 import net.minecraft.client.model.HumanoidModel;

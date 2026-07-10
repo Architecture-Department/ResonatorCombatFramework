@@ -12,6 +12,7 @@ import net.minecraft.network.codec.StreamCodec
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.InteractionHand
+import net.minecraft.world.entity.player.Player
 import net.neoforged.neoforge.network.PacketDistributor
 import net.neoforged.neoforge.network.handling.IPayloadContext
 
@@ -63,7 +64,7 @@ class AttackPayload(
 	/**
 	 * 执行攻击逻辑：获取当前手持物品的 [WeaponProperty] 并调用其 [WeaponProperty.onAttack] 方法。
 	 */
-	private fun execute(player: net.minecraft.world.entity.player.Player) {
+	private fun execute(player: Player) {
 		val itemStack = player.getItemInHand(hand)
 		val ability = itemStack.getCapability(RcfCapabilitys.ITEM_ABILITY)
 		(ability as? WeaponProperty)?.onAttack(itemStack, player, hand, pressType)

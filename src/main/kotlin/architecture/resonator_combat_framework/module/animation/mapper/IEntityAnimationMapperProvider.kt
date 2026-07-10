@@ -41,14 +41,6 @@ interface IEntityAnimationMapperProvider<T : Entity, M : EntityModel<T>> {
 	fun tick()
 
 	/**
-	 * 解析动画 ID 对应的骨骼配置。
-	 *
-	 * @param animId 动画 ID
-	 * @return 骨骼配置
-	 */
-	fun resolveConfig(animId: ResourceLocation): BoneConfig
-
-	/**
 	 * 客户端每帧渲染（Mixin 调用）。
 	 *
 	 * @param model 实体模型

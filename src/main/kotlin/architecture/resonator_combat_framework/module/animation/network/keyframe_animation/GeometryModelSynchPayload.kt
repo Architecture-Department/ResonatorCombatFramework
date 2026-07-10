@@ -14,6 +14,13 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload
 import net.minecraft.resources.ResourceLocation
 import net.neoforged.neoforge.network.handling.IPayloadContext
 
+/**
+ * 几何模型同步数据包 —— 服务端→客户端。
+ * 在数据包同步时将服务端的几何模型数据发送给客户端，
+ * 包括骨骼结构、定位器、立方体定义等 Bedrock 几何模型信息。
+ *
+ * @property nbtMap 模型 ID 到 NBT 序列化数据的映射
+ */
 data class GeometryModelSynchPayload(
 	val nbtMap: Map<ResourceLocation, CompoundTag>
 ) : ToClientPayload {

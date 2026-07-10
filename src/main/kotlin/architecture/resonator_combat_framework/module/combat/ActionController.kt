@@ -67,10 +67,10 @@ class ActionController(val entity: LivingEntity) {
 	final var combatSpeedMultiplier: Float = 1f
 		set(value) {
 			val newValue = max(value, 0f)
-			action?.onSpeedModify(entity, actionSequence, field, newValue)
+			action?.onSpeedModify(entity, this, actionSequence, field, newValue)
 			field = newValue
 		}
-	
+
 	/**
 	 * 切换动作，若当前有动作则先检查打断性。
 	 *
@@ -137,7 +137,7 @@ class ActionController(val entity: LivingEntity) {
 		combatSpeedMultiplier = 1f
 		actionState = ActionState.EMPTY
 		if (action != null) {
-			action!!.onEnd(entity, actionSequence)
+			action!!.onEnd(entity, this, actionSequence)
 			RcfEventHooks.combatActionEnd(holder, entity, action!!)
 			onChangedAction(null, CombatActionEvent.Changed.Type.END)
 		}
@@ -223,19 +223,19 @@ class ActionController(val entity: LivingEntity) {
 
 		if (time <= 0f) {
 			RcfEventHooks.combatActionStart(holder, entity, action)
-			action.onStart(entity, actionSequence)
+			action.onStart(entity, this, actionSequence)
 		}
 		if (!RcfEventHooks.combatActionTickPre(holder, entity, action)) {
-			action.onTick(entity, actionSequence, time)
+			action.onTick(entity, this, actionSequence, time)
 			RcfEventHooks.combatActionTickPost(holder, entity, action)
 		}
 		actionState = action.getState(time, entity)
 		// 阶段切换回调
 		if (actionState != prevActionState) {
 			when (actionState) {
-				ActionState.WINDUP -> action.onWindup(entity, actionSequence, time)
-				ActionState.ACTIVE -> action.onActive(entity, actionSequence, time)
-				ActionState.RECOVERY -> action.onRecovery(entity, actionSequence, time)
+				ActionState.WINDUP -> action.onWindup(entity, this, actionSequence, time)
+				ActionState.ACTIVE -> action.onActive(entity, this, actionSequence, time)
+				ActionState.RECOVERY -> action.onRecovery(entity, this, actionSequence, time)
 				else -> {}
 			}
 			prevActionState = actionState
@@ -243,7 +243,7 @@ class ActionController(val entity: LivingEntity) {
 
 		time += scaledDelta
 
-		if (time >= action.timeLength) {
+		if (time >= action.durationTime) {
 			onActionEnd()
 			stageIndex = -1
 			return

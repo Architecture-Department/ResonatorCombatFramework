@@ -17,6 +17,9 @@ import net.neoforged.bus.api.SubscribeEvent
 import net.neoforged.fml.common.EventBusSubscriber
 import net.neoforged.neoforge.event.tick.PlayerTickEvent
 
+/**
+ * 玩家事件 —— 处理丢弃物品拦截和客户端调试粒子渲染。
+ */
 @EventBusSubscriber(modid = RcfUtil.ID)
 object PlayerEvents {
 	private var DEBUG = false
@@ -58,6 +61,14 @@ object PlayerEvents {
 		}
 	}
 
+	/**
+	 * 在 locator 骨骼位置生成调试粒子标记，用于可视化骨骼位置。
+	 * @param name 骨骼/locator 名称
+	 * @param brModel 几何模型
+	 * @param animationData 当前动画姿态
+	 * @param player 玩家
+	 * @param level 世界
+	 */
 	private fun test(
 		name: String,
 		brModel: GeometryModel,

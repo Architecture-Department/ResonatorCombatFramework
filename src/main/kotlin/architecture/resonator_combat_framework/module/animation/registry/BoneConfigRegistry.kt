@@ -56,6 +56,11 @@ class BoneConfigRegistry(
 		 */
 		@JvmStatic
 		fun findAll(): Map<ResourceLocation, BoneConfig> = CLIENT.getAll() + SERVER.getAll()
+
+		@JvmStatic
+		fun get(isClient: Boolean, animId: ResourceLocation): BoneConfig? {
+			return if (isClient) find(animId) else SERVER.get(animId)
+		}
 	}
 
 	private val configs = mutableMapOf<ResourceLocation, BoneConfig>()

@@ -2,12 +2,9 @@ package architecture.resonator_combat_framework.module.animation.mapper
 
 import architecture.resonator_combat_framework.events.registry.AnimationControllers
 import architecture.resonator_combat_framework.module.animation.controller.IEntityAnimationController
-import architecture.resonator_combat_framework.module.animation.data.BoneConfig
 import architecture.resonator_combat_framework.module.animation.data.BoneFlags
 import architecture.resonator_combat_framework.module.animation.data.PlayConfig
 import architecture.resonator_combat_framework.module.animation.model.PoseData
-import architecture.resonator_combat_framework.module.animation.registry.BoneConfigRegistry
-import architecture.resonator_combat_framework.module.animation.registry.KeyframeAnimationRegistry
 import architecture.resonator_combat_framework.module.animation.util.ModelPartApplier
 import com.mojang.blaze3d.vertex.PoseStack
 import net.minecraft.client.model.EntityModel
@@ -40,13 +37,6 @@ abstract class EntityAnimationMapperProvider<T : Entity, M : EntityModel<T>>(
 
 	/** 当前渲染帧的 partialTick，供 applyItemTransform 使用 */
 	protected var currentPartialTick = 0f
-
-	/** 骨骼配置加载器 */
-	val configLoader: BoneConfigRegistry = BoneConfigRegistry.getInstance(isClient)
-
-	/** 动画数据加载器 */
-	val animationLoader: KeyframeAnimationRegistry = KeyframeAnimationRegistry.getInstance(isClient)
-
 
 	// ---- 触发 ----
 
@@ -201,17 +191,6 @@ abstract class EntityAnimationMapperProvider<T : Entity, M : EntityModel<T>>(
 	 * 游戏刻推进，委托给动画控制器管理器。
 	 */
 	override fun tick() = animationControllerManager.tick()
-
-	// ---- 配置 ----
-
-	/**
-	 * 获取动画的骨骼配置。
-	 *
-	 * @param animId 动画 ID
-	 * @return 骨骼配置
-	 */
-	override fun resolveConfig(animId: ResourceLocation): BoneConfig =
-		configLoader.get(animId) ?: BoneConfig.EMPTY
 
 	// ---- 骨骼应用 ----
 

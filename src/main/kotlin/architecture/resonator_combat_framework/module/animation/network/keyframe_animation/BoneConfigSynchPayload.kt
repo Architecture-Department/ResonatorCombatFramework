@@ -14,6 +14,13 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload
 import net.minecraft.resources.ResourceLocation
 import net.neoforged.neoforge.network.handling.IPayloadContext
 
+/**
+ * 骨骼配置同步数据包 —— 服务端→客户端。
+ * 在数据包同步时将服务端的骨骼配置数据发送给客户端，
+ * 包括过渡时间、骨骼标志、时间线等动画行为配置。
+ *
+ * @property nbtMap 骨骼配置 ID 到 NBT 序列化数据的映射
+ */
 data class BoneConfigSynchPayload(
 	val nbtMap: Map<ResourceLocation, CompoundTag>
 ) : ToClientPayload {

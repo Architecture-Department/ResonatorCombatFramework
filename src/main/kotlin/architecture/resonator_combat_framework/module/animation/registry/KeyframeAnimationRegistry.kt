@@ -57,6 +57,11 @@ class KeyframeAnimationRegistry(
 		 */
 		@JvmStatic
 		fun findAll(): Map<ResourceLocation, KeyframeAnimation> = CLIENT.getAll() + SERVER.getAll()
+
+		@JvmStatic
+		fun get(isClient: Boolean, animId: ResourceLocation): KeyframeAnimation? {
+			return if (isClient) find(animId) else SERVER.get(animId)
+		}
 	}
 
 	private val bakingAnimations = mutableMapOf<ResourceLocation, KeyframeAnimation>()

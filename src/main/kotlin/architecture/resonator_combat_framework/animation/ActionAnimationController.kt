@@ -1,6 +1,8 @@
 package architecture.resonator_combat_framework.animation
 
+import architecture.resonator_combat_framework.combat.AttackAnimationAction
 import architecture.resonator_combat_framework.config.RcfConfig
+import architecture.resonator_combat_framework.init.RcfAttachmentTypes
 import architecture.resonator_combat_framework.module.animation.controller.AnimationController
 import architecture.resonator_combat_framework.module.animation.mapper.AnimationControllerManager
 import architecture.resonator_combat_framework.module.animation.mapper.IEntityAnimationMapperProvider
@@ -42,20 +44,25 @@ class ActionAnimationController<T : Entity>(
 		if (!entity.level().isClientSide) return
 		if (entity !is Player) return
 		if (!RcfConfig.CLIENT.itemSwitchingAnimation.get()) return
+		val stateHolder = entity.getExistingDataOrNull(RcfAttachmentTypes.STATE_HOLDER)
 
 		val mainHandItem = entity.mainHandItem
 		val offhandItem = entity.offhandItem
 		if (!ItemStack.isSameItem(mainHandItem, this.mainHandItem ?: ItemStack.EMPTY)) {
 			this.mainHandItem = entity.mainHandItem
 			if (mainHandItem != ItemStack.EMPTY) {
-				trigger(getSwitchingAnimId(entity.mainArm == HumanoidArm.RIGHT))
+				if (stateHolder == null || stateHolder.actionController.action !is AttackAnimationAction) {
+					trigger(getSwitchingAnimId(entity.mainArm == HumanoidArm.RIGHT))
+				}
 			}
 		}
 
 		if (!ItemStack.isSameItem(offhandItem, this.offhandItem ?: ItemStack.EMPTY)) {
 			this.offhandItem = entity.offhandItem
 			if (offhandItem != ItemStack.EMPTY) {
-				trigger(getSwitchingAnimId(entity.mainArm != HumanoidArm.RIGHT))
+				if (stateHolder == null || stateHolder.actionController.action !is AttackAnimationAction) {
+					trigger(getSwitchingAnimId(entity.mainArm != HumanoidArm.RIGHT))
+				}
 			}
 		}
 	}

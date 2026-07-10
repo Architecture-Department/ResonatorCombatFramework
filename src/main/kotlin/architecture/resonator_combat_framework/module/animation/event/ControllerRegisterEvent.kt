@@ -61,7 +61,7 @@ class ControllerRegisterEvent<T : Entity> : Event() {
 	)
 
 	/**
-	 * 按优先级（升序）返回所有已注册的控制��条目。
+	 * 按优先级（升序）返回所有已注册的控制器条目。
 	 * @return 排序后的 [ControllerEntry] 列表
 	 */
 	fun getSortedEntries(): List<ControllerEntry<T>> = entries.values.sortedBy { it.priority }

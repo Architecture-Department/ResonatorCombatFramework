@@ -1,6 +1,7 @@
 package architecture.resonator_combat_framework.module.animation.registry
 
 import architecture.goldenboughs_lib.util.LibUtil
+import architecture.goldenboughs_lib.util.LibUtil.rlOf
 import architecture.resonator_combat_framework.module.animation.model.GeometryData
 import architecture.resonator_combat_framework.util.RcfUtil
 import com.google.gson.Gson
@@ -57,6 +58,11 @@ class GeometryModelRegistry(
 		 */
 		@JvmStatic
 		fun findAll(): Map<ResourceLocation, GeometryData> = CLIENT.getAll() + SERVER.getAll()
+
+		@JvmStatic
+		fun get(isClient: Boolean, id: ResourceLocation): GeometryData? {
+			return if (isClient) find(id) else SERVER.get(id)
+		}
 	}
 
 	private val models = mutableMapOf<ResourceLocation, GeometryData>()
@@ -70,7 +76,11 @@ class GeometryModelRegistry(
 	 * @return 几何数据，不存在时返回 null
 	 */
 	fun get(identifier: ResourceLocation): GeometryData? {
-		return models[identifier] ?: models[LibUtil.rlOf(identifier.namespace, "geometry.${identifier.path}")]
+		val original = identifier.path
+		return models[identifier] ?: models[rlOf(
+			identifier.namespace,
+			original.replaceAfterLast("/", "geometry." + original.substringAfterLast("/"))
+		)]
 	}
 
 	/**

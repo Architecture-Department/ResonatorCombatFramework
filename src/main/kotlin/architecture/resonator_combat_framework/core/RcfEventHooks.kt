@@ -3,18 +3,13 @@ package architecture.resonator_combat_framework.core
 import architecture.goldenboughs_lib.util.LazySupplier
 import architecture.goldenboughs_lib.util.Value
 import architecture.resonator_combat_framework.combat.AttackActionPhase
-import architecture.resonator_combat_framework.event.ColliderEvent
 import architecture.resonator_combat_framework.module.animation.AnimationDef
 import architecture.resonator_combat_framework.module.animation.controller.IEntityAnimationController
 import architecture.resonator_combat_framework.module.animation.data.PlayConfig
 import architecture.resonator_combat_framework.module.animation.event.*
 import architecture.resonator_combat_framework.module.animation.mapper.IEntityAnimationMapperProvider
-import architecture.resonator_combat_framework.module.animation.model.GeometryModel
 import architecture.resonator_combat_framework.module.animation.model.PoseData
 import architecture.resonator_combat_framework.module.animation.registry.KeyframeAnimationRegistry
-import architecture.resonator_combat_framework.module.collision.CollisionEntityData
-import architecture.resonator_combat_framework.module.collision.CollisionEntry
-import architecture.resonator_combat_framework.module.collision.event.CollisionEntityEvent
 import architecture.resonator_combat_framework.module.combat.Action
 import architecture.resonator_combat_framework.module.combat.ActionState
 import architecture.resonator_combat_framework.module.state_machine.event.CombatActionEvent
@@ -30,7 +25,7 @@ import org.joml.Vector3d
 import thedarkcolour.kotlinforforge.neoforge.forge.FORGE_BUS
 
 /**
- * RCF 事件钩子 —— 集中转发战斗、动画、碰撞、粒子等系统的事件到 NeoForge 总线。
+ * RCF 事件钩子 —— 集中转发战斗、动画、粒子等系统的事件到 NeoForge 总线。
  * 各模块通过此对象发射事件，外部监听者通过 [NeoForge.EVENT_BUS] 订阅。
  */
 object RcfEventHooks {
@@ -144,32 +139,6 @@ object RcfEventHooks {
 		NeoForge.EVENT_BUS.post(ControllerEvent.TickHandlerPost(id, controller, mapper))
 	}
 
-	// ===== Animation Collider =====
-
-	@JvmStatic
-	fun animationColliderPre(
-		controller: IEntityAnimationController<*>,
-		entity: Entity,
-		animTime: Float,
-		poseData: PoseData,
-		brModel: GeometryModel,
-		mergedProxy: PoseData
-	) {
-		NeoForge.EVENT_BUS.post(ColliderEvent.Pre(controller, entity, animTime, poseData, brModel, mergedProxy))
-	}
-
-	@JvmStatic
-	fun animationColliderPost(
-		controller: IEntityAnimationController<*>,
-		entity: Entity,
-		animTime: Float,
-		poseData: PoseData,
-		brModel: GeometryModel,
-		mergedProxy: PoseData
-	) {
-		NeoForge.EVENT_BUS.post(ColliderEvent.Post(controller, entity, animTime, poseData, brModel, mergedProxy))
-	}
-
 	// ===== Animation Phase =====
 
 	@JvmStatic
@@ -180,23 +149,6 @@ object RcfEventHooks {
 	@JvmStatic
 	fun animationPhaseEnd(controller: IEntityAnimationController<*>, phase: AttackActionPhase) {
 		NeoForge.EVENT_BUS.post(PhaseEvent.End(controller, phase))
-	}
-
-	// ===== Collision =====
-
-	@JvmStatic
-	fun collisionEntityCheck(
-		attacker: Entity,
-		entry: CollisionEntry,
-		target: Entity,
-		data: CollisionEntityData
-	): CollisionEntityEvent.Check {
-		return NeoForge.EVENT_BUS.post(CollisionEntityEvent.Check(attacker, entry, target, data))
-	}
-
-	@JvmStatic
-	fun collisionEntityHit(attacker: Entity, entry: CollisionEntry, target: Entity, data: CollisionEntityData) {
-		NeoForge.EVENT_BUS.post(CollisionEntityEvent.Hit(attacker, entry, target, data))
 	}
 
 	// ===== Particle =====

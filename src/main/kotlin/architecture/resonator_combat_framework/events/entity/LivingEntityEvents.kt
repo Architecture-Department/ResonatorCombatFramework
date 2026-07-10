@@ -7,6 +7,10 @@ import net.neoforged.fml.common.EventBusSubscriber
 import net.neoforged.neoforge.event.entity.living.LivingEquipmentChangeEvent
 import net.neoforged.neoforge.event.entity.living.LivingSwapItemsEvent
 
+/**
+ * 生物事件 —— 处理装备变化、物品交换等生物专属事件。
+ * 当前装备切换逻辑已注释（由动作系统内部处理），保留钩子以备用。
+ */
 @EventBusSubscriber(modid = RcfUtil.ID)
 object LivingEntityEvents {
 	/**

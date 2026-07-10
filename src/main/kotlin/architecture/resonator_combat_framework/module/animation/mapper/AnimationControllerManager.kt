@@ -20,7 +20,6 @@ import net.minecraft.world.entity.Entity
 import org.joml.Matrix4fc
 import org.joml.Vector3f
 import org.mesdag.particlestorm.particle.MolangParticleEngine
-import kotlin.collections.iterator
 
 /**
  * 动画控制器管理器，负责管理实体上所有动画控制器的生命周期、骨骼合并和事件调度。
@@ -285,7 +284,6 @@ constructor(
 		}
 	}
 
-
 	/**
 	 * 获取骨骼的全局变换矩阵（惰性计算 + 缓存）。
 	 * 同一 tick 内对同一骨骼的重复查询直接返回缓存。
@@ -302,98 +300,6 @@ constructor(
 	}
 
 	/**
-	 * 获取合并后的插值骨骼（逐帧在 prevMergedPose 和 mergedPose 之间线性插值）。
-	 *
-	 * @param name 骨骼名称
-	 * @param partialTick 渲染帧插值系数
-	 * @return 插值后的骨骼姿态，如果骨骼不存在则返回 null
-	 */
-	fun getInterpolatedBone(name: String, partialTick: Float): BonePose? = interpolateBone(name, partialTick)
-
-	/**
-	 * 对单根骨骼进行帧间线性插值。
-	 *
-	 * @param name 骨骼名称
-	 * @param partialTick 渲染帧插值系数
-	 * @return 插值后的骨骼姿态
-	 */
-	private fun interpolateBone(name: String, partialTick: Float): BonePose? {
-		val currBone = mergedPose.getBone(name) ?: return null
-		val prevBone = prevMergedPose.getBone(name)
-		val mb = BonePose(name)
-
-		if (currBone.noInterp) {
-			if (currBone.hasPos()) {
-				mb.setPosEmpty(false); mb.pos.set(currBone.pos)
-			}
-			if (currBone.hasRot()) {
-				mb.setRotEmpty(false); mb.rotation.set(currBone.rotation)
-			}
-			if (currBone.hasScale()) {
-				mb.setScaleEmpty(false); mb.scale.set(currBone.scale)
-			}
-			return mb
-		}
-
-		if (prevBone != null) {
-			if (currBone.hasPos()) {
-				mb.setPosEmpty(false)
-				mb.pos.set(prevBone.pos).lerp(currBone.pos, partialTick)
-			} else if (prevBone.hasPos()) {
-				mb.setPosEmpty(false)
-				mb.pos.set(prevBone.pos)
-			}
-			if (currBone.hasRot()) {
-				mb.setRotEmpty(false)
-				RotationUtil.lerpRotation(prevBone.rotation, currBone.rotation, partialTick, mb.rotation)
-			} else if (prevBone.hasRot()) {
-				mb.setRotEmpty(false)
-				mb.rotation.set(prevBone.rotation)
-			}
-			if (currBone.hasScale()) {
-				mb.setScaleEmpty(false)
-				mb.scale.set(prevBone.scale).lerp(currBone.scale, partialTick)
-			} else if (prevBone.hasScale()) {
-				mb.setScaleEmpty(false)
-				mb.scale.set(prevBone.scale)
-			}
-		} else {
-			if (currBone.hasPos()) {
-				mb.setPosEmpty(false); mb.pos.set(currBone.pos)
-			}
-			if (currBone.hasRot()) {
-				mb.setRotEmpty(false); mb.rotation.set(currBone.rotation)
-			}
-			if (currBone.hasScale()) {
-				mb.setScaleEmpty(false); mb.scale.set(currBone.scale)
-			}
-		}
-		return mb
-	}
-
-	/**
-	 * 深拷贝 PoseData 的所有骨骼到新对象。
-	 *
-	 * @param source 源姿态数据
-	 * @return 深拷贝后的姿态数据
-	 */
-	private fun copyProxyModel(source: PoseData): PoseData {
-		val result = PoseData("interp")
-		for ((name, bone) in source.bones) {
-			val copy = BonePose(name)
-			copy.pos.set(bone.pos)
-			copy.rotation.set(bone.rotation)
-			copy.scale.set(bone.scale)
-			if (bone.hasPos()) copy.setPosEmpty(false)
-			if (bone.hasRot()) copy.setRotEmpty(false)
-			if (bone.hasScale()) copy.setScaleEmpty(false)
-			copy.noInterp = bone.noInterp
-			result.addBone(copy)
-		}
-		return result
-	}
-
-	/**
 	 * 获取合并后的插值骨骼数据副本（逐帧在 prevMergedPose 和 mergedPose 之间线性插值）。
 	 * partialTick=0 或 1 时直接返回对应源，避免不必要的插值计算。
 	 *
@@ -401,13 +307,7 @@ constructor(
 	 * @return 插值后的姿态数据
 	 */
 	fun getInterpolatedProxy(partialTick: Float): PoseData {
-		if (partialTick == 0f) return copyProxyModel(prevMergedPose)
-		if (partialTick == 1f) return copyProxyModel(mergedPose)
-		val result = PoseData("interp")
-		for ((name, _) in mergedPose.bones) {
-			interpolateBone(name, partialTick)?.let { result.addBone(it) }
-		}
-		return result
+		return PoseData.interpolate(prevMergedPose, mergedPose, partialTick)
 	}
 
 	/**

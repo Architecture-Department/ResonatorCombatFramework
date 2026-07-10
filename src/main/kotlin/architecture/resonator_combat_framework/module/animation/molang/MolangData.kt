@@ -273,10 +273,7 @@ open class MolangData {
 
 		@JvmStatic
 		fun of(holder: Any?): MolangData {
-			if (holder is Entity) {
-				return holder.getData(RcfAttachmentTypes.MOLANG_DATA)
-			}
-			if (holder is Level) {
+			if (holder is Entity || holder is Level) {
 				return holder.getData(RcfAttachmentTypes.MOLANG_DATA)
 			}
 			throw IllegalArgumentException("MolangData can only be attached to Level or Entity. Unsupported holder type: ${holder?.javaClass}")

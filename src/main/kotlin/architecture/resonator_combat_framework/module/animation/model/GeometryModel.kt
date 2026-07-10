@@ -3,15 +3,12 @@ package architecture.resonator_combat_framework.module.animation.model
 import architecture.goldenboughs_lib.util.toRadians
 import org.joml.Matrix4f
 import org.joml.Vector3f
-import org.joml.Vector3fc
-import kotlin.collections.get
 
 // TODO 对应不同体型的玩家取不同的位置
 /**
  * 运行时几何模型——由 [GeometryData] 构建的可变模型实例。
  *
  * 支持骨骼和定位器的动态合并、替换和变换矩阵计算。
- * 每帧根据动画姿态数据更新骨骼变换。
  */
 data class GeometryModel
 @JvmOverloads
@@ -196,135 +193,6 @@ constructor(
 			return GeometryModel(
 				geometryData.bones.map { (k, v) -> k to BrBone.of(v) }.toMap().toMutableMap(),
 				geometryData.locators.map { (k, v) -> k to BrLocator.of(v) }.toMap().toMutableMap()
-			)
-		}
-	}
-}
-
-/**
- * 运行时骨骼数据。
- *
- * @property name 骨骼名称
- * @property parent 父骨骼名称
- * @property pivot 轴心点
- * @property rotation 默认旋转
- * @property cubes 立方体列表
- * @property locators 定位器映射
- */
-data class BrBone
-@JvmOverloads
-constructor(
-	val name: String,
-	val parent: String? = null,
-	val pivot: Vector3fc = Vector3f(0f, 0f, 0f),
-	val rotation: Vector3fc = Vector3f(0f, 0f, 0f),
-	val cubes: MutableList<BrCube> = mutableListOf(),
-	val locators: MutableMap<String, BrLocator> = mutableMapOf()
-) {
-	/** 从 [GeometryData] 合并 cubes 和 locators 到已有骨骼 */
-	fun add(model: GeometryData) {
-		model.bones[name]?.let {
-			cubes.addAll(it.cubes.map(BrCube::of))
-			locators.putAll(it.locators.map { (k, v) -> k to BrLocator.of(v) })
-		}
-	}
-
-	/** 从 [GeometryData] 替换 cubes 和 locators */
-	fun set(model: GeometryData) {
-		model.bones[name]?.let {
-			cubes.clear()
-			locators.clear()
-			cubes.addAll(it.cubes.map(BrCube::of))
-			locators.putAll(it.locators.map { (k, v) -> k to BrLocator.of(v) })
-		}
-	}
-
-	companion object {
-		/**
-		 * 从 [BakingBrBone] 转换为运行时 [BrBone]。
-		 *
-		 * @param bone 烘培骨骼数据
-		 * @return 运行时骨骼实例
-		 */
-		@JvmStatic
-		fun of(bone: BakingBrBone): BrBone {
-			return BrBone(
-				bone.name,
-				bone.parent,
-				Vector3f(bone.pivot),
-				Vector3f(bone.rotation),
-				bone.cubes.map { BrCube.of(it) }.toMutableList(),
-				bone.locators.map { (k, v) -> k to BrLocator.of(v) }.toMap().toMutableMap()
-			)
-		}
-	}
-}
-
-/**
- * 运行时立方体数据。
- *
- * @property inflate 膨胀值
- * @property origin 原点坐标
- * @property size 尺寸
- * @property rotation 旋转
- */
-data class BrCube
-@JvmOverloads
-constructor(
-	val inflate: Float = 0f,
-	val origin: Vector3f = Vector3f(),
-	val size: Vector3f = Vector3f(),
-	val rotation: Vector3f = Vector3f()
-) {
-	companion object {
-		/**
-		 * 从 [BakingBrCube] 转换为运行时 [BrCube]。
-		 *
-		 * @param cube 烘培立方体数据
-		 * @return 运行时立方体实例
-		 */
-		@JvmStatic
-		fun of(cube: BakingBrCube): BrCube {
-			return BrCube(
-				cube.inflate,
-				Vector3f(cube.origin),
-				Vector3f(cube.size),
-				Vector3f(cube.rotation)
-			)
-		}
-	}
-}
-
-/**
- * 运行时定位器数据。
- *
- * @property name 定位器名称
- * @property boneName 所属骨骼名称
- * @property offset 相对骨骼偏移
- * @property rotation 相对骨骼旋转
- */
-data class BrLocator
-@JvmOverloads
-constructor(
-	val name: String,
-	val boneName: String,
-	val offset: Vector3fc = Vector3f(),
-	val rotation: Vector3fc = Vector3f()
-) {
-	companion object {
-		/**
-		 * 从 [BakingBrLocator] 转换为运行时 [BrLocator]。
-		 *
-		 * @param locator 烘培定位器数据
-		 * @return 运行时定位器实例
-		 */
-		@JvmStatic
-		fun of(locator: BakingBrLocator): BrLocator {
-			return BrLocator(
-				locator.name,
-				locator.boneName,
-				Vector3f(locator.offset),
-				Vector3f(locator.rotation)
 			)
 		}
 	}

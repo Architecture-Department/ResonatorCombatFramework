@@ -3,8 +3,10 @@ package architecture.resonator_combat_framework.module.animation.molang.value
 import architecture.resonator_combat_framework.module.animation.molang.MolangData
 import architecture.resonator_combat_framework.module.animation.molang.MolangValue
 
-// MoLang AST 节点: 三元运算 condition ? true : false
-
+/**
+ * MoLang AST 节点 —— 三元条件运算（condition ? true_value : false_value）。
+ * condition 非 0 时取 trueValue，否则取 falseValue。
+ */
 @JvmRecord
 data class Ternary(val condition: MolangValue, val trueValue: MolangValue, val falseValue: MolangValue) : MolangValue {
 	override fun eval(context: MolangData?): Double {

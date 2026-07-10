@@ -27,8 +27,7 @@ class PlayerAnimationMapperProvider(
 	constructor(holder: Player) : this(holder, holder.level().isClientSide, AnimationControllerManager(holder))
 
 	init {
-		animationControllerManager.geometry =
-			GeometryModelRegistry.getInstance(isClient).get(IDENTIFIER) ?: GeometryData.EMPTY
+		animationControllerManager.geometry = GeometryModelRegistry.get(isClient, IDENTIFIER) ?: GeometryData.EMPTY
 		RcfEventHooks.animationControllerRegister<Player>().getSortedEntries()
 			.forEach { (controllerName, controllerFactory, priority) ->
 				animationControllerManager.add(

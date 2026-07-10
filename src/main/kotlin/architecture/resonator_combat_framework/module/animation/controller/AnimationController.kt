@@ -3,11 +3,11 @@ package architecture.resonator_combat_framework.module.animation.controller
 import architecture.resonator_combat_framework.core.RcfEventHooks
 import architecture.resonator_combat_framework.module.animation.AnimationDef
 import architecture.resonator_combat_framework.module.animation.LoopType
-import architecture.resonator_combat_framework.module.animation.keyframe_animation.KeyframeAnimation
 import architecture.resonator_combat_framework.module.animation.data.BoneConfig
 import architecture.resonator_combat_framework.module.animation.data.PlayConfig
 import architecture.resonator_combat_framework.module.animation.data.PlayMode
 import architecture.resonator_combat_framework.module.animation.data.shouldBlend
+import architecture.resonator_combat_framework.module.animation.keyframe_animation.KeyframeAnimation
 import architecture.resonator_combat_framework.module.animation.mapper.AnimationControllerManager
 import architecture.resonator_combat_framework.module.animation.mapper.IEntityAnimationMapperProvider
 import architecture.resonator_combat_framework.module.animation.model.BonePose
@@ -119,9 +119,10 @@ class AnimationController<T : Entity> @JvmOverloads constructor(
 		oldActionAnim?.onEnd(manager.holder)
 
 		currentAnim = anim
-		val baseAnim = KeyframeAnimationRegistry.find(anim.animationId) ?: KeyframeAnimation.EMPTY
+		val animId = anim.animationId
+		val baseAnim = KeyframeAnimationRegistry.get(isClient, animId)?: KeyframeAnimation.EMPTY
 		currentBakingAnim = if (config.mirror) baseAnim.mirror() else baseAnim
-		val baseConfig = BoneConfigRegistry.find(anim.animationId) ?: BoneConfig.EMPTY
+		val baseConfig = BoneConfigRegistry.get(isClient, animId)?: BoneConfig.EMPTY
 		currentBoneConfig = if (config.mirror) baseConfig.mirror() else baseConfig
 		manager.clearEmittersFor(id)
 		poseData.bones.clear()
@@ -144,7 +145,7 @@ class AnimationController<T : Entity> @JvmOverloads constructor(
 
 		anim.onBegin(manager.holder, animTime, 0f, poseData, manager.brModel)
 		anim.tick(manager.holder, animTime, 0f, poseData, manager.brModel)
-		extraModel = activeBoneConfig.extraModelId?.let { GeometryModelRegistry.find(it) }
+		extraModel = activeBoneConfig.extraModelId?.let { GeometryModelRegistry.get(isClient, it) }
 		manager.rebuildBones()
 
 		anim.onStart(manager.holder, animTime, 0f, poseData, manager.brModel)
@@ -173,7 +174,8 @@ class AnimationController<T : Entity> @JvmOverloads constructor(
 	override fun resume() {
 		if (state != IEntityAnimationController.State.PAUSED) return
 		if (currentAnim == null) {
-			state = if (isInFadeIn()) IEntityAnimationController.State.CROSSFADING else IEntityAnimationController.State.PLAYING
+			state =
+				if (isInFadeIn()) IEntityAnimationController.State.CROSSFADING else IEntityAnimationController.State.PLAYING
 			return
 		}
 
@@ -236,6 +238,7 @@ class AnimationController<T : Entity> @JvmOverloads constructor(
 			}
 
 			fromBone.pos.lerp(toBone.pos, fadeProgress, toBone.pos)
+//			fromBone.rotation.lerp(toBone.rotation, fadeProgress, toBone.rotation)
 			RotationUtil.lerpRotation(fromBone.rotation, toBone.rotation, fadeProgress, toBone.rotation)
 			fromBone.scale.lerp(toBone.scale, fadeProgress, toBone.scale)
 			if (fromBone.hasPos() || toBone.hasPos()) toBone.setPosEmpty(false)
@@ -341,7 +344,8 @@ class AnimationController<T : Entity> @JvmOverloads constructor(
 	private fun handleStateTransition() {
 		if (state == IEntityAnimationController.State.CROSSFADING && transitionSource != null) crossfadeStep()
 		if (state == IEntityAnimationController.State.CROSSFADING && fadeProgress >= 1f) {
-			state = IEntityAnimationController.State.PLAYING; transitionSource = null; lastRawGameTime = advanceTickCount / 20f
+			state = IEntityAnimationController.State.PLAYING; transitionSource = null; lastRawGameTime =
+				advanceTickCount / 20f
 		}
 		if (state == IEntityAnimationController.State.FADING_OUT && fadeProgress <= 0f) forceClear()
 	}

@@ -10,6 +10,9 @@ import net.neoforged.fml.config.ModConfig
 import net.neoforged.fml.event.config.ModConfigEvent
 import net.neoforged.neoforge.common.ModConfigSpec
 
+/**
+ * RCF 配置入口 —— 管理客户端配置规格及其注册到 NeoForge 配置系统的生命周期。
+ */
 @EventBusSubscriber(modid = RcfUtil.ID)
 object RcfConfig : BasicConfigMapper() {
 
