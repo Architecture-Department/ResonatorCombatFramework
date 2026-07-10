@@ -25,38 +25,37 @@ import java.util.function.Supplier
 class AttackAnimationAction(
 	id: ResourceLocation,
 	animation: Supplier<AnimationDef?>, controllerId: ResourceLocation?,
-	fadeInTick: Int = 1,
-	windupTick: Int = 0,
-	activeTick: Int = 4,
-	recoveryTick: Int = 2,
-	fadeOutTick: Int = 1,
+	fadeInTime: Float = 1f / 20f,
+	windupTime: Float = 0f,
+	activeTime: Float = 4f / 20f,
+	recoveryTime: Float = 2f / 20f,
+	fadeOutTime: Float = 1f / 20f,
 	interruptData: InterruptData = InterruptData(),
 	weight: Int = 2500,
 	vararg val phases: AttackActionPhase,
 ) : AnimationAction(
 	id, animation, controllerId,
-	fadeInTick, windupTick + activeTick + recoveryTick, fadeOutTick, interruptData, weight
+	fadeInTime, windupTime + activeTime + recoveryTime, fadeOutTime, interruptData, weight
 ) {
 	constructor(
 		id: ResourceLocation, animationId: ResourceLocation, controllerId: ResourceLocation?,
-		fadeInTick: Int = 1, windupTick: Int = 0, activeTick: Int = 4, recoveryTick: Int = 2,
-		fadeOutTick: Int = 1, interruptData: InterruptData = InterruptData(), weight: Int = 2500,
+		fadeInTime: Float = 1f / 20f, windupTime: Float = 0f, activeTime: Float = 4f / 20f, recoveryTime: Float = 2f / 20f,
+		fadeOutTime: Float = 1f / 20f, interruptData: InterruptData = InterruptData(), weight: Int = 2500,
 		vararg phases: AttackActionPhase,
 	) : this(
 		id, AnimationDefRegistry.get(animationId)!!, controllerId,
-		fadeInTick, windupTick, activeTick, recoveryTick, fadeOutTick, interruptData, weight, *phases,
+		fadeInTime, windupTime, activeTime, recoveryTime, fadeOutTime, interruptData, weight, *phases,
 	)
 
-	override val fadeInTime = fadeInTick / 20f
-	val windupTime = (fadeInTick + windupTick) / 20f
-	override val activeTime = (fadeInTick + animationTick) / 20f
-	override val durationTime = (fadeInTick + animationTick + fadeOutTick) / 20f
+	val windupTime = fadeInTime + windupTime
+	override val activeTime = fadeInTime + animationTime
+	override val durationTime = fadeInTime + animationTime + fadeOutTime
 
 	override fun getState(time: Float, entity: LivingEntity): ActionState = when {
 		time < 0f -> ActionState.IDLE
 		time < windupTime -> ActionState.WINDUP
 		time < activeTime -> ActionState.ACTIVE
-		time < durationTime * 20f -> ActionState.RECOVERY
+		time < durationTime -> ActionState.RECOVERY
 		else -> ActionState.IDLE
 	}
 
@@ -80,7 +79,12 @@ class AttackAnimationAction(
 		}
 	}
 
-	// ===== 碰撞检测 =====
+	fun getDamageSource(attacker: LivingEntity, phase1: AttackActionPhase): DamageSource =
+		if (attacker is Player) attacker.damageSources().playerAttack(attacker)
+		else attacker.damageSources().mobAttack(attacker)
+
+	fun getDamage(attacker: LivingEntity, phase: AttackActionPhase): Float =
+		(attacker.getAttributeValue(Attributes.ATTACK_DAMAGE) * phase.damageMultiplier).toFloat()
 
 	fun processActivePhases(
 		pose: Matrix4fc,
@@ -120,13 +124,6 @@ class AttackAnimationAction(
 		}
 	}
 
-	fun getDamageSource(attacker: LivingEntity, phase1: AttackActionPhase): DamageSource =
-		if (attacker is Player) attacker.damageSources().playerAttack(attacker)
-		else attacker.damageSources().mobAttack(attacker)
-
-	fun getDamage(attacker: LivingEntity, phase: AttackActionPhase): Float =
-		(attacker.getAttributeValue(Attributes.ATTACK_DAMAGE) * phase.damageMultiplier).toFloat()
-
 	fun firePhaseEvents(
 		controller: IEntityAnimationController<*>,
 		started: Set<Int>, ended: Set<Int>,
@@ -147,17 +144,19 @@ class AttackAnimationAction(
 		val record = attacker.getData(RcfAttachmentTypes.ATTACK_HIT_RECORD)
 
 		val current = phases.indices.filter { idx ->
-			time >= phases[idx].startTime && time <= phases[idx].endTime
+			time >= phases[idx].startTime && time < phases[idx].endTime
 		}.toSet()
 		val started = current - record.activePhases
 		val ended = (record.activePhases - current).filter { it in phases.indices }.toSet()
 
-		val poseStack = PoseStack()
-		poseStack.pushPose()
-		poseStack.translate(attacker.position())
-		poseStack.mulPose(Axis.YP.rotation(-attacker.getPreciseBodyRotation(1.0f).toRadians()))
-		processActivePhases(poseStack.last().pose, controller.manager, current, record, attacker)
-		poseStack.popPose()
+		if (current.isNotEmpty() && !attacker.level().isClientSide) {
+			val poseStack = PoseStack()
+			poseStack.pushPose()
+			poseStack.translate(attacker.position())
+			poseStack.mulPose(Axis.YP.rotation(-attacker.getPreciseBodyRotation(1.0f).toRadians()))
+			processActivePhases(poseStack.last().pose, controller.manager, current, record, attacker)
+			poseStack.popPose()
+		}
 
 		ended.forEach { record.removeGroup(it) }
 		firePhaseEvents(controller, started, ended, attacker)

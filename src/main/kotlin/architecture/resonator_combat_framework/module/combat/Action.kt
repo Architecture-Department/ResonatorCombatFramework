@@ -15,14 +15,14 @@ import java.util.*
  * 通过 [getState] 方法根据时间轴判定当前所处阶段，在 [ActionController.tick] 中驱动阶段切换。
  *
  * @param id 动作的唯一标识符
- * @param durationTick 动作持续时长（游戏刻）
+ * @param durationTime 动作持续时长（秒）
  * @param interruptData 打断配置，定义各阶段的可打断性
  * @param weight 动作权重，用于打断判定时与目标动作权重比较
  */
 @AllOpe
 abstract class Action(
 	val id: ResourceLocation,
-	val durationTick: Int,
+	val durationTime: Float,
 	val interruptData: InterruptData,
 	val weight: Int = 2500
 ) {
@@ -48,7 +48,6 @@ abstract class Action(
 		val CAN_SWITCH_ITEM = RcfUtil.modRl("can_switch_item")
 	}
 
-	val durationTime = durationTick / 20f
 
 	/** 动作属性映射表 */
 	val properties = mutableMapOf<ActionProperty<*>, Any>()
@@ -79,7 +78,7 @@ abstract class Action(
 	fun getState(time: Float, entity: LivingEntity): ActionState {
 		return when {
 			time < 0f -> ActionState.IDLE
-			time < durationTick -> ActionState.ACTIVE
+			time < durationTime -> ActionState.ACTIVE
 			else -> ActionState.IDLE
 		}
 	}

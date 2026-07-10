@@ -55,7 +55,7 @@ object PlayerAnimationHelper {
 				animId = animId, playMode = config.playMode,
 				speedMultiplier = config.resolveSpeedMultiplier(),
 				startTime = config.startTime, endTime = config.endTime,
-				fadeInTicks = config.fadeInTicks, fadeOutTicks = config.fadeOutTicks
+				fadeInTime = config.fadeInTime, fadeOutTime = config.fadeOutTime
 			)
 		)
 	}
@@ -64,25 +64,24 @@ object PlayerAnimationHelper {
 	 * 通过简化参数触发玩家动画（速度 + 淡入 + 淡出）。
 	 * @param animId 动画资源 ID
 	 * @param speedMultiplier 播放速度倍率，默认为 1.0
-	 * @param fadeInTicks 淡入过渡刻数，-1 表示使用默认值
-	 * @param fadeOutTicks 淡出过渡刻数，-1 表示使用默认值
+	 * @param fadeInTime 淡入过渡秒数，-1 表示使用默认值
+	 * @param fadeOutTime 淡出过渡秒数，-1 表示使用默认值
 	 * @param isPayload 是否同步网络数据包
 	 */
 	@JvmStatic
-	@JvmOverloads
 	fun Player.triggerPlayerAnima(
 		animId: ResourceLocation,
 		speedMultiplier: Float = 1f,
-		fadeInTicks: Int = -1,
-		fadeOutTicks: Int = -1,
+		fadeInTime: Float = -1f,
+		fadeOutTime: Float = -1f,
 		isPayload: Boolean = true
 	) {
 		triggerPlayerAnima(
 			animId,
 			PlayConfig(
 				speedMultiplier = speedMultiplier,
-				fadeInTicks = fadeInTicks,
-				fadeOutTicks = fadeOutTicks
+				fadeInTime = fadeInTime,
+				fadeOutTime = fadeOutTime
 			), isPayload = isPayload
 		)
 	}
@@ -90,22 +89,21 @@ object PlayerAnimationHelper {
 	/**
 	 * 通过过渡时间和速度触发玩家动画。
 	 * @param animId 动画资源 ID
-	 * @param transitionTicks 过渡（淡入）刻数
+	 * @param transitionTime 过渡（淡入）秒数
 	 * @param speedMultiplier 播放速度倍率，默认为 1.0
 	 * @param isPayload 是否同步网络数据包
 	 */
 	@JvmStatic
-	@JvmOverloads
 	fun Player.triggerPlayerAnima(
 		animId: ResourceLocation,
-		transitionTicks: Int,
+		transitionTime: Float,
 		speedMultiplier: Float = 1f,
 		isPayload: Boolean = true
 	) {
 		triggerPlayerAnima(
 			animId,
 			PlayConfig(
-				fadeInTicks = transitionTicks,
+				fadeInTime = transitionTime,
 				speedMultiplier = speedMultiplier
 			), isPayload = isPayload
 		)
@@ -116,22 +114,22 @@ object PlayerAnimationHelper {
 	/**
 	 * 停止指定控制器的动画播放。
 	 * @param name 目标控制器名称，默认为 [AnimationControllers.MAIN]
-	 * @param fadeOutTicks 淡出刻数，-1 表示使用默认值
+	 * @param fadeOutTime 淡出秒数，-1 表示使用默认值
 	 * @param isPayload 是否同步网络数据包
 	 */
 	@JvmStatic
 	@JvmOverloads
 	fun Player.stopAnima(
 		name: ResourceLocation = AnimationControllers.MAIN,
-		fadeOutTicks: Int = -1,
+		fadeOutTime: Float = -1f,
 		isPayload: Boolean = true
 	) {
-		if (this is AbstractClientPlayer) getMapperProvider().stop(name, fadeOutTicks)
+		if (this is AbstractClientPlayer) getMapperProvider().stop(name, fadeOutTime)
 		else if (this is ServerPlayer) {
-			getMapperProvider().stop(name, fadeOutTicks)
+			getMapperProvider().stop(name, fadeOutTime)
 			if (isPayload) {
 				PacketDistributor.sendToPlayersTrackingEntityAndSelf(
-					this, StopPlayerPayload(uuid, null as ResourceLocation?, fadeOutTicks)
+					this, StopPlayerPayload(uuid, null as ResourceLocation?, fadeOutTime)
 				)
 			}
 		}

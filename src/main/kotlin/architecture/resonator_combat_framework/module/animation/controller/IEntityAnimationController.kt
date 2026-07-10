@@ -73,8 +73,8 @@ interface IEntityAnimationController<T : Entity> {
 	/** 混合目标值（外部只读） */
 	val fadeTarget: Float
 
-	/** 过渡持续 tick 数（外部只读） */
-	val currentTransitionTicks: Int
+	/** 过渡持续时间（秒，外部只读） */
+	val currentTransitionTime: Float
 
 	/** 是否覆盖模式（true=覆盖低优先级，false=叠加） */
 	val isOverriding: Boolean
@@ -119,20 +119,20 @@ interface IEntityAnimationController<T : Entity> {
 	 *
 	 * @param animId 动画资源 ID
 	 * @param speedMultiplier 播放速度倍率
-	 * @param fadeInTicks 淡入 tick 数（-1 使用默认值）
-	 * @param fadeOutTicks 淡出 tick 数（-1 使用默认值）
+	 * @param fadeInTime 淡入时间（秒，-1f 使用默认值）
+	 * @param fadeOutTime 淡出时间（秒，-1f 使用默认值）
 	 */
 	fun trigger(
 		animId: ResourceLocation,
 		speedMultiplier: Float = 1f,
-		fadeInTicks: Int = -1,
-		fadeOutTicks: Int = -1
+		fadeInTime: Float = -1f,
+		fadeOutTime: Float = -1f
 	) = trigger(
 		animId,
 		PlayConfig(
 			speedMultiplier = speedMultiplier,
-			fadeInTicks = fadeInTicks,
-			fadeOutTicks = fadeOutTicks
+			fadeInTime = fadeInTime,
+			fadeOutTime = fadeOutTime
 		)
 	)
 
@@ -144,8 +144,8 @@ interface IEntityAnimationController<T : Entity> {
 		return currentAnimId == id
 	}
 
-	/** 停止动画（可指定淡出 tick 数） */
-	fun stop(fadeOutTicks: Int = -1)
+	/** 停止动画（可指定淡出时间，秒） */
+	fun stop(fadeOutTime: Float = -1f)
 
 	/** 暂停动画 */
 	fun pause()

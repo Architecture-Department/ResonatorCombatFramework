@@ -11,24 +11,21 @@ import java.util.*
  * 状态修饰通过 [ActionProperty] 键存储在 [properties] 中，
  * 在阶段开始时自动应用到 [EntityStateHolder]，结束时恢复。
  *
- * @param startTick 阶段起始时间
- * @param endTick 阶段结束时间
+ * @param startTime 阶段起始时间（秒）
+ * @param endTime 阶段结束时间（秒）
  * @param colliderCount sweep 采样基数（乘以攻击速度后取整为实际采样数，至少为基数）
  * @param colliders 本阶段中用于碰撞检测的骨骼-碰撞体绑定列表
  */
 @AllOpe
 data class AttackActionPhase(
-	val startTick: Int,
-	val endTick: Int,
+	val startTime: Float,
+	val endTime: Float,
 	/** 每次攻击最多命中实体数 */
 	val maxStrikes: Int = 3,
 	val damageMultiplier: Float = 1.0f,
 	val colliderCount: Int = 3,
 	val colliders: Array<JointColliderPair>
 ) {
-
-	val startTime = startTick / 20f
-	val endTime = endTick / 20f
 
 	/** 阶段属性映射表 */
 	private val properties = mutableMapOf<ActionProperty<*>, Any>()

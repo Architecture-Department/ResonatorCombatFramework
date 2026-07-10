@@ -33,6 +33,7 @@ object RenderEvents {
 		// 仅 F3+B（显示碰撞箱）时渲染
 		if (!Minecraft.getInstance().entityRenderDispatcher.shouldRenderHitBoxes()) return
 
+		val partialTick = event.partialTick
 		val bufferSource = event.multiBufferSource
 		val vertexConsumer = bufferSource.getBuffer(RenderType.lines())
 		val poseStack = event.poseStack
@@ -52,6 +53,7 @@ object RenderEvents {
 		poseStack.pushPose()
 		poseStack.mulPose(Axis.YP.rotation(-entity.getPreciseBodyRotation(1.0f).toRadians()))
 		renderColliders(
+			partialTick,
 			manager,
 			action, time, poseStack, vertexConsumer
 		)
@@ -63,6 +65,7 @@ object RenderEvents {
 	 * 当前碰撞体以亮白色显示，sweep 插值样本以渐变绿色显示。
 	 */
 	private fun renderColliders(
+		partialTick: Float,
 		manager: AnimationControllerManager<out Entity>,
 		action: AttackAnimationAction,
 		time: Float,
@@ -72,8 +75,7 @@ object RenderEvents {
 		val brModel = manager.brModel
 		val (bones, _) = brModel
 		for (phase in action.phases) {
-			if (time < phase.startTime || time > phase.endTime) continue
-
+			if (time < phase.startTime || time >= phase.endTime) continue
 			for (pair in phase.colliders) {
 				if (bones[pair.boneName] == null) continue
 				val c2 = pair.collider
@@ -84,7 +86,7 @@ object RenderEvents {
 
 				// 主碰撞体（当前帧，亮白色）
 				val currMat = brModel.computeBoneGlobalMatrix(
-					pair.boneName, manager.getInterpolatedProxy(0f), true,
+					pair.boneName, manager.getInterpolatedProxy(partialTick), true,
 				)
 				renderBox(
 					poseStack, vertexConsumer, currMat, c2.modelCenter,
@@ -94,7 +96,7 @@ object RenderEvents {
 				// sweep 路径（与 MultiCollider 相同的骨骼插值，数量由 AttackActionPhase 指定）
 				val colliderCount = phase.colliderCount
 				for (step in 0 until colliderCount) {
-					val t = if (colliderCount > 1) step / (colliderCount - 1f) else 1f
+					val t = if (colliderCount > partialTick) step / (colliderCount - partialTick) else partialTick
 					val sweepMat = brModel.computeBoneGlobalMatrix(
 						pair.boneName, manager.getInterpolatedProxy(t), true,
 					)

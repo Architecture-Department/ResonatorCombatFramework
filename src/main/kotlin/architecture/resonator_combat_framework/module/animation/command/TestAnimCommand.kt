@@ -112,8 +112,8 @@ object TestAnimCommand {
 
 		val config = PlayConfig(
 			speedMultiplier = speed,
-			fadeInTicks = fadeIn,
-			fadeOutTicks = fadeOut
+			fadeInTime = fadeIn / 20f,
+			fadeOutTime = fadeOut / 20f
 		)
 
 

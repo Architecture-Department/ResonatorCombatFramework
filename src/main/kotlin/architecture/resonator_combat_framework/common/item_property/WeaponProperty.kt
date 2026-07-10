@@ -7,7 +7,6 @@ import architecture.resonator_combat_framework.module.combat.ActionSequence
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.InteractionHand
 import net.minecraft.world.entity.LivingEntity
-import net.minecraft.world.entity.ai.attributes.Attributes
 import net.minecraft.world.item.ItemStack
 import java.util.function.Supplier
 
@@ -61,7 +60,8 @@ constructor(
 		}
 
 		if (actionController.onNextAction()) {
-			actionController.combatSpeedMultiplier = entity.getAttributeValue(Attributes.ATTACK_SPEED).toFloat()
+			actionController.combatSpeedMultiplier = 1f
+//			actionController.combatSpeedMultiplier = entity.getAttributeValue(Attributes.ATTACK_SPEED).toFloat()
 		} else {
 			actionController.combatSpeedMultiplier = 1f
 		}

@@ -28,8 +28,8 @@ import java.util.*
  * @property controllerName 目标控制器名称，为空则使用主控制器
  * @property animId 要触发的动画 ID
  * @property speedMultiplier 播放速度倍率
- * @property fadeInTicks 淡入时长（tick），-1 表示默认
- * @property fadeOutTicks 淡出时长（tick），-1 表示默认
+ * @property fadeInTime 淡入时长（秒），-1 表示默认
+ * @property fadeOutTime 淡出时长（秒），-1 表示默认
  */
 data class TriggerPlayerPayload
 @JvmOverloads
@@ -38,8 +38,8 @@ constructor(
 	val controllerName: Optional<ResourceLocation>,
 	val animId: ResourceLocation,
 	val speedMultiplier: Float = 1f,
-	val fadeInTicks: Int = -1,
-	val fadeOutTicks: Int = -1
+	val fadeInTime: Float = -1f,
+	val fadeOutTime: Float = -1f
 ) : ToServerAndClientPayload {
 
 	@JvmOverloads
@@ -48,9 +48,9 @@ constructor(
 		controllerName: ResourceLocation?,
 		animId: ResourceLocation,
 		speedMultiplier: Float = 1f,
-		fadeInTicks: Int = -1,
-		fadeOutTicks: Int = -1
-	) : this(playerUuid, Optional.ofNullable(controllerName), animId, speedMultiplier, fadeInTicks, fadeOutTicks)
+		fadeInTime: Float = -1f,
+		fadeOutTime: Float = -1f
+	) : this(playerUuid, Optional.ofNullable(controllerName), animId, speedMultiplier, fadeInTime, fadeOutTime)
 
 	override fun type() = TYPE
 
@@ -59,8 +59,8 @@ constructor(
 		val target = (level.getPlayerByUUID(playerUuid) as? AbstractClientPlayer) ?: return
 		val config = PlayConfig(
 			speedMultiplier = speedMultiplier,
-			fadeInTicks = fadeInTicks,
-			fadeOutTicks = fadeOutTicks
+			fadeInTime = fadeInTime,
+			fadeOutTime = fadeOutTime
 		)
 		target.getMapperProvider().trigger(controllerName.orElse(AnimationControllers.MAIN)!!, animId, config)
 	}
@@ -68,8 +68,8 @@ constructor(
 	override fun toServer(context: IPayloadContext, player: ServerPlayer) {
 		val config = PlayConfig(
 			speedMultiplier = speedMultiplier,
-			fadeInTicks = fadeInTicks,
-			fadeOutTicks = fadeOutTicks
+			fadeInTime = fadeInTime,
+			fadeOutTime = fadeOutTime
 		)
 		player.getMapperProvider().trigger(controllerName.orElse(AnimationControllers.MAIN)!!, animId, config)
 		PacketDistributor.sendToPlayersTrackingEntityAndSelf(player, this)
@@ -86,8 +86,8 @@ constructor(
 				RESOURCE_LOCATION_OPTIONAL_STREAM_CODEC.encode(buf, p.controllerName)
 				ResourceLocation.STREAM_CODEC.encode(buf, p.animId)
 				ByteBufCodecs.FLOAT.encode(buf, p.speedMultiplier)
-				ByteBufCodecs.VAR_INT.encode(buf, p.fadeInTicks)
-				ByteBufCodecs.VAR_INT.encode(buf, p.fadeOutTicks)
+				ByteBufCodecs.FLOAT.encode(buf, p.fadeInTime)
+				ByteBufCodecs.FLOAT.encode(buf, p.fadeOutTime)
 			},
 			{ buf ->
 				TriggerPlayerPayload(
@@ -95,8 +95,8 @@ constructor(
 					RESOURCE_LOCATION_OPTIONAL_STREAM_CODEC.decode(buf),
 					ResourceLocation.STREAM_CODEC.decode(buf),
 					ByteBufCodecs.FLOAT.decode(buf),
-					ByteBufCodecs.VAR_INT.decode(buf),
-					ByteBufCodecs.VAR_INT.decode(buf)
+					ByteBufCodecs.FLOAT.decode(buf),
+					ByteBufCodecs.FLOAT.decode(buf)
 				)
 			}
 		)

@@ -60,19 +60,19 @@ abstract class EntityAnimationMapperProvider<T : Entity, M : EntityModel<T>>(
 	 * 停止指定控制器的动画。
 	 *
 	 * @param controllerName 控制器名称
-	 * @param fadeOutTicks 淡出时长（tick），-1 表示立即停止
+	 * @param fadeOutTime 淡出时长（秒），-1 表示立即停止
 	 */
-	override fun stop(controllerName: ResourceLocation, fadeOutTicks: Int) {
-		(animationControllerManager.get(controllerName) ?: mainController).stop(fadeOutTicks)
+	override fun stop(controllerName: ResourceLocation, fadeOutTime: Float) {
+		(animationControllerManager.get(controllerName) ?: mainController).stop(fadeOutTime)
 	}
 
 	/**
 	 * 停止所有控制器的动画。
 	 *
-	 * @param fadeOutTicks 淡出时长（tick）
+	 * @param fadeOutTime 淡出时长（秒）
 	 */
-	override fun stopAll(fadeOutTicks: Int) {
-		animationControllerManager.getAll().forEach { it.stop(fadeOutTicks) }
+	override fun stopAll(fadeOutTime: Float) {
+		animationControllerManager.getAll().forEach { it.stop(fadeOutTime) }
 	}
 
 	// ---- 暂停/恢复 ----

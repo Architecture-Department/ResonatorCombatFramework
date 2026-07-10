@@ -196,7 +196,7 @@ constructor(
 	 */
 	fun remove(name: ResourceLocation) {
 		val ctrl = nameMap.remove(name) ?: return
-		ctrl.stop(0)
+		ctrl.stop(0f)
 		ordered.remove(ctrl)
 	}
 

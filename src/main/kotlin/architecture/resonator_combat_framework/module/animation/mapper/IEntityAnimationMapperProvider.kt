@@ -101,25 +101,25 @@ interface IEntityAnimationMapperProvider<T : Entity, M : EntityModel<T>> {
 	 * 停止指定控制器的动画。
 	 *
 	 * @param controllerName 控制器名称
-	 * @param fadeOutTicks 淡出时长（tick），-1 表示立即停止
+	 * @param fadeOutTime 淡出时长（秒），-1f 表示立即停止
 	 */
-	fun stop(controllerName: ResourceLocation, fadeOutTicks: Int = -1)
+	fun stop(controllerName: ResourceLocation, fadeOutTime: Float = -1f)
 
 	/**
 	 * 停止主控制器的动画。
 	 *
-	 * @param fadeOutTicks 淡出时长（tick）
+	 * @param fadeOutTime 淡出时长（秒）
 	 */
-	fun stop(fadeOutTicks: Int = -1) {
-		stop(AnimationControllers.MAIN, fadeOutTicks)
+	fun stop(fadeOutTime: Float = -1f) {
+		stop(AnimationControllers.MAIN, fadeOutTime)
 	}
 
 	/**
 	 * 停止所有控制器的动画。
 	 *
-	 * @param fadeOutTicks 淡出时长（tick）
+	 * @param fadeOutTime 淡出时长（秒）
 	 */
-	fun stopAll(fadeOutTicks: Int = -1)
+	fun stopAll(fadeOutTime: Float = -1f)
 
 	/**
 	 * 暂停指定控制器的动画。

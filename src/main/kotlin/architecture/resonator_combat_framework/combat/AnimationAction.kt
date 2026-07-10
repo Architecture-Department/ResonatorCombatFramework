@@ -23,9 +23,9 @@ import java.util.function.Supplier
  *
  * @property animation 动画定义的延迟提供者
  * @property controllerId 目标动画控制器的 ID
- * @property fadeInTick 淡入过渡的 tick 数
- * @property animationTick 动画持续 tick 数
- * @property fadeOutTick 淡出过渡的 tick 数
+ * @property fadeInTime 淡入过渡时间（秒）
+ * @property animationTime 动画持续时间（秒）
+ * @property fadeOutTime 淡出过渡时间（秒）
  * @property weight 动作权重
  */
 class AnimationAction
@@ -34,21 +34,20 @@ constructor(
 	id: ResourceLocation,
 	val animation: Supplier<out AnimationDef?>,
 	val controllerId: ResourceLocation?,
-	val fadeInTick: Int = 1,
-	val animationTick: Int,
-	val fadeOutTick: Int = 1,
+	val fadeInTime: Float = 1f / 20f,
+	val animationTime: Float,
+	val fadeOutTime: Float = 1f / 20f,
 	interruptData: InterruptData = InterruptData.DEFAULT,
 	override val weight: Int = 2500,
 ) : Action(
 	id,
-	fadeInTick + animationTick + fadeOutTick,
+	fadeInTime + animationTime + fadeOutTime,
 	interruptData,
 	weight
 ) {
-	val fadeInTime = fadeInTick / 20f
-	val activeTime = (fadeInTick + animationTick) / 20f
+	val activeTime = fadeInTime + animationTime
 
-	override val durationTime = (fadeInTick + animationTick + fadeOutTick) / 20f
+	override val durationTime = fadeInTime + animationTime + fadeOutTime
 
 	override fun getState(time: Float, entity: LivingEntity): ActionState {
 		return when {
@@ -76,8 +75,8 @@ constructor(
 		val combatSpeedMultiplier = actionController.combatSpeedMultiplier
 		getAnimationController(entity)?.trigger(
 			getAnimation(), PlayConfig(
-				fadeInTicks = (fadeInTick / combatSpeedMultiplier).toInt(),
-				fadeOutTicks = (fadeOutTick / combatSpeedMultiplier).toInt()
+				fadeInTime = fadeInTime / combatSpeedMultiplier,
+				fadeOutTime = fadeOutTime / combatSpeedMultiplier
 			)
 		)
 	}
@@ -109,7 +108,7 @@ constructor(
 	fun onForcedEnd(entity: LivingEntity, actionSequence: ActionSequence?) {
 		clearModifiers(entity)
 		if (entity is IAnimationProvider) {
-			getAnimationController(entity)?.stop(0)
+			getAnimationController(entity)?.stop(0f)
 		}
 	}
 

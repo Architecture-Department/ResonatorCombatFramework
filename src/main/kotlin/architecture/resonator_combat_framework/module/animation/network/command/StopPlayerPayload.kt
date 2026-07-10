@@ -24,22 +24,22 @@ import java.util.*
  *
  * @property playerUuid 目标玩家的 UUID
  * @property controllerName 要停止的控制器名称，为空则停止所有控制器
- * @property fadeOutTicks 淡出时长（tick），-1 表示立即停止
+ * @property fadeOutTime 淡出时长（秒），-1 表示立即停止
  */
 data class StopPlayerPayload
 @JvmOverloads
 constructor(
 	val playerUuid: UUID,
 	val controllerName: Optional<ResourceLocation> = Optional.empty(),
-	val fadeOutTicks: Int = -1
+	val fadeOutTime: Float = -1f
 ) : ToServerAndClientPayload {
 
 	@JvmOverloads
 	constructor(
 		playerUuid: UUID,
 		controllerName: ResourceLocation?,
-		fadeOutTicks: Int = -1
-	) : this(playerUuid, Optional.ofNullable(controllerName), fadeOutTicks)
+		fadeOutTime: Float = -1f
+	) : this(playerUuid, Optional.ofNullable(controllerName), fadeOutTime)
 
 	override fun type() = TYPE
 
@@ -48,22 +48,22 @@ constructor(
 		val target = (level.getPlayerByUUID(playerUuid) as? AbstractClientPlayer) ?: return
 		val transformer = target.getMapperProvider()
 		if (controllerName.isPresent) {
-			transformer.getController(controllerName.get())?.stop(fadeOutTicks)
+			transformer.getController(controllerName.get())?.stop(fadeOutTime)
 		} else {
-			transformer.stopAll(fadeOutTicks)
+			transformer.stopAll(fadeOutTime)
 		}
 	}
 
 	override fun toServer(context: IPayloadContext, player: ServerPlayer) {
 		player.getMapperProvider().let { transformer ->
 			if (controllerName.isPresent) {
-				transformer.getController(controllerName.get())?.stop(fadeOutTicks)
+				transformer.getController(controllerName.get())?.stop(fadeOutTime)
 			} else {
-				transformer.stopAll(fadeOutTicks)
+				transformer.stopAll(fadeOutTime)
 			}
 		}
 		PacketDistributor.sendToPlayersTrackingEntityAndSelf(
-			player, StopPlayerPayload(player.uuid, controllerName, fadeOutTicks)
+			player, StopPlayerPayload(player.uuid, controllerName, fadeOutTime)
 		)
 	}
 
@@ -77,13 +77,13 @@ constructor(
 			{ buf, p ->
 				UUIDUtil.STREAM_CODEC.encode(buf, p.playerUuid)
 				RESOURCE_LOCATION_OPTIONAL_STREAM_CODEC.encode(buf, p.controllerName)
-				ByteBufCodecs.VAR_INT.encode(buf, p.fadeOutTicks)
+				ByteBufCodecs.FLOAT.encode(buf, p.fadeOutTime)
 			},
 			{ buf ->
 				StopPlayerPayload(
 					UUIDUtil.STREAM_CODEC.decode(buf),
 					RESOURCE_LOCATION_OPTIONAL_STREAM_CODEC.decode(buf),
-					ByteBufCodecs.VAR_INT.decode(buf)
+					ByteBufCodecs.FLOAT.decode(buf)
 				)
 			}
 		)

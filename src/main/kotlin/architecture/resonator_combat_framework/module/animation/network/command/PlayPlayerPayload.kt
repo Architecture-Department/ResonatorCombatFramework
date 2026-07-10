@@ -29,10 +29,10 @@ import java.util.*
  * @property animId 要播放的动画 ID
  * @property playMode 播放模式
  * @property speedMultiplier 播放速度倍率
- * @property startTime 起始时间（tick）
- * @property endTime 结束时间（tick）
- * @property fadeInTicks 淡入时长（tick），-1 表示默认
- * @property fadeOutTicks 淡出时长（tick），-1 表示默认
+ * @property startTime 起始时间（秒）
+ * @property endTime 结束时间（秒）
+ * @property fadeInTime 淡入时长（秒），-1 表示默认
+ * @property fadeOutTime 淡出时长（秒），-1 表示默认
  */
 data class PlayPlayerPayload
 @JvmOverloads
@@ -42,10 +42,10 @@ constructor(
 	val animId: ResourceLocation,
 	val playMode: PlayMode = PlayMode.DEFAULT,
 	val speedMultiplier: Float = 1f,
-	val startTime: Int = 0,
-	val endTime: Int = 0,
-	val fadeInTicks: Int = -1,
-	val fadeOutTicks: Int = -1
+	val startTime: Float = 0f,
+	val endTime: Float = 0f,
+	val fadeInTime: Float = -1f,
+	val fadeOutTime: Float = -1f
 ) : ToServerAndClientPayload {
 
 	@JvmOverloads
@@ -55,10 +55,10 @@ constructor(
 		animId: ResourceLocation,
 		playMode: PlayMode = PlayMode.DEFAULT,
 		speedMultiplier: Float = 1f,
-		startTime: Int = 0,
-		endTime: Int = 0,
-		fadeInTicks: Int = -1,
-		fadeOutTicks: Int = -1
+		startTime: Float = 0f,
+		endTime: Float = 0f,
+		fadeInTime: Float = -1f,
+		fadeOutTime: Float = -1f
 	) : this(
 		playerUuid,
 		Optional.ofNullable(controllerName),
@@ -67,8 +67,8 @@ constructor(
 		speedMultiplier,
 		startTime,
 		endTime,
-		fadeInTicks,
-		fadeOutTicks
+		fadeInTime,
+		fadeOutTime
 	)
 
 	override fun type() = TYPE
@@ -78,8 +78,8 @@ constructor(
 		speedMultiplier = speedMultiplier,
 		startTime = startTime,
 		endTime = endTime,
-		fadeInTicks = fadeInTicks,
-		fadeOutTicks = fadeOutTicks
+		fadeInTime = fadeInTime,
+		fadeOutTime = fadeOutTime
 	)
 
 	override fun toClient(context: IPayloadContext, player: AbstractClientPlayer) {
@@ -111,10 +111,10 @@ constructor(
 				ResourceLocation.STREAM_CODEC.encode(buf, p.animId)
 				ANIM_TYPE_CODEC.encode(buf, p.playMode)
 				ByteBufCodecs.FLOAT.encode(buf, p.speedMultiplier)
-				ByteBufCodecs.VAR_INT.encode(buf, p.startTime)
-				ByteBufCodecs.VAR_INT.encode(buf, p.endTime)
-				ByteBufCodecs.VAR_INT.encode(buf, p.fadeInTicks)
-				ByteBufCodecs.VAR_INT.encode(buf, p.fadeOutTicks)
+				ByteBufCodecs.FLOAT.encode(buf, p.startTime)
+				ByteBufCodecs.FLOAT.encode(buf, p.endTime)
+				ByteBufCodecs.FLOAT.encode(buf, p.fadeInTime)
+				ByteBufCodecs.FLOAT.encode(buf, p.fadeOutTime)
 			},
 			{
 				PlayPlayerPayload(
@@ -123,10 +123,10 @@ constructor(
 					ResourceLocation.STREAM_CODEC.decode(it),
 					ANIM_TYPE_CODEC.decode(it),
 					ByteBufCodecs.FLOAT.decode(it),
-					ByteBufCodecs.VAR_INT.decode(it),
-					ByteBufCodecs.VAR_INT.decode(it),
-					ByteBufCodecs.VAR_INT.decode(it),
-					ByteBufCodecs.VAR_INT.decode(it)
+					ByteBufCodecs.FLOAT.decode(it),
+					ByteBufCodecs.FLOAT.decode(it),
+					ByteBufCodecs.FLOAT.decode(it),
+					ByteBufCodecs.FLOAT.decode(it)
 				)
 			}
 		)

@@ -20,10 +20,10 @@ private constructor(
 	val bones: Map<String, BoneFlags> = DEFAULT_FLAGS,
 	/** 动画时间线配置，在不同时间段动态覆盖骨骼标志 */
 	val timeline: List<TimelineEntry> = emptyList(),
-	/** 默认过渡 tick 数（淡入/淡出的备用值） */
-	val transitionTicks: Int = DEFAULT_TRANSITION_TICKS,
-	private val fadeInTicks: Int = -1,
-	private val fadeOutTicks: Int = -1,
+	/** 默认过渡时间（秒，淡入/淡出的备用值） */
+	val transitionTime: Float = DEFAULT_TRANSITION_TIME,
+	private val fadeInTime: Float = -1f,
+	private val fadeOutTime: Float = -1f,
 	/** 额外模型数据定义（动画期间动态添加的模型数据） */
 	val extraModelId: ResourceLocation? = null
 ) {
@@ -33,18 +33,18 @@ private constructor(
 		val DEFAULT_FLAGS = mapOf("head" to BoneFlags(mapOf("lock" to false)))
 
 		@JvmField
-		val EMPTY = of(emptyMap(), emptyList(), DEFAULT_TRANSITION_TICKS)
+		val EMPTY = of(emptyMap(), emptyList(), DEFAULT_TRANSITION_TIME)
 
-		const val DEFAULT_TRANSITION_TICKS: Int = 3
+		const val DEFAULT_TRANSITION_TIME: Float = 3f / 20f
 
 		/**
 		 * 创建 [BoneConfig] 实例，自动合并默认骨骼标志。
 		 *
 		 * @param bones 骨骼标志映射
 		 * @param timeline 时间线条目
-		 * @param transitionTicks 默认过渡 tick 数
-		 * @param fadeInTicks 淡入 tick 数（-1 使用 transitionTicks）
-		 * @param fadeOutTicks 淡出 tick 数（-1 使用 transitionTicks）
+		 * @param transitionTime 默认过渡时间（秒）
+		 * @param fadeInTime 淡入时间（秒，-1 使用 transitionTime）
+		 * @param fadeOutTime 淡出时间（秒，-1 使用 transitionTime）
 		 * @param extraModelId 额外模型 ID
 		 * @return 合并了默认标志的 [BoneConfig]
 		 */
@@ -52,24 +52,24 @@ private constructor(
 		fun of(
 			bones: Map<String, BoneFlags>,
 			timeline: List<TimelineEntry>,
-			transitionTicks: Int,
-			fadeInTicks: Int = -1,
-			fadeOutTicks: Int = -1,
+			transitionTime: Float,
+			fadeInTime: Float = -1f,
+			fadeOutTime: Float = -1f,
 			extraModelId: ResourceLocation? = null
 		): BoneConfig {
 			val merged = mutableMapOf<String, BoneFlags>().apply {
 				putAll(DEFAULT_FLAGS)
 				putAll(bones)
 			}
-			return BoneConfig(merged, timeline, transitionTicks, fadeInTicks, fadeOutTicks, extraModelId)
+			return BoneConfig(merged, timeline, transitionTime, fadeInTime, fadeOutTime, extraModelId)
 		}
 
 		/** 从 JSON 解析骨骼配置 */
 		@JvmStatic
 		fun parse(json: JsonObject): BoneConfig {
-			val transitionTicks = json.get("transition")?.asInt ?: DEFAULT_TRANSITION_TICKS
-			val fadeInTicks = json.get("fade_in")?.asInt ?: -1
-			val fadeOutTicks = json.get("fade_out")?.asInt ?: -1
+			val transitionTime = (json.get("transition")?.asInt ?: 3) / 20f
+			val fadeInTime = (json.get("fade_in")?.asInt ?: -1) / 20f
+			val fadeOutTime = (json.get("fade_out")?.asInt ?: -1) / 20f
 			val bones = parseBonesSection(json.get("bones"))
 
 			val timelineJson = json.getAsJsonObject("timeline")
@@ -92,7 +92,7 @@ private constructor(
 			// 解析额外骨骼定义（动画期间动态添加的 BrBone 几何数据）
 			val extraModel = json.get("extra_model_id")?.asString?.let { rlOf(it) }
 
-			return of(bones, timeline, transitionTicks, fadeInTicks, fadeOutTicks, extraModel)
+			return of(bones, timeline, transitionTime, fadeInTime, fadeOutTime, extraModel)
 		}
 
 		private fun parseBonesSection(section: JsonElement?): Map<String, BoneFlags> {
@@ -123,11 +123,11 @@ private constructor(
 		}
 	}
 
-	/** 获取淡入 tick 数，未设置时退化为 transitionTicks */
-	fun getFadeInTicks(): Int = if (fadeInTicks >= 0) fadeInTicks else transitionTicks
+	/** 获取淡入 tick 数，未设置时退化为 transitionTime */
+	fun getFadeInTime(): Float = if (fadeInTime >= 0f) fadeInTime else transitionTime
 
-	/** 获取淡出 tick 数，未设置时退化为 transitionTicks */
-	fun getFadeOutTicks(): Int = if (fadeOutTicks >= 0) fadeOutTicks else transitionTicks
+	/** 获取淡出 tick 数，未设置时退化为 transitionTime */
+	fun getFadeOutTime(): Float = if (fadeOutTime >= 0f) fadeOutTime else transitionTime
 
 	/** 根据当前动画时间合并基础配置和时间线配置 */
 	fun resolveBoneFlags(animTime: Float): Map<String, BoneFlags> {
@@ -166,9 +166,9 @@ private constructor(
 		return of(
 			bones = mergedBones,
 			timeline = mergedTimeline,
-			transitionTicks = other.transitionTicks.takeIf { it != DEFAULT_TRANSITION_TICKS } ?: transitionTicks,
-			fadeInTicks = other.fadeInTicks.takeIf { it >= 0 } ?: this.fadeInTicks,
-			fadeOutTicks = other.fadeOutTicks.takeIf { it >= 0 } ?: this.fadeOutTicks,
+			transitionTime = other.transitionTime.takeIf { it != DEFAULT_TRANSITION_TIME } ?: transitionTime,
+			fadeInTime = other.fadeInTime.takeIf { it >= 0f } ?: this.fadeInTime,
+			fadeOutTime = other.fadeOutTime.takeIf { it >= 0f } ?: this.fadeOutTime,
 			extraModelId = other.extraModelId ?: this.extraModelId,
 		)
 	}

@@ -78,7 +78,7 @@ class AnimationController<T : Entity> @JvmOverloads constructor(
 
 	final override var fadeProgress = 0f; private set
 	final override var fadeTarget = 0f; private set
-	final override var currentTransitionTicks = BoneConfig.DEFAULT_TRANSITION_TICKS; private set
+	final override var currentTransitionTime = BoneConfig.DEFAULT_TRANSITION_TIME; private set
 	final override var speedMultiplier = 1f
 	final override var affectedBones = emptySet<String>(); private set
 
@@ -131,14 +131,14 @@ class AnimationController<T : Entity> @JvmOverloads constructor(
 		currentConfig = config
 
 		snapshotTransitionSource()
-		currentTransitionTicks = config.resolveFadeInTicks(activeBoneConfig.getFadeInTicks())
+		currentTransitionTime = config.resolveFadeInTime(activeBoneConfig.getFadeInTime())
 		state = IEntityAnimationController.State.CROSSFADING
 		fadeProgress = 0f
 		fadeTarget = 1f
 
 		// 根据播放方向设置初始动画时间
 		animTime = if (speedMultiplier >= 0) 0f else calcEndSecond()
-		if (config.startTime > 0) animTime = config.startTime / 20f
+		if (config.startTime > 0f) animTime = config.startTime
 		lastRawGameTime = -1f
 		affectedBones = anim.computeAndWrite(currentBakingAnim!!, animTime, poseData, currentData)
 		if (transitionSource != null) crossfadeStep()
@@ -154,15 +154,15 @@ class AnimationController<T : Entity> @JvmOverloads constructor(
 
 	// ===== 停止 =====
 
-	override fun stop(fadeOutTicks: Int) {
+	override fun stop(fadeOutTime: Float) {
 		if (state == IEntityAnimationController.State.IDLE || state == IEntityAnimationController.State.FADING_OUT) return
 		manager.clearEmittersFor(id)
 		state = IEntityAnimationController.State.FADING_OUT
 		fadeTarget = 0f
 		transitionSource = null
-		currentTransitionTicks = if (fadeOutTicks >= 0) fadeOutTicks
-		else currentConfig.resolveFadeOutTicks(activeBoneConfig.getFadeOutTicks())
-		if (currentTransitionTicks <= 0) forceClear()
+		currentTransitionTime = if (fadeOutTime >= 0f) fadeOutTime
+		else currentConfig.resolveFadeOutTime(activeBoneConfig.getFadeOutTime())
+		if (currentTransitionTime <= 0f) forceClear()
 	}
 
 	override fun pause() {
@@ -272,7 +272,7 @@ class AnimationController<T : Entity> @JvmOverloads constructor(
 			}
 
 			PlayMode.LOOP -> {
-				resetAnimAndRestart(); if (currentConfig.startTime > 0) setAnimStartTime(currentConfig.startTime / 20f)
+				resetAnimAndRestart(); if (currentConfig.startTime > 0f) setAnimStartTime(currentConfig.startTime)
 			}
 
 			PlayMode.STOP_AT_LAST -> pause()
@@ -284,7 +284,7 @@ class AnimationController<T : Entity> @JvmOverloads constructor(
 		pause()
 		state = IEntityAnimationController.State.FADING_OUT
 		fadeTarget = 0f
-		currentTransitionTicks = currentConfig.resolveFadeOutTicks(activeBoneConfig.getFadeOutTicks())
+		currentTransitionTime = currentConfig.resolveFadeOutTime(activeBoneConfig.getFadeOutTime())
 		RcfEventHooks.animationComplete(this)
 	}
 
@@ -294,8 +294,8 @@ class AnimationController<T : Entity> @JvmOverloads constructor(
 		val animLength = currentLength()
 		if (animLength <= 0f) return 0f
 		return when {
-			config.endTime < 0 -> animLength + config.endTime / 20f
-			config.endTime > 0 -> config.endTime / 20f
+			config.endTime < 0f -> animLength + config.endTime
+			config.endTime > 0f -> config.endTime
 			else -> animLength
 		}
 	}
@@ -414,10 +414,10 @@ class AnimationController<T : Entity> @JvmOverloads constructor(
 	/** 按帧推进 fadeProgress 向 fadeTarget 靠近 */
 	private fun tickBlend() {
 		if (fadeProgress == fadeTarget) return
-		if (currentTransitionTicks <= 0) {
+		if (currentTransitionTime <= 0f) {
 			fadeProgress = fadeTarget; return
 		}
-		val step = 1f / currentTransitionTicks
+		val step = 1f / (20f * currentTransitionTime)
 		fadeProgress = if (fadeProgress < fadeTarget) (fadeProgress + step).coerceAtMost(fadeTarget)
 		else (fadeProgress - step).coerceAtLeast(fadeTarget)
 	}
@@ -436,7 +436,7 @@ class AnimationController<T : Entity> @JvmOverloads constructor(
 		transitionSource = null
 		currentConfig = PlayConfig.EMPTY
 		affectedBones = emptySet()
-		currentTransitionTicks = BoneConfig.DEFAULT_TRANSITION_TICKS
+		currentTransitionTime = BoneConfig.DEFAULT_TRANSITION_TIME
 		speedMultiplier = 1f
 		extraModel = null
 		currentBakingAnim = null
