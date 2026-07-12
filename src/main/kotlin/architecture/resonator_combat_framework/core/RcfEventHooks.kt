@@ -2,20 +2,17 @@ package architecture.resonator_combat_framework.core
 
 import architecture.goldenboughs_lib.util.LazySupplier
 import architecture.goldenboughs_lib.util.Value
+import architecture.resonator_combat_framework.animation.AnimationDef
+import architecture.resonator_combat_framework.animation.controller.IEntityAnimationController
+import architecture.resonator_combat_framework.animation.data.PlayConfig
+import architecture.resonator_combat_framework.animation.mapper.IEntityAnimationMapperProvider
+import architecture.resonator_combat_framework.combat.Action
+import architecture.resonator_combat_framework.combat.ActionState
 import architecture.resonator_combat_framework.combat.AttackActionPhase
-import architecture.resonator_combat_framework.module.animation.AnimationDef
-import architecture.resonator_combat_framework.module.animation.controller.IEntityAnimationController
-import architecture.resonator_combat_framework.module.animation.data.PlayConfig
-import architecture.resonator_combat_framework.module.animation.event.*
-import architecture.resonator_combat_framework.module.animation.mapper.IEntityAnimationMapperProvider
-import architecture.resonator_combat_framework.module.animation.model.PoseData
-import architecture.resonator_combat_framework.module.animation.registry.KeyframeAnimationRegistry
-import architecture.resonator_combat_framework.module.combat.Action
-import architecture.resonator_combat_framework.module.combat.ActionState
-import architecture.resonator_combat_framework.module.state_machine.event.CombatActionEvent
-import architecture.resonator_combat_framework.module.state_machine.event.CombatActionEvent.Changed.Type
-import architecture.resonator_combat_framework.module.state_machine.event.CombatEvent
-import architecture.resonator_combat_framework.module.state_machine.holder.EntityStateHolder
+import architecture.resonator_combat_framework.event.*
+import architecture.resonator_combat_framework.event.ActionEvent.Changed.Type
+import architecture.resonator_combat_framework.registry.KeyframeAnimationRegistry
+import architecture.resonator_combat_framework.state_machine.holder.EntityStateHolder
 import net.minecraft.core.particles.ParticleType
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.Entity
@@ -34,22 +31,22 @@ object RcfEventHooks {
 
 	@JvmStatic
 	fun combatActionStart(holder: EntityStateHolder<*>, entity: LivingEntity, action: Action) {
-		NeoForge.EVENT_BUS.post(CombatActionEvent.Start(holder, entity, action))
+		NeoForge.EVENT_BUS.post(ActionEvent.Start(holder, entity, action))
 	}
 
 	@JvmStatic
 	fun combatActionTickPre(holder: EntityStateHolder<*>, entity: LivingEntity, action: Action): Boolean {
-		return NeoForge.EVENT_BUS.post(CombatActionEvent.Tick.Pre(holder, entity, action)).isCanceled
+		return NeoForge.EVENT_BUS.post(ActionEvent.Tick.Pre(holder, entity, action)).isCanceled
 	}
 
 	@JvmStatic
 	fun combatActionTickPost(holder: EntityStateHolder<*>, entity: LivingEntity, action: Action) {
-		NeoForge.EVENT_BUS.post(CombatActionEvent.Tick.Post(holder, entity, action))
+		NeoForge.EVENT_BUS.post(ActionEvent.Tick.Post(holder, entity, action))
 	}
 
 	@JvmStatic
 	fun combatActionEnd(holder: EntityStateHolder<*>, entity: LivingEntity, action: Action) {
-		NeoForge.EVENT_BUS.post(CombatActionEvent.End(holder, entity, action))
+		NeoForge.EVENT_BUS.post(ActionEvent.End(holder, entity, action))
 	}
 
 	@JvmStatic
@@ -57,15 +54,15 @@ object RcfEventHooks {
 		holder: EntityStateHolder<*>, entity: LivingEntity, action: Action, target: Action, value: Boolean
 	): Boolean {
 		val event =
-			NeoForge.EVENT_BUS.post(CombatActionEvent.Interruptible(holder, entity, action, target, value, value))
+			NeoForge.EVENT_BUS.post(ActionEvent.Interruptible(holder, entity, action, target, value, value))
 		return if (event.isCanceled) value else event.newValue
 	}
 
 	@JvmStatic
 	fun combatActionChanged(
 		holder: EntityStateHolder<*>, entity: LivingEntity, oldValue: Action?, newValue: Action?, type: Type
-	): CombatActionEvent.Changed {
-		return NeoForge.EVENT_BUS.post(CombatActionEvent.Changed(holder, entity, oldValue, newValue, type))
+	): ActionEvent.Changed {
+		return NeoForge.EVENT_BUS.post(ActionEvent.Changed(holder, entity, oldValue, newValue, type))
 	}
 
 	@JvmStatic
@@ -75,7 +72,7 @@ object RcfEventHooks {
 		oldValue: ActionState,
 		newValue: ActionState
 	) {
-		NeoForge.EVENT_BUS.post(CombatEvent.ActionStateChanged(holder, entity, oldValue, newValue))
+		NeoForge.EVENT_BUS.post(ActionStateChangedEvent(holder, entity, oldValue, newValue))
 	}
 
 	// ===== Animation Trigger =====
@@ -98,7 +95,7 @@ object RcfEventHooks {
 
 	@JvmStatic
 	fun animationComplete(controller: IEntityAnimationController<*>) {
-		NeoForge.EVENT_BUS.post(CompleteEvent(controller))
+		NeoForge.EVENT_BUS.post(AnimationEvent.Complete(controller))
 	}
 
 	// ===== Animation Controller Tick =====
@@ -109,7 +106,7 @@ object RcfEventHooks {
 		controller: IEntityAnimationController<T>,
 		mapper: IEntityAnimationMapperProvider<T, *>
 	): Boolean {
-		return NeoForge.EVENT_BUS.post(ControllerEvent.TickPre(id, controller, mapper)).isCanceled
+		return NeoForge.EVENT_BUS.post(AnimationControllerEvent.Tick.Pre(id, controller, mapper)).isCanceled
 	}
 
 	@JvmStatic
@@ -118,7 +115,7 @@ object RcfEventHooks {
 		controller: IEntityAnimationController<T>,
 		mapper: IEntityAnimationMapperProvider<T, *>
 	) {
-		NeoForge.EVENT_BUS.post(ControllerEvent.TickPost(id, controller, mapper))
+		NeoForge.EVENT_BUS.post(AnimationControllerEvent.Tick.Post(id, controller, mapper))
 	}
 
 	@JvmStatic
@@ -127,7 +124,7 @@ object RcfEventHooks {
 		controller: IEntityAnimationController<T>,
 		mapper: IEntityAnimationMapperProvider<T, *>
 	): Boolean {
-		return NeoForge.EVENT_BUS.post(ControllerEvent.TickHandlerPre(id, controller, mapper)).isCanceled
+		return NeoForge.EVENT_BUS.post(AnimationControllerEvent.HandlerTick.Pre(id, controller, mapper)).isCanceled
 	}
 
 	@JvmStatic
@@ -136,7 +133,7 @@ object RcfEventHooks {
 		controller: IEntityAnimationController<T>,
 		mapper: IEntityAnimationMapperProvider<T, *>
 	) {
-		NeoForge.EVENT_BUS.post(ControllerEvent.TickHandlerPost(id, controller, mapper))
+		NeoForge.EVENT_BUS.post(AnimationControllerEvent.HandlerTick.Post(id, controller, mapper))
 	}
 
 	// ===== Animation Phase =====
@@ -154,14 +151,14 @@ object RcfEventHooks {
 	// ===== Particle =====
 
 	@JvmStatic
-	fun animationParticlePre(
-		controller: IEntityAnimationController<*>,
+	fun <T : Entity> animationParticlePre(
+		controller: IEntityAnimationController<T>,
 		locatorName: String,
 		particleId: ResourceLocation,
 		particle: Value<ParticleType<*>?>,
 		rotate: Value<Vector3d>,
 		pos: Value<Vector3d>
-	): ParticleEvent.Pre {
+	): ParticleEvent.Pre<T> {
 		return NeoForge.EVENT_BUS.post(
 			ParticleEvent.Pre(
 				controller,
@@ -175,8 +172,8 @@ object RcfEventHooks {
 	}
 
 	@JvmStatic
-	fun animationParticlePost(
-		controller: IEntityAnimationController<*>,
+	fun <T : Entity> animationParticlePost(
+		controller: IEntityAnimationController<T>,
 		locatorName: String,
 		particleId: ResourceLocation,
 		particle: ParticleType<*>?,

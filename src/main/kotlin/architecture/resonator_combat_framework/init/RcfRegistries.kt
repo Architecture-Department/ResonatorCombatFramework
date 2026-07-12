@@ -1,5 +1,7 @@
 package architecture.resonator_combat_framework.init
 
+import architecture.resonator_combat_framework.combat.Action
+import architecture.resonator_combat_framework.common.item_property.ItemProperty
 import architecture.resonator_combat_framework.util.RcfUtil
 import net.minecraft.core.MappedRegistry
 import net.minecraft.core.Registry
@@ -13,6 +15,18 @@ import net.neoforged.neoforge.registries.RegistryBuilder
  */
 object RcfRegistries {
 	private val REGISTRIES = mutableListOf<Registry<*>>()
+
+	@JvmField
+	val ACTION_KEY: ResourceKey<Registry<Action>> = key("action")
+
+	@JvmField
+	val ACTION: MappedRegistry<Action> = register(ACTION_KEY) { it.sync(true) }
+
+	@JvmField
+	val ITEM_PROPERTY_KEY: ResourceKey<Registry<ItemProperty>> = key("item_property")
+
+	@JvmField
+	val ITEM_PROPERTY: MappedRegistry<ItemProperty> = register(ITEM_PROPERTY_KEY) { it.sync(true) }
 
 	/** 将所有自定义注册表注册到 NeoForge 的 NewRegistryEvent */
 	@JvmStatic

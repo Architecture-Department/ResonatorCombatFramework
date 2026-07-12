@@ -4,9 +4,6 @@ file = "META-INF/accesstransformer.cfg"
 [[mixins]]
 config = "${mod_id}.mixins.json"
 
-[[mixins]]
-config = "entity_animation.mixins.json"
-
 [[dependencies.${ mod_id }]]
 modId = "geckolib"
 type = "required"

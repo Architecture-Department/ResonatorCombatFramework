@@ -4,10 +4,10 @@ import architecture.goldenboughs_lib.event.PlayerDropItemEvent
 import architecture.goldenboughs_lib.util.PoseStack
 import architecture.goldenboughs_lib.util.toPos
 import architecture.goldenboughs_lib.util.toRadians
+import architecture.resonator_combat_framework.animation.IAnimationProvider.Companion.getMapperProvider
 import architecture.resonator_combat_framework.init.RcfAttachmentTypes
-import architecture.resonator_combat_framework.module.animation.IAnimationProvider.Companion.getMapperProvider
-import architecture.resonator_combat_framework.module.animation.model.GeometryModel
-import architecture.resonator_combat_framework.module.animation.model.PoseData
+import architecture.resonator_combat_framework.model.DynamicGeometryModel
+import architecture.resonator_combat_framework.model.PoseData
 import architecture.resonator_combat_framework.util.RcfUtil
 import com.mojang.math.Axis
 import net.minecraft.core.particles.ParticleTypes
@@ -71,7 +71,7 @@ object PlayerEvents {
 	 */
 	private fun test(
 		name: String,
-		brModel: GeometryModel,
+		brModel: DynamicGeometryModel,
 		animationData: PoseData,
 		player: Player,
 		level: Level

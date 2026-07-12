@@ -1,12 +1,11 @@
 package architecture.resonator_combat_framework.combat
 
+import architecture.resonator_combat_framework.animation.AnimationDef
+import architecture.resonator_combat_framework.animation.IAnimationProvider
+import architecture.resonator_combat_framework.animation.IAnimationProvider.Companion.getMapperProvider
+import architecture.resonator_combat_framework.animation.controller.IEntityAnimationController
+import architecture.resonator_combat_framework.animation.data.PlayConfig
 import architecture.resonator_combat_framework.init.RcfAttachmentTypes
-import architecture.resonator_combat_framework.module.animation.AnimationDef
-import architecture.resonator_combat_framework.module.animation.IAnimationProvider
-import architecture.resonator_combat_framework.module.animation.IAnimationProvider.Companion.getMapperProvider
-import architecture.resonator_combat_framework.module.animation.controller.IEntityAnimationController
-import architecture.resonator_combat_framework.module.animation.data.PlayConfig
-import architecture.resonator_combat_framework.module.combat.*
 import architecture.resonator_combat_framework.util.RcfUtil
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.Entity
@@ -16,10 +15,10 @@ import java.util.function.Supplier
 /**
  * 动画动作。
  *
- * 将动画定义（[AnimationDef]）包装为状态机可调度的 [architecture.resonator_combat_framework.module.combat.Action]，
+ * 将动画定义（[AnimationDef]）包装为状态机可调度的 [Action]，
  * 在动作启动/结束/速度变化时自动控制对应动画控制器的播放、停止与速度同步。
- * 状态修饰通过 [addProperty] 存入 [architecture.resonator_combat_framework.module.combat.Action.properties]，
- * 以 [architecture.resonator_combat_framework.module.combat.BooleanStateProperty] 或 [architecture.resonator_combat_framework.module.combat.FloatStateProperty] 为键，运行时自动应用。
+ * 状态修饰通过 [addProperty] 存入 [properties]，
+ * 以 [BooleanStateProperty] 或 [FloatStateProperty] 为键，运行时自动应用。
  *
  * @property animation 动画定义的延迟提供者
  * @property controllerId 目标动画控制器的 ID
@@ -34,27 +33,35 @@ constructor(
 	id: ResourceLocation,
 	val animation: Supplier<out AnimationDef?>,
 	val controllerId: ResourceLocation?,
-	val fadeInTime: Float = 1f / 20f,
-	val animationTime: Float,
-	val fadeOutTime: Float = 1f / 20f,
+	val fadeInTimeLength: Float = 1f / 20f,
+	val animationTimeLength: Float,
+	val fadeOutTimeLength: Float = 1f / 20f,
 	interruptData: InterruptData = InterruptData.DEFAULT,
 	override val weight: Int = 2500,
 ) : Action(
 	id,
-	fadeInTime + animationTime + fadeOutTime,
+	fadeInTimeLength + animationTimeLength + fadeOutTimeLength,
 	interruptData,
 	weight
 ) {
-	val activeTime = fadeInTime + animationTime
+	fun isFadeIn(time: Float): Boolean {
+		return 0f < time && time <= durationTimeLength
+	}
 
-	override val durationTime = fadeInTime + animationTime + fadeOutTime
+	fun isAnimationTime(time: Float): Boolean {
+		return durationTimeLength < time && time <= fadeInTimeLength + animationTimeLength
+	}
+
+	fun isFadeOut(time: Float): Boolean {
+		return fadeInTimeLength + animationTimeLength < time && time <= fadeInTimeLength + animationTimeLength + fadeOutTimeLength
+	}
 
 	override fun getState(time: Float, entity: LivingEntity): ActionState {
 		return when {
 			time < 0f -> ActionState.IDLE
-			time < fadeInTime -> ActionState.WINDUP
-			time < activeTime -> ActionState.ACTIVE
-			time < durationTime -> ActionState.RECOVERY
+			time < fadeInTimeLength -> ActionState.WINDUP
+			time < fadeInTimeLength + animationTimeLength -> ActionState.ACTIVE
+			time < fadeInTimeLength + animationTimeLength + fadeOutTimeLength -> ActionState.RECOVERY
 			else -> ActionState.IDLE
 		}
 	}
@@ -75,8 +82,8 @@ constructor(
 		val combatSpeedMultiplier = actionController.combatSpeedMultiplier
 		getAnimationController(entity)?.trigger(
 			getAnimation(), PlayConfig(
-				fadeInTime = fadeInTime / combatSpeedMultiplier,
-				fadeOutTime = fadeOutTime / combatSpeedMultiplier
+				fadeInTime = fadeInTimeLength / combatSpeedMultiplier,
+				fadeOutTime = fadeOutTimeLength / combatSpeedMultiplier
 			)
 		)
 	}
@@ -113,7 +120,7 @@ constructor(
 	}
 
 	/**
-	 * 从 [Action.properties] 中读取 [architecture.resonator_combat_framework.module.combat.BooleanStateProperty] 和 [architecture.resonator_combat_framework.module.combat.FloatStateProperty] 键，
+	 * 从 [properties] 中读取 [BooleanStateProperty] 和 [FloatStateProperty] 键，
 	 * 应用到 [EntityStateHolder]。
 	 */
 	@Suppress("UNCHECKED_CAST")

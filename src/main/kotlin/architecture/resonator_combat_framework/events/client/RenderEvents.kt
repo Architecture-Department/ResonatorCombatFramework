@@ -2,11 +2,11 @@ package architecture.resonator_combat_framework.events.client
 
 import architecture.goldenboughs_lib.util.client.translate
 import architecture.goldenboughs_lib.util.toRadians
+import architecture.resonator_combat_framework.animation.IAnimationProvider
+import architecture.resonator_combat_framework.animation.IAnimationProvider.Companion.getMapperProvider
+import architecture.resonator_combat_framework.animation.mapper.AnimationControllerManager
 import architecture.resonator_combat_framework.combat.AttackAnimationAction
 import architecture.resonator_combat_framework.init.RcfAttachmentTypes
-import architecture.resonator_combat_framework.module.animation.IAnimationProvider
-import architecture.resonator_combat_framework.module.animation.IAnimationProvider.Companion.getMapperProvider
-import architecture.resonator_combat_framework.module.animation.mapper.AnimationControllerManager
 import architecture.resonator_combat_framework.util.RcfUtil
 import com.mojang.blaze3d.vertex.PoseStack
 import com.mojang.blaze3d.vertex.VertexConsumer

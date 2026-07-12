@@ -1,7 +1,7 @@
 package architecture.resonator_combat_framework.combat
 
 import architecture.goldenboughs_lib.api.AllOpe
-import architecture.resonator_combat_framework.module.collision.OBBCollider
+import architecture.resonator_combat_framework.collision.OBBCollider
 
 /**
  * 骨骼-碰撞体绑定对。

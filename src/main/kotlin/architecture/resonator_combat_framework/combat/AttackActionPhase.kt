@@ -1,9 +1,6 @@
 package architecture.resonator_combat_framework.combat
 
 import architecture.goldenboughs_lib.api.AllOpe
-import architecture.resonator_combat_framework.module.combat.ActionProperty
-import architecture.resonator_combat_framework.module.combat.BooleanStateProperty
-import architecture.resonator_combat_framework.module.combat.FloatStateProperty
 import java.util.*
 
 /**
@@ -13,6 +10,7 @@ import java.util.*
  *
  * @param startTime 阶段起始时间（秒）
  * @param endTime 阶段结束时间（秒）
+ * @param maxStrikes 每次攻击最多命中实体数
  * @param colliderCount sweep 采样基数（乘以攻击速度后取整为实际采样数，至少为基数）
  * @param colliders 本阶段中用于碰撞检测的骨骼-碰撞体绑定列表
  */
@@ -20,7 +18,6 @@ import java.util.*
 data class AttackActionPhase(
 	val startTime: Float,
 	val endTime: Float,
-	/** 每次攻击最多命中实体数 */
 	val maxStrikes: Int = 3,
 	val damageMultiplier: Float = 1.0f,
 	val colliderCount: Int = 3,
@@ -29,6 +26,10 @@ data class AttackActionPhase(
 
 	/** 阶段属性映射表 */
 	private val properties = mutableMapOf<ActionProperty<*>, Any>()
+
+	fun duringTheStage(time: Float): Boolean {
+		return time > startTime && time <= endTime
+	}
 
 	/**
 	 * 链式添加属性。

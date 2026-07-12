@@ -6,7 +6,10 @@
 		"EntityMixin",
 		"PlayerMixin",
 		"gecko_lib.GeckoLibCacheAccessor",
-		"gecko_lib.GeckoLibCacheMixin"
+		"client.CameraAccessor",
+		"client.ItemInHandLayerMixin",
+		"client.LivingEntityRendererMixin",
+		"client.PlayerModelMixin"
 	],
 	"client": [
 	],

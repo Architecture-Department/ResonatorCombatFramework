@@ -1,8 +1,8 @@
 package architecture.resonator_combat_framework.events
 
-import architecture.resonator_combat_framework.module.animation.network.keyframe_animation.BoneConfigSynchPayload
-import architecture.resonator_combat_framework.module.animation.network.keyframe_animation.KeyframeAnimationSynchPayload
-import architecture.resonator_combat_framework.module.animation.network.keyframe_animation.GeometryModelSynchPayload
+import architecture.resonator_combat_framework.payload.toc.BoneConfigSynchPayload
+import architecture.resonator_combat_framework.payload.toc.GeometryModelSynchPayload
+import architecture.resonator_combat_framework.payload.toc.KeyframeAnimationSynchPayload
 import architecture.resonator_combat_framework.util.RcfUtil
 import net.neoforged.bus.api.SubscribeEvent
 import net.neoforged.fml.common.EventBusSubscriber

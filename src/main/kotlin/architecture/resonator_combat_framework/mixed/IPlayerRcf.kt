@@ -1,6 +1,6 @@
 package architecture.resonator_combat_framework.mixed
 
-import architecture.resonator_combat_framework.module.animation.IAnimationProvider
+import architecture.resonator_combat_framework.animation.IAnimationProvider
 
 /**
  * RCF 玩家扩展接口 —— 通过 mixin 注入到玩家实体。

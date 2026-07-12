@@ -1,9 +1,9 @@
 package architecture.resonator_combat_framework.common.item_property
 
-import architecture.resonator_combat_framework.common.payload.AttackPayload
+import architecture.resonator_combat_framework.combat.Action
+import architecture.resonator_combat_framework.combat.ActionSequence
 import architecture.resonator_combat_framework.init.RcfAttachmentTypes
-import architecture.resonator_combat_framework.module.combat.Action
-import architecture.resonator_combat_framework.module.combat.ActionSequence
+import architecture.resonator_combat_framework.payload.tosc.AttackPayload
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.InteractionHand
 import net.minecraft.world.entity.LivingEntity
@@ -24,9 +24,15 @@ class WeaponProperty
 @JvmOverloads
 constructor(
 	id: ResourceLocation,
-	val actionSequence: Supplier<ActionSequence>,
-	val longAction: Supplier<Action>? = null
+	val actionSequence: ActionSequence,
+	val longAction: Supplier<out Action>? = null
 ) : ItemProperty(id) {
+
+	constructor(
+		id: ResourceLocation,
+		vararg actionSequence: Supplier<out Action>,
+		longAction: Supplier<out Action>? = null
+	) : this(id, ActionSequence.of(*actionSequence), longAction)
 
 	override fun onUse(
 		item: ItemStack,
@@ -54,8 +60,7 @@ constructor(
 			return
 		}
 
-		val actionSequence = actionSequence.get()
-		if (actionController.actionSequence?.id != actionSequence.id) {
+		if (actionController.actionSequence != actionSequence) {
 			actionController.actionSequence = actionSequence
 		}
 

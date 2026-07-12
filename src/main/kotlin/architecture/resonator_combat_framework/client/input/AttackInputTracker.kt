@@ -1,6 +1,6 @@
 package architecture.resonator_combat_framework.client.input
 
-import architecture.resonator_combat_framework.common.payload.AttackPayload
+import architecture.resonator_combat_framework.payload.tosc.AttackPayload
 
 /**
  * 每 client tick 检测攻击键状态，追踪按下时长并区分短按/长按。

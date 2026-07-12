@@ -1,8 +1,8 @@
 package architecture.resonator_combat_framework.events.client
 
 import architecture.resonator_combat_framework.client.input.AttackInputTracker
-import architecture.resonator_combat_framework.common.payload.AttackPayload
 import architecture.resonator_combat_framework.init.RcfCapabilitys
+import architecture.resonator_combat_framework.payload.tosc.AttackPayload
 import architecture.resonator_combat_framework.util.RcfUtil
 import net.minecraft.client.Minecraft
 import net.minecraft.world.InteractionHand

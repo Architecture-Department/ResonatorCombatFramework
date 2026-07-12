@@ -1,6 +1,6 @@
 package architecture.resonator_combat_framework.event
 
-import architecture.resonator_combat_framework.module.state_machine.holder.EntityStateHolder
+import architecture.resonator_combat_framework.state_machine.holder.EntityStateHolder
 import net.minecraft.world.entity.EntityType
 import net.minecraft.world.entity.LivingEntity
 import net.neoforged.bus.api.Event

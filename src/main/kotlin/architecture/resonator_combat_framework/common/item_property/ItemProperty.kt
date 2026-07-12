@@ -1,7 +1,7 @@
 package architecture.resonator_combat_framework.common.item_property
 
 import architecture.goldenboughs_lib.api.AllOpe
-import architecture.resonator_combat_framework.common.payload.AttackPayload
+import architecture.resonator_combat_framework.payload.tosc.AttackPayload
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.InteractionHand
 import net.minecraft.world.entity.LivingEntity
@@ -27,4 +27,17 @@ abstract class ItemProperty(
 		hand: InteractionHand,
 		pressType: AttackPayload.PressType
 	)
+
+	override fun equals(other: Any?): Boolean {
+		if (this === other) return true
+		if (other !is ItemProperty) return false
+
+		if (id != other.id) return false
+
+		return true
+	}
+
+	override fun hashCode(): Int {
+		return id.hashCode()
+	}
 }
