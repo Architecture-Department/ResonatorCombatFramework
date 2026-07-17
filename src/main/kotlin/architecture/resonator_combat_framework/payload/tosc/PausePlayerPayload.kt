@@ -3,7 +3,7 @@ package architecture.resonator_combat_framework.payload.tosc
 import architecture.goldenboughs_lib.api.payload.ToServerAndClientPayload
 import architecture.goldenboughs_lib.util.LibUtil.RESOURCE_LOCATION_OPTIONAL_STREAM_CODEC
 import architecture.resonator_combat_framework.animation.IAnimationProvider.Companion.getMapperProvider
-import architecture.resonator_combat_framework.init.registry.AnimationControllers
+import architecture.resonator_combat_framework.init.RcfAnimationControllers
 import architecture.resonator_combat_framework.util.RcfUtil
 import io.netty.buffer.ByteBuf
 import net.minecraft.client.player.AbstractClientPlayer
@@ -37,7 +37,7 @@ constructor(
 
 	override fun type() = TYPE
 
-	private val ctrlName: ResourceLocation get() = controllerName.orElse(AnimationControllers.MAIN)!!
+	private val ctrlName: ResourceLocation get() = controllerName.orElse(RcfAnimationControllers.MAIN)!!
 
 	override fun toClient(context: IPayloadContext, player: AbstractClientPlayer) {
 		val target = context.player().level().getPlayerByUUID(playerUuid) as? AbstractClientPlayer ?: return

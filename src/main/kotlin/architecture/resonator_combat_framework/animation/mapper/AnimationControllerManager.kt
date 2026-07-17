@@ -1,6 +1,6 @@
 package architecture.resonator_combat_framework.animation.mapper
 
-import architecture.goldenboughs_lib.api.AllOpe
+import architecture.goldenboughs_lib.api.AllOpen
 import architecture.resonator_combat_framework.animation.EventsToFire
 import architecture.resonator_combat_framework.animation.IAnimationProvider
 import architecture.resonator_combat_framework.animation.IAnimationProvider.Companion.getMapperProvider
@@ -8,7 +8,7 @@ import architecture.resonator_combat_framework.animation.ParticleStormAnimAdapte
 import architecture.resonator_combat_framework.animation.controller.AnimationController
 import architecture.resonator_combat_framework.animation.controller.IEntityAnimationController
 import architecture.resonator_combat_framework.animation.data.BoneFlags
-import architecture.resonator_combat_framework.init.registry.AnimationControllers
+import architecture.resonator_combat_framework.init.RcfAnimationControllers
 import architecture.resonator_combat_framework.model.BonePose
 import architecture.resonator_combat_framework.model.DynamicGeometryModel
 import architecture.resonator_combat_framework.model.GeometryModel
@@ -30,7 +30,7 @@ import org.mesdag.particlestorm.particle.MolangParticleEngine
  * @property holder 所属实体
  * @property mapperProvider 动画映射器提供者
  */
-@AllOpe
+@AllOpen
 class AnimationControllerManager<T : Entity>
 @JvmOverloads
 constructor(
@@ -326,7 +326,7 @@ constructor(
 	 *
 	 * @return 主控制器实例
 	 */
-	fun getMainController(): IEntityAnimationController<T> = nameMap[AnimationControllers.MAIN]
+	fun getMainController(): IEntityAnimationController<T> = nameMap[RcfAnimationControllers.MAIN]
 		?: error("Main controller not initialized")
 
 	/**
@@ -448,7 +448,7 @@ constructor(
 	fun firePendingEvents() {
 		if (pendingEvents.isEmpty()) return
 		val entity = mapperProvider.holder
-		val data = mapperProvider.molangData
+		val data = mapperProvider.molangDataHolder
 
 		for ((controller, events) in pendingEvents) {
 			try {

@@ -10,6 +10,7 @@ import io.netty.buffer.ByteBuf
 import net.minecraft.client.player.AbstractClientPlayer
 import net.minecraft.network.codec.StreamCodec
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload
+import net.minecraft.resources.ResourceLocation
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.InteractionHand
 import net.minecraft.world.entity.player.Player
@@ -27,6 +28,7 @@ import net.neoforged.neoforge.network.handling.IPayloadContext
  * @property pressType 攻击类型：短按（SHORT）/ 长按（LONG）
  */
 class AttackPayload(
+	val controllerId: ResourceLocation,
 	val hand: InteractionHand,
 	val pressType: PressType,
 ) : ToServerAndClientPayload {
@@ -67,7 +69,7 @@ class AttackPayload(
 	private fun execute(player: Player) {
 		val itemStack = player.getItemInHand(hand)
 		val ability = itemStack.getCapability(RcfCapabilitys.ITEM_ABILITY)
-		(ability as? WeaponProperty)?.onAttack(itemStack, player, hand, pressType)
+		(ability as? WeaponProperty)?.onAttack(controllerId, itemStack, player, hand, pressType)
 	}
 
 	companion object {
@@ -76,6 +78,7 @@ class AttackPayload(
 
 		@JvmField
 		val STREAM_CODEC: StreamCodec<ByteBuf, AttackPayload> = StreamCodec.composite(
+			ResourceLocation.STREAM_CODEC, AttackPayload::controllerId,
 			LibUtil.INTERACTION_HAND_STREAM_CODEC, AttackPayload::hand,
 			PressType.STREAM_CODEC, AttackPayload::pressType,
 			::AttackPayload

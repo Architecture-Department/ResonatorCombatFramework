@@ -5,38 +5,41 @@ import architecture.resonator_combat_framework.animation.IAnimationProvider
 import architecture.resonator_combat_framework.animation.IAnimationProvider.Companion.getMapperProvider
 import architecture.resonator_combat_framework.animation.controller.IEntityAnimationController
 import architecture.resonator_combat_framework.animation.data.PlayConfig
-import architecture.resonator_combat_framework.init.RcfAttachmentTypes
-import architecture.resonator_combat_framework.util.RcfUtil
+import architecture.resonator_combat_framework.registry.AnimationDefRegistry
+import architecture.resonator_combat_framework.state.EntityStateHolder
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.LivingEntity
-import java.util.function.Supplier
 
-/**
- * 动画动作。
- *
- * 将动画定义（[AnimationDef]）包装为状态机可调度的 [Action]，
- * 在动作启动/结束/速度变化时自动控制对应动画控制器的播放、停止与速度同步。
- * 状态修饰通过 [addProperty] 存入 [properties]，
- * 以 [BooleanStateProperty] 或 [FloatStateProperty] 为键，运行时自动应用。
- *
- * @property animation 动画定义的延迟提供者
- * @property controllerId 目标动画控制器的 ID
- * @property fadeInTime 淡入过渡时间（秒）
- * @property animationTime 动画持续时间（秒）
- * @property fadeOutTime 淡出过渡时间（秒）
- * @property weight 动作权重
- */
+// TODO weight独立出去，controllerId独立出去
 class AnimationAction
 @JvmOverloads
 constructor(
 	id: ResourceLocation,
-	val animation: Supplier<out AnimationDef?>,
+	/**
+	 * 动画定义的延迟提供者
+	 */
+	val animationId: ResourceLocation,
+	/**
+	 * 目标动画控制器的 ID
+	 */
 	val controllerId: ResourceLocation?,
+	/**
+	 * 淡入过渡时间（秒）
+	 */
 	val fadeInTimeLength: Float = 1f / 20f,
+	/**
+	 * 动画持续时间（秒）
+	 */
 	val animationTimeLength: Float,
+	/**
+	 * 淡出过渡时间（秒）
+	 */
 	val fadeOutTimeLength: Float = 1f / 20f,
 	interruptData: InterruptData = InterruptData.DEFAULT,
+	/**
+	 * 动作权重
+	 */
 	override val weight: Int = 2500,
 ) : Action(
 	id,
@@ -44,6 +47,7 @@ constructor(
 	interruptData,
 	weight
 ) {
+
 	fun isFadeIn(time: Float): Boolean {
 		return 0f < time && time <= durationTimeLength
 	}
@@ -70,9 +74,9 @@ constructor(
 	 * 获取动画定义实例。
 	 */
 	fun getAnimation(): AnimationDef {
-		val anim = animation.get()
-		anim ?: throw IllegalArgumentException("AnimationAction: Animation not found: ${this.animation}")
-		return anim
+		val anim = AnimationDefRegistry.get(animationId)
+			?: throw IllegalArgumentException("AnimationAction: Animation not found: ${this.animationId}")
+		return anim.get()!!
 	}
 
 	override fun onStart(entity: LivingEntity, actionController: ActionController, actionSequence: ActionSequence?) {
@@ -81,7 +85,7 @@ constructor(
 		if (entity !is IAnimationProvider) return
 		val combatSpeedMultiplier = actionController.combatSpeedMultiplier
 		getAnimationController(entity)?.trigger(
-			getAnimation(), PlayConfig(
+			animationId, PlayConfig(
 				fadeInTime = fadeInTimeLength / combatSpeedMultiplier,
 				fadeOutTime = fadeOutTimeLength / combatSpeedMultiplier
 			)
@@ -119,24 +123,19 @@ constructor(
 		}
 	}
 
-	/**
-	 * 从 [properties] 中读取 [BooleanStateProperty] 和 [FloatStateProperty] 键，
-	 * 应用到 [EntityStateHolder]。
-	 */
 	@Suppress("UNCHECKED_CAST")
 	private fun applyModifiers(entity: LivingEntity) {
-		val stateHolder = entity.getExistingData(RcfAttachmentTypes.STATE_HOLDER).orElse(null) ?: return
+		if (!EntityStateHolder.has(entity)) return
+		val stateHolder = EntityStateHolder.of(entity)
+
 		val boolMods = properties.filterKeys { it is BooleanStateProperty }
 		if (boolMods.isNotEmpty()) {
-			stateHolder.applyStateModifiers(
-				boolMods.mapKeys { RcfUtil.modRl(it.key.name) }.mapValues { it.value as Boolean }
-			)
+			stateHolder.applyStateModifiers(boolMods.mapKeys { it.key.id }.mapValues { it.value as Boolean })
 		}
+
 		val floatMods = properties.filterKeys { it is FloatStateProperty }
 		if (floatMods.isNotEmpty()) {
-			stateHolder.applyFloatModifiers(
-				floatMods.mapKeys { RcfUtil.modRl(it.key.name) }.mapValues { it.value as Float }
-			)
+			stateHolder.applyFloatModifiers(floatMods.mapKeys { it.key.id }.mapValues { it.value as Float })
 		}
 	}
 
@@ -145,18 +144,16 @@ constructor(
 	 */
 	@Suppress("UNCHECKED_CAST")
 	private fun clearModifiers(entity: LivingEntity) {
-		val stateHolder = entity.getExistingData(RcfAttachmentTypes.STATE_HOLDER).orElse(null) ?: return
+		if (!EntityStateHolder.has(entity)) return
+		val stateHolder = EntityStateHolder.of(entity)
+
 		val boolKeys = properties.keys.filterIsInstance<BooleanStateProperty>()
 		if (boolKeys.isNotEmpty()) {
-			stateHolder.applyStateModifiers(
-				boolKeys.associate { RcfUtil.modRl(it.name) to false }
-			)
+			stateHolder.applyStateModifiers(boolKeys.associate { it.id to false })
 		}
 		val floatKeys = properties.keys.filterIsInstance<FloatStateProperty>()
 		if (floatKeys.isNotEmpty()) {
-			stateHolder.applyFloatModifiers(
-				floatKeys.associate { RcfUtil.modRl(it.name) to 0f }
-			)
+			stateHolder.applyFloatModifiers(floatKeys.associate { it.id to 0f })
 		}
 	}
 
@@ -165,5 +162,9 @@ constructor(
 	 */
 	protected fun getAnimationController(entity: IAnimationProvider): IEntityAnimationController<out Entity>? {
 		return entity.getMapperProvider().getController(controllerId)
+	}
+
+	override fun toString(): String {
+		return "AnimationAction(id=$id, animationId=$animationId)"
 	}
 }

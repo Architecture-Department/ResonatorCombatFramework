@@ -1,6 +1,6 @@
 package architecture.resonator_combat_framework.combat
 
-import architecture.goldenboughs_lib.api.AllOpe
+import architecture.goldenboughs_lib.api.AllOpen
 import java.util.function.Supplier
 
 /**
@@ -10,7 +10,7 @@ import java.util.function.Supplier
  *
  * @param stages 动作数组，按连击段顺序排列
  */
-@AllOpe
+@AllOpen
 data class ActionSequence(
 	val stages: Array<Supplier<out Action>>,
 ) {

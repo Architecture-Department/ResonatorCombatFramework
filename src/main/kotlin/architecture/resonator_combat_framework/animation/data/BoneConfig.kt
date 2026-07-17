@@ -1,6 +1,6 @@
 package architecture.resonator_combat_framework.animation.data
 
-import architecture.goldenboughs_lib.api.AllOpe
+import architecture.goldenboughs_lib.api.AllOpen
 import architecture.goldenboughs_lib.util.LibUtil.rlOf
 import architecture.resonator_combat_framework.util.MirrorUtil
 import com.google.gson.JsonElement
@@ -13,7 +13,7 @@ import net.minecraft.resources.ResourceLocation
  * 用于控制动画播放时的骨骼混合行为、淡入淡出时间以及动画期间的骨骼标志动态切换。
  */
 @ExposedCopyVisibility
-@AllOpe
+@AllOpen
 data class BoneConfig
 private constructor(
 	/** 骨骼名到标志配置的映射 */

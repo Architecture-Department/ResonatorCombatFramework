@@ -5,7 +5,7 @@ import architecture.goldenboughs_lib.util.LibUtil.RESOURCE_LOCATION_OPTIONAL_STR
 import architecture.resonator_combat_framework.animation.IAnimationProvider.Companion.getMapperProvider
 import architecture.resonator_combat_framework.animation.data.PlayConfig
 import architecture.resonator_combat_framework.animation.data.PlayMode
-import architecture.resonator_combat_framework.init.registry.AnimationControllers
+import architecture.resonator_combat_framework.init.RcfAnimationControllers
 import architecture.resonator_combat_framework.util.RcfUtil
 import io.netty.buffer.ByteBuf
 import net.minecraft.client.player.AbstractClientPlayer
@@ -85,11 +85,11 @@ constructor(
 	override fun toClient(context: IPayloadContext, player: AbstractClientPlayer) {
 		val level = context.player().level()
 		val target = (level.getPlayerByUUID(playerUuid) as? AbstractClientPlayer) ?: return
-		target.getMapperProvider().trigger(controllerName.orElse(AnimationControllers.MAIN)!!, animId, buildConfig())
+		target.getMapperProvider().trigger(controllerName.orElse(RcfAnimationControllers.MAIN)!!, animId, buildConfig())
 	}
 
 	override fun toServer(context: IPayloadContext, player: ServerPlayer) {
-		player.getMapperProvider().trigger(controllerName.orElse(AnimationControllers.MAIN)!!, animId, buildConfig())
+		player.getMapperProvider().trigger(controllerName.orElse(RcfAnimationControllers.MAIN)!!, animId, buildConfig())
 		PacketDistributor.sendToPlayersTrackingEntityAndSelf(player, this)
 	}
 

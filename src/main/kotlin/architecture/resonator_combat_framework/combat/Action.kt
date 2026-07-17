@@ -1,53 +1,31 @@
 package architecture.resonator_combat_framework.combat
 
-import architecture.goldenboughs_lib.api.AllOpe
+import architecture.goldenboughs_lib.api.AllOpen
 import architecture.resonator_combat_framework.core.RcfEventHooks
-import architecture.resonator_combat_framework.state_machine.holder.EntityStateHolder
-import architecture.resonator_combat_framework.util.RcfUtil
+import architecture.resonator_combat_framework.state.EntityStateHolder
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.LivingEntity
 import java.util.*
 
-/**
- * 动作 —— 定义一次攻击动作的完整生命周期，包含时长、阶段判定、打断规则和各阶段回调。
- *
- * 每个动作包含前摇（WINDUP）、执行（ACTIVE）、后摇（RECOVERY）、空闲（IDLE）四个阶段。
- * 通过 [getState] 方法根据时间轴判定当前所处阶段，在 [ActionController.tick] 中驱动阶段切换。
- *
- * @param id 动作的唯一标识符
- * @param durationTime 动作持续时长（秒）
- * @param interruptData 打断配置，定义各阶段的可打断性
- * @param weight 动作权重，用于打断判定时与目标动作权重比较
- */
-@AllOpe
+@AllOpen
 class Action(
+	/**
+	 * 动作id
+	 */
 	val id: ResourceLocation,
+	/**
+	 * 动作持续时长（秒）
+	 */
 	val durationTimeLength: Float,
+	/**
+	 * 打断配置，定义各阶段的可打断性
+	 */
 	val interruptData: InterruptData,
+	/**
+	 * 动作权重，用于打断判定时与目标动作权重比较
+	 */
 	val weight: Int = 2500
 ) {
-	companion object {
-		/** 能否移动（由攻击动画控制） */
-		@JvmField
-		val CAN_MOVE = RcfUtil.modRl("can_move")
-
-		/** 能否转动视角（由攻击动画控制） */
-		@JvmField
-		val CAN_LOOK_AROUND = RcfUtil.modRl("can_look_around")
-
-		/** 移动速度倍率（0=不能移动，1=正常速度），float 状态 */
-		@JvmField
-		val SPEED_MODIFIER = RcfUtil.modRl("speed_modifier")
-
-		/** 最大视角转动速度（弧度/秒），float 状态 */
-		@JvmField
-		val MAX_LOOK_SPEED = RcfUtil.modRl("max_look_speed")
-
-		/** 能否切换物品（由 ActionAnimation 控制） */
-		@JvmField
-		val CAN_SWITCH_ITEM = RcfUtil.modRl("can_switch_item")
-	}
-
 	/** 动作属性映射表 */
 	val properties = mutableMapOf<ActionProperty<*>, Any>()
 
@@ -62,8 +40,6 @@ class Action(
 	fun isEnd(time: Float): Boolean {
 		return time > 0 && time > durationTimeLength
 	}
-
-	// ===== 属性系统 =====
 
 	/**
 	 * 链式添加动作属性。
@@ -90,6 +66,54 @@ class Action(
 			time < 0f -> ActionState.IDLE
 			time < durationTimeLength -> ActionState.ACTIVE
 			else -> ActionState.IDLE
+		}
+	}
+
+	/** 获取内部属性映射的只读视图 */
+	fun getAllProperties(): Map<ActionProperty<*>, Any> = properties.toMap()
+
+	/** 获取所有布尔状态修饰 */
+	@Suppress("UNCHECKED_CAST")
+	fun getStateModifiers(): Map<BooleanStateProperty, Pair<Boolean, Boolean>> =
+		properties.filterKeys { it is BooleanStateProperty }.mapKeys { it.key as BooleanStateProperty }
+			.mapValues { it.value as Pair<Boolean, Boolean> }
+
+	/** 获取所有浮点状态修饰 */
+	@Suppress("UNCHECKED_CAST")
+	fun getFloatModifiers(): Map<FloatStateProperty, Pair<Float, Float>> =
+		properties.filterKeys { it is FloatStateProperty }.mapKeys { it.key as FloatStateProperty }
+			.mapValues { it.value as Pair<Float, Float> }
+
+	@Suppress("DuplicatedCode")
+	fun resetState(entity: LivingEntity) {
+		if (!EntityStateHolder.has(entity)) return
+		val stateHolder = EntityStateHolder.of(entity)
+		val boolMods = getStateModifiers()
+		if (boolMods.isNotEmpty()) {
+			stateHolder.applyStateModifiers(boolMods.mapKeys { it.key.id }
+				.mapValues { it.value.second })
+		}
+		val floatMods = getFloatModifiers()
+		if (floatMods.isNotEmpty()) {
+			stateHolder.applyFloatModifiers(floatMods.mapKeys { it.key.id }
+				.mapValues { it.value.second })
+		}
+	}
+
+
+	@Suppress("DuplicatedCode")
+	fun applyState(entity: LivingEntity) {
+		if (!EntityStateHolder.has(entity)) return
+		val stateHolder = EntityStateHolder.of(entity)
+		val boolMods = getStateModifiers()
+		if (boolMods.isNotEmpty()) {
+			stateHolder.applyStateModifiers(boolMods.mapKeys { it.key.id }
+				.mapValues { it.value.second })
+		}
+		val floatMods = getFloatModifiers()
+		if (floatMods.isNotEmpty()) {
+			stateHolder.applyFloatModifiers(floatMods.mapKeys { it.key.id }
+				.mapValues { it.value.second })
 		}
 	}
 
@@ -173,13 +197,13 @@ class Action(
 	) {
 	}
 
-	fun isInterruptible(time: Float, holder: EntityStateHolder<*>, target: Action, entity: LivingEntity): Boolean {
+	fun isInterruptible(controller: ActionController, time: Float, target: Action, entity: LivingEntity): Boolean {
 		val actionState = getState(time, entity)
 		val interruptWeight = interruptData.getInterruptWeight(actionState)
 		if (interruptWeight < 0) {
-			return RcfEventHooks.combatActionInterruptible(holder, entity, this, target, false)
+			return RcfEventHooks.combatActionInterruptible(controller, entity, this, target, false)
 		}
-		return RcfEventHooks.combatActionInterruptible(holder, entity, this, target, interruptWeight < target.weight)
+		return RcfEventHooks.combatActionInterruptible(controller, entity, this, target, interruptWeight < target.weight)
 	}
 
 	fun nextAction(
@@ -194,22 +218,22 @@ class Action(
 	}
 
 	override fun toString(): String {
-		return "id=$id"
+		return "Action(id=$id)"
 	}
 
-	fun isMove(time: Float, holder: EntityStateHolder<*>, entity: LivingEntity): Boolean {
+	fun isMove(time: Float, controller: ActionController, entity: LivingEntity): Boolean {
 		return true
 	}
 
-	fun isCanLookAround(time: Float, holder: EntityStateHolder<*>, entity: LivingEntity): Boolean {
+	fun isCanLookAround(time: Float, controller: ActionController, entity: LivingEntity): Boolean {
 		return true
 	}
 
-	fun getSpeedModifier(time: Float, holder: EntityStateHolder<*>, entity: LivingEntity): Float {
+	fun getSpeedModifier(time: Float, controller: ActionController, entity: LivingEntity): Float {
 		return -1f
 	}
 
-	fun getMaxLookSpeed(time: Float, holder: EntityStateHolder<*>, entity: LivingEntity): Float {
+	fun getMaxLookSpeed(time: Float, controller: ActionController, entity: LivingEntity): Float {
 		return -1f
 	}
 

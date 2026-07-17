@@ -2,7 +2,7 @@ package architecture.resonator_combat_framework.animation.helper
 
 import architecture.resonator_combat_framework.animation.IAnimationProvider.Companion.getMapperProvider
 import architecture.resonator_combat_framework.animation.data.PlayConfig
-import architecture.resonator_combat_framework.init.registry.AnimationControllers
+import architecture.resonator_combat_framework.init.RcfAnimationControllers
 import architecture.resonator_combat_framework.payload.tosc.PausePlayerPayload
 import architecture.resonator_combat_framework.payload.tosc.PlayPlayerPayload
 import architecture.resonator_combat_framework.payload.tosc.ResumePlayerPayload
@@ -27,7 +27,7 @@ object PlayerAnimationHelper {
 	 * 通过完整的 [PlayConfig] 配置触发玩家动画。
 	 * @param animId 动画资源 ID
 	 * @param config 播放配置（速度、淡入淡出等）
-	 * @param controllerName 目标控制器名称，默认为 [AnimationControllers.MAIN]
+	 * @param controllerName 目标控制器名称，默认为 [RcfAnimationControllers.MAIN]
 	 * @param isPayload 是否同步网络数据包（仅服务端有效），默认为 true
 	 */
 	@JvmStatic
@@ -35,7 +35,7 @@ object PlayerAnimationHelper {
 	fun Player.triggerPlayerAnima(
 		animId: ResourceLocation,
 		config: PlayConfig,
-		controllerName: ResourceLocation = AnimationControllers.MAIN,
+		controllerName: ResourceLocation = RcfAnimationControllers.MAIN,
 		isPayload: Boolean = true
 	) {
 		if (this is AbstractClientPlayer) {
@@ -113,14 +113,14 @@ object PlayerAnimationHelper {
 
 	/**
 	 * 停止指定控制器的动画播放。
-	 * @param name 目标控制器名称，默认为 [AnimationControllers.MAIN]
+	 * @param name 目标控制器名称，默认为 [RcfAnimationControllers.MAIN]
 	 * @param fadeOutTime 淡出秒数，-1 表示使用默认值
 	 * @param isPayload 是否同步网络数据包
 	 */
 	@JvmStatic
 	@JvmOverloads
 	fun Player.stopAnima(
-		name: ResourceLocation = AnimationControllers.MAIN,
+		name: ResourceLocation = RcfAnimationControllers.MAIN,
 		fadeOutTime: Float = -1f,
 		isPayload: Boolean = true
 	) {
@@ -139,12 +139,12 @@ object PlayerAnimationHelper {
 
 	/**
 	 * 暂停指定控制器的动画播放。
-	 * @param name 目标控制器名称，默认为 [AnimationControllers.MAIN]
+	 * @param name 目标控制器名称，默认为 [RcfAnimationControllers.MAIN]
 	 * @param isPayload 是否同步网络数据包
 	 */
 	@JvmStatic
 	@JvmOverloads
-	fun Player.pauseAnima(name: ResourceLocation = AnimationControllers.MAIN, isPayload: Boolean = true) {
+	fun Player.pauseAnima(name: ResourceLocation = RcfAnimationControllers.MAIN, isPayload: Boolean = true) {
 		if (this is AbstractClientPlayer) getMapperProvider().pause(name)
 		else if (this is ServerPlayer) {
 			getMapperProvider().pause(name)
@@ -158,12 +158,12 @@ object PlayerAnimationHelper {
 
 	/**
 	 * 恢复指定控制器的动画播放。
-	 * @param name 目标控制器名称，默认为 [AnimationControllers.MAIN]
+	 * @param name 目标控制器名称，默认为 [RcfAnimationControllers.MAIN]
 	 * @param isPayload 是否同步网络数据包
 	 */
 	@JvmStatic
 	@JvmOverloads
-	fun Player.resumeAnima(name: ResourceLocation = AnimationControllers.MAIN, isPayload: Boolean = true) {
+	fun Player.resumeAnima(name: ResourceLocation = RcfAnimationControllers.MAIN, isPayload: Boolean = true) {
 		if (this is AbstractClientPlayer) getMapperProvider().resume(name)
 		else if (this is ServerPlayer) {
 			getMapperProvider().resume(name)

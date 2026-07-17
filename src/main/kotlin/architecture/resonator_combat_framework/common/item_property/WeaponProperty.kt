@@ -1,8 +1,8 @@
 package architecture.resonator_combat_framework.common.item_property
 
 import architecture.resonator_combat_framework.combat.Action
+import architecture.resonator_combat_framework.combat.ActionHolder
 import architecture.resonator_combat_framework.combat.ActionSequence
-import architecture.resonator_combat_framework.init.RcfAttachmentTypes
 import architecture.resonator_combat_framework.payload.tosc.AttackPayload
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.InteractionHand
@@ -47,13 +47,13 @@ constructor(
 	 * 根据按压类型决定调度逻辑：长按触发独立动作（若有），短按在动作序列中推进到下一段。
 	 */
 	override fun onAttack(
+		controllerId: ResourceLocation,
 		item: ItemStack,
 		entity: LivingEntity,
 		hand: InteractionHand,
 		pressType: AttackPayload.PressType
 	) {
-		val stateHolder = entity.getData(RcfAttachmentTypes.STATE_HOLDER)
-		val actionController = stateHolder.actionController
+		val actionController = ActionHolder.of(entity).getCreate(controllerId)
 
 		if (longAction != null && pressType == AttackPayload.PressType.LONG) {
 			actionController.onChangedAction(longAction!!.get())

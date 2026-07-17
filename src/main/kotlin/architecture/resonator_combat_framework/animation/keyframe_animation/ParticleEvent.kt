@@ -3,13 +3,13 @@ package architecture.resonator_combat_framework.animation.keyframe_animation
 import architecture.goldenboughs_lib.util.*
 import architecture.resonator_combat_framework.animation.ParticleStormAnimAdapter
 import architecture.resonator_combat_framework.animation.controller.IEntityAnimationController
-import architecture.resonator_combat_framework.animation.molang.MoLangParser
-import architecture.resonator_combat_framework.animation.molang.MolangData
-import architecture.resonator_combat_framework.animation.molang.MolangValue
-import architecture.resonator_combat_framework.animation.molang.withScope
 import architecture.resonator_combat_framework.core.RcfEventHooks
 import architecture.resonator_combat_framework.model.DynamicGeometryModel
 import architecture.resonator_combat_framework.model.PoseData
+import architecture.resonator_combat_framework.molang.MoLangParser
+import architecture.resonator_combat_framework.molang.MolangDataHolder
+import architecture.resonator_combat_framework.molang.MolangValue
+import architecture.resonator_combat_framework.molang.withScope
 import architecture.resonator_combat_framework.util.RcfUtil
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
@@ -45,7 +45,7 @@ data class ParticleEvent
 		entity: Entity,
 		brModel: DynamicGeometryModel,
 		animationData: PoseData,
-		context: MolangData? = null,
+		context: MolangDataHolder? = null,
 		partialTick: Float = 1f
 	) {
 		effects.forEach { it.run(controller, entity, brModel, animationData, context, partialTick) }
@@ -83,7 +83,7 @@ data class ParticleEvent
 			entity: Entity,
 			brModel: DynamicGeometryModel,
 			animationData: PoseData,
-			context: MolangData? = null,
+			context: MolangDataHolder? = null,
 			partialTick: Float = 1f
 		) {
 			locatorName ?: return

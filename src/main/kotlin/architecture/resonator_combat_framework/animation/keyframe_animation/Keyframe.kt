@@ -1,10 +1,10 @@
 package architecture.resonator_combat_framework.animation.keyframe_animation
 
-import architecture.resonator_combat_framework.animation.molang.MoLangParser
-import architecture.resonator_combat_framework.animation.molang.MolangData
-import architecture.resonator_combat_framework.animation.molang.MolangValue
-import architecture.resonator_combat_framework.animation.molang.MolangVector3
-import architecture.resonator_combat_framework.animation.molang.value.Constant
+import architecture.resonator_combat_framework.molang.MoLangParser
+import architecture.resonator_combat_framework.molang.MolangDataHolder
+import architecture.resonator_combat_framework.molang.MolangValue
+import architecture.resonator_combat_framework.molang.MolangVector3
+import architecture.resonator_combat_framework.molang.value.Constant
 import architecture.resonator_combat_framework.util.RcfUtil
 import com.google.gson.JsonArray
 import com.google.gson.JsonElement
@@ -41,7 +41,7 @@ data class Keyframe
 	 * @param context MoLang 运行上下文
 	 * @return 求值后的 Vector3f
 	 */
-	fun evaluateValue(out: Vector3f = Vector3f(), context: MolangData? = null): Vector3f {
+	fun evaluateValue(out: Vector3f = Vector3f(), context: MolangDataHolder? = null): Vector3f {
 		if (!value.allNull()) return value.evaluate(out, context)
 		if (!post.allNull()) return post.evaluate(out, context)
 		if (!pre.allNull()) return pre.evaluate(out, context)
@@ -55,7 +55,7 @@ data class Keyframe
 	 * @param context MoLang 运行上下文
 	 * @return 求值后的 Vector3f
 	 */
-	fun evaluatePre(out: Vector3f = Vector3f(), context: MolangData? = null): Vector3f {
+	fun evaluatePre(out: Vector3f = Vector3f(), context: MolangDataHolder? = null): Vector3f {
 		if (!pre.allNull()) return pre.evaluate(out, context)
 		if (!value.allNull()) return value.evaluate(out, context)
 		if (!post.allNull()) return post.evaluate(out, context)
@@ -69,7 +69,7 @@ data class Keyframe
 	 * @param context MoLang 运行上下文
 	 * @return 求值后的 Vector3f
 	 */
-	fun evaluatePost(out: Vector3f = Vector3f(), context: MolangData? = null): Vector3f {
+	fun evaluatePost(out: Vector3f = Vector3f(), context: MolangDataHolder? = null): Vector3f {
 		if (!post.allNull()) return post.evaluate(out, context)
 		if (!value.allNull()) return value.evaluate(out, context)
 		if (!pre.allNull()) return pre.evaluate(out, context)

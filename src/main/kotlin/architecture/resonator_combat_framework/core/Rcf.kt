@@ -1,7 +1,7 @@
 package architecture.resonator_combat_framework.core
 
 import architecture.resonator_combat_framework.config.RcfConfig
-import architecture.resonator_combat_framework.event.CreateEntityStateHolderEvent
+import architecture.resonator_combat_framework.event.definition.CreateEntityStateHolderEvent
 import architecture.resonator_combat_framework.init.RcfAttachmentTypes
 import architecture.resonator_combat_framework.init.RcfDataComponentTypes
 import architecture.resonator_combat_framework.util.RcfUtil

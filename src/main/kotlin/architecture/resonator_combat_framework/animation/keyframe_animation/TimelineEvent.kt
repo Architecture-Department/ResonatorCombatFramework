@@ -1,8 +1,8 @@
 package architecture.resonator_combat_framework.animation.keyframe_animation
 
-import architecture.resonator_combat_framework.animation.molang.MoLangParser
-import architecture.resonator_combat_framework.animation.molang.MolangData
-import architecture.resonator_combat_framework.animation.molang.MolangValue
+import architecture.resonator_combat_framework.molang.MoLangParser
+import architecture.resonator_combat_framework.molang.MolangDataHolder
+import architecture.resonator_combat_framework.molang.MolangValue
 import architecture.resonator_combat_framework.util.RcfUtil
 import com.google.gson.JsonObject
 import net.minecraft.commands.CommandSourceStack
@@ -36,7 +36,7 @@ data class TimelineEvent
 	 * @param entity 所属实体
 	 * @param context MoLang 运行上下文
 	 */
-	fun run(entity: Entity, context: MolangData? = null) {
+	fun run(entity: Entity, context: MolangDataHolder? = null) {
 		molangs.forEach { it.eval(context) }
 
 		entityEvents.forEach { event -> processEntityEvent(entity, event) }

@@ -5,7 +5,7 @@ import architecture.goldenboughs_lib.api.payload.ToServerAndClientPayload
 import architecture.goldenboughs_lib.util.LibUtil.RESOURCE_LOCATION_OPTIONAL_STREAM_CODEC
 import architecture.resonator_combat_framework.animation.IAnimationProvider.Companion.getMapperProvider
 import architecture.resonator_combat_framework.animation.data.PlayConfig
-import architecture.resonator_combat_framework.init.registry.AnimationControllers
+import architecture.resonator_combat_framework.init.RcfAnimationControllers
 import architecture.resonator_combat_framework.util.RcfUtil
 import io.netty.buffer.ByteBuf
 import net.minecraft.client.player.AbstractClientPlayer
@@ -62,7 +62,7 @@ constructor(
 			fadeInTime = fadeInTime,
 			fadeOutTime = fadeOutTime
 		)
-		target.getMapperProvider().trigger(controllerName.orElse(AnimationControllers.MAIN)!!, animId, config)
+		target.getMapperProvider().trigger(controllerName.orElse(RcfAnimationControllers.MAIN)!!, animId, config)
 	}
 
 	override fun toServer(context: IPayloadContext, player: ServerPlayer) {
@@ -71,7 +71,7 @@ constructor(
 			fadeInTime = fadeInTime,
 			fadeOutTime = fadeOutTime
 		)
-		player.getMapperProvider().trigger(controllerName.orElse(AnimationControllers.MAIN)!!, animId, config)
+		player.getMapperProvider().trigger(controllerName.orElse(RcfAnimationControllers.MAIN)!!, animId, config)
 		PacketDistributor.sendToPlayersTrackingEntityAndSelf(player, this)
 	}
 

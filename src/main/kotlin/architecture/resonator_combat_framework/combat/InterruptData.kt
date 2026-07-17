@@ -1,6 +1,6 @@
 package architecture.resonator_combat_framework.combat
 
-import architecture.goldenboughs_lib.api.AllOpe
+import architecture.goldenboughs_lib.api.AllOpen
 
 /**
  * 打断配置 —— 定义攻击段各部分的可打断性及外部规则。
@@ -21,7 +21,7 @@ import architecture.goldenboughs_lib.api.AllOpe
  * @property recovery 后摇
  * @property idle 空闲
  */
-@AllOpe
+@AllOpen
 data class InterruptData(
 	val windup: Int = 5000,
 	val attack: Int = 10000,

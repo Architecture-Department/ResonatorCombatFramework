@@ -6,7 +6,7 @@ import architecture.resonator_combat_framework.animation.helper.PlayerAnimationH
 import architecture.resonator_combat_framework.animation.helper.PlayerAnimationHelper.resumeAnima
 import architecture.resonator_combat_framework.animation.helper.PlayerAnimationHelper.stopAnima
 import architecture.resonator_combat_framework.animation.helper.PlayerAnimationHelper.triggerPlayerAnima
-import architecture.resonator_combat_framework.init.registry.AnimationControllers
+import architecture.resonator_combat_framework.init.RcfAnimationControllers
 import com.mojang.brigadier.CommandDispatcher
 import com.mojang.brigadier.arguments.FloatArgumentType
 import com.mojang.brigadier.arguments.IntegerArgumentType
@@ -65,12 +65,12 @@ object TestAnimCommand {
 						)
 						.then(
 							Commands.literal("stop")
-								.executes { action(it) { stopAnima(AnimationControllers.COMMAND) } }
+								.executes { action(it) { stopAnima(name = RcfAnimationControllers.COMMAND) } }
 								.then(
 									Commands.argument("fade_out", IntegerArgumentType.integer(-1))
 										.executes {
 											val target = getPlayer(it)
-											target.stopAnima(AnimationControllers.COMMAND)
+											target.stopAnima(RcfAnimationControllers.COMMAND)
 											it.source.sendSuccess({
 												Component.literal("Stopped animation on ${target.name.string}")
 											}, true)
@@ -80,11 +80,11 @@ object TestAnimCommand {
 						)
 						.then(
 							Commands.literal("pause")
-								.executes { action(it) { pauseAnima(AnimationControllers.COMMAND) } }
+								.executes { action(it) { pauseAnima(RcfAnimationControllers.COMMAND) } }
 						)
 						.then(
 							Commands.literal("resume")
-								.executes { action(it) { resumeAnima(AnimationControllers.COMMAND) } }
+								.executes { action(it) { resumeAnima(RcfAnimationControllers.COMMAND) } }
 						)
 				)
 		)

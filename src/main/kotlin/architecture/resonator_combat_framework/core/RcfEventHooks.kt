@@ -7,12 +7,12 @@ import architecture.resonator_combat_framework.animation.controller.IEntityAnima
 import architecture.resonator_combat_framework.animation.data.PlayConfig
 import architecture.resonator_combat_framework.animation.mapper.IEntityAnimationMapperProvider
 import architecture.resonator_combat_framework.combat.Action
+import architecture.resonator_combat_framework.combat.ActionController
 import architecture.resonator_combat_framework.combat.ActionState
 import architecture.resonator_combat_framework.combat.AttackActionPhase
-import architecture.resonator_combat_framework.event.*
-import architecture.resonator_combat_framework.event.ActionEvent.Changed.Type
+import architecture.resonator_combat_framework.event.definition.*
+import architecture.resonator_combat_framework.event.definition.ActionEvent.Changed.Type
 import architecture.resonator_combat_framework.registry.KeyframeAnimationRegistry
-import architecture.resonator_combat_framework.state_machine.holder.EntityStateHolder
 import net.minecraft.core.particles.ParticleType
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.Entity
@@ -21,58 +21,54 @@ import net.neoforged.neoforge.common.NeoForge
 import org.joml.Vector3d
 import thedarkcolour.kotlinforforge.neoforge.forge.FORGE_BUS
 
-/**
- * RCF 事件钩子 —— 集中转发战斗、动画、粒子等系统的事件到 NeoForge 总线。
- * 各模块通过此对象发射事件，外部监听者通过 [NeoForge.EVENT_BUS] 订阅。
- */
 object RcfEventHooks {
 
 	// ===== Combat (entity_state_machine) =====
 
 	@JvmStatic
-	fun combatActionStart(holder: EntityStateHolder<*>, entity: LivingEntity, action: Action) {
-		NeoForge.EVENT_BUS.post(ActionEvent.Start(holder, entity, action))
+	fun combatActionStart(controller: ActionController, entity: LivingEntity, action: Action) {
+		NeoForge.EVENT_BUS.post(ActionEvent.Start(controller, entity, action))
 	}
 
 	@JvmStatic
-	fun combatActionTickPre(holder: EntityStateHolder<*>, entity: LivingEntity, action: Action): Boolean {
-		return NeoForge.EVENT_BUS.post(ActionEvent.Tick.Pre(holder, entity, action)).isCanceled
+	fun combatActionTickPre(controller: ActionController, entity: LivingEntity, action: Action): Boolean {
+		return NeoForge.EVENT_BUS.post(ActionEvent.Tick.Pre(controller, entity, action)).isCanceled
 	}
 
 	@JvmStatic
-	fun combatActionTickPost(holder: EntityStateHolder<*>, entity: LivingEntity, action: Action) {
-		NeoForge.EVENT_BUS.post(ActionEvent.Tick.Post(holder, entity, action))
+	fun combatActionTickPost(controller: ActionController, entity: LivingEntity, action: Action) {
+		NeoForge.EVENT_BUS.post(ActionEvent.Tick.Post(controller, entity, action))
 	}
 
 	@JvmStatic
-	fun combatActionEnd(holder: EntityStateHolder<*>, entity: LivingEntity, action: Action) {
-		NeoForge.EVENT_BUS.post(ActionEvent.End(holder, entity, action))
+	fun combatActionEnd(controller: ActionController, entity: LivingEntity, action: Action) {
+		NeoForge.EVENT_BUS.post(ActionEvent.End(controller, entity, action))
 	}
 
 	@JvmStatic
 	fun combatActionInterruptible(
-		holder: EntityStateHolder<*>, entity: LivingEntity, action: Action, target: Action, value: Boolean
+		controller: ActionController, entity: LivingEntity, action: Action, target: Action, value: Boolean
 	): Boolean {
 		val event =
-			NeoForge.EVENT_BUS.post(ActionEvent.Interruptible(holder, entity, action, target, value, value))
+			NeoForge.EVENT_BUS.post(ActionEvent.Interruptible(controller, entity, action, target, value, value))
 		return if (event.isCanceled) value else event.newValue
 	}
 
 	@JvmStatic
 	fun combatActionChanged(
-		holder: EntityStateHolder<*>, entity: LivingEntity, oldValue: Action?, newValue: Action?, type: Type
+		controller: ActionController, entity: LivingEntity, oldValue: Action?, newValue: Action?, type: Type
 	): ActionEvent.Changed {
-		return NeoForge.EVENT_BUS.post(ActionEvent.Changed(holder, entity, oldValue, newValue, type))
+		return NeoForge.EVENT_BUS.post(ActionEvent.Changed(controller, entity, oldValue, newValue, type))
 	}
 
 	@JvmStatic
 	fun combatActionStateChanged(
-		holder: EntityStateHolder<*>,
+		controller: ActionController,
 		entity: LivingEntity,
 		oldValue: ActionState,
 		newValue: ActionState
 	) {
-		NeoForge.EVENT_BUS.post(ActionStateChangedEvent(holder, entity, oldValue, newValue))
+		NeoForge.EVENT_BUS.post(ActionStateChangedEvent(controller, entity, oldValue, newValue))
 	}
 
 	// ===== Animation Trigger =====
@@ -186,8 +182,8 @@ object RcfEventHooks {
 	// ===== Controller Register =====
 
 	@JvmStatic
-	fun <T : Entity> animationControllerRegister(): ControllerRegisterEvent<T> {
-		return NeoForge.EVENT_BUS.post(ControllerRegisterEvent<T>())
+	fun <T : Entity> animationControllerRegister(): AnimationControllerRegisterEvent<T> {
+		return NeoForge.EVENT_BUS.post(AnimationControllerRegisterEvent<T>())
 	}
 
 	@JvmStatic

@@ -1,6 +1,6 @@
 package architecture.resonator_combat_framework.registry
 
-import architecture.goldenboughs_lib.api.AllOpe
+import architecture.goldenboughs_lib.api.AllOpen
 import architecture.goldenboughs_lib.util.LazySupplier
 import architecture.resonator_combat_framework.animation.AnimationDef
 import architecture.resonator_combat_framework.core.RcfEventHooks
@@ -13,7 +13,7 @@ import net.minecraft.util.profiling.ProfilerFiller
  * 动画定义注册表，通过资源重载监听器收集所有 [AnimationDef]。
  * 在数据包重载时通过事件系统从各个模组收集动画定义，并提供懒加载能力。
  */
-@AllOpe
+@AllOpen
 object AnimationDefRegistry :
 	SimplePreparableReloadListener<Map<ResourceLocation, LazySupplier<AnimationDef>>>() {
 	private val animationsDef = mutableMapOf<ResourceLocation, LazySupplier<AnimationDef>>()

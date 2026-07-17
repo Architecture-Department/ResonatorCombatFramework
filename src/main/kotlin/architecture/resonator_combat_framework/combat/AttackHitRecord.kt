@@ -1,5 +1,8 @@
 package architecture.resonator_combat_framework.combat
 
+import architecture.resonator_combat_framework.init.RcfAttachmentTypes
+import net.minecraft.resources.ResourceLocation
+import net.minecraft.world.entity.LivingEntity
 import java.util.*
 
 /**
@@ -9,29 +12,45 @@ import java.util.*
  * 每阶段（phaseIdx）独立记录 tried/hit 的实体 UUID，阶段结束时调用 [removeGroup] 清理。
  */
 class AttackHitRecord {
+	private val tried = mutableMapOf<ResourceLocation, HashMap<Int, MutableSet<UUID>>>()
+	private val hit = mutableMapOf<ResourceLocation, HashMap<Int, MutableSet<UUID>>>()
 
-	private val tried = mutableMapOf<Int, MutableSet<UUID>>()
-	private val hit = mutableMapOf<Int, MutableSet<UUID>>()
-
-	fun getTried(phaseIdx: Int): MutableSet<UUID> = tried.getOrPut(phaseIdx) { mutableSetOf() }
-	fun getHit(phaseIdx: Int): MutableSet<UUID> = hit.getOrPut(phaseIdx) { mutableSetOf() }
+	fun getTried(id: ResourceLocation, phaseIdx: Int): MutableSet<UUID> = tried[id]?.get(phaseIdx) ?: mutableSetOf()
+	fun getHit(id: ResourceLocation, phaseIdx: Int): MutableSet<UUID> = hit[id]?.get(phaseIdx) ?: mutableSetOf()
 
 	/** 获取该阶段的所有已尝试 entity，不存在则返回空集 */
-	fun getTriedOrEmpty(phaseIdx: Int): Set<UUID> = tried[phaseIdx] ?: emptySet()
-	fun getHitOrEmpty(phaseIdx: Int): Set<UUID> = hit[phaseIdx] ?: emptySet()
+	fun getTriedOrEmpty(id: ResourceLocation, phaseIdx: Int): Set<UUID> = tried[id]?.get(phaseIdx) ?: emptySet()
+	fun getHitOrEmpty(id: ResourceLocation, phaseIdx: Int): Set<UUID> = hit[id]?.get(phaseIdx) ?: emptySet()
 
 	/** 返回当前有记录的 phase 索引集合 */
-	val activePhases: Set<Int> get() = tried.keys
+	fun getActivePhases(id: ResourceLocation): Set<Int> = tried[id]?.keys ?: emptySet()
 
 	/** 移除指定阶段的记录（阶段结束时调用） */
-	fun removeGroup(phaseIdx: Int) {
-		tried.remove(phaseIdx)
-		hit.remove(phaseIdx)
+	fun removeGroup(id: ResourceLocation, phaseIdx: Int) {
+		tried.remove(id)?.remove(phaseIdx)
+		hit.remove(id)?.remove(phaseIdx)
 	}
 
-	/** 清空所有记录（动作结束时调用） */
 	fun clear() {
 		tried.clear()
 		hit.clear()
+	}
+
+	companion object {
+		@JvmStatic
+		fun of(entity: LivingEntity): AttackHitRecord {
+			return entity.getData(RcfAttachmentTypes.ATTACK_HIT_RECORD)
+		}
+
+		@JvmStatic
+		fun has(entity: LivingEntity): Boolean {
+			return entity.hasData(RcfAttachmentTypes.ATTACK_HIT_RECORD)
+		}
+
+		@JvmStatic
+		fun clear(entity: LivingEntity) {
+			if (!has(entity)) return
+			of(entity).clear()
+		}
 	}
 }

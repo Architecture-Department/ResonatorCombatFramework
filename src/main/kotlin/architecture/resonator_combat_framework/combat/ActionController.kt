@@ -1,10 +1,11 @@
 package architecture.resonator_combat_framework.combat
 
-import architecture.goldenboughs_lib.api.AllOpe
+import architecture.goldenboughs_lib.api.AllOpen
 import architecture.resonator_combat_framework.core.RcfEventHooks
-import architecture.resonator_combat_framework.event.ActionEvent
-import architecture.resonator_combat_framework.state_machine.holder.EntityStateHolder
+import architecture.resonator_combat_framework.event.definition.ActionEvent
+import architecture.resonator_combat_framework.state.EntityStateHolder
 import architecture.resonator_combat_framework.util.TimeUtil
+import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.LivingEntity
 import kotlin.math.max
 
@@ -15,12 +16,11 @@ import kotlin.math.max
  *
  * @param entity 所属生物实体
  */
-@AllOpe
-class ActionController(val entity: LivingEntity) {
-	/** 状态持有者引用（由 EntityStateHolder 在构造后立即设置） */
-	final lateinit var holder: EntityStateHolder<*>
-		internal set
-
+@AllOpen
+class ActionController(
+	val id: ResourceLocation,
+	val entity: LivingEntity
+) {
 	/**
 	 * 当前动作集。
 	 * 设置时自动重置舞台索引为 -1，并将动作阶段设为 WINDUP。
@@ -49,7 +49,7 @@ class ActionController(val entity: LivingEntity) {
 	final var actionState: ActionState = ActionState.EMPTY
 		set(value) {
 			if (field == value) return
-			RcfEventHooks.combatActionStateChanged(holder, entity, field, value)
+			RcfEventHooks.combatActionStateChanged(this, entity, field, value)
 			field = value
 		}
 
@@ -78,7 +78,7 @@ class ActionController(val entity: LivingEntity) {
 	 */
 	fun onChangedAction(target: Action): Boolean {
 		if (action != null) {
-			if (!action!!.isInterruptible(time, holder, target, entity)) return false
+			if (!action!!.isInterruptible(this, time, target, entity)) return false
 		}
 		return onChangedAction(target, ActionEvent.Changed.Type.DEFAULT)
 	}
@@ -91,7 +91,7 @@ class ActionController(val entity: LivingEntity) {
 	 */
 	fun onNextChangedAction(target: Action): Boolean {
 		if (action != null) {
-			if (!action!!.isInterruptible(time, holder, target, entity)) return false
+			if (!action!!.isInterruptible(this, time, target, entity)) return false
 		}
 		return onChangedAction(target, ActionEvent.Changed.Type.NEXT)
 	}
@@ -104,7 +104,7 @@ class ActionController(val entity: LivingEntity) {
 	 */
 	fun onCompulsoryChangedAction(target: Action): Boolean {
 		if (action != null) {
-			if (!action!!.isInterruptible(time, holder, target, entity)) {
+			if (!action!!.isInterruptible(this, time, target, entity)) {
 				return onChangedAction(target, ActionEvent.Changed.Type.INTERRUPTIBLE)
 			}
 		}
@@ -119,7 +119,7 @@ class ActionController(val entity: LivingEntity) {
 	 * @return 是否成功切换
 	 */
 	private fun onChangedAction(value: Action?, type: ActionEvent.Changed.Type): Boolean {
-		val event = RcfEventHooks.combatActionChanged(holder, entity, action, value, type)
+		val event = RcfEventHooks.combatActionChanged(this, entity, action, value, type)
 		if (event.isCanceled) {
 			return false
 		}
@@ -137,7 +137,7 @@ class ActionController(val entity: LivingEntity) {
 		actionState = ActionState.EMPTY
 		if (action != null) {
 			action!!.onEnd(entity, this, actionSequence)
-			RcfEventHooks.combatActionEnd(holder, entity, action!!)
+			RcfEventHooks.combatActionEnd(this, entity, action!!)
 			onChangedAction(null, ActionEvent.Changed.Type.END)
 		}
 	}
@@ -153,12 +153,11 @@ class ActionController(val entity: LivingEntity) {
 		actionState = ActionState.EMPTY
 		if (action != null) {
 			(action as? AnimationAction)?.onForcedEnd(entity, actionSequence)
-			RcfEventHooks.combatActionEnd(holder, entity, action!!)
+			RcfEventHooks.combatActionEnd(this, entity, action!!)
 			onChangedAction(null, ActionEvent.Changed.Type.INTERRUPTIBLE)
 		}
 	}
 
-	/** 切换下一段动作 */
 	/**
 	 * 切换到动作序列的下一段。若当前为末段则回到首段。
 	 *
@@ -185,7 +184,6 @@ class ActionController(val entity: LivingEntity) {
 		return isSuccess
 	}
 
-	/** 强制切换下一段动作 */
 	/**
 	 * 强制切换到动作序列的下一段，无视打断规则。
 	 *
@@ -221,12 +219,12 @@ class ActionController(val entity: LivingEntity) {
 		if (scaledDelta <= 0f) return
 
 		if (time <= 0f) {
-			RcfEventHooks.combatActionStart(holder, entity, action)
+			RcfEventHooks.combatActionStart(this, entity, action)
 			action.onStart(entity, this, actionSequence)
 		}
-		if (!RcfEventHooks.combatActionTickPre(holder, entity, action)) {
+		if (!RcfEventHooks.combatActionTickPre(this, entity, action)) {
 			action.onTick(entity, this, actionSequence, time)
-			RcfEventHooks.combatActionTickPost(holder, entity, action)
+			RcfEventHooks.combatActionTickPost(this, entity, action)
 		}
 		actionState = action.getState(time, entity)
 		// 阶段切换回调

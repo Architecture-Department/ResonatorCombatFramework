@@ -1,19 +1,19 @@
 package architecture.resonator_combat_framework.animation.controller
 
-import architecture.goldenboughs_lib.api.AllOpe
+import architecture.goldenboughs_lib.api.AllOpen
 import architecture.resonator_combat_framework.animation.AnimationDef
 import architecture.resonator_combat_framework.animation.data.BoneConfig
 import architecture.resonator_combat_framework.animation.data.PlayConfig
 import architecture.resonator_combat_framework.animation.keyframe_animation.KeyframeAnimation
 import architecture.resonator_combat_framework.animation.mapper.AnimationControllerManager
-import architecture.resonator_combat_framework.animation.molang.MolangData
 import architecture.resonator_combat_framework.model.GeometryModel
 import architecture.resonator_combat_framework.model.PoseData
+import architecture.resonator_combat_framework.molang.MolangDataHolder
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.Entity
 
 /** 动画控制器接口——定义实体动画控制器的完整行为契约。 */
-@AllOpe
+@AllOpen
 interface IEntityAnimationController<T : Entity> {
 	/** 控制器状态机 */
 	enum class State {
@@ -49,8 +49,8 @@ interface IEntityAnimationController<T : Entity> {
 	val id: ResourceLocation
 
 	/** 当前 MoLang 数据上下文 */
-	val currentData: MolangData
-		get() = manager.mapperProvider.molangData
+	val currentData: MolangDataHolder
+		get() = manager.mapperProvider.molangDataHolder
 
 	/** 控制器当前状态（外部只读） */
 	val state: State

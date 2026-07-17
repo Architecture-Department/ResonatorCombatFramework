@@ -1,14 +1,14 @@
 package architecture.resonator_combat_framework.animation
 
-import architecture.goldenboughs_lib.api.AllOpe
+import architecture.goldenboughs_lib.api.AllOpen
 import architecture.resonator_combat_framework.animation.controller.IEntityAnimationController
 import architecture.resonator_combat_framework.animation.keyframe_animation.KeyframeAnimation
 import architecture.resonator_combat_framework.animation.keyframe_animation.ParticleEvent
 import architecture.resonator_combat_framework.animation.keyframe_animation.SoundEvent
 import architecture.resonator_combat_framework.animation.keyframe_animation.TimelineEvent
-import architecture.resonator_combat_framework.animation.molang.MolangData
 import architecture.resonator_combat_framework.model.DynamicGeometryModel
 import architecture.resonator_combat_framework.model.PoseData
+import architecture.resonator_combat_framework.molang.MolangDataHolder
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.Entity
 
@@ -18,7 +18,7 @@ import net.minecraft.world.entity.Entity
  * 动画数据（[KeyframeAnimation]、[BoneConfig]）由注册表管理，
  * 调用时从对应端的 Registry 获取后传入方法。
  */
-@AllOpe
+@AllOpen
 class AnimationDef(
 	val id: ResourceLocation,
 	val animationId: ResourceLocation,
@@ -41,7 +41,7 @@ class AnimationDef(
 		anim: KeyframeAnimation,
 		time: Float,
 		poseData: PoseData,
-		context: MolangData? = null,
+		context: MolangDataHolder? = null,
 	): Set<String> {
 		return anim.computeAndWrite(time, poseData, context)
 	}

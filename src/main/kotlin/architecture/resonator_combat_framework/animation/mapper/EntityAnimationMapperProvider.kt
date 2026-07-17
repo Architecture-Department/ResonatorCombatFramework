@@ -3,7 +3,7 @@ package architecture.resonator_combat_framework.animation.mapper
 import architecture.resonator_combat_framework.animation.controller.IEntityAnimationController
 import architecture.resonator_combat_framework.animation.data.BoneFlags
 import architecture.resonator_combat_framework.animation.data.PlayConfig
-import architecture.resonator_combat_framework.init.registry.AnimationControllers
+import architecture.resonator_combat_framework.init.RcfAnimationControllers
 import architecture.resonator_combat_framework.model.PoseData
 import architecture.resonator_combat_framework.util.ModelPartApplier
 import com.mojang.blaze3d.vertex.PoseStack
@@ -48,7 +48,7 @@ abstract class EntityAnimationMapperProvider<T : Entity, M : EntityModel<T>>(
 	 * @param playData 播放配置
 	 */
 	override fun trigger(controllerName: ResourceLocation?, animId: ResourceLocation, playData: PlayConfig) {
-		(animationControllerManager.get(controllerName ?: AnimationControllers.MAIN) ?: mainController).trigger(
+		(animationControllerManager.get(controllerName ?: RcfAnimationControllers.MAIN) ?: mainController).trigger(
 			animId,
 			playData
 		)
@@ -117,7 +117,7 @@ abstract class EntityAnimationMapperProvider<T : Entity, M : EntityModel<T>>(
 	 * @return 控制器实例
 	 */
 	override fun getController(controllerName: ResourceLocation?): IEntityAnimationController<T>? =
-		animationControllerManager.get(controllerName ?: AnimationControllers.MAIN) ?: mainController
+		animationControllerManager.get(controllerName ?: RcfAnimationControllers.MAIN) ?: mainController
 
 	/**
 	 * 获取所有控制器。
@@ -144,7 +144,7 @@ abstract class EntityAnimationMapperProvider<T : Entity, M : EntityModel<T>>(
 	 * @param controller 控制器实例
 	 */
 	protected fun addController(name: ResourceLocation, controller: IEntityAnimationController<T>) {
-		if (name == AnimationControllers.MAIN) return
+		if (name == RcfAnimationControllers.MAIN) return
 		animationControllerManager.add(name, controller)
 	}
 
@@ -154,7 +154,7 @@ abstract class EntityAnimationMapperProvider<T : Entity, M : EntityModel<T>>(
 	 * @param name 控制器名称
 	 */
 	protected fun removeController(name: ResourceLocation) {
-		if (name == AnimationControllers.MAIN) return
+		if (name == RcfAnimationControllers.MAIN) return
 		animationControllerManager.remove(name)
 	}
 

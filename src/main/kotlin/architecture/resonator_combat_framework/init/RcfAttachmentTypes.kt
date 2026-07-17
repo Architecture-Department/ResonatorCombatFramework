@@ -1,15 +1,14 @@
 package architecture.resonator_combat_framework.init
 
-import architecture.resonator_combat_framework.animation.molang.MolangData
-import architecture.resonator_combat_framework.animation.molang.MolangData.Companion.initEntityQueries
+import architecture.resonator_combat_framework.combat.ActionHolder
 import architecture.resonator_combat_framework.combat.AttackHitRecord
-import architecture.resonator_combat_framework.event.CreateEntityStateHolderEvent
-import architecture.resonator_combat_framework.init.RcfAttachmentTypes.ATTACK_HIT_RECORD
-import architecture.resonator_combat_framework.init.RcfAttachmentTypes.MOLANG_DATA
-import architecture.resonator_combat_framework.init.RcfAttachmentTypes.STATE_HOLDER
-import architecture.resonator_combat_framework.state_machine.holder.EntityStateHolder
-import architecture.resonator_combat_framework.state_machine.holder.MobStateHolder
-import architecture.resonator_combat_framework.state_machine.holder.PlayerStateHolder
+import architecture.resonator_combat_framework.event.definition.CreateActionHolderEvent
+import architecture.resonator_combat_framework.event.definition.CreateEntityStateHolderEvent
+import architecture.resonator_combat_framework.molang.MolangDataHolder
+import architecture.resonator_combat_framework.molang.MolangDataHolder.Companion.initEntityQueries
+import architecture.resonator_combat_framework.state.EntityStateHolder
+import architecture.resonator_combat_framework.state.MobStateHolder
+import architecture.resonator_combat_framework.state.PlayerStateHolder
 import architecture.resonator_combat_framework.util.RcfUtil.modRegister
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.LivingEntity
@@ -21,25 +20,15 @@ import net.neoforged.neoforge.registries.DeferredHolder
 import net.neoforged.neoforge.registries.DeferredRegister
 import net.neoforged.neoforge.registries.NeoForgeRegistries
 
-/**
- * RCF Attachment 类型注册 —— 注册所有附加到实体/世界的自定义数据。
- *
- * 每个 Attachment 通过 [DeferredRegister] 懒加载注册，在首次访问时自动构造实例。
- * 支持的 Attachment：
- * - [MOLANG_DATA]：MoLang 表达式上下文数据，附加到 Entity 或 Level
- * - [STATE_HOLDER]：实体战斗状态持有者，附加到 LivingEntity
- * - [ATTACK_HIT_RECORD]：攻击命中记录，附加到 LivingEntity
- */
 object RcfAttachmentTypes {
 	@JvmField
 	val REGISTRY: DeferredRegister<AttachmentType<*>> = modRegister(NeoForgeRegistries.ATTACHMENT_TYPES)
 
-	/** MoLang 表达式上下文数据 —— 附加到 Entity 或 Level，用于动画表达式求值 */
 	@JvmField
-	val MOLANG_DATA: DeferredHolder<AttachmentType<*>, AttachmentType<MolangData>> =
+	val MOLANG_DATA: DeferredHolder<AttachmentType<*>, AttachmentType<MolangDataHolder>> =
 		REGISTRY.register("molang_data") { ->
 			AttachmentType.builder { holder ->
-				val data = MolangData()
+				val data = MolangDataHolder()
 				if (holder is Entity) {
 					data.initEntityQueries(holder)
 					return@builder data
@@ -51,9 +40,8 @@ object RcfAttachmentTypes {
 			}.build()
 		}
 
-	/** 实体战斗状态持有者 —— 附加到 LivingEntity，管理动作控制器和状态标志 */
 	@JvmField
-	val STATE_HOLDER: DeferredHolder<AttachmentType<*>, AttachmentType<EntityStateHolder<*>>> =
+	val ENTITY_STATE_HOLDER: DeferredHolder<AttachmentType<*>, AttachmentType<EntityStateHolder<*>>> =
 		REGISTRY.register("entity_state_holder") { ->
 			AttachmentType.builder { holder ->
 				if (holder !is LivingEntity) {
@@ -73,7 +61,22 @@ object RcfAttachmentTypes {
 			}.build()
 		}
 
-	/** 攻击命中记录 —— 附加到 LivingEntity，按阶段记录已尝试/已命中的实体 UUID */
+	@JvmField
+	val ACTION_HOLDER: DeferredHolder<AttachmentType<*>, AttachmentType<ActionHolder<*>>> =
+		REGISTRY.register("action_holder") { ->
+			AttachmentType.builder { holder ->
+				if (holder !is LivingEntity) {
+					throw IllegalArgumentException("ActionHolder can only be attached to LivingEntity. Unsupported: ${holder?.javaClass}")
+				}
+
+				val function = CreateActionHolderEvent.getAll()[holder.type]
+				if (function != null) {
+					return@builder function(holder)
+				}
+				return@builder ActionHolder(holder)
+			}.build()
+		}
+
 	@JvmField
 	val ATTACK_HIT_RECORD: DeferredHolder<AttachmentType<*>, AttachmentType<AttackHitRecord>> =
 		REGISTRY.register("attack_hit_record") { ->

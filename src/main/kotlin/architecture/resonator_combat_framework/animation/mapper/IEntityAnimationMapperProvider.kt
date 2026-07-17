@@ -1,10 +1,10 @@
 package architecture.resonator_combat_framework.animation.mapper
 
-import architecture.goldenboughs_lib.api.AllOpe
+import architecture.goldenboughs_lib.api.AllOpen
 import architecture.resonator_combat_framework.animation.controller.IEntityAnimationController
 import architecture.resonator_combat_framework.animation.data.PlayConfig
-import architecture.resonator_combat_framework.animation.molang.MolangData
-import architecture.resonator_combat_framework.init.registry.AnimationControllers
+import architecture.resonator_combat_framework.init.RcfAnimationControllers
+import architecture.resonator_combat_framework.molang.MolangDataHolder
 import com.mojang.blaze3d.vertex.PoseStack
 import net.minecraft.client.model.EntityModel
 import net.minecraft.resources.ResourceLocation
@@ -17,7 +17,7 @@ import net.minecraft.world.entity.Entity
  * @param T 实体类型
  * @param M 实体模型类型
  */
-@AllOpe
+@AllOpen
 interface IEntityAnimationMapperProvider<T : Entity, M : EntityModel<T>> {
 	/** 所属实体 */
 	val holder: T
@@ -29,7 +29,7 @@ interface IEntityAnimationMapperProvider<T : Entity, M : EntityModel<T>> {
 	val animationControllerManager: AnimationControllerManager<T>
 
 	/** 实体级 MoLang 数据 */
-	val molangData: MolangData get() = MolangData.of(holder)
+	val molangDataHolder: MolangDataHolder get() = MolangDataHolder.of(holder)
 
 	/** 主控制器 */
 	val mainController: IEntityAnimationController<T> get() = animationControllerManager.getMainController()
@@ -110,7 +110,7 @@ interface IEntityAnimationMapperProvider<T : Entity, M : EntityModel<T>> {
 	 * @param fadeOutTime 淡出时长（秒）
 	 */
 	fun stop(fadeOutTime: Float = -1f) {
-		stop(AnimationControllers.MAIN, fadeOutTime)
+		stop(RcfAnimationControllers.MAIN, fadeOutTime)
 	}
 
 	/**
@@ -125,14 +125,14 @@ interface IEntityAnimationMapperProvider<T : Entity, M : EntityModel<T>> {
 	 *
 	 * @param controllerName 控制器名称
 	 */
-	fun pause(controllerName: ResourceLocation = AnimationControllers.MAIN)
+	fun pause(controllerName: ResourceLocation = RcfAnimationControllers.MAIN)
 
 	/**
 	 * 恢复指定控制器的动画。
 	 *
 	 * @param controllerName 控制器名称
 	 */
-	fun resume(controllerName: ResourceLocation = AnimationControllers.MAIN)
+	fun resume(controllerName: ResourceLocation = RcfAnimationControllers.MAIN)
 
 	/** 暂停所有控制器的动画 */
 	fun pauseAll()
@@ -156,6 +156,6 @@ interface IEntityAnimationMapperProvider<T : Entity, M : EntityModel<T>> {
 	 * @param playData 播放配置
 	 */
 	fun trigger(animId: ResourceLocation, playData: PlayConfig) {
-		trigger(AnimationControllers.MAIN, animId, playData)
+		trigger(RcfAnimationControllers.MAIN, animId, playData)
 	}
 }

@@ -1,10 +1,10 @@
 package architecture.resonator_combat_framework.animation.keyframe_animation
 
 import architecture.resonator_combat_framework.animation.LoopType
-import architecture.resonator_combat_framework.animation.molang.EasingTypes
-import architecture.resonator_combat_framework.animation.molang.MolangData
 import architecture.resonator_combat_framework.model.BonePose
 import architecture.resonator_combat_framework.model.PoseData
+import architecture.resonator_combat_framework.molang.EasingTypes
+import architecture.resonator_combat_framework.molang.MolangDataHolder
 import architecture.resonator_combat_framework.util.MirrorUtil
 import com.google.gson.JsonObject
 import org.joml.Vector2f
@@ -85,7 +85,7 @@ data class KeyframeAnimation
 	 * @param context MoLang 运行上下文
 	 * @return 受此帧影响的骨骼名称集合
 	 */
-	fun computeAndWrite(time: Float, poseData: PoseData, context: MolangData? = null): Set<String> {
+	fun computeAndWrite(time: Float, poseData: PoseData, context: MolangDataHolder? = null): Set<String> {
 		val affected = mutableSetOf<String>()
 		for ((boneName, boneAnim) in bones) {
 			val posRes = interpolateFrames(boneAnim.pos, time, context)
@@ -122,7 +122,7 @@ data class KeyframeAnimation
 	 * @return 插值结果
 	 */
 	internal fun interpolateFrames(
-		frames: List<Keyframe>, time: Float, context: MolangData? = null
+		frames: List<Keyframe>, time: Float, context: MolangDataHolder? = null
 	): InterpResult {
 		if (frames.isEmpty()) return InterpResult(null, false)
 		val afterIdx = frames.indexOfFirst { it.time > time }

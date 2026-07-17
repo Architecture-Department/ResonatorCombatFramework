@@ -9,24 +9,21 @@ Mod ID: `resonator_combat_framework`
 - `core/` — `Rcf.kt`(@Mod), `RcfClient.kt`
 - `config/` — `RcfConfig`, `RcfClientConfig`
 - `init/` — 注册初始化（AttachmentTypes, DataComponentTypes, Capabilitys）
-- `event/` — 自定义事件（`AddGeckoLibCachePathEvent`）
-- `events/` — 事件监听器 + 注册中心（Entity, Player, Level, Renderer 事件；AnimationController, Capability, Command,
-  Payload, ResourceReload 注册）
+- `event/definition/` — 自定义事件定义（ActionEvent, TriggerEvent, ParticleEvent 等）
+- `event/listener/` — 事件监听器（Entity, Player, Level, Renderer 等 NeoForge 事件处理）
 - `mixed/` — Mixin 接口（`IEntityRcf`, `IPlayerRcf`）
 - `common/payload/` — 网络包（`AppurtenanceSynchroPayload`）
 - `util/` — 工具类（`RcfUtil`）
-- `module/entity_animation/` — 玩家动画模块
-  - `animation/` — 核心动画引擎（IEntityAnimationController, BedrockAnimationController, AnimationControllerManager,
-    EntityAnimationMapper→PlayerAnimationMapper, BrModel, ProxyModel, MoLang 解析引擎）
-  - `command/` — 测试动画命令
-  - `event/` — 动画事件（ControllerEvent, RegisterEvent, AnimationEvent, ParticleEvent）
-  - `helper/` — 双端便捷入口（PlayerAnimationHelper）
-  - `mixed/` — 动画 Mixin 接口（IAnimationProxyProvider）
-  - `network/` — 动画同步网络包（Trigger/Stop/Pause/Resume）
-  - `registry/` — 注册中心（BedrockAnimation, BedrockModel, ProxyBoneConfigData）
-  - `render/` — 第一人称渲染
-  - `util/` — 骨骼变换工具、GeckoLib 工具
-- `module/collision/` — 碰撞检测系统
+- `animation/` — 核心动画引擎（控制器、映射器、关键帧动画、骨骼/几何模型）
+- `molang/` — 独立 MoLang 表达式引擎（解析器、求值器、22 个内置函数）
+- `combat/` — 战斗动作系统（Action, ActionController, AttackAnimationAction）
+- `collision/` — 碰撞检测（OBBCollider, SAT, MultiCollider）
+- `command/` — 测试动画命令
+- `mixed/` — Mixin 接口（IEntityRcf, IPlayerRcf）
+- `model/` — 运行时骨骼/几何模型
+- `payload/` — 网络包（动画触发/停止/同步）
+- `registry/` — 资源注册表（动画、模型、骨骼配置）
+- `state_machine/holder/` — 实体状态容器
 - `mixin/java/` — Java Mixin 类（EntityMixin, PlayerMixin, GeckoLibCache, 动画客户端 Mixin）
 
 ## 关键系统

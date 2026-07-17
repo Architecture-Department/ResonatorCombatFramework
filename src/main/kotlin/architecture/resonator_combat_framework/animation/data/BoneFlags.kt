@@ -1,6 +1,6 @@
 package architecture.resonator_combat_framework.animation.data
 
-import architecture.goldenboughs_lib.api.AllOpe
+import architecture.goldenboughs_lib.api.AllOpen
 
 /**
  * 骨骼标志配置 — 内部用 Map<String, Boolean> 存储，第三方可通过自定义 key 扩展。
@@ -24,7 +24,7 @@ import architecture.goldenboughs_lib.api.AllOpe
  * scale.z        — 缩放 Z 轴启用
  * scale.lock     — 锁定缩放
  */
-@AllOpe
+@AllOpen
 data class BoneFlags(
 	val flags: Map<String, Boolean> = emptyMap()
 ) {
